@@ -11,7 +11,11 @@ interface ContentPageProps {
   };
 }
 
-export async function generateMetadata({ params: { category, slug } }: ContentPageProps): Promise<Metadata> {
+export async function generateMetadata(
+  { params }: ContentPageProps
+): Promise<Metadata> {
+  // Await the params before destructuring
+  const { slug } = await params;
   const post = await marketingService.getPageContent(slug);
 
   if (!post) {
@@ -27,7 +31,9 @@ export async function generateMetadata({ params: { category, slug } }: ContentPa
   };
 }
 
-export default async function ContentPage({ params: { category, slug } }: ContentPageProps) {
+export default async function ContentPage({ params }: ContentPageProps) {
+  // Await the params before destructuring
+  const { slug } = await params;
   const post = await marketingService.getPageContent(slug);
 
   if (!post) {

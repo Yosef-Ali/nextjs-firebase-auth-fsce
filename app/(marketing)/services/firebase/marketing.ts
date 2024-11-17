@@ -21,27 +21,45 @@ import { db } from '@/app/firebase';
 
 export type PostStatus = "draft" | "published" | "archived";
 
-export interface Author {
-  id: string;
-  name: string;
-  image: string;
-}
-
 export interface Post {
   id: string;
   title: string;
   slug: string;
-  images?: string[];
-  content: any;
   excerpt: string;
-  status: PostStatus;
+  content: string;
   category: string;
-  author: Author;
-  updatedAt: number;
+  status: PostStatus;
+  authorId: string;
+  authorName: string;
+  authorImage: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export type CreatePostInput = Omit<Post, 'id' | 'updatedAt'>;
-export type UpdatePostInput = Partial<Omit<Post, 'id'>>;
+export interface CreatePostInput {
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  status: PostStatus;
+  authorId: string;
+  authorName: string;
+  authorImage: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface UpdatePostInput {
+  title?: string;
+  slug?: string;
+  excerpt?: string;
+  content?: string;
+  category?: string;
+  status?: PostStatus;
+  authorId?: string;
+  updatedAt: Date;
+}
 
 class MarketingService {
   private readonly collectionName = 'posts';
@@ -50,70 +68,57 @@ class MarketingService {
     try {
       const docRef = await addDoc(collection(db, this.collectionName), {
         ...input,
-        updatedAt: Date.now(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
 
       const docSnap = await getDoc(docRef);
-      const data = docSnap.data();
+      
+      if (!docSnap.exists()) {
+        throw new Error('Failed to create post');
+      }
 
       return {
-        id: docRef.id,
-        title: data!.title,
-        slug: data!.slug,
-        images: data!.images,
-        content: data!.content,
-        excerpt: data!.excerpt,
-        status: data!.status,
-        category: data!.category,
-        author: data!.author,
-        updatedAt: data!.updatedAt,
-      };
+        id: docSnap.id,
+        ...docSnap.data(),
+      } as Post;
     } catch (error) {
       console.error('Error creating post:', error);
-      throw new Error('Failed to create post');
+      throw error;
     }
   }
 
   async updatePost(id: string, input: UpdatePostInput): Promise<Post> {
     try {
       const docRef = doc(db, this.collectionName, id);
+      
       await updateDoc(docRef, {
         ...input,
-        updatedAt: Date.now(),
+        updatedAt: serverTimestamp(),
       });
 
       const docSnap = await getDoc(docRef);
-      const data = docSnap.data();
-
-      if (!data) {
+      
+      if (!docSnap.exists()) {
         throw new Error('Post not found');
       }
 
       return {
-        id: docRef.id,
-        title: data.title,
-        slug: data.slug,
-        images: data.images,
-        content: data.content,
-        excerpt: data.excerpt,
-        status: data.status,
-        category: data.category,
-        author: data.author,
-        updatedAt: data.updatedAt,
-      };
+        id: docSnap.id,
+        ...docSnap.data(),
+      } as Post;
     } catch (error) {
       console.error('Error updating post:', error);
-      throw new Error('Failed to update post');
+      throw error;
     }
   }
 
   async deletePost(id: string): Promise<void> {
     try {
-      const docRef = doc(db, this.collectionName, id);
-      await deleteDoc(docRef);
+      await deleteDoc(doc(db, this.collectionName, id));
     } catch (error) {
       console.error('Error deleting post:', error);
-      throw new Error('Failed to delete post');
+      throw error;
     }
   }
 
@@ -121,57 +126,36 @@ class MarketingService {
     try {
       const q = query(
         collection(db, this.collectionName),
-        where('author.id', '==', userId),
-        orderBy('updatedAt', 'desc')
+        where('authorId', '==', userId)
       );
 
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          title: data.title,
-          slug: data.slug,
-          images: data.images,
-          content: data.content,
-          excerpt: data.excerpt,
-          status: data.status,
-          category: data.category,
-          author: data.author,
-          updatedAt: data.updatedAt,
-        };
-      });
+      
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Post[];
     } catch (error) {
-      console.error('Error fetching user posts:', error);
-      return [];
+      console.error('Error getting user posts:', error);
+      throw error;
     }
   }
 
   async getPostById(id: string): Promise<Post | null> {
     try {
-      const docRef = doc(db, this.collectionName, id);
-      const docSnap = await getDoc(docRef);
+      const docSnap = await getDoc(doc(db, this.collectionName, id));
       
       if (!docSnap.exists()) {
         return null;
       }
 
-      const data = docSnap.data();
       return {
         id: docSnap.id,
-        title: data.title,
-        slug: data.slug,
-        images: data.images,
-        content: data.content,
-        excerpt: data.excerpt,
-        status: data.status,
-        category: data.category,
-        author: data.author,
-        updatedAt: data.updatedAt,
-      };
+        ...docSnap.data(),
+      } as Post;
     } catch (error) {
-      console.error('Error fetching post:', error);
-      return null;
+      console.error('Error getting post:', error);
+      throw error;
     }
   }
 
@@ -194,14 +178,16 @@ class MarketingService {
         id: docData.id,
         title: data.title,
         slug: data.slug,
-        images: data.images,
-        content: data.content,
         excerpt: data.excerpt,
-        status: data.status,
+        content: data.content,
         category: data.category,
-        author: data.author,
+        status: data.status,
+        authorId: data.authorId,
+        authorName: data.authorName,
+        authorImage: data.authorImage,
+        createdAt: data.createdAt,
         updatedAt: data.updatedAt,
-      };
+      } as Post;
     } catch (error) {
       console.error('Error fetching page content:', error);
       return null;
@@ -219,21 +205,10 @@ class MarketingService {
       );
 
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          title: data.title,
-          slug: data.slug,
-          images: data.images,
-          content: data.content,
-          excerpt: data.excerpt,
-          status: data.status,
-          category: data.category,
-          author: data.author,
-          updatedAt: data.updatedAt,
-        };
-      });
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Post[];
     } catch (error) {
       console.error('Error fetching latest news:', error);
       return [];
@@ -250,21 +225,10 @@ class MarketingService {
       );
 
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          title: data.title,
-          slug: data.slug,
-          images: data.images,
-          content: data.content,
-          excerpt: data.excerpt,
-          status: data.status,
-          category: data.category,
-          author: data.author,
-          updatedAt: data.updatedAt,
-        };
-      });
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Post[];
     } catch (error) {
       console.error(`Error fetching ${category} posts:`, error);
       return [];
@@ -289,21 +253,10 @@ class MarketingService {
       }
 
       const querySnapshot = await getDocs(q);
-      const posts = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          title: data.title,
-          slug: data.slug,
-          images: data.images,
-          content: data.content,
-          excerpt: data.excerpt,
-          status: data.status,
-          category: data.category,
-          author: data.author,
-          updatedAt: data.updatedAt,
-        };
-      });
+      const posts = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Post[];
 
       // Client-side search since Firestore doesn't support full-text search
       const searchTermLower = searchQuery.toLowerCase();

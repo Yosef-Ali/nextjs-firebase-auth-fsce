@@ -26,12 +26,14 @@ export interface Post {
   updatedAt: Timestamp;
 }
 
+type PostStatus = Post['status'] | 'all';
+
 const POSTS_PER_PAGE = 10;
 
 export const dashboardService = {
   // Posts
   async getPosts(
-    status?: Post['status'],
+    status?: PostStatus,
     category?: string,
     lastDoc?: DocumentSnapshot
   ) {
