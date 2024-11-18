@@ -1,0 +1,14 @@
+[install]
+# Use the exact versions specified in package.json
+exact = true
+
+[install.scopes]
+next = "https://registry.npmjs.org/"
+
+[test]
+# Enable coverage tracking
+coverage = true
+
+[debug]
+# Enable source maps
+sourcemap = true

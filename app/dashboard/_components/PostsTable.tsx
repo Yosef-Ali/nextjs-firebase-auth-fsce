@@ -20,7 +20,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, Plus } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { MoreHorizontal } from 'lucide-react';
 import { Post } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
 import { useAuth } from '@/app/hooks/useAuth';
@@ -30,49 +31,36 @@ interface PostsTableProps {
   initialPosts: Post[];
 }
 
-export function PostsTable({ initialPosts }: PostsTableProps) {
+function PostsTable({ initialPosts }: PostsTableProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    const loadPosts = async () => {
-      if (!user) return;
-      try {
-        const userPosts = await postsService.getUserPosts(user.uid);
-        setPosts(userPosts);
-      } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'Failed to load posts. Please try again.',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadPosts();
-  }, [user]);
+    console.log('PostsTable received initialPosts:', initialPosts);
+    if (Array.isArray(initialPosts)) {
+      setPosts(initialPosts);
+    }
+  }, [initialPosts]);
 
   const handleDelete = async (postId: string) => {
-    if (isDeleting) return;
+    if (!user || isDeleting) return;
 
     try {
       setIsDeleting(true);
       await postsService.deletePost(postId);
       setPosts(posts.filter(post => post.id !== postId));
       toast({
-        title: 'Post deleted',
-        description: 'The post has been deleted successfully.',
+        title: 'Success',
+        description: 'Post deleted successfully',
       });
-      router.refresh();
     } catch (error) {
+      console.error('Error deleting post:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete the post. Please try again.',
+        description: 'Failed to delete post',
         variant: 'destructive',
       });
     } finally {
@@ -80,88 +68,92 @@ export function PostsTable({ initialPosts }: PostsTableProps) {
     }
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold tracking-tight">Posts</h2>
-        <Button onClick={() => router.push('/dashboard/posts/new')}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Post
-        </Button>
-      </div>
+  if (!Array.isArray(posts)) {
+    return <div>Error loading posts</div>;
+  }
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Last Updated</TableHead>
-              <TableHead className="w-[70px]"></TableHead>
+  if (posts.length === 0) {
+    return <div>No posts found</div>;
+  }
+
+  return (
+    <div className="container mx-auto py-10">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[300px]">Title & Excerpt</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Author</TableHead>
+            <TableHead>Created</TableHead>
+            <TableHead>Updated</TableHead>
+            <TableHead className="text-right">Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {posts.map((post) => (
+            <TableRow key={post.id}>
+              <TableCell>
+                <div>
+                  <h3 className="text-lg font-semibold">{post.title}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {post.excerpt || post.content?.slice(0, 100)}...
+                  </p>
+                </div>
+              </TableCell>
+              <TableCell>
+                <Badge variant="secondary">{post.category}</Badge>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>
+                      {post.author?.name?.slice(0, 2).toUpperCase() || user?.email?.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm">{post.author?.name || user?.email}</span>
+                </div>
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {new Date(post.createdAt).toLocaleDateString()}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {new Date(post.updatedAt).toLocaleDateString()}
+              </TableCell>
+              <TableCell className="text-right">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      aria-label={`Actions for ${post.title}`}
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuItem
+                      onClick={() => router.push(`/dashboard/posts/${post.id}/edit`)}
+                    >
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => handleDelete(post.id)}
+                      disabled={isDeleting}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
-                  Loading posts...
-                </TableCell>
-              </TableRow>
-            ) : posts.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
-                  No posts found. Create your first post!
-                </TableCell>
-              </TableRow>
-            ) : (
-              posts.map((post) => (
-                <TableRow key={post.id}>
-                  <TableCell className="font-medium">{post.title}</TableCell>
-                  <TableCell>
-                    <Badge variant={post.published ? 'default' : 'secondary'}>
-                      {post.published ? 'Published' : 'Draft'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(post.updatedAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => router.push(`/dashboard/posts/${post.id}/edit`)}
-                        >
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => router.push(`/posts/${post.slug}`)}
-                        >
-                          View
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => handleDelete(post.id)}
-                          disabled={isDeleting}
-                        >
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }
+
+export default PostsTable;

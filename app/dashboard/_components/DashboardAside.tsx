@@ -14,6 +14,7 @@ import {
   BarChart,
   FileText,
   ChevronLeft,
+  Archive,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -52,6 +53,11 @@ const DashboardAside = () => {
       href: '/dashboard/pages',
       label: 'Pages',
       icon: FileText,
+    },
+    {
+      href: '/dashboard/resources',
+      label: 'Resources',
+      icon: Archive,
     },
     {
       href: '/dashboard/media',

@@ -1,0 +1,1066 @@
+EMBED MSPhotoEd.3 
+
+Forum on Sustainable Child Empowerment (FSCE)
+
+
+
+
+
+Strategic Plan (Final Draft)
+(2021-2025)
+
+
+
+
+
+
+April 2024
+
+
+ 
+
+
+
+
+
+
+CONTENTS
+ TOC \o "1-3" \h \z \u HYPERLINK \l "_Toc351301124" 1. INTRODUCTION PAGEREF _Toc351301124 \h 3
+ HYPERLINK \l "_Toc351301125" 1.1 Brief Country Overview PAGEREF _Toc351301125 \h 3
+ HYPERLINK \l "_Toc351301126" 1.2 Child Protection Context 5
+ 1.3 Situation of Youth in Ethiopia …………………………………………………………..10 
+ 1.4. The Current Humanitarian Need in Ethiopia ……………………………………………13
+ HYPERLINK \l "_Toc351301127" 1.5 Charities and Societies in Ethiopia .1 PAGEREF _Toc351301127 \h 6
+ HYPERLINK \l "_Toc351301128" 1.6 Profile of the FSCE 1 PAGEREF _Toc351301128 \h 6
+ HYPERLINK \l "_Toc351301129" 1.7 Major Achievements of FSCE 1 PAGEREF _Toc351301129 \h 7
+ HYPERLINK \l "_Toc351301130" 1.8 The Strategic Plan Development Process PAGEREF _Toc351301130 \h 20
+ HYPERLINK \l "_Toc351301137" 2. STAKEHOLDERS ANALYSIS 21
+ HYPERLINK \l "_Toc351301138" 3. SWOT ANALYSIS 23
+ HYPERLINK \l "_Toc351301139" 4. CRITICAL ISSUES 29
+ HYPERLINK \l "_Toc351301142" 5. PROPOSED VISION, MISSION, PROGRAMS AND STRATEGIES 31
+ HYPERLINK \l "_Toc351301143" 5.1 Vision 31
+ HYPERLINK \l "_Toc351301144" 5.2 Mission 31
+ HYPERLINK \l "_Toc351301145" 5.3 Core Programs 31
+ 5.4 Strategies and Approaches ……………………………………………………………. 35 
+ HYPERLINK \l "_Toc351301146" 6. THE STARATEGIC PLAN IMPLEMENTATION 36
+ HYPERLINK \l "_Toc351301147" 6.1 Implementation Process 36
+ HYPERLINK \l "_Toc351301149" 6.2 Work Plans 37
+ HYPERLINK \l "_Toc351301150" 6.3 Monitoring and Evaluation 37
+
+Annexes
+ HYPERLINK \l "_Toc351301151" Annex 1: SWOT matrix
+ HYPERLINK \l "_Toc351301152" Annex 2: Action Plan for Strategic Issues
+
+
+
+
+
+Acronyms
+ACRWC African Charter on the Rights and Welfare of the Child 
+ECCE Early Childhood Care and Education
+CBO Community Based Organization
+CPP Child Protection Policy
+CBR Community Based Rehabilitation
+CRC Convention on the Rights of the Child 
+CRDA Christian Relief and Development Association
+CSO Charities and Societies Organization
+EDHS Ethiopian Demograhic Health Survey
+GDP Gross Domestic Product
+GER Gross Enrollment Rate
+HDI Human Development Index
+HIV/AIDS Human Immuno Deficiency Virus/Acquired Immunodeficiency syndrome 
+IDP Internally Displaced People
+ILO International Labor Organization
+MDG Milinium Development Goal 
+MoFED Ministry of Finance and Economic Development
+MSCPS Multi-Stakeholder Child Protection System
+NGO Non-Government Organization
+NNGO National Non-Governmental Organization
+OVC Orphan and Vulnerable Children
+PwD People with Disabilities
+RH/FP Reproductive health/Family planning
+SDG Sustainable Development Goal
+SRH Sexual Reproductive Health
+SWOT Strength, Weakness, Opportunities and Threats
+TFR Total fertility rate
+TVET Technical and Vocational Education and Training
+UNDP United Nations Development Program
+UNICEF United Nations Children's Fund
+
+USAID United States Agency for International Deveopment
+
+INTRODUCTION
+Brief Country Overview
+Ethiopia is the second most populous country in Africa. The population is unevenly distributed owing to varying physical factors such as altitude and climate and human factors such as type of economic activities. Ethiopia's current population is about 115 million and is expected to surpass 200 million by the end of 2049. Ethiopia's population is growing about 2.7% annually with no projected peak year or period of decline. The birth rate in Ethiopia is 36 births per 1,000 people. The fertility rate is 4.1 births per woman. Religion plays a major role in Ethiopia's high birth rate, as well as the lack of contraceptives. The disproportionate population increase has hindered the economy's ability to grow and develop at a more rapid pace due to the increased need for more resources. Ethiopia remains one of the poorest countries in the world due to its rapid population upsurge. https://population.un.org/wpp, 2022/
+The country is located in one of the most conflict ridden, unstable, and environmentally degraded and food insecure most vulnerable part of the world where there is a big population displacement due to human-made and natural disasters. This situation has made the conditions of children and mothers particularly difficult in the countries of the horn and particularly that of Ethiopia in light of its huge population. 
+
+Ethiopia's economy which is largely dependent on exports of the primary sector, though showing growth is challenged by many factors including weak production base, low international prices for agricultural products, the world economic crisis, the sharp increase in negative balance of trade, high rates of inflation and unemployment and in particular youth unemployment. While the government has developed and is implementing economic policies and strategies to improve the economic situations, the challenges have persisted. The poverty situation in Ethiopia is grave. The country, being one of the poorest in the world, has children who are exposed to deprivations of basic economic needs. The social situations as expressed in indicators such as health, HIV/AIDS, access to clean water and education have direct impact on the life and wellbeing of children. Ethiopia has been one of the fastest growing economies in Africa, with growth averaging around 8% annually every year since 2008. Despite this, Ethiopia remains one of the world's poorest countries, ranked 174th out of 188 Countries in the Human Development Index, and 163rd out of 177 countries for Gross National Income per capita. Almost half of Ethiopia's population are children and 11,915,000 (15%) are under the age of five (DHS, 2016). Ethiopia's real gross domestic product growth slowed to 6.1% in 2019/20 due to the effects of COVID-19, with a per capita income of $850. 
+
+
+
+
+
+
+
+
+
+In 1990, 40% of the population lived below the World Bank poverty line, now estimated at 24% (2015 World Bank); since 1990, the total fertility rate (TFR) has declined from 7.2 to 4.6; the infant mortality rate has declined from 120 per 1,000 live births to 41; while access to education has increased in recent years, the overall the adult literacy rate has increased from below 25% to 49%. Only about 65.8 per cent of the rural population has access to potable water (within 1.5km) and about 80 per cent have no access to improved sanitation.
+ 
+The new Ethiopian 10 year perspective plan, 2021-2030 envisages translating the growth rates in the country into improved living conditions for the poor and a declining poverty headcount and intended to make Ethiopia African beacon of prosperity. The 10 year perspective plan has inclusive and comprehensive goals that include economic, social, administrative and institutional issues. Ethiopia, as per the 10 year plan, is working slash poverty by half and register a per capita GDP of 2200 US Dollars and position the country among middle income countries level doubling the current per capita GDP per capita. In 2030 unemployment is targeted to rich to less than nine percent and moreover, a lot of other goals are included in the 10 year perspective plan. It is intended to ensure that social development goals tough lives of our citizens in the sectors including health, education, among others pursuant to the sustainable development goals. In 2015, the United Nations General Assembly adopted it to build on the MDGs' achievements and complete what the MDGs did not achieve. The agenda comprises 17 Sustainable Development Goals (SDGs), 169 targets, and 232 indicators to address sustainable development's economic, social, and environmental dimensions. The Ethiopian 10 year perspective plan is, therefore, designed in lieu of meeting the global sustainable development goals. 
+
+In 1992, Ethiopia ratified the UN Convention on the Rights of the Child (CRC), and adopted the African Charter on the Rights and Welfare of the Child (ACRWC) in 2002. However, currently there is no comprehensive Children's Code in Ethiopian law. Legislation of particular relevance to children can be found throughout a number of Codes and Proclamations that include provision for laws affecting children. In 2010, the Government of Ethiopia published the 'National Policy Framework for Early Childhood Care and Education in Ethiopia' (ECCE Policy) and the National Children's Policy in April 2017. 
+
+To this regard, FSCE with a mission of protecting and empowering children and youth will continue working to meet to SDG-1 (End Poverty), SDG-2 (End Hunger), SDG-3 (Ensure Healthy Life), SDG-4 (Quality Education), SDG-5 (Gender Equality), SDG-8 and SDG-16. This clearly demonstrates FSCE's relevance and potential for impactful contributions. SDG-1 focusing on poverty reduction in general and child/household poverty in particular that has been clearly indicated in the Ethiopian Child Policy. The works of strengthening families economically and socially have direct impact on child protection results. The role of social service workers and family outreach is a crucial connection between social protection and child protection. 
+1.2 Child Protection Context
+Children are the future generation who will be socialized and grown in a good healthy condition because they are the future adults and development in overall the world. If the children have not necessarily been socialized, they shall be exposing different faces for their physical, mental, psychological, moral, and community development at large. Now there are 1.9 billion children in the world which is 27% of the world population (UN Population Division, 2021).
+Today, child problems like child labor, trafficking, early marriage, female genital mutilation, sexual abuse, rape and so forth are viewed as a grievous issue throughout the world. Particularly in Africa, Asia and Latin America, the problem is very serious. It is a critical human rights problem because it denies the child's time to take part in activities that are useful for the 'normal' growth of the child like time to go to school and time to play (ILO, 2016). Child labor is one of the most prevalent causes and forms of child exploitation and abuse. Its negative effect is observed in the physical, intellectual and social development of the working children (Weston, 2005; Myers, 1991). Currently, millions of children toil in non-schooling type of work, early marriage, and trafficking through deception mostly under hardship and hazardous conditions which are detrimental to their health and wellbeing (UNICEF, 2015). The number of children in child labour has risen to 160 million worldwide – an increase of 8.4 million children in the last four years – with millions more at risk due to the impacts of COVID-19, 73 million of whom are in hazardous work and seventy percent occurs in agriculture and is usually related to poverty and the parents' difficulties finding adequate work, according to a new report by the International Labour Organization (ILO) and UNICEF, 10 June 2021, New York/Geneva. The report warns that globally, 9 million additional children are at risk of being pushed into child labour by the end of 2022 as a result of the COVID-19 pandemic. 
+The global geo-political prominence of migration has greatly increased in recent times, as the world sees larger numbers of migrants than at any other time in history. The number of international migrants reached 244 million in 2015, a 41 percent increase on the 2000 figure, whilst the number of international migrants from Africa reached 34 million, with nearly half of them being women. An estimated 50 million children are on the move in the world today. Millions more have been deeply affected by migration. The need for solid evidence to develop better policies on child migration has never been greater. With the adoption of the Sustainable Development Goals (SDGs) in 2015, and explicit references to migration in 6 of its 17 goals, migration was mainstreamed into global development policy. The 2030 Agenda recognizes migration as a key dimension of sustainable development, including references to migration and decent work, protection from forced labor and the need of promoting safe migration, the urgency of reducing cost of remittances and the imperative of collecting disaggregated data on migration. (Migration Policy Framework for Africa and Plan of Action, 2018 – 2030). 
+48.6% of Ethiopia people are children who are below 15 years old. Among 48.6%, nearly 18% are under the age of 5 years, and these have encountered to the challenges of child trafficking, child labor, sexual abuse, orphan and vulnerable and other related problems. Despite the fact that the Ethiopia government has launched a lot of policies, such as child protection policy for tackling such problems, these have still been occurring and expanding in different districts in a country without the discrimination of ethnicity, language, and nations and nationalities. More specifically, in fact getting available data on human trafficking in general and child trafficking in particular is difficult owing to its illegal, hidden, the extent and magnitude of trafficking activities and problems, more than 869, 567 children who are at the age between 10 to 14 were illegally migrating from Ethiopia. The agriculture sector in Ethiopia accounts for 70 per cent of children in child labour (112 million) followed by 20 per cent in services (31.4 million) and 10 per cent in industry (16.5 million). Nearly 28 per cent of children aged 5 to 11 years and 35 per cent of children aged 12 to 14 years in child labour are out of school. The prevalence of child labour in rural areas (14 per cent) is close to three times higher than in urban areas (5 per cent), according to a new report by the International Labour Organization (ILO) and UNICEF, 10 June 2021, New York/Geneva. The average age of children that are forced to enter the sex trade industry is between 12 to 14 years, these children in prostitution are exploited 10 to 20 times per night, seven days in row. This problem came from their parents, up to 20, 000 children, some 10 years old are sold each year by their parents by less than $ 1.20 per children (HRC, 2013:13). The most comprehensive evidence comes from a publication of the African Child Policy Forum (ACPF), cited in Getnet and Desta, 2008 on the state of violence against girls including sexual violence in Ethiopia issued that 70% in Ethiopian girls are sexually abused and harassed and 30% girls were raped at least one time in their life before reaching the age of eighteen. Though a lot of local and international organizations have put their estimation, recent approximations claimed that there are over 5 million orphans including 1.5 million AIDS orphans in Ethiopia. This estimation shown that the children are those who were 18 years old were being influenced to different exposures: loss of mother, father or both, healthy orphan and so forth (Abebe and Asase, 2007; Gross and Connors, 2007). After AIDS orphans, "The remaining 70% of orphans are often classified as 'famine orphans,' 'war orphans,' 'malaria orphans,' and 'social orphans,' i.e. children who have been abandoned mainly due to poverty" (Abebe and Asase, 2007). In Ethiopia, it is estimated that 600,000 children are taking part in street life. As many as 500,000 children are at high risk of becoming involved in street life, with a further one million vulnerable or at risk of being on the street (Sexual and physical abuse and its determinants among street children in Addis Ababa, Ethiopia 2016). 
+
+The government of Ethiopia is committed to eliminate practice of FGM by strategic and programmatic measures. These include putting in place a national Harmful Traditional Practices (HTPs) strategy founded on the three-pillar approach: prevention, provision, and protection. Additionally, Ethiopia has criminalized the practice and now penalizes practitioners in the national Criminal Code, revised in 2005. Moreover, the government of Ethiopia refreshed its commitment to end FGM and child marriage by 2025 at the London Global Girls' Summit held in July 2014. In addition, the community-based and faith-based organizations play a key role in mobilizing communities against HTPs, including FGM. due to intensive awareness raising intervention on FGM, 93% of women (97% in urban and 91% in rural) aged 15-49 and 94% of men age 15-49 have heard about FGM. Knowledge of FGM is higher in Afar (100%), Somali (100%), Harari (99%), Addis Ababa (99%), and Dire Dawa (97%), and lower in Gambela (71%). Women's knowledge of FGM increases steadily with increasing education, from 90% among women with no education to 100% among those with more than secondary education. 
+The prevalence of FGM/C in Ethiopia has decreased over the past 16 years, dropping from 80% in the 2000 EDHS, to 74% in the 2005 EDHS, and to 65% in the 2016 EDHS. Likewise the prevalence of FGM/C in Dire Dawa has decreased, dropping from 92% in the 2000 EDHS, to 95% in the 2005 EDHS, and to 75% in the 2016 EDHS. 
+
+Elimination of child marriage by 2030 is targeted in Sustainable Development Goal (SDG5.3), and child marriage is illegal in Ethiopia as stated in the revised criminal and family laws of Ethiopia (2005) which set the minimum age of marriage for women as 18 years. Despite such legal provisions, child marriage remains high in Ethiopia. According to UNICEF (2018), the prevalence of child marriage in Ethiopia is 40% and varies across regions. Fewer than 10 percent of young women were married in childhood in Addis Ababa compared to 50 percent or more in Afar, Benishangul Gumuz, and Somali regions. Although the legal age of marriage in Ethiopia is 18 years, 14.1% of girls married by age 15, and 40.3% by age 18. In Ethiopia, most teenage pregnancies occur within marriage. Nationally, 13% of the married teenager's age group 15-19 have already begun childbearing. The pastoral settings of Afar and Somali have the highest teenage birth estimated at 23% and 19%, respectively while Addis Ababa is the lowest with only 3% of teens giving birth to a child before age 18 years (EDHS 2016).
+
+The threat of gender-based violence is pervasive and contributes to the end of childhood for millions of children around the world, as shown by staggering global trends: 15 million girls are married before the age of 18 each year, 30 million girls are at risk of female genital mutilation in the next decade and 1 in 3 girls and women live in countries where marital rape is not an explicit crime (Gender _Based Violence, A Global Threat, © 2021, Save the Children). Based on the analysis of the United Nations, it is estimated that about eight million people in Ethiopia live with disabilities. That is about 10 percent of the total number of the Ethiopian population. An estimated 95 percent of PWDs in Ethiopia live in poverty, which is one of the manifestations of unemployment. Although, pre-primary gross enrolment has increased in Ethiopia to 46 per cent in 2016 from 9 per cent in 2010, access is limited to children in urban and wealthier regions. Access to education has surged, especially at the primary level, where more than 85 per cent of the relevant age group is now in school (net enrolment rate) where GER of 96 per cent. At the secondary level, the gross enrolment rate (GER) for grades 9–10 has more than doubled since 2000. 
+The Ethiopia government has affirmed a lot of international convention and agreement for the protection of children, such as the minimum Age Convention No. 138, the African Charter on the Rights and Welfare of Children, and the Worst Forms of Child Labor (UN, 2012), and ratification of UNCRC in 1991. Since the ratification of UNCRC, the government has carried out numerous activities geared towards ensuring the protection and promotion of the rights and welfare of children. The Convention was domesticated through a national legislation (Proclamation No 10/1992) and then translated into 11 nationality languages for dissemination. Despite the fact that the government of Ethiopia has formulated Child Protection Policy for protecting the trauma of variety conditions within children and different formal and informal sectors have also given their contributions for sustaining their natural human rights and the constitutional democratic rights in Ethiopia based on the country's child protection policy, child trafficking, child labor, and child sexual abuse are the chronicle child problems in this country. Over, 216,000 children have been trafficked each your abroad for the purposes of exploitation. (Global Journal of Human-Social Science: Sociology & Culture, Volume 18 Issue 3 Version 1.0 Year 2018).
+Recently, FSCE has conducted child right situation assessment in its three operational areas where child vulnerability to abuse, violence and exploitation is a serious challenge, namely; Diredawa, Wolayita and Addis Ababa. The rapid increase of vulnerable children in these cities is the reflection of the country and the cities socioeconomic performance. Hence, the child right situation with respect enjoyment of rights, their knowledge and attitude in relation to claiming these rights; and violations in achievement of these rights and the role of duty bearers in upholding the child rights and children capacity to fulfil their responsibilities were assessed. The assessment encompasses the various kinds of child problems that includes; children victims of trafficking and unsafe migration, children without parental care, commercial sexually exploited children, children in street situation, children with disability, children in conflict with the law and vulnerable youth with a view to explore effective mechanism to cope up and/or minimize the vulnerability of children. Though, the rapid assessment has had its own limitation in terms of sample size, area coverage and time, it clearly showed the rights and protection situation of vulnerable children in the study areas.
+ 
+According to the assessment findings, the number of children exposed to sexual exploitation in Diredawa town is growing due to increased child trafficking, migration, poverty, and peer pressure. For instance, vulnerable children to sexual exploitations are obviously prone to unhealthy situations like violence, drug addiction, sexual abuse etc. Contrary to this, however, there are only two rehabilitation centers; one run by government (BoWSA) and one by FSCE for the rehabilitation of children victims of sexual abuse Moreover, in the assessment, the stakeholders has confirmed and witnessed that FSCE greatly improved the awareness of community through community conversation, mass media; and has also provided rehabilitation including legal support for the victims. As a result, public awareness and reporting abuse incidents have shown improvement. The assessment findings in Dire Dawa town has showed that; bringing girls from rural parts of the country with a promise to their families to send to school and educate them has become a common practice by households and brokers. However, except doing the domestic work, the children were not sent to school. Some of these children on domestic work were engaged in hazardous tasks working long hours starting at 5 AM before down to 10 PM late at night. The children have experienced the difficult and long hours of domestic work accompanied by domestic violence where girls may end up in domestic servitude or prostitution. According to the assessment, in the last 5 years, FSCE has rescued 307(Female = 139) children on the move from abuse and risks that is, rehabilitated them through temporary shelter and then reunited with their family or placed them in a satisfactory alternative care placement in collaboration with stakeholders. 
+The Diredawa town government and the participants of the assessment confirmed a decrease of Female Genital Mutilation (FGM) since incident reporting is decreasing in the town, however, information obtained from police and women and social affairs during focus group discussion revealed FGM is becoming a hidden agenda and being practiced under cover during celebration of traditional and religious events and festivities. The assessment team confirmed that FSCE has done a remarkable achievement in caring and treating children in conflict with the law since the establishment of an area program office in Diredawa in 1996 using its four Multi-purpose Community Based Child Friendly Centers, located in four Kebeles. These centers has served us an alternative community based diversion mechanism of correcting children with minor offenses and behavioural problems, and thousands of children have been referred to FSCE Multi-purpose Community Based Child Centers. However, the participants reflected their fear that if FSCE terminate its project intervention of diverting children in conflict with the law, the current initiative and performance will not be adequately taken over by the government and there is no similar CSO undertaking diversion in the area. Thus, the assessment indicated the need of FSCE to embolden the work and avail alternative rehabilitation services for children with deviant behaviour. Moreover, the assessment has revealed that, in the last three years, FSCE Dire Dawa Area Program Office supported 159(Female 46) children living on street with rehabilitation through basic needs and psychosocial supports and reintegrated with their parents with economic strengthening and started to live a healthy life. It has been found that, the major gaps to support children in street situations are lack of resource by duty bearers and CSOs to alleviate the problem of the children since it requires intensive support, moreover, the assessment has identified lack of giving due attention to the street children situation due to having negative societal images that requires capacity building works. The recent study conducted by Wolayita Zone Women and Children Affairs has showed that about 1136 children living in street of Sodo town. The assessment indicated that certain proportion of these street children were the victims of child trafficking. The study has showed that the number of street children is increasing from time to time at substantial rate (WZWCAO, 2014). According to the EDHS 2016, Dire Dawa has a high rate of physical violence against girls/women (aged 15-49). The proportion of girls/women (aged 15-49) who have ever experienced physical violence since age 15 is 20%. The percentage of girls/women in the region who have ever experienced sexual violence is 7%.
+1.3 Situation of Youth in Ethiopia 
+The economic performance of a country is mainly depending on the labour of youth population. Energetic, courageous and qualified youth can make changes to the social and economic development if they are well utilized and managed. Investing in youth now will lay the groundwork for Ethiopia's future. Ethiopia has experienced unprecedented population growth, with 69.5% of its population being under 29 years of age. Youths between the ages of 15 and 29 years constitute approximately 30% of the population, and this is expected to grow from 35 to 40 million within the next decade. The ability to engage the youth in productive activities is paramount for the social and economic improvement of the country. However, the youth in Ethiopia face enormous challenges and their potential remains untapped. A high rate of rural to urban migration, rapid population growth, unemployment, and inadequate civic engagement, which further predispose them to be actors and victims of major problems such as crime, violence, dependence on family, low self-esteem, poor social adaptation, addiction, and several other social problems, have been driving the youth in a vicious cycle of poverty (Kefeta Formative Assessment; The state of youth and youth-serving organizations in major cities of Ethiopia, May 2022 - Addis Ababa, Ethiopia, , Page 6).
+Unemployment in general and youth unemployment in particular is a major policy challenge for the Government of Ethiopia. The youth unemployment is found to be higher than the general unemployment. Using the Ethiopian official definition of youth with age group 15-29, the national "reduced definition" based youth unemployment in 2021 was found to be 14%, 6 percentage points above the general unemployment rate. In the urban areas, the youth unemployment rate is very high at 23.1% in 2021. This, in turn is very high for females at 29% compared to that of male which is 16%. The rural youth unemployment at 12% is relatively better, however, this rural rate for female and male also being 16.4% and 7.4%, respectively ( The Challenge of Unemployment and Youth Unemployment amidst Fast Economic Growth in Ethiopia, Alemayehu Geda, Department of Economics, Addis Ababa University, August 2022). From the working age population in Ethiopia aged 10yrs and above (69,964,473 people); 41,637,071 employed whereas 28, 327, 402 not engaged in economic activities of which 3, 608,688 are unemployed and the rest 24, 718,714 not seeking and not available for work (CSA & IOM, Labour Force and Migration Survey Key Findings, Addis Ababa Ethipia, 2021).
+
+One reason for the high youth unemployment rate is low literacy (68 percent). Ethiopia's secondary school gross enrollment rate is 39.8 percent—far too inadequate for a country with Ethiopia's natural resources, economic potential and global ambition. Technical and vocational education and training reached 352,000 students in 2015 and female enrolment continues to be higher than male enrolment (USAID.GOV/Ethiopia, Developing Ethiopia'S Youth. 2017). The government estimates that about two million individuals enter Ethiopian labor force every year (Ethiopian Job Creation Commission, 2019). 
+
+In Ethiopia, there is a better progress in access to education and training in primary, secondary and TVET education and training throughout the country as compared to the previous time. The access of primary education (NER for grade 1-8) in 2019 was 94.7% and GER was 100%, which is relatively considered as better achievement. The access of secondary education (GER for grade 9-12 is 32%, GER for grade 9-10 is 48.5% (female = 45.6%, Male = 51.3%) and grade 11-12 is 14.8% (female = 13.2%, male = 16.4%) in 2019) shows an increment but not sufficient. This indicates that transition from primary to secondary education is very low. The country has also invested heavily in TVET and the enrolment has increased from 5,264 in 1999 to 387,792 in 2018. University enrolment has increased from 10,000 in 1990 to 825,003 in 2018, but still low as compared to Sub-Saharan African countries (FDRE, Policy Studies Institute, Industrial Development Policy Studies Center, Addis Ababa, Ethiopia, 2021). 
+
+In Ethiopia, 17.1 percent of the population (not including Tigray region) are migrants. Females tend to migrate more frequently than males, given that 15.1 percent of males are migrants compared to 19.1 percent of females. The remaining 84,9 percent of males and 81.9 percent of females are non migrants. Two-thirds of the internal migrants were aged 15-39. This shows that most migrants are in the productive age group. (CSA & IOM, Labour Force and Migration Survey Key Findings, Addis Ababa Ethipia, 2021).
+
+Cognizant of paramount importance of youth for socioeconomic and political transformation of country, government realigned its priorities and strategic direction to meet the education, employment, health, and civic engagement needs of the youth and fully harvest their potential (MoE, Education Statistics Annual (2019-2020), Ministry of Education report, 2020). This fact has been witnessed by attempt made to develop and implement favorable and youth-focused policies and programs that foster robust national youth development path. Existence of youth dedicated ministry, various policies and laws, national strategies, frameworks, guidelines, and documents to strategically guide youth development efforts in the country are indicators of some notable state commitments. Flourishing TVET colleges, industry parks and other programs are also opportunities availed to enhance knowledge and also created job opportunities for thousands of youth throughout the country. However, only 13.3% youth join tertiary education while vast majority who completed primary and secondary school levels end up without adequate sellable knowledge and skill, and many college graduates don't meet market demand (MOE, 2020, CSA, 2020, DHS, 2016). The skill mismatch constrained made public and private sector not adequately absorb the growing workforce or enable youth to run their own businesses. 
+Consequently, Ethiopian youth face tremendous hurdles in their search for and secure job opportunities causing over quarter of them unemployed (31.7% female and 18.8% male) in 2020 (CSA, 2020). In addition to these commonly shared problems of youth, gender based discrimination inhibit young women and girls from participating in the labor force and business that kept them marginalized in almost all spheres of life. The recent slack in operation of industries due to Covid-19 and inflation and hard currency related obstacles cause job loss for thousands of already underpaid labor force particularly young people. The outbreak of Covid-19 overshadowed the whole economic system but gravely affected service and industry sector of Ethiopia (Alemayehu, 2021). The situation posed national threat to its over 53 million labor force and forced government to sustain its positive economic growth and advance poverty alleviation through job creation (World Bank, 2021). The pandemic has had a significant impact on unemployment rate metrics in the country and reduced household incomes, nearly 15% of those who attended post-secondary education are unemployed and problem posed socioeconomic crisis and risk of political unrest (Tamrat, 2020). Besides, the pandemic induced violence and abuses expose young girls for forced marriage, domestic violence, abuse and exploitation beyond economic challenges. The problem worsens due to lack of access to health care services and psychosocial services for the traumatized youth especially for girls. The attempt of UN-women to rehabilitate survivors of gender based violence and domestic abuse signifies worsening situation of the problem after the pandemic.An assessment made by Care Ethiopia (2021) on impact of Covid-19 on Women and Girls in Ethiopia illustrated that among 372 who participated in the research, 64% reported decreased income, 37% lost their job and job loss was as high as 71% among married women. In addition, 55% of them lost their access to health services though over 50% witnessed increased experience of GBV at workplace and residential area..
+To respond to the situation of youth, FSCE intends to use its widely applauded positive youth development mechanisms to improve situation of youth in a sustainable manner. This will be realized with active engagement of key stakeholders, youth and their familiesthereby enhancing the psychological wellbeing and livlihood of youth and awaring the community, local governmetn and community structures at large.. 
+
+1.4. The Current Humanitarian Need in Ethiopia
+The primary aim of humanitarianism is to protect those in immediate risk and the prevention of unnecessary suffering (Barnett, 2009). Before the 1990s, humanitarian agencies were few with few sustained interactions; and they had less attention to maintaining the principles of action, codes of conduct, and professional standards that define the boundaries in the field. And they operated on a few standard procedures, and little scientific knowledge (Barnett, 2005).
+
+The humanitarian needs in Ethiopia are immense, and they continue to grow year after year. Climatic shocks such as drought and floods are recurring events, but the frequency and duration of droughts is increasing; further intensifying the needs of affected people and causing greater devastation to lives and livelihoods. The situation is further exacerbated by fragile social service systems that are unable to respond to the needs of the population. These systems and institutions are in turn heavily affected by humanitarian shocks, which further limit their ability to provide quality services. Conflict and insecurity add another layer of instability, increasing risks and needs as well as creating barriers for humanitarian and development actors alike to access affected people. Additionally, the majorities of Ethiopia's populations live in rural areas and depend on agriculture for their livelihoods. This leaves them highly vulnerable during crises, and millions of households in rural parts of the country are chronically food insecure and dependent on emergency food assistance. Emergencies and shocks require urgent humanitarian assistance and usually reverse progress towards sustainable development and contribute to underdevelopment, while underdevelopment in turn exacerbates humanitarian emergencies and can even trigger them, for example in the case of conflict. This vicious cycle highlights the importance for humanitarian, development and peace actors to work together as triple nexus to effectively meet needs, reduce vulnerabilities and achieve lasting improvements to people's lives.
+ 
+Some of the major recent historical shocks that have driven waves of displacement in Ethiopia include territorial disputes along the Oromia-Somali border, which escalated in 2017 displacing an estimated 857,000 people. In 2018 conflict erupted in West Guji between Guji Oromo and Gedeo tribes over land and resources, displacing an estimated 748,499 people by August of that year. In Benishangul Gumuz region, numerous attacks by unidentified armed groups (UAGs) in September 2020 drove displacement into Awi zone of Amhara region, with displacement peaking in January 2021 at 76,000. In November 2020 the Northern Ethiopia conflict between Tigray Armed Forces and the Federal Government Military Forces broke out, resulting in mass displacement, death and wealth destructions and eventually coming to an end in November 2022 with the signing of the Cessation of Hostilities Agreement. In April 2021, conflict erupted in Amhara's North Shewa zone, leading to the displacement of an estimated 310,000 people at its peak. Conflict has continued or escalated in other parts of the country, most notably in Oromia, impeding humanitarian access and driving high needs and displacement within the region and to neighbouring Amhara region. The ongoing conflict between Fano Militants and the Federal Military Forces has also erupted in Amhara Region since April 2023. The 2023 Ethiopia Humanitarian Response Plan (HRP) requires US$3.99 billion to target more than 20 million people across the country. This includes an estimated 4.6 million internally displaced people (IDPs). 
+
+Ethiopia is highly vulnerable to climatic shocks and is one of the most drought-prone countries in the world, and the severe drought that began in late 2020 has continued into 2023 with the passing of five poor to failed rainy seasons. Under this HRP, an estimated 13 million people are targeted for humanitarian response in drought affected areas. Women and children are disproportionately affected during times of crisis and make up more than two-thirds of the people in need in 2023 in Ethiopia. They face greater threats to their survival and are particularly vulnerable to protection risks, including violence, neglect, exploitation, and abuse. Displacement and the destruction of educational facilities have deprived millions of children of their right to education. In the 2023 HRP released by Ethiopian government, particular attention is given to build the capacity of local and national NGOs, and enabling their meaningful engagement in humanitarian response. Similarly in 2024, twenty million people require humanitarian assistance, including 15.4 million children and women and nearly 4.4 million displaced people, 1.8 million children with disabilities and 117,000 new refugees. (UNICEF's Humanitarian Action for Children 2024 – Ethiopia, December 2023). 
+
+Thus, FSCE operating in this fragile contexts and situations needs context specific strategic plan that responds to the needs of the community. For efficient and effective utilization of this, FSCE needs to materialize 'localization', an issue resurfaced in the humanitarian sector globally since 2015 and has been recurring intermittently, though not a new term in the sector. Localization is the recognition of the need to shift the dial to invest more in local capacity, reduce dependence on international organizations and promote and facilitate increased community engagement and accountability in the design and implementation of humanitarian programs (British Red Cross, 2019). While combating the financial gap in 2015, the humanitarian sectors' move towards localization was more or less a choice, but with the global pandemic, and its impact on the sector's operations, the sector was forced to innovate towards localization (ICVA, 2020) as a tool for pursuing the 2030 Agenda. Considering the financing gap, it made sense to opt for localization because it is cost-effective and local actors bring the comparative advantage of a better understanding of context (IFRC, 2018). On the other hand, considering the COVID-19 global pandemic, it was the only option because the equalizing effect of the pandemic meant everyone was dealing with a similar emergency back at home. The infection prevention control measures of partial to strict global travel restrictions and lockdown for about four to six months in 2020 (depending on where one lived) further negated any considerations to do otherwise (Meer et al., 2020). Seven different interpretation of the process of localization: providing more direct funding to existing national and local actors, empowering affected people as human actors themselves, increase decision making power at operational levels, better linking international action to national and local realities, investing in partner capacities, opening space for participation in coordination mechanisms and reducing administrative barriers to accessing international fund (Localization examined: An ICVA Briefing paper, 2018). 
+
+Although there are rich experiences of engagements of all parties in humanitarian operations during crises, since recent time, it has become noted that localizing humanitarian responses during emergencies has appeared to be an effective approach that major donors and international organizations have tended to accept. The national and particularly international humanitarian debates are shifting to the localization of aid. These debates are based on the fact that local actors are the first and main responders after a disaster strikes: they know the context and speak the language; they are there, and will stay there long after international actors have left. A growing body of evidence demonstrates that partnerships with national and local organisations enhance the relevance, appropriateness, accountability and connectedness of humanitarian responses, and ensure better linking up of relief, rehabilitation and development. The meaningful involvement of local/national NGOs ensures humanitarian response effectiveness and builds local resilience (The Organization for Economic Cooperation and Development, 2017). It is realized that there are global movements towards enabling local actors and local humanitarian responders to engage in disaster risk reduction and management. This is aiming for a more balanced humanitarian system, where the role of local and national humanitarian actors is encouraged and supported by international humanitarian agencies, donors and INGOs.
+
+In Ethiopia, out of 2,000 NNGOs registered with the Agency for Civil Society Organizations (ACSO) more than 40 conduct humanitarian operations (CCRDA, 2018). The study indicates that many of these NNGOs operate in response to drought, floods, and conflict in different sectors assisting communities identified by the national response plan in prioritized geographic locations. Despite the commitments of international humanitarian communities to capacitate local actors, engagement of these organizations in humanitarian interventions also remains minimal in Ethiopia. 
+Children and women throughout Ethiopia remain at high risk for protection concerns and other harms stemming from armed conflict and violence, climate shocks and stressors, multiple disease outbreaks, new refugee influxes, large-scale population displacements that continue to be a cause for a complex and protracted humanitarian crisis in Ethiopia. People's difficulties are compounded by humanitarian access constraints, the suspension of food aid and significant new refugee influxes. Of the total people requiring humanitarian assistance, currently 15.4 million are children and women, 10.5 million Children in need of education support and 5.7 million children in need of protection services ( HYPERLINK "https://www.unicef.org/appeals/ethiopia/situation-reports" https://www.unicef.org/appeals/ethiopia/situation-reports,2024).The increasing number of children requiring humanitarian support living in war and drought affected areas causes displacement of children from their localities; this will in turn increase their vulnerability to various forms of abuse and exploitation. Thus, emergency support for children is very critical in preventing child abuses and exploitation and ensuring better protection for children which is one of the major focus areas of FSCE's Child protection Sub-Program. This gives quiet a good rational to operate in child protection in emergency situation nexus with youth empowerment and advocacy works in order to respond to humanitarian crises in Ethiopia. 
+All sectors of humanitarian response are critical to providing an adequate and holistic response for children who have survived different types of violence, exploitation, abuse and neglect. Following the immediate humanitarian response all humanitarian sectors have an important contribution to make to the effective rehabilitation and reintegration of child survivors. Mainstreaming child protection or ensuring that child protection considerations inform all aspects of humanitarian action helps to maximize the child protection impacts of the work that all humanitarians do, (Plan International, Child Protection mainstreaming briefing paper for all sectors, September 26, 2023). Mainstreaming child protection is an essential part of compliance with the 'do no harm' principle that applies to all humanitarian action. Going beyond mainstreaming, integrated programming allows for actions between two or more sectors to work together towards a common programme objective, based on an assessment of needs. Where integrated child protection programming is not possible, child protection mainstreaming is essential. 
+1.5 Charities and Societies in Ethiopia
+Ethiopia is a country where civil society organizations, especially NGOs in the modern sense of the concept emerged recently. While traditional community institutions have been in existence since long ago, several local and international NGOs appeared in the 1980s. The number of local NGOs showed a rapid increase in the 1990s and early 2000. In Ethiopia, the initiative towards enhancing CSO accountability commenced with the drafting of the NGO Code of Conduct under the auspices of CRDA in 1999. It can be recalled that the drafting of the NGO Code of Conduct in the second half of the 1990s' was shaped by the situation where the gradual moves of the sector from the predominantly humanitarian work to that of development activities was challenged by the absence of proper law facilitating and regulating such NGO participation in development. In January 2009, the government enacted a new legislation to register and regulate Charities and Societies in the country (Proclamation No. 621/2009). The proclamation is the first of its kind in specifically dealing with the issues of CSOs and NGOs. The law restricted the areas of CSO engagement i.e. Ethiopian resident Charities or Societies and Foreign Charities were limited to playing the role of service–providers and not allowed to operate Human Rights based operations, advocacy, conflict resolution issues etc that is left for Ethiopian Charities or associations to operate which are obliged to mobilize 90% of the fund locally, however, Ethiopian charities are restricted in the funding they can receive from overseas organizations. (Federal Negarit Gazette 2009:4530). 
+Due to the political "reform" in Ethiopia in 2018, the "reformed" government in light of keeping the promise to the people to improve the Shrinking Civic Space repealed the first very much contested CSP and enacted a new CSP number 1113/2019 on March 12, 2019. Following the issuance of new Civil Society Organizations (CSOs), proclamation no 1113/2019, FSCE has re-registered as Forum on Sustainable Child Empowerment with the prior registration number 0064. Amendment made on CSOs legislation has given greater space and freedom for civil societies to work on right & advocacy issues and own income generation opportunities. In general, it is believed that the current encouraging improvement in political and socio-cultural environment of the country will continue and FSCE will strategically plan to exploit the new working space created for CSOs by the government and be successful in curbing the problems of children. 
+1.6 Profile of FSCE
+Forum on Sustainable Child Empowerment (FSCE) was established in 1989 by very few dedicated Ethiopians with the aim of promoting the cause of disadvantaged urban children. FSCE is a local, non-governmental, non-profit child centered organization. Today, the Organization has developed into one of the largest indigenous NGOs in the country. FSCE has over 34 years of practical experiences and exemplary achievements in areas of child right, advocacy, child protection,youth empowerment, research, networking and child resource development impacting the life of vulnerable children and their families. FSCE remained vibrant in the last three decades due to its culture of consistent revision and formulation of relevant development programs, strategies and systems that could fit in the prevailing social, political and economic dynamics of the country. Peculiar achievements of FSCE includes; initiation, support and establishment of a permanent child protection structures and system in government offices such as) Child Protection Unit (CPU) in 1996 in police commission, Child Courts (benches) in justice offices; Community Based Multi-Purpose Child Protection (Friendly) centers in the communities. Moreover, FSCE in the absence of a national child policy in the country, in 2007 felt the inevitability of developing institutional child protection policy and developed its own "Child Protection Policy". 
+FSCE shifted from issue based project approach to comprehensive program approach, increased the level and diversity of stakeholder engagement through the establishment and enhancement of Community Based Multi-Stakeholder Child Protection Structures in all its operating areas, and improved its program management capacity through the operationalization of result based management in planning and measuring of outcomes. FSCE, being a pioneering NGO, has built good reputations through promoting the rights of children and the provision of quality services for disadvantaged children in general and marginalized urban children in particular. FSCE has registered various notable achievements in partnership with donors, beneficiary communities, community based organizations and respective government sector offices through the establishment and strengthening of community based multi-stakeholder child protection structure in all the intervention areas through a wide range of interventions planned and implemented under its child protection program. 
+
+The organization also has interventions that aimed at empowering youth to own, lead and advance their own health, social, economic and civic development and amplify their engagement and role on regional and national development and peace building platforms.
+The main organs of FSCE are the General Assembly, the Executive Board of Management, and the Secretariat. The General assembly is the supreme organ of authority of FSCE. The Executive Board is the second highest governing body of FSCE. The Secretariat is the organ of FSCE that is responsible for the development and implementation of the operational activities of the Forum. It consists of the Executive Director, who is the principal executive officer and legal representative of FSCE, and the staff. Since its establishment in 1989, FSCE went through five strategic plan periods and is now developing the six strategic plans 2021-2025. Currently, FSCE operates child protection, youth empowerment and advocacy programs. All of FSCE's program activities and many initiatives take place in SNNPR specifically in Wolayita Sodo and Gamo Zones, Addis Ababa, Dire Dawa, Hareri,Somalia (Jijiga), Amhara specifically in South Wollo (Dessie), South Gondor and Bahir Dar) running nine projects in eight program offices. FSCE currently manages more than 130 staff and with annual budget of more than 70 million and significant amount of and material resources. 
+1.7 Major Achievements of FSCE
+1.7.1 Overall Achievement
+FSCE has over 34 years of practical experiences and exemplary achievements in areas of child right, advocacy, child protection, research, networking and child resource development impacting the life of vulnerable children and their families. FSCE remained vibrant in the last three decades due to its culture of consistent revision and formulation of relevant child right and protection programs, strategies and systems that could fit in the prevailing social, political and economic dynamics of the country. Peculiar achievements of FSCE includes; initiation, support and establishment of a permanent child protection structures and system in government offices such as Child Protection Unit (CPU) in 1996 in police commission, Child Courts (benches) in justice offices; Community Based Multi-Purpose Child Protection (Child Friendly) centers in the communities. Moreover, FSCE in the absence of a national child policy in the country, in 2007 felt the inevitability of developing institutional child protection policy and drafted its own "Child Protection Policy". FSCE shifted from issue based project approach to comprehensive program approach, increased the level and diversity of stakeholder engagement through the establishment and enhancement of Community Based Multi-Stakeholder Child Protection Structures that became permanent and dependable structures for faciliating and coordingating FSCE programs in the operational areas. Moreove, FSCEprogram management capacity and program quality improved through following participatory result based management system in planning and measuring of outcomes. FSCE, being a pioneering NGO, has built good reputations through promoting the rights of children and the provision of quality services for disadvantaged children in general and marginalized urban children in particular. In the earlier years of its intervention, FSCE was well known and acknowledged in the child resource development program and quite a commendable research output produced and made accessible to policy makers, program developers, development workers and child focused agencies to enhance their capacities before the legislation of the CSO restrictive policy by the government in 2009 however, FSCE intervention in evidence based program intervention became minimal following the implementation of the 2009 restrictive legislation, since the cost of this program falls under administration, however, it has shown improvement following the enactment of the new legistlation in 2019. 
+The bridging strategic plan has brought remarkable changes in the vision and mission statements of FSCE reinforced with additions of two new main intervention programs; youth empowerment and advocacy. The mission of FSCE was fine-tuned and fitted with the SGDs and 10 year national development plan and the new 2019 CSO legislation. During the execution period of the bridging strategic plan, FSCE operational area expanded from six to eight, the number of projects and the annual budget of the organization almost doubled. Moreover, during the bridging strategic plan period, FSCE has made revision on a number of policies and working procedures. FSCE received award from international organizations like IOM and Women and Children Affairs Ministry for its best achievements in child protection and youth empowerment. Encouraging engagement and contribution of the executive board members through forming sub committee that oversree the finance and audit issues, stategic issues including policy formulation/revision, strategic plan and resource mobilization issues apart from the regular follow up of the organization performance, technical support and professional advice. High level of participation and engagement recorded specifically during the preparation of the bridging strategic plan and revision of the same to the full-fledged plan
+1.7.2 Program Achievements of FSCE 
+FSCE has registered various notable achievements in partnership with donors, beneficiary communities, community based organizations and respective government sector offices through the establishment and strengthening of community based multi-stakeholder child protection structure in all the intervention areas through a wide range of interventions planned and implemented under its child protection, youth empowerment and advocacy programs. The highlights of these achievements are presented below:
+
+Child Protection Program
+
+The child protection program of FSCE encompasses primary prevention, secondary prevention and tertiary prevention sub programs. 
+Primary Prevention 
+In the strategic plan period, under primary prevention sub program that includes economic empowerment, creating access to education and capacity building on child vulnerability and rights a number of projects have been implemented in FSCE operational areas. In the economic empowerment intervention more than 23, 525 children, children of vulnerable families and unemployed youths directly benefited of which morethan 80% are females through trainings (life skill, vocational and business skill trainings );provision of technical supports that includes business plan preparation for IGAs and SHGs, provision of start-up capital, psychosocial support, linking with the financial institution, market, and private business for creating employment opportuinty, mentoring and follow up of the businesses. Moreover, a number of experience and best practice sharing meetings facilitated and conducted among different businesses established and organized by FSCE. Under creating access to education; 25,344 out of school and vulnerable children has benefited in the previous strategic plan period including the bridging phase. The education program enabled children to be enrolled and stayed in school that ultimately contributes to the countries plan and effort of accessing education to children and for quality learning and thereby reduces abuse and exploitation of vulnerable children of which morethan 60% are females. The awareness raising and capacity building program was made operational through different implementation strategies that includes conducting; community conversations, peer education, public campaign and show, awareness raising workshops, and use of mass media (electronic and print medias) that successfully raised the awareness of the target community members; parents, guardians and school children focusing on positive parenting skills, child psychology, and protection needs of children. In the previous strategic plan period including the bridging phase over 270,743 people in the target areas directly addressed. Moreover, millions of people have been reached through mass media.
+Secondary Prevention 
+In the strategic plan period, 1,288 children and youth in conflict with the law protected from further trauma and stress through establishing and strengthening community based correction centers. Moreover, recreational, library, and ICT services provided for over 6,791 misbehaving children in the project interventions areas. In the last strategic period including the bridging phase, FSCE has successfully reunified 5,816 trafficked children and those that migrated from different corners of the country using temporary shelter and through strengthening referral linkages.
+
+Tertiary Prevention
+ 
+The program targets street children, sexually abused and exploited children, children in child labour. 5,028 sexually abused and exploited children, street children and children in child labour rehabilitated, reunified and/or reintegrated. Moreover, FSCE has been providing emergency support for creating a healthy school environment through scholastic and wash support since 2018. program focusing on protecting vulnerable children in four primary schools in Diredawa with the fund obtained from KNH, the long standing and strategic donor of FSCE and accordingly 1003 children has got nutritional, educational, hygiene and sanitation and psycho-social support since the start of the emergency program to till to August 2022. This program has brought significant achievements, including improvements in school retention, community engagement to sustain the school feeding program, and strong local government support in managing unforeseen challenges.
+
+ii. Youth Empowerment Program
+
+This program is included as one core program of FSCE in the bridging strategic plan period (2021-2023). The basic rational for inclusion of this program is the large number of vulnerable young people found in Ethiopia. This program aimed at empowering Ethiopian youths to advance their own economic, civic, and social development and contribute to the country's peace and prosperity. Accordingly, in 2022 and 2023 fiscal year, FSCE has reached 10,314 youths in various trainings that aimed to create gainful employment opportunity and engage them in income generating activities and create a healthy working environment through preventing and protecting maltreatments. The trainings include but not limited to: life and soft skill, entrepreneurship and vocational skill, job fair and linkage, work readiness, sexual and reproductive health. In addition, 29,858 accessed youth friendly servicesof which 54% were females with the established ten youth friendly centers (corners). This was made possible in collaboration with health centers, youth centers, TVETs and universities. Moreover, three youth coalitions established that constituted of over 300 (167) youth coalition members trained on gender and SRH trainings. 51 (F=33) health workers trained on youth friendly health service provision, 5581 (F=3,373) young people got SRH/FP services at Kefeta's youth friendly service delivery points. As a result of the youth coalition program huge number of youth mobilized and engaged in emergency, peace building and development interventions. The saving and credit coopertatives (SACCO) and youth centers increased visibility and opportunity for youth, business linkage and collaboration created in the operational areas, high employment opportunity created, exhibited capability of youth to address community concerns and new initiatives created to broaden networking at local and global levels.
+
+iii. Advocacy Program
+
+Under advocacy sub-program, a total of 4,711 interest groups (volunteers) had been registered and engaged to address community problemes in the three operational areas; namely, Diredawa, Harer and Jijega. Over 6,553 youth representatives actively engaged in peace building dialogues that brought an increased youth engagement in community affairs during the bridging strategic plan period . 
+
+1.8 The Strategic Plan Development Process
+1.8.1 The Need for Strategic Plan Development
+Organizations are operating in dynamic and ever-changing environments. These organizational environments are characterized by a situation embedded with constant change. In order to respond to these ever-changing dynamic environments, strategic plan is one of the essential means to where organizations prepare themselves for change. Hence, the overall purpose of this Strategic Plan is to have a strategic guidance on the organization's efforts towards achieving its mission through shaping its fundamental purposes and actions required. Since its establishment, FSCE went through five strategic plan periods and this is the sixth strategic plan of FSCE. This is actually a review and update of the earlier three years bridging strategic document into five years strategic plan. Obviously, having a strategic plan in place would enable FSCE to track progress towards its set strategic and program goals. When FSCE staff and management actively participates in the strategic planning process and understands an organization's larger strategy and future directions, their engagement can directly impact its success. 
+
+Hence, the development of a five year plan 2021-2025 became necessary because it reviews and clarifies the earlier mission statement, update the strategic and program goals, improves efficiency and focus, builds and increases team spirit, serves as a tool for communication, reduces organizational uncertainties, and builds consensus where the organization is going. Moreover, the issuance of a new CSO legislation number 1113/2019 that brought a turning-point in the scope, operation and environment for NGOs in Ethiopia and the need to align interventions with the Sustainable Development Goals (SDGs) and the 10 years perspective plan of the country 2020-2030 are the basic environmental issues assessed and dealt for the development of this plan. 
+1.8.2 Strategic Plan Development Methodology 
+The methodologies employed for reviewing the bridging strategic plan document and expanding into of a five year full-fledged strategic plan majorly includes; Document review (review of the three years bridging strategic plan, review of FSCE annual plans and reports, assessments, and literature review); Undertaking interview and/or filling questionnaire by staff, FSCE governance and partners and conducting a series of consultative meetings with FSCE management including the executive board; preparation of the draft SPM report, incorporation of comments and finalizing of the strategic plan development. 
+The specific objectives of reviewing the bridging plan and expanding into a five strategic plan include:
+ To extend the period of the bridging plan as it has ended ,
+The need for assessment and review of the current context and environmental situation to develop strategic issues, goals and options,
+The need for assessment and revisit the values and principles, 
+Review the vision and mission statements and make changes as deemed necessary,
+Assess the programs, major implementation strategies, monitoring and evaluation mechanisms and update and possibly include the revised once based on the current context,
+Preparing workable action plans for realizing the strategic issues and options.
+
+The document is organized in six sections. Section one; introduction. The introductory section includes brief country overview, child protection context, youth situation update, the need for humanitarian intervention, Charities and Societies (CSO) context, profile of the FSCE, key achievements of FSCE and the need for development of the strategic plan. Section two; Stakeholder Analysis. Section three; SWOT analyses. Section four, core strategic issues, goals, initiatives and options where FSCE's efforts, energy and resource have to be concentrated during the remaining two years of the strategic plan period to realize its organizational endeavor. Section five; core programs, strategies and approaches of FSCE's, The last section includes monitoring and evaluation and a action plan.
+2. STAKEHOLDERS ANALYSIS
+The stakeholder analysis helps to properly understand their roles and ensure maximized opportunities of FSCE and establish appropriate relationship with each stakeholder. FSCE will continue and increase its interaction with several international and indigenous NGOs, federal and local government bodies, CBOs, diverse sectoral institutions, networks, forums, umbrella organizations, coalitions, the private sector and other forms of civil society organizations. FSCE knows that many of these organizations will have direct or indirect influence on the operation, performance and results of FSCE. Therefore, it is found ideal to analyze its stakeholders, their collaboration and expectation from both sides. The views, needs and expectations of FSCE stakeholders are analyzed in Table 1.
+Table 1: Stakeholders' Analysis
+Stakeholders
+What Stakeholders Expect from FSCE
+What FSCE Expects from Stakeholders
+Government Agencies and relevant organizations 
+
+Provide skill trainings to vulnerable children and women;
+Support beneficiaries generate their own income;
+Expand multi-stakeholders approach to other places operation.
+Continued support from Social and Women Affairs Offices at all levels and the commitment of the local administration to work and make change in child Protection Program;
+Support to enforce child protection policy in the Country.
+2. Beneficiaries
+Provide them with skill trainings to enable them generate their own income; 
+Provide awareness creation trainings for the community and other stakeholders members to enable them protect vulnerable children and women in their communities sustainably;
+Provision of timely and adequate protection, economic and social support,
+
+Generate their own income using the training & support they receive from FSCE,
+Stakeholders and communities to be more active in identifying beneficiaries and prepare themselves to take over the responsibility,
+Sustainability of projects after phase out.
+3. Donors 
+To be leading, vibrant & effective organization;
+Make multi-stake holders approach (MSCPS) sustainable and prepare to hand them over to communities;
+Document learning, share its expertise and continue its engagement internationally;
+Use resources effectively and efficiently 
+Improve communications between FSCE Program and Finance Departments; 
+Submit timely report and improve communication with donors.
+Continuous financial support with more fund to achieve its goal of supporting its beneficiaries become self-reliant;
+Timely release of approved funds. 
+4. Multi-Stakeholders
+Establish MSCPS in new operating areas and/or strength existing once. 
+Avoid dependency attitude of beneficiaries by providing sustainable support. 
+Work hard in the capacity building of communities, multi-stakeholders, vulnerable children and women.
+Consistently attend discussion forums, training sessions and other gatherings organized by FSCE to strengthen the role of multi-stakeholders;
+Cooperate in implementing national and international laws on child protection. 
+FSCE Governance/Board & General Assembly/
+Emphasize on working on child right and Advocacy issues;
+Work with girls who are vulnerable; 
+Work on integrated child protection program;
+FSCE goal of child protection should adopt systems approach. The system may include family, gov't, schools, others;
+FSCE human Resource Manuals and practices should reflect Child protection principles. 
+Continue providing directions and guidance for FSCE,
+
+Contribute in fund raising activity,
+
+Contribute in system and strategy development
+
+6.FSCE Staff & Management
+Work for the enforcement of Child protection laws with the support from the government,
+
+Motivate staff by providing training, promotion and rewards as appropriate and paying competitive salary and benefits,
+
+Multi-stakeholder child protection activities strengthened and scaled up in all intervention areas,
+
+Work on soft activities like capacity building programs, awareness creation sessions, stakeholders participative management,
+
+Align interventions with major governmental focus areas and meeting SDGs-1 End Poverty, SDG-2 End Hunger, SDG-3 SDG-4 quality education, SDG-5, Gender equality, SDG-8 and SDG-16.
+Commitment in the implementation of the strategic & project plans of FSCE,
+
+Respect for rules and regulation of the organization,
+
+Proper use of organizational resources,
+
+Transparency and accountability,
+
+Cooperate, collaborate and linkage with FSCE in performing the projects, meeting objectives and for ensuring sustainability
+
+
+3. SWOT ANALYSIS
+The SWOT analysis identified several strengths and opportunities from which FSCE may benefit and also revealed critical limitations and threats that FSCE should address (see Annex 1 for the detail of action based SWOT matrix). 
+ Table 2: SWOT Matrix
+
+Internal Environment Analysis 
+
+Strength
+
+1.Governance and leadership
+
+Pioneer in establishing, strengthening and institutionalizing its program and strategies in government and communities: Child protection units (CPUs) and Child-friendly courts in government structures; preparation of police training manual, training of the police forces and providing of support to the police institute during the strategic plan development; development of diversion manual and establishment and strengthening of community based correction/protection centers (CBCCs) in the community for juvenile offenders, presence of Child resource development center (CRDC) and Community based multi-stakeholder structures.
+
+Dedicated and professional founders and board members,
+
+Flexible and dynamic to adopt and make changes towards global, country & local level context changes,
+
+Has very good partnership and networking with strategic partners; CCRDA, Family for Every Child, ECPAT International, UNICEF, etc),, donors, and government,, 
+
+Guided by well-defined strategic plan with clear vision, mission, objectives and strategies,
+
+Participatory planning, implementation, monitoring and evaluation practices and collective leadership,
+
+Follows systemic and integrated approach in program/project implementation and management,
+
+The existence of relevant program and effective implementation experiences,
+
+Compliance with CSA policies and regulation
+
+
+
+
+
+
+
+Organizational structure, systems and Human Resource
+
+Presence of updated structure, policy, guidelines and systems (Child safeguarding policy, Financial Policy, Human Resource, etc.,),
+
+Have structure down to the grass root level,
+
+Has own office,
+
+Presence of Professional and Competent Staff,
+
+Undertaking staff performance evaluation
+
+Financial Resource Management
+
+Demonstrated Significant growth in finance and burning rate (able to raise a substantial amount of funds as compared to the last strategic period),
+
+Accounts of FSCE are audited by an external audit firm (both organizational and separate audit for projects) regularly to ensure transparency and accountability and this gives confidence for funding partners in the financial management of FSCE, 
+
+
+
+4. Monitoring, Evaluation and Learning
+
+Presence of result based project M&E plan,
+ 
+Evidence based reporting: recording and sharing of case stories and best practices to partners for learning and improvement.
+
+
+
+
+
+
+
+
+
+
+
+
+
+5. Service Delivery
+High level of recognition and acceptance by the local government, the community, CBOs, partner NGOs and others,
+
+Professionalism, extensive experience and dedicated service in Child Protection for over three decades, 
+
+Using community knowledge, structures and CBOs to plan and implement programs/projects (Active community engagement),
+
+Strong partnership with local government, funding partners and with the community,
+
+
+Non-discriminatory; free of ethnic, gender, age, language and religious bias)
+
+Weakness
+
+1.Governance and Leadership
+ 
+
+
+Limited number of women in the leadership and governance
+
+Lack of training opportunities for board and senior management 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2. Organizational Structure, System and Human Resource 
+In adequate implementation of staff development plan,
+
+Minimal engagement on social media Platform,
+
+Limited effectiveness in selling and promoting the brand and its accomplishments.
+
+Financial Resource Management
+ 
+Limited fund diversification,
+High dependency on external donors
+
+
+
+
+
+
+
+
+
+
+
+4. Monitoring, Evaluation and Learning 
+
+The monitoring and evaluation system relies on manual processes and is not automated. (digitalized), 
+Limited implementation of result-based M&E system,
+Infrequent evaluation of the strategic plan,
+Lack of regular review meetings/forum at least once on annual basis.
+
+
+
+
+
+
+
+
+
+
+5. Service Delivery
+Advocacy strategy and guideline is not up to date and needs improvement.
+The advocacy efforts within FSCE's child protection and youth empowerment programs are currently limited.
+Limited response to emergencies/humanitarian crisis affecting families and children in the host communities and in temporary shelters for the displaced.
+
+
+
+
+
+
+
+
+
+
+ External Environment Analysis 
+Opportunity
+Threat
+1. Political Environment
+Presence of supportive government policies, strategies and plan: Child Policy and protocols and the enactment of the revised Family Law, the health policy, Social protection policy and the ten years prosperity plan, the youth policy, and relevant offices of the government like social and women affairs offices/structure,
+
+The existence of alternative media outlets,
+
+
+2. Economic Environment
+Alignment with Sustainable Development Goals (SDGs), 
+The presence of ten years perspective plan of the government: 2021-2030,
+The possibility to engage in different income-generating activities (IGA),
+Localization agenda at global level & start of the actual practice in Ethiopia that is in favor of/in support of/ of meeting FSCE mission,
+
+1. Political Environment
+Socio-political instability and insecurity in the country due to Conflict among ethnic groups and between federal defense force and armed groups,, 
+
+
+
+Economic Environment
+
+Economic challenges due to high and persistent inflation,
+
+Shift of donors focus from long-term development support to short-term emergency support due to global political and economic crises:- The continued war in Europe (Russia-Ukraine), Middle East and in Africa specifically in Ethiopia, Sudan, Somalia etc.,
+
+Long-term unemployment affecting youth, families and children's vulnerability,
+
+Wide spread poverty and low levels of economic diversification in the country,
+
+The dire and huge humanitarian need in the country due to the persistent drought and conflict in the country
+
+
+
+
+ External Environment Analysis 
+Opportunity
+Threat
+
+3. Physical Environment 
+Climate change (natural calamities such as drought, flood etc.,) is an area for new local and global partnership and collaboration.
+The existence of environment friendly policy of the government,
+4. Social Environment
+Multi-sectoral collaboration and coordination in place: The presence of different humanitarian clusters, interagency forums, networks and alliances,
+Community acceptance and recognition of the FSCE's work.
+5. Technological Environment
+Improved/expanding online communication, internet and mobile access, the social media in the country especially benefiting remote and underserved areas. 
+6. Legal Environment
+The new CSO proclamation no 1113/2019 gives a wider space for CSOs to operate; in right based issues, good governance, democracy and advocacy as opposed to the earlier 2009 restrictive policy,,
+
+ 
+3. Physical Environment
+
+
+
+
+
+
+
+4. Social Environment
+
+Rapid population growth not chased by economic growth increases vulnerability of the people especifically for children and youths.
+
+High level of displacement: Trafficking and migration.
+5. Technological Environment
+Online vlenerability of children increased with the enhanced IT Technology 
+
+
+6. Legal Environment
+
+The capacity and the capability of the agency (ACSO) to facilitate support and follow up the execution of the policy.
+
+
+
+
+
+
+4. STRATEGIC ISSUES 
+The strategic issues are areas where the organization needs to focus to improve significantly through its upcoming years of programming and execution. The issues has been identified as the result of consultations with FSCE staff and management, review of the earlier bridging plan; context, stakeholder and SWOT analysis; interviews and/or questionnaire completed by staff, FSCE management and executive board and partners. Although several critical issues listed out, the final list of critical issues that needs prior attention and be worked upon in the next two years of the strategic plan period; 2024 and 2025 are examined and identified based on urgency, importance, impact, and feasibility parameters: 
+4.1 Explanation of the identified critical/strategic issues
+Issue one (Resource Mobilization): 
+In the past three years of the bridging strategic plan period, there has been much progress in projects development and resource mobilization. However, resource mobilization and allocation needs to be more systematic, logical, proactive, stable, comprhensive and not dependent on few staff and management. 
+The fact that there is high donor dependency, limited diversification and local fund raising has hindered the organization to address its programs (the child protection and youth empowerment) requirement adequately and comprehensively. This calls the need for strengthening resource mobilization effort of FSCE. 
+FSCE has an opportunity to attain child protection and youth empowerment by exploiting the opportunity leveraged by the revised CSO law to embark on profit making activities and the space created to work in amore flexible programming and execution that includes intervening in advocacy and right based issues. Moreover, there is an evolving localization agenda and emerging issues that the organization could embark on apart from the existing resource mobilization FSCE from donors. Therefore, this would be an area that the organization should priortize and capitalize on. 
+Issue two (Strengthening PME): 
+The fact that the monitoring and evaluation system of FSCE relies on manual processes; limited implementation of result-based M&E system, infrequent evaluation of the strategic plan and review of organizational performance at least once on annual basis calls for the need for strenthening the PME system and practice. Strong monitoring and learning is one of the important milestones of a successful organization. Although there is good practice of monitoring and learning in FSCE, the MEAL system is not yet automated. 
+Moreover, the evidence based decision making is one of the critical elements that keeps the organization focused and on its right track. Exercising evidence based decision making needs conducting periodic researches, conducting participatory and result based management system, impact evaluations and analysis of lessons, proper documentation and sharing and exchanging of information. 
+Issue three: Partnership Management and Publicity: 
+In the past three years of the strategic plan period, FSCE has done a lot in system and policy revision and development, however, its engagement on social media platform and selling and promoting the brand has been limited that needs to be more systematic, focused and supplemented by assignment of staff and/or team. Accordingly, 
+
+FSCE needs to assess and update: its website; communication and advocacy guidelines; and strengthen the public relation and/or communication service both internally and externally supplemented by strengthening documentation of best practices manually and electronically. 
+
+Needs to strengthen its participation in different forums including GO-NGO & youth forums, CBOs, clusters, consortiums, networks, strategic partners, alliances, with existing and potential donors both nationally and internationally advocating its promising practices and evolving issues of concern in child protection and youth empowerment interventions.
+
+and enhance FSCE to play a leading role in the partnerships and engagements in a manner that contributes to attainment of its organizational mission. 
+Strategic Pillars /Key Areas of Intervention/ 
+Based on the above identified core issues, the following key areas of intervention have been charted. 
+Resource Mobilization 
+Communicate and partner with UN & international non-governmental organizations fullfulling all the requiremetns of the contemporary localization agenda to solicit fund for humanitarian intervention.
+
+Develop quality proposals to secure fund from existing donors and new once for diversifying funding base.
+
+Enhanced Local resource mobilization efforts and capacity through organizing events with key stakeholders in the government, private sector, and civil society to enhance credibility and support for FSCE's mission.
+
+Engagement in income generating Activities (business) to finance charity,
+
+4,2,2 Strengthening PME
+
+Install automated and systematized Monitoring, Evaluation, Accountability and Learning (MEAL) system,
+
+Undertake regularly result based Monitoring and Evaluation,
+
+Strengthen research, lesson learning, documentation and dissemination and scale up evidence based decision making,
+Conduct annual review meeting.
+
+4.2.3 Partnership Management and Publicity
+
+Update the existing manuals and guidelines to strengthen partnership and publicity,
+Use social and electronic media at scale, 
+Improve visibility through branding and emage building, 
+Upgrade Website and assign a staff for regularly follow up and refreshment of the site,
+Advocate and lobby to better preposition the organization among UN agencies and other big institutional donors,
+Advocate for the localization agenda. 
+
+5. PROPOSED VISION, MISSION, VALUES, PROGRAMS AND STRATEGIES
+Based on the current context and the identified critical issues in section five of this SPM, it is essential to chart out strategic directions that can bring about solutions and determine its program focus. FSCE realizes that it should take the required change in order to make the organization more effective than it is now. Cognizant of this, the following strategies are designed:
+5.1 VISION
+To see empowered and resilient children and youth with bright future.
+5.2 MISSION
+FSCE strives to protect and empower children and youth through a right based and comprehensive system approach in collaboration with relevant stakeholders. 
+Alternative
+FSCE strives to protect, empower, and support resilient children and youth through a rights-based, adaptive, and holistic approach, in partnership with a diverse range of stakeholders." 
+
+5.3 FSCE Core Values and Principles
+FSCE is a value driven organization. Its core values are the principles it cherishes and follows in serving disadvantaged children and working with the community and various stakeholders. The following are the core values that guide FSCE.
+
+Participation: FSCE operates under the principle that children and youth in particular and the community in general should be actively involved in each and every major undertaking and relevant stages of projects. Participation will strongly be tied to the empowerment of children and communities with whom FSCE works. Staff participation in organizational and program matters will always be maintained and enhanced.
+ 
+Transparency: FSCE has a strong faith in maintaining transparency in its operation and utilization of resources. It will continue to be open in its relationship with all its stakeholders on what it is doing, where and how it is performing its responsibilities.
+ 
+Accountability: FSCE recognizes its legal, ethical and social obligations and accepts its accountability. It will consistently work towards strengthening and streamlining its organizational and operational systems and practices to enable it meet its accountability requirements from donors, government, the community, and all its partners.
+
+Teamwork: FSCE adheres to the principle that building teams is a powerful force that binds FSCE and its members together and moves them foreword successfully. It will continue to value and practice teamwork and endeavor purposefully towards continuously developing team spirit. 
+
+Integrity: FSCE always act truthfully and honestly. FSCE believes greater impact will be achieved through a more holistic approach to its development and humanitarian work.
+
+Ethical Professionalism: FSCE will undertake its duties with a sense of high ethics and professionalism.
+
+Humanity: FSCE strives to address human suffering wherever it is found, with particular attention to the most vulnerable.
+
+Neutrality: FSCE will carryout its engagements and activities in a principled, reasonable and constructive manner with out taking sides in whatever form imaginable. 
+
+Do no harm: FSCE seek to prevent or minimize as much as possible any unintended negative consequences of the intervention/program which could increase children's and youth vulnerability to risks; ensure a conflict-sensitive approach, support the development of self-protection capacities and enhance community cohesion.
+
+Impartiality: FSCE treats everybody equally and given fair and free opportunity to participate and influence in decisions and activities which affect their lives. It will ensure equal opportunity to everyone irrespective of religion, age, ethnicity, disability, nationality, sexual orientation, ability or other specific identity.
+
+Partnership: FSCE recognizes that partnership is a powerful tool that builds a sense of working and achieving together. It believes that true partnership is based on mutual trust, respect and benefit. FSCE will continue to develop partnership with all its stakeholders in a bid to realize its vision and mission.
+
+Commitment to gender equality and justice: FSCE adheres to the principles of gender equity both at institutional and programmatic levels. It will ensure that its organizational policies and program intervention guidelines adequately include gender responsiveness as a prerequisite and get implemented. FSCE will also ensure that fairness, justice and respect for all are strictly maintained in working with beneficiaries and other stakeholders.
+
+Providing transformational quality service: FSCE knows that change occurs and sustained impact get created when services to children are provided with good quality. In the provision of basic services, FSCE will focus on best quality work in order to make sure the life of disadvantaged children could be positively transformed in a lasting manner.
+Sustainability: FSCE believes that the continuity of relevant programs and the sustaining of useful impacts that positively change the life of children have to be maintained. Therefore, FSCE gives specials emphasis and commits itself to sustainability in all its useful forms. 
+5.3 FSCE CORE PROGRAMS 
+The core programs of FSCE are selected based on the vision and mission of FSCE, its rich experiences and lessons drawn from attaining results in its over 34 years of services to the children and youths of Ethiopia, the relevance and validity of the program interventions to the needs of its targets and the contribution of the identified program interventions to the attainment of the new Ethiopian 10 year perspective plan, 2021-2030 that envisages translating the growth rates in the country into improved living conditions for the poor and a declining poverty headcount and intended to make Ethiopia African beacon of prosperity.
+The strategy of FSCE also fits with Ethiopian constitutional and legal framework (Art. 41/5 of the FDRE Constitution). Convention on the Rights of the Child (CRC) and youth policy: Therefore, the FSCE strategic focus is guided by international and national frameworks and conventions.
+Achieving SDG-1 (End Poverty in all its forms), SDG-2 (End Hunger), SDG-3 (Ensure Healthy Life), SDG-4 (Ensure inclusive and Equitable Quality Education and promote lifelong learning opportuinites for all), SDG-5 (Gender Equality and empower all women and girls), SDG-8 and SDG-16. specifically 16.2 End abuse, exploitation, trafficking and all forms of violence against and torture of children & 16.9 provide legal identity for all, including birth registration by 2030).. Of course this demands greater collaboration and partnership of all stakeholders. In line with this, FSCE's proposed the following core programs to be operational in this SPM period and in the consecutive SPM periods to contribute its part in meeting the country 10 year perspective plan (2021-2030) and SDGs. 
+
+Accordingly, the four proposed core programs of FSCE are:
+Child Protection Program
+Youth Empowerment program
+Advocacy Program
+Humanitarian Program
+
+Child Protection Program: 
+
+The child protection program entails protection of children from all forms of challenges that affects their development and ensure proper respect for their rights, in collaboration with relevant stakeholders and intervening at various levels to empower the child, the family and the target community at large. The program will also strengthen the child protection system at various levels to address children problems in a sustainable manner and child resource development will continue to have adequate attention as this is an area which is unique to FSCE. The program will:
+
+Aware the target community including children on the cause and consequences of child maltreatments.
+
+Avail the necessary services and support for children to live with their families or arrange an alternative family protection for children who are separated from their families.
+
+Work with relevant stakeholders to protect children on the move from all forms of abuse and exploitation.
+Work with relevant stakeholders to rehabilitate and reintegrate children living and working on street, children in conflict with the law, children in emergency situation and sexually abused and children exposed to different forms of child labour. 
+
+Youth Empowerment Program: 
+
+The ability to engage the youth in productive activities is paramount for the social and economic improvement of the country as the youth consititute the larger proportion of the population.However, the youth in Ethiopia face enormous challenges and their potential remains untapped.Some of the challenges includes marriage at an early age, illiterancy, school dropouts, low intake of nutrients, high rate of mortality of adolescent mothers, lack of access to Sexual Reproductive Health (SRH), physical or mental problems, drug abuse. Therefore, for minimizing the multitude of challelnges and empowering the youths it needs;
+
+i. to:enhance psychosocial wellbeing of youth through rebuilding their self-understanding, self-esteem and creating access to rehabilitation services; 
+ii. enhance the livelihood of youth to enable them lead economically productive and healthy life through comprehensive supports mechanisms together with stakeholders and 
+
+iii. to build the awareness of community, local government and community structures on rights of youths, gender equality through addressing biased perception. 
+
+Advocacy Program: 
+
+Based on the UNCRC, The African Charter on the Rights and Welfare of the Child to which Ethiopia acceded and the national policies and plans, FSCE has collaborated as well as spearheaded (in certain instances) in advocating for the rights of children in general and that of urban children in particular till to 2009. FSCE has been successfully engaged in advocacy on policy issues and legislation targeting policy and law makers, planners, judicial organs and decision-makers at different levels. The aim of such interventions is to influence and change government policies and practices that affect the wellbeing of children through lobbying for amendment of policy and legislation and proper implementation of existing provisions. 
+ 
+The efforts in this field have resulted in the marking of the African Child Day, the World Day Against Child Labor in different places, the training of police officers, the expansion of operations of the Child Protection Program in FSCE operating areas of the country, the creation of a child friendly environment, and positive treatment of children on the part of the police. This program therefore is crucial and not new to FSCE and believed to enable the community and the larger people respect and promote the right of children and fulfill their basic needs. The program will also advocate for other vulnerable groups including youth and women. 
+
+Humanitarian Response Program: 
+
+Currenlty, Ethiopia has faced multiple overlapping humanitarian crises, putting at risk the lives and livelihoods of over twenty millions of people driving continued high and urgent needs for humanitarian support. The country is characterized by armed conflicts and the resultant huge internal displacement, tension between the ruling and contesting political parties, and political intolerance. The adverse weather conditions and the resultant adverse impacts; Climate change-induced drought, flood and pest infestation exacerbated the humanitarian crisis in different parts of the country.The conflict and drought in Ethiopia remarkably disrupts Ethiopia's progress towards achieving the United Nations' Global Goals including food security and eradicates extreme anger, access for universal primary education, gender equality and empowerment of youth, reduction of child mortality, maternal health and environmental sustainability.
+
+The above scenario therefore justifies the importance of charity and society organizations (CSOs) like FSCE to join hands to respond to the current humanitarian crisis in the country. Hence, cognizant of the magnitude, severity and continuity of crises in terms of the affected millions of population, FSCE plan to intervene in humanitarian intervention in this strategic plan period both as distinct program and integrating with its existing child protection and youth empowerment programs. The major proposed interventions in this program includes: 
+
+i. Emergency relief that majorly includes life saving food and non-food items (NFI) provisons, 
+ii. Recovery support; this includes provision of improved seed and farm tools for farm HHs in emergency situation; restocking of livestock, poultry, vegetables and fruit seedlings provision; 
+iii. Cash transfer program; 
+Iv. Reintegrating of IDPs to their orginal place; 
+v. Community based comprehensive psychosocial support and GBV related activities focusing on vulnerable host communities and internally displaced people specifically focusing on children, youth and woment. 
+
+For each of the FSCE four core programs, goals have been set, targets identified and expected outcomes devised. The core programs, goals, and the expected outcomes are summarized and presented below.
+
+5.3.1 Child Protection Program
+
+Goal 
+
+To protect children from different kinds of abuses and address the problems related with child right violations.
+ 
+Targets 
+
+All abused, exploited and neglected children specifically it includes; children on the move, children without adequate parental care, children in conflict with the law, street children, sexually abused & exploited children, children in child labor, and children in emergency. 
+
+Outcomes
+
+Reduced the incidence of child abuse, neglect and exploitation; 
+Children who are victims of abuse, neglect and trafficking are rehabilitated; reunified/reintegrated with their family/community on the basis of their best interest and lead normal life;
+Children with minor offenses are treated and protected in a community based/and child friendly environment;
+Children in difficult circumstances and in the worst form of exploitation (labor exploited, sexually abused, street children) are identified, withdrawn rehabilitated and reintegrated with their best interest.
+Access to knowledge and information for pertinent stakeholders created.
+
+5.3.2 Youth Empowerment Program:
+
+Goal
+
+To protect youth and adolescents against economic, social, and psychological vulnerabilities, realize their rigths and reach full potential.
+
+Targets:
+
+Youth including adolescents of both sexes at risk that includes unemployed youths, out of school youths and adolescents, youths in schools and universities.
+
+c) Outcomes
+
+Youth friendly services supported/enhanced that would enable youth resilence and economic empowerment and reduce their social and economic stresses.
+
+Youth-led development activities enhanced; demonstrating self-relience addressing youth- identified challenges; such as social ( health, education etc) , psychological, legal and economic aspects.
+
+Skill development needed for youth in school or life and work supported/enhanced that comprisies of foundational skills, life skills (soft skills), digital skills and job specific skills.
+
+Youth empowered to become change agents in their communites through offering leadership and advocacy trainings there by the youth are encouraged to take initiative, voice their opinions, and lead initiatives that address social issues.
+
+Enhanced livelihood and capabilities of adolecentsand and their parents, and youths.
+
+Linkage created with financial institutions, small scale enterprises development office, and TVET colleges and the like to ensure that youth have access to finance, knowledge, skill and employment opportunity.
+Build and deepen the knowledge and capcity of the community structures and local government on the rights of youth, on gender equality through addressing biased perception, on addressing SRH services for women and girls that will be supportive to achieve intended objectives of the project and beyond the project life span.
+Enhanced civic engagement of youth through volunteering, community service, and awareness campaigns thereby young individuals learn the value of social responsibility and become active citizens.
+
+Improved gender equality by empowering young women and creating inclusive spaces for all genders.This will enable the young women challenge gender stereotypes, provide mentorship for female leaders, and advocate for policies that ensure equal opportunities. 
+5.3.3 Advocacy Program
+
+Goal
+ 
+To enable the community and the larger people respect and promote the right of children and youth and fulfill their basic needs and rights.
+
+Targets
+
+Government officials (policy and law makers, planners, law enforcment bodies including judicial organs and decision-makers at different levels; relevant government ministries, bureaus and offices); children and youth; school community; child right promotion and youth empowerment structures; media, informal community leaders, the local level government structures and the community at large.
+ .
+Outcomes
+
+Children and youth awared and empowered to exercise their rights; establish forums (clubs), parlaments and form consistuencies. 
+
+Government child welfare, youth affairs and low enforcing bodies enhanced to undertake the support of children and youth in a responsible, sensitive and skilled way.
+Existing government laws, policies, legislation, strategies and issues related to child protection, youth empowerment and women identified (child related laws and policies in accordance with international minimum standards, youth policy, the minimum wage floor, safty and security at job etc), consulted and analyzed together with other like minded CSOs (child protection and youth empowerment NGOs, with youth forums and counciles etc) through the various advocacy platforums, campaigns and brought to the attention of government policy makers, planners and practioners for review/amendement.
+Strengthened partnerships for advocacy with key community-led and civil society organizations.
+Private businesses (employers) advocated and influenced to hire skilled youth, protect safety and security of the employee.
+Digital skills enhanced among children and youth through advocacy efforts geared towards increasing their internet access and align with the need for digital inclusion to cope up with the dynamic global environment for increased performance and productivity of the young generation.
+Strengthen advocacy for sellable professions required by the market through lobbying for quality education and trainings of children and youth. 
+UNICEF child protection indicators lobbyed and put into practice as the result of FSCE intervention efforts in its operational areas. 
+Enhanced volunteerism on child protection and youth empowerment programs.
+Humanitarian Response Program
+a) Goal
+To contribute to the humanitarian response program of the country by addressing drought and conflict-affected vulnerable communities.
+b) Targets
+
+Vulnerable host communities, internally displaced people (IDPs) and returnees with special focus on the most vulnerable groups; children including adolscents, preganent and lactating women, the disabled, the elderly, the chronically ill, and orphan..
+
+c) Outcomes
+
+Improved food security status of vulnerable communities affected by humanitarian crisis in target areas,
+
+Enhanced use of sanitation and hygiene practices of the vulnerable communities, 
+Enhanced protection and psychosocial support of women, girls, boys, and men in situations of humanitarian crisis 
+ Improved early livelihood recovery of vulnerable host communities affected by humanitarian crisis in target areas,
+
+SGBV Survivors accessed lifesaving, specialized SGBV services appropriate and relevant to their immediate needs.
+5.4 Strategies and Approaches: 
+
+FSCE's Program Strategies and Approaches needs to focus and based on:
+
+Family based care: Every child's right to be protected and cared for, ideally by their own family or in a family like environment.
+Participation and Engagement: FSCE promotes ethical and meaningful participation of children and youth in all stages of FSCE's programming and interventions including mobilizing of resources for achievements of its objectives ,
+Strengthening Community Based Approach including Community based Multi-Stakeholder Approach,
+Comprehensive & integrated systemic approach – FSCE will continue to follow this systematic approach which is basically proactive approach that prevents potential challenges to child wellbeing in all the thirteen indicators of child protection developed by Unicef rather than the earlier issue based approach which is basically reactive in its approach. This would ensure a holistic approach to child and youth, legal protection, and welfare services, addressing gaps in the current system,
+Follows corridor based approach for trafficking and unsafe migration,
+Addressing discrimination and poverty to reach the most vulnerable children and youth by adopting a mainstreaming and inclusion approach to properly address the issues of gender, disability and other cross cutting issues, 
+Advocating on carefully selected issues of children, youth and women for government policy makers, executives, law enforcement bodies, communities, business, donors and other strategic partners. 
+Implementing a user-friendly case management system-Apply easy and accessible case management system for emergencies, youth empowerment, child protection, gender-based violence, and trauma response,
+Work towards image building and publicity;develop promotional materials & organize image building events.
+Empowerment to build self-propelling community; FSCE encourages the target groups to speak up and act for themseleves and actively particpate and mangage their development endeavors.
+Sustainability: FSCE works in close partnership, collaboration, and networking with the relevant stakeholders (government, target communities, donors, Universities , private organizations and other partners) to ensure sustainability of the interventions,
+
+6. THE STARATEGIC PLAN IMPLEMENTATION 
+6.1 Implementation Process
+
+FSCE needs to undertake the following measures pertaining to the process of strategy implementation.
+Clearly define roles and responsibilities of individuals and units for its implementation;
+Breakdown the strategic plan core issues into annual work plan; 
+Communicate the strategy to all parties who have the stake in its implementation;
+Design monitoring and evaluation mechanisms with indicators for result (output) and outcome for the realization of the plan into action.
+
+6.2 Work Plans
+The strategic plan provides the basis for preparing annual work plan and budget. The strategic plan has to be cascaded into clear, understandable and measurable annual plans and budgets. This is the key to the implementation, monitoring and evaluation of the strategic plan. The annual work plan will indicate the tasks to be implemented during the year with timetables and implementation responsibilities. Each work unit has the responsibility of preparing the annual work plan and budgets for its respective units in consultation with the Executive Director. The program, finance and administration units have to coordinate and synchronize work plans for implementation, and will be evaluated on the basis of performance of the implementation. The core issues implementation schedule (action plan and corresponding budget) of the strategy is depicted in Annex 2.
+6.3 Monitoring and Evaluation
+This Strategic plan will be monitored and evaluated at different levels. The Executive Board of FSCE will oversight the implementation of the strategic plan, and monitor on quarter bases against the work plans that are endorsed by the General Assembly at the beginning of the fiscal year. 
+FSCE will review the strategic plan implementation on quarterly bases and reports its core findings to the executive board for discussion and action and annually in the General Assembly meeting. FSCE will organize review meeting in the presence of program offices at least once in a year to discuss on the operationality status of the strategic plan and program/project performance. Moreover, FSCE management and senior staff at central level will travel to field offices and undertake result based monitoring at least once in six months based on the set criteria and indicators of change in addition to the regular desk level technical support provided by the program managers at the head office level. The Area program/project offices will monitor the program/project implementation on quarterly basis to check the efficiency, effectiveness & quality of implementation and its realignment with the strategic plan.The M&E findings will be properly organized, analyzed, documented and shared to relevant stakeholders. In the strategic plan period, FSCE M&E system will be supported and enhanced with automation/digitalization/ to better capture outcomes and impacts of programs, facilitating better decision making, demonstrating value to donors and meet the required quality standards by all stakeholders. 
+Achievement of the strategic plan will be measured through the following key indicators. 
+Table: 3 Performance Indicators
+Strategic Goals and Results
+Strategic Objectives Indicators 
+Resource Mobilization
+
+Enhanced RM efforts and capacities
+Grant Funding (Donation)
+
+
+Updated RM guideline and procedures and improved RM capacities,
+
+1.2 Developed database of new potential donors,
+1.3 Completed SAM registration with UN agencies for tapping humanitarian funding,
+
+New Project proposals developed
+
+2. Enhanced Local resource mobilization efforts and capacity 
+Updated Fundraising guideline and procedures
+Partners mapping completed 
+Fundraisng events organized
+
+
+
+Resource Mobilization
+
+Improved diversification and amount of grant resources: Raise in project funding by 20% in the 2024 and 2025 
+
+1.1 The revised and updated guideline (1)
+
+
+1.2 The developed database
+
+Registered Localization with UN agencies
+
+
+1.4 Three new projects get funding
+
+Improved local resources and better capacity of RM 
+2.1 The developed fundraising guideline (1)
+2.2 Partners mapping (1)
+2.3 Fund raising event organized (2)
+
+
+
+Strengthening PME 
+II. Strengthening PME
+
+1. Periodic research, Learning, documentation for evidence based decision enhanced.
+ 
+2. Automated and systematized MEAL system
+
+
+Periodic Result Based Monitoring and Review practiced
+ 
+
+
+
+
+1. Documented best practices for learning and/or action based research conducted (2) to excel programming and management of FSCE.
+
+Automated MEAL system put in place
+
+3.Regular RBM conducted at least on biannual basis and feedback communicated and used as an input for improvement and/or future planning and management
+
+
+Partnership Management and Publicity
+
+1. Use of social and electronic media scaled up
+
+
+2. Updated manuals and guidelines to strengthen partnership and publicity,
+
+3. Improve visibility through branding and emage building, 
+4. Upgrade Website and assign a staff for regularly follow up and refreshment of the site,
+5. Advocate and lobby to better preposition the organization among UN agencies and other big institutional donors,
+
+
+
+III. Partnership Management and Publicity
+
+1. Increased social media use (Whats up and Telegram)
+
+2. The developed manuals and guidelines (2)
+
+Organized visibility platforums and/or participate in such platforums organized by umberella organizations or by the CSO council (2)
+
+4. Updated organizational website
+
+5. FSCE positioned itself well among strategic donors and UN agencies as reputable organization (2)
+
+
+
+Annex 1: SWOT Matrix and Strategic Choices
+
+ Internal Environment
+
+
+
+
+
+
+
+
+
+
+External 
+Environment 
+Strengths
+Governance and leadership
+1. Pioneer in establishing, strengthening and institutionalizing of its program, structure and systems in government organizations and in the communities:
+2. Dedicated and professional founders and board members,
+3. Flexible and dynamic to adopt and make changes towards global, country & local level context changes,
+4. Has very good partnership and networking with strategic partners; CCRDA, Family for Every Child, ECPAT International, UNICEF, etc),, donors, and government, 
+5. Guided by well-defined strategic plan with clear vision, mission, objectives and strategies,
+6. Participatory planning, implementation, monitoring and evaluation practices and collective leadership,
+7. Follows systemic and integrated approach in program/project implementation and management,
+8. The existence of relevant program and effective implementation experiences,
+9. Compliance with CSA policies and regulation,
+Organizational structure, systems and Human Resource
+1. Presence of updated structure, policy, guidelines and systems (child safeguarding policy, Financial Policy, Human Resource, etc.,),
+2. Have structure down to the grass root level,
+3. Has own office,
+4. Presence of Professional and Competent Staff,
+5. Undertaking staff performance evaluation
+
+Financial Resource Management
+1. Demonstrated Significant growth in finance and burning rate (able to raise a substantial amount of funds as compared to the last strategic period),
+2. Accounts of FSCE are audited by an external audit firm (both organizational and separate audit for projects) regularly to ensure transparency and accountability and this gives confidence for funding partners in the financial management of FSCE, 
+Monitoring, Evaluation, Reporting and Learning
+1.Presence of result based project M&E plan,
+2. Evidence based reporting: recording and sharing of case stories and best practices to partners for learning and improvement.
+Service Delivery
+1. High level of recognition and acceptance by the local government, the community, CBOs, partner NGOs and others,
+2. Professionalism, extensive experience and dedicated service in Child Protection for over three decades, 
+3. Using community knowledge, structures and CBOs to plan and implement programs/projects (Active community engagement),
+4. Strong partnership with local government, funding partners and with the community,
+5. Non-discriminatory; free of ethnic, gender, age, language and religious bias)
+
+
+Weakness
+Governance and leadership
+
+
+
+
+Limited number of women in the leadership and governance.
+
+Lack of training opportunities for board and senior management 
+
+
+
+
+
+
+
+
+
+Organizational Structure, System and Human Resource
+1. In adequate implementation of staff development plan,
+2. Minimal engagement on social media Platform,
+3. Limited effectiveness in selling and promoting the brand and its accomplishments.
+
+
+Financial Resource Management
+1. Limited fund diversification,
+2. High dependency on external donors
+
+
+
+
+
+Monitoring, Evaluation and Learning 
+1.The monitoring and evaluation system relies on manual processes and is not automated. (digitalized), 
+2.Limited implementation of result-based M&E system,
+3.Infrequent evaluation of the strategic plan,
+4.Lack of regular review meetings/forum at least once on annual basis.
+5. Service Delivery
+1.Advocacy strategy and guideline is not up to date and needs improvement.
+2.The advocacy efforts within FSCE's child protection and youth empowerment programs are currently limited.
+3.Limited response to emergencies/humanitarian crisis affecting families and children in the host communities and in temporary shelters for the displaced. 
+Opportunity
+1. Political Environment
+Presence of supportive government policies, strategies and plan
+The existence of alternative media outlets,
+2. Economic Environment
+Alignment with Sustainable Development Goals (SDGs), 
+The presence of ten years perspective plan of the government: 2021-2030,
+The possibility to engage in different income-generating activities (IGA),
+Localization agenda at global level & start of the actual practice in Eth 
+3. Physical Environment 
+Climate change is an area for new local and global partnership and collaboration.
+The existence of environment friendly policy of the government,
+4. Social Environment
+Multi-sectoral collaboration and coordination in place.
+Community acceptance and recognition of the FSCE's work.
+5. Technological Environment
+Improved/expanding online communication, internet and mobile access& the social media in the country. 
+6. Legal Environment
+The new proclamation of charities and societies in 2019 that gives a wider space for CSOs to operate. 
+
+S+O = GROWTH
+
+Expanding FSCE program areas through inclusion of 
+Youth 
+Advocacy 
+Expanding/Diversify FSCE geographic intervention
+Expanding FSCE financial resource base using the new opportunity of localization agenda
+
+
+W+O = LEVERAGE
+
+Promote Internal capacity building,
+Strengthen resource mobilization effort:diversify donor bases;Initate, introduce and engage in income generating (IGA )business and/or in local fundraising apart from mobilizing resources from donors,
+Strengthening Partnership Management, Communication and Publicity,
+Strengthen Grant and Donor Compliance Management,
+Strengthening Result based ME and institute digitalized data management system 
+Threat
+1. Political Environment
+Socio-political instability and insecurity in the country 
+Conflict among ethnic groups and between federal defense force and armed groups, 
+2. Economic Environment
+Economic challenges due to high and persistent inflation,
+Shift of donors focus from long-term development support to short-term emergency support due to global political and economic crises
+Long-term unemployment affecting youth, families and children's vulnerability,
+Wide spread poverty and low levels of economic diversification in the country,
+The dire and huge humanitarian need in the country due to the persistent drought and conflict in the country
+3. Physical Environment
+4. Social Environment
+
+Rapid population growth not chased by economic growth increases vulnerability of the people specifically for children and youths.
+
+High level of displacement: Trafficking and migration.
+
+5. Technological Environment
+
+6. Legal Environment
+
+The capacity and the capability of the authority (ACSO) to facilitate support and follow up the execution of the policy.
+
+
+
+S+T = RESPONSE
+Initiate and engage in peace building and conflict resolution program to mitigate the instability and insecurity that arises due to conflict.
+Intitiate and engage in Humanitarian Response Program to address the vulnerable community due to drought and conflict. 
+Advocate and lobby for; 
+Youth empowerment and youth led development
+Youth engagement in income generating activities to reduce youth unemployment,
+The rights of the child, care and Child led development,
+Family planning etc to reduce povery in the country
+Sustainability of FSCE work and creating to meet the challenge on large scale
+
+
+
+
+
+L+T = SURVIVAL
+Financial sustainability and organizational viability
+Assess capability gaps and plan to defend/avert in very specific controlled ways.
+ 
+ 
+
+
+
+
+
+
+
+
+
+
+
+FSCE- Strategic Plan 2021-2025
+ 
+
+
+
+Page PAGE 1 of NUMPAGES 45

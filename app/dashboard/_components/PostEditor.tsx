@@ -40,7 +40,9 @@ const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   content: z.string().min(1, 'Content is required'),
   excerpt: z.string().min(1, 'Excerpt is required'),
-  coverImage: z.string().url('Cover image URL is required'),
+  coverImage: z.string().refine((val) => val === '' || val.startsWith('http'), {
+    message: 'Cover image must be a valid URL or empty',
+  }).optional().default(''),
   images: z.array(z.string().url()).optional(),
   published: z.boolean().default(false),
   category: z.string().min(1, 'Category is required'),
@@ -138,6 +140,43 @@ export function PostEditor({ post }: PostEditorProps) {
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="values-principles">Values & Principles</SelectItem>
+                        <SelectItem value="partners">Partners</SelectItem>
+                        <SelectItem value="merits">Merits & Achievements</SelectItem>
+                        <SelectItem value="prevention-promotion">Prevention & Promotion</SelectItem>
+                        <SelectItem value="protection">Protection</SelectItem>
+                        <SelectItem value="rehabilitation">Rehabilitation</SelectItem>
+                        <SelectItem value="resource-center">Resource Center</SelectItem>
+                        <SelectItem value="case-stories">Case Stories</SelectItem>
+                        <SelectItem value="news">News</SelectItem>
+                        <SelectItem value="events">Events</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Choose a category that best fits your post
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <Tabs defaultValue="write" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="write">Write</TabsTrigger>
@@ -185,32 +224,6 @@ export function PostEditor({ post }: PostEditorProps) {
                   </FormItem>
                 )}
               />
-
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="technology">Technology</SelectItem>
-                        <SelectItem value="lifestyle">Lifestyle</SelectItem>
-                        <SelectItem value="travel">Travel</SelectItem>
-                        <SelectItem value="food">Food</SelectItem>
-                        <SelectItem value="health">Health</SelectItem>
-                        <SelectItem value="business">Business</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
 
             {/* Right Column */}
@@ -223,7 +236,12 @@ export function PostEditor({ post }: PostEditorProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                      <ImageUploadCard aspectRatio="16:9" onImageUpload={field.onChange} type={'cover'} />
+                        <ImageUploadCard 
+                          type="cover"
+                          aspectRatio="aspect-[16/9]"
+                          onImageUpload={field.onChange}
+                          initialImage={post?.coverImage}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -237,10 +255,16 @@ export function PostEditor({ post }: PostEditorProps) {
                   {[...Array(4)].map((_, index) => (
                     <ImageUploadCard
                       key={index}
+                      type="additional"
+                      aspectRatio="aspect-square"
+                      onImageUpload={(url) => {
+                        const currentImages = form.getValues('images') || [];
+                        const newImages = [...currentImages];
+                        newImages[index] = url;
+                        form.setValue('images', newImages.filter(Boolean));
+                      }}
+                      initialImage={post?.images?.[index]}
                       index={index}
-                      aspectRatio="1:1"
-                      onImageUpload={handleImageUpload} 
-                      type={'additional'}          
                     />
                   ))}
                 </div>

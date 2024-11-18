@@ -4,6 +4,9 @@ import { useRouter } from 'next/navigation';
 import { PostEditor } from '@/app/dashboard/_components/PostEditor';
 import { useAuth } from '@/app/hooks/useAuth';
 import { useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function NewPostPage() {
   const { user, loading } = useAuth();
@@ -17,10 +20,24 @@ export default function NewPostPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-10">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 w-1/3 bg-gray-200 rounded"></div>
-          <div className="h-32 bg-gray-200 rounded"></div>
+      <div className="container mx-auto py-10 space-y-6">
+        <div className="flex items-center">
+          <Skeleton className="h-9 w-[100px]" /> {/* Back button skeleton */}
+        </div>
+        <div className="space-y-6">
+          <Skeleton className="h-10 w-[200px]" /> {/* Title skeleton */}
+          <div className="space-y-4">
+            <Skeleton className="h-12 w-full" /> {/* Title input skeleton */}
+            <Skeleton className="h-32 w-full" /> {/* Content editor skeleton */}
+            <div className="flex gap-4">
+              <Skeleton className="h-10 w-[120px]" /> {/* Category select skeleton */}
+              <Skeleton className="h-10 w-[120px]" /> {/* Status select skeleton */}
+            </div>
+            <div className="flex justify-end gap-4">
+              <Skeleton className="h-10 w-[100px]" /> {/* Cancel button skeleton */}
+              <Skeleton className="h-10 w-[100px]" /> {/* Save button skeleton */}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -31,8 +48,22 @@ export default function NewPostPage() {
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <PostEditor />
+    <div className="container mx-auto py-10 space-y-6">
+      <div className="flex items-center">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-2"
+          onClick={() => router.back()}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+      </div>
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold">Create New Post</h1>
+        <PostEditor mode="create" />
+      </div>
     </div>
   );
 }

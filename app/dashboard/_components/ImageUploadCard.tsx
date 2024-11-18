@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { storage } from '@/app/firebase'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { Upload, X, ImageIcon } from 'lucide-react'
 import { useDropzone } from 'react-dropzone'
 import { cn } from "@/lib/utils"
@@ -13,12 +13,19 @@ interface ImageUploadCardProps {
   type: 'cover' | 'additional'
   aspectRatio: string
   onImageUpload: (url: string) => void
+  initialImage?: string
   index?: number
 }
 
-export default function ImageUploadCard({ type, aspectRatio, onImageUpload, index }: ImageUploadCardProps) {
+export default function ImageUploadCard({ type, aspectRatio, onImageUpload, initialImage, index }: ImageUploadCardProps) {
   const [uploading, setUploading] = useState(false)
-  const [preview, setPreview] = useState<string | null>(null)
+  const [preview, setPreview] = useState<string | null>(initialImage || null)
+
+  useEffect(() => {
+    if (initialImage) {
+      setPreview(initialImage)
+    }
+  }, [initialImage])
 
   const handleUpload = async (file: File) => {
     try {
@@ -50,6 +57,7 @@ export default function ImageUploadCard({ type, aspectRatio, onImageUpload, inde
   const removeImage = (e: React.MouseEvent) => {
     e.stopPropagation()
     setPreview(null)
+    onImageUpload('')
   }
 
   return (
@@ -95,7 +103,7 @@ export default function ImageUploadCard({ type, aspectRatio, onImageUpload, inde
                     "text-primary mb-2",
                     type === 'cover' ? "h-6 w-6" : "h-4 w-4"
                   )} />
-                  {type === 'cover' && index === 0 && (
+                  {type === 'cover' && (
                     <p className="text-sm font-medium">
                       Upload cover image
                     </p>
