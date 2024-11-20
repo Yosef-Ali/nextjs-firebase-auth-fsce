@@ -11,14 +11,33 @@ export interface Post {
   content: string;
   excerpt?: string;
   category: string;
+  slug: string;
   coverImage?: string;
-  images?: string[];  // Array of image URLs
+  images?: string[];
   published: boolean;
+  featured?: boolean;
   authorId: string;
   authorEmail: string;
   author?: Author;
   createdAt: number;
   updatedAt: number;
   tags?: string[];
-  slug: string;
+  date?: string;  
+  time?: string;  
+  location?: string;  
+}
+
+export interface Resource {
+  id: string;
+  title: string;
+  description?: string;
+  category: 'report' | 'publication' | 'media';
+  type: 'pdf' | 'doc' | 'image';
+  fileUrl: string;
+  fileSize?: string;
+  downloadCount?: number;
+  published: boolean;
+  createdAt: number;
+  updatedAt: number;
+  tags?: string[];
 }

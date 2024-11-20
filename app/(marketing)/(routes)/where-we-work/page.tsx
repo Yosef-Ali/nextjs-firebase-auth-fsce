@@ -1,68 +1,183 @@
-import { Metadata } from 'next';
-import { Suspense } from 'react';
-import dynamic from 'next/dynamic';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { locationsService } from '@/app/services/locations';
-import { LocationCard } from './_components/location-card';
-import { LocationStats } from './_components/location-stats';
-import { LocationsMap } from './_components/locations-map';
+"use client";
 
-export const metadata: Metadata = {
-  title: 'Where We Work | FSCE',
-  description: 'Explore FSCE\'s presence across Ethiopia, from city offices to regional centers.',
-};
+import React from 'react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import EthiopianMap from './_components/EthiopianMap';
+import { Building2, MapPin } from 'lucide-react';
+import CarouselSection from "@/components/carousel";
+import LocationsGrid from './_components/LocationsGrid';
+import LocationsMap from './_components/locations-map';
 
-export const revalidate = 3600; // Revalidate every hour
+const locations = [
+  {
+    region: "Addis Ababa",
+    city: "Addis Ababa",
+    address: "Bole Sub-City, Woreda 03, Building No. 345",
+    image: "/images/addis-office.jpg",
+    contact: "+251 11 551 2696",
+    beneficiaries: "Supporting over 5,000 children annually",
+    programs: [
+      "Child Protection",
+      "Education Support",
+      "Family Strengthening",
+      "Youth Empowerment"
+    ],
+    featured: true
+  },
+  {
+    region: "Oromia",
+    city: "Adama",
+    address: "Kebele 05, Near Adama University",
+    image: "/images/adama-office.jpg",
+    contact: "+251 22 111 2345",
+    beneficiaries: "Reaching 3,000+ beneficiaries",
+    programs: [
+      "Community Development",
+      "Child Rights Advocacy",
+      "Educational Support"
+    ],
+    featured: true
+  },
+  {
+    region: "Amhara",
+    city: "Bahir Dar",
+    address: "Belay Zeleke Street, Building 123",
+    image: "/images/bahirdar-office.jpg",
+    contact: "+251 58 220 1234",
+    beneficiaries: "Supporting 2,500 children",
+    programs: [
+      "Child Protection",
+      "Family Support",
+      "Education"
+    ]
+  },
+  {
+    region: "SNNPR",
+    city: "Hawassa",
+    address: "Piazza Area, Behind Hawassa University",
+    image: "/images/hawassa-office.jpg",
+    contact: "+251 46 220 5678",
+    beneficiaries: "Serving 2,000+ families",
+    programs: [
+      "Youth Development",
+      "Community Outreach",
+      "Child Welfare"
+    ]
+  },
+  {
+    region: "Tigray",
+    city: "Mekelle",
+    address: "Hadnet Sub-City, Near Mekelle University",
+    image: "/images/mekelle-office.jpg",
+    contact: "+251 34 440 9876",
+    beneficiaries: "Reaching 1,800 children",
+    programs: [
+      "Emergency Response",
+      "Child Protection",
+      "Education Support"
+    ]
+  },
+  {
+    region: "Dire Dawa",
+    city: "Dire Dawa",
+    address: "Kezira Area, Near Train Station",
+    image: "/images/diredawa-office.jpg",
+    contact: "+251 25 111 4567",
+    beneficiaries: "Supporting 1,500+ children",
+    programs: [
+      "Child Rights",
+      "Community Development",
+      "Youth Programs"
+    ]
+  }
+];
 
-export default async function WhereWeWorkPage() {
-  const [locations, stats] = await Promise.all([
-    locationsService.getAllLocations(),
-    locationsService.getLocationStatistics(),
-  ]);
-
-  const cityLocations = locations.filter(loc => loc.type === 'city');
-  const regionalLocations = locations.filter(loc => loc.type === 'regional');
-
+export default function WhereWeWorkPage() {
   return (
-    <div className="container mx-auto py-8 space-y-8">
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold">Where We Work</h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          FSCE operates across Ethiopia through a network of city and regional offices,
-          working directly with communities to create lasting positive change.
-        </p>
-      </div>
-
-      <LocationStats stats={stats} />
-
-      <div className="h-[400px] w-full rounded-lg overflow-hidden">
-        <Suspense fallback={<div>Loading map...</div>}>
-          <LocationsMap locations={locations} />
-        </Suspense>
-      </div>
-
-      <Tabs defaultValue="city" className="w-full">
-        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-          <TabsTrigger value="city">City Offices</TabsTrigger>
-          <TabsTrigger value="regional">Regional Offices</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="city">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-            {cityLocations.map((location) => (
-              <LocationCard key={location.id} location={location} />
-            ))}
+    <div className="min-h-screen bg-background">
+      <CarouselSection />
+      
+      {/* Map Section */}
+      <section className="py-8 px-4 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="h-[400px] w-full rounded-xl overflow-hidden shadow-lg">
+            <LocationsMap locations={locations} />
           </div>
-        </TabsContent>
-        
-        <TabsContent value="regional">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-            {regionalLocations.map((location) => (
-              <LocationCard key={location.id} location={location} />
-            ))}
+        </div>
+      </section>
+
+      {/* Statistics Section */}
+      <section className="py-16 px-4 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            <div className="p-6 bg-blue-50 rounded-lg">
+              <h3 className="text-4xl font-bold text-blue-600 mb-2">6+</h3>
+              <p className="text-gray-600">Regional Offices</p>
+            </div>
+            <div className="p-6 bg-blue-50 rounded-lg">
+              <h3 className="text-4xl font-bold text-blue-600 mb-2">15,000+</h3>
+              <p className="text-gray-600">Children Supported</p>
+            </div>
+            <div className="p-6 bg-blue-50 rounded-lg">
+              <h3 className="text-4xl font-bold text-blue-600 mb-2">20+</h3>
+              <p className="text-gray-600">Years of Impact</p>
+            </div>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </section>
+
+      {/* Office Types Section */}
+      <section className="py-24 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Link href="/where-we-work/city-offices">
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                className="bg-white p-8 rounded-xl shadow-lg cursor-pointer transition-shadow hover:shadow-xl"
+              >
+                <Building2 className="w-12 h-12 text-blue-600 mb-4" />
+                <h2 className="text-2xl font-bold mb-4">City Offices</h2>
+                <p className="text-gray-600 mb-6">
+                  Our city offices serve as central hubs in major urban areas,
+                  providing comprehensive support to children and families in
+                  metropolitan regions.
+                </p>
+                <span className="text-blue-600 font-medium">Learn more →</span>
+              </motion.div>
+            </Link>
+
+            <Link href="/where-we-work/regional-offices">
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                className="bg-white p-8 rounded-xl shadow-lg cursor-pointer transition-shadow hover:shadow-xl"
+              >
+                <MapPin className="w-12 h-12 text-blue-600 mb-4" />
+                <h2 className="text-2xl font-bold mb-4">Regional Offices</h2>
+                <p className="text-gray-600 mb-6">
+                  Our regional offices extend our reach across Ethiopia, ensuring we
+                  can effectively serve children in every corner of the nation.
+                </p>
+                <span className="text-blue-600 font-medium">Learn more →</span>
+              </motion.div>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Locations Section */}
+      <section className="py-16 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold mb-4">Our Locations</h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              FSCE operates across Ethiopia through a network of strategically located offices,
+              ensuring we can effectively serve children and communities where they need us most.
+            </p>
+          </div>
+          <LocationsGrid locations={locations} />
+        </div>
+      </section>
     </div>
   );
 }

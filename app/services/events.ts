@@ -1,0 +1,166 @@
+import { db } from '@/app/firebase';
+import { collection, doc, getDoc, getDocs, query, where, orderBy, Timestamp, addDoc, updateDoc, deleteDoc, limit } from 'firebase/firestore';
+import { Post } from '@/app/types/post';
+
+// Helper function to generate slug from title
+const generateSlug = (title: string): string => {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+};
+
+class EventsService {
+  private collectionName = 'posts';
+
+  async getAllEvents(includeUnpublished = false, includePastEvents = false): Promise<Post[]> {
+    try {
+      let constraints = [
+        where('category', '==', 'events')
+      ];
+
+      if (!includeUnpublished) {
+        constraints.push(where('published', '==', true));
+      }
+
+      if (!includePastEvents) {
+        constraints.push(where('date', '>=', new Date().toISOString().split('T')[0]));
+      }
+
+      const q = query(
+        collection(db, this.collectionName),
+        ...constraints,
+        orderBy('date', 'asc') // Upcoming events first
+      );
+
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt instanceof Timestamp 
+          ? doc.data().createdAt.toMillis() 
+          : Date.now(),
+        updatedAt: doc.data().updatedAt instanceof Timestamp 
+          ? doc.data().updatedAt.toMillis() 
+          : Date.now(),
+      })) as Post[];
+    } catch (error) {
+      console.error('Error getting events:', error);
+      throw error;
+    }
+  }
+
+  async getUpcomingEvents(count: number = 3, includeUnpublished = false): Promise<Post[]> {
+    try {
+      let constraints = [
+        where('category', '==', 'events'),
+        where('date', '>=', new Date().toISOString().split('T')[0])
+      ];
+
+      if (!includeUnpublished) {
+        constraints.push(where('published', '==', true));
+      }
+
+      const q = query(
+        collection(db, this.collectionName),
+        ...constraints,
+        orderBy('date', 'asc'),
+        limit(count)
+      );
+
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt instanceof Timestamp 
+          ? doc.data().createdAt.toMillis() 
+          : Date.now(),
+        updatedAt: doc.data().updatedAt instanceof Timestamp 
+          ? doc.data().updatedAt.toMillis() 
+          : Date.now(),
+      })) as Post[];
+    } catch (error) {
+      console.error('Error getting upcoming events:', error);
+      throw error;
+    }
+  }
+
+  async getEventBySlug(slug: string): Promise<Post | null> {
+    try {
+      const q = query(
+        collection(db, this.collectionName),
+        where('category', '==', 'events'),
+        where('slug', '==', slug),
+        limit(1)
+      );
+
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        return null;
+      }
+
+      const doc = querySnapshot.docs[0];
+      return {
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt instanceof Timestamp 
+          ? doc.data().createdAt.toMillis() 
+          : Date.now(),
+        updatedAt: doc.data().updatedAt instanceof Timestamp 
+          ? doc.data().updatedAt.toMillis() 
+          : Date.now(),
+      } as Post;
+    } catch (error) {
+      console.error('Error getting event by slug:', error);
+      throw error;
+    }
+  }
+
+  async createEvent(data: Partial<Post>): Promise<string> {
+    try {
+      const slug = generateSlug(data.title || '');
+      const timestamp = Timestamp.now();
+
+      const docRef = await addDoc(collection(db, this.collectionName), {
+        ...data,
+        category: 'events',
+        slug,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        tags: [...(data.tags || []), 'events']
+      });
+
+      return docRef.id;
+    } catch (error) {
+      console.error('Error creating event:', error);
+      throw error;
+    }
+  }
+
+  async updateEvent(id: string, data: Partial<Post>): Promise<void> {
+    try {
+      const docRef = doc(db, this.collectionName, id);
+      const timestamp = Timestamp.now();
+
+      await updateDoc(docRef, {
+        ...data,
+        updatedAt: timestamp
+      });
+    } catch (error) {
+      console.error('Error updating event:', error);
+      throw error;
+    }
+  }
+
+  async deleteEvent(id: string): Promise<void> {
+    try {
+      await deleteDoc(doc(db, this.collectionName, id));
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      throw error;
+    }
+  }
+}
+
+export const eventsService = new EventsService();

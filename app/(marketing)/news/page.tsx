@@ -1,108 +1,295 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { CalendarDays, ArrowRight, Star } from 'lucide-react';
+import FSCESkeleton from '@/components/FSCESkeleton';
+import { Post } from '@/app/types/post';
+import { formatDate } from '@/lib/utils';
+import { postsService } from '@/app/services/posts';
+import { motion } from 'framer-motion';
+
 export default function NewsPage() {
-  const news = [
-    {
-      title: "FSCE Launches New Child Protection Initiative",
-      date: "March 15, 2024",
-      summary: "A groundbreaking program aimed at strengthening community-based child protection mechanisms.",
-      category: "Program Launch",
-      image: "/images/placeholder.jpg"
-    },
-    {
-      title: "Annual Report Shows Significant Impact in Child Welfare",
-      date: "March 1, 2024",
-      summary: "Our 2023 annual report reveals substantial progress in child protection and community development.",
-      category: "Reports",
-      image: "/images/placeholder.jpg"
-    },
-    {
-      title: "Partnership Agreement with Ministry of Education",
-      date: "February 20, 2024",
-      summary: "New collaboration to enhance educational support for vulnerable children.",
-      category: "Partnerships",
-      image: "/images/placeholder.jpg"
-    }
+  const [news, setNews] = useState<Post[]>([]);
+  const [featuredNews, setFeaturedNews] = useState<Post[]>([]);
+  const [events, setEvents] = useState<Post[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [loading, setLoading] = useState(true);
+
+  const categories = [
+    { id: 'all', label: 'All News' },
+    { id: 'major', label: 'Major Updates' },
+    { id: 'program', label: 'Program News' },
+    { id: 'impact', label: 'Impact Stories' },
+    { id: 'partnership', label: 'Partnerships' },
   ];
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [newsData, eventsData] = await Promise.all([
+          postsService.getAllNews(),
+          postsService.getUpcomingEvents(3)
+        ]);
+        
+        // Separate featured and regular news
+        const featured = newsData.filter(post => post.featured);
+        const regular = newsData.filter(post => !post.featured);
+        
+        setFeaturedNews(featured);
+        setNews(regular);
+        setEvents(eventsData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const filteredNews = news.filter(article => 
+    selectedCategory === 'all' || article.category === selectedCategory
+  );
+
+  if (loading) {
+    return <FSCESkeleton />;
+  }
+
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-4xl font-bold text-gray-900 mb-8">Latest News</h1>
-
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {news.map((item, index) => (
-          <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="h-48 bg-gray-200">
-              {/* Image placeholder - replace with actual images */}
-              <div className="w-full h-full flex items-center justify-center text-gray-500">
-                Image Placeholder
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="flex items-center mb-2">
-                <span className="text-sm text-blue-600 font-medium">
-                  {item.category}
-                </span>
-                <span className="mx-2 text-gray-300">•</span>
-                <span className="text-sm text-gray-500">
-                  {item.date}
-                </span>
-              </div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                {item.title}
-              </h2>
-              <p className="text-gray-600 mb-4">
-                {item.summary}
-              </p>
-              <a 
-                href="#" 
-                className="text-blue-600 hover:text-blue-800 font-medium"
-              >
-                Read more →
-              </a>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-12">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-          Upcoming Events
-        </h2>
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900">
-                  Child Protection Workshop
-                </h3>
-                <p className="text-gray-600 mt-1">
-                  Training session for community leaders and social workers
-                </p>
-              </div>
-              <div className="text-right">
-                <div className="text-blue-600 font-medium">April 5, 2024</div>
-                <div className="text-gray-500 text-sm">9:00 AM - 4:00 PM</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900">
-                  Community Awareness Campaign
-                </h3>
-                <p className="text-gray-600 mt-1">
-                  Public event focusing on child rights and protection
-                </p>
-              </div>
-              <div className="text-right">
-                <div className="text-blue-600 font-medium">April 15, 2024</div>
-                <div className="text-gray-500 text-sm">2:00 PM - 6:00 PM</div>
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <section className="py-20 bg-primary/5">
+        <div className="container mx-auto px-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-center mb-6">
+            News & Updates
+          </h1>
+          <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto">
+            Stay updated with the latest news and developments from FSCE. Learn about our impact and ongoing initiatives.
+          </p>
         </div>
-      </div>
+      </section>
+
+      {/* Featured News Section */}
+      {featuredNews.length > 0 && (
+        <section className="py-16 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center gap-2 mb-8">
+              <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
+              <h2 className="text-3xl font-bold">Featured News</h2>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {featuredNews.map((article) => (
+                <motion.div
+                  key={article.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <Link href={`/news/${article.slug}`} className="block group">
+                    <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {article.coverImage && (
+                          <div className="relative w-full pt-[75%] md:pt-[100%] overflow-hidden">
+                            <Image
+                              src={article.coverImage}
+                              alt={article.title}
+                              fill
+                              className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                          </div>
+                        )}
+                        <div className="p-6">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Badge variant="secondary" className="bg-yellow-100">Featured</Badge>
+                            {article.category && (
+                              <Badge variant="outline" className="text-primary">
+                                {article.category}
+                              </Badge>
+                            )}
+                          </div>
+                          <CardTitle className="text-2xl group-hover:text-primary transition-colors mb-4">
+                            {article.title}
+                          </CardTitle>
+                          <p className="text-muted-foreground line-clamp-3 mb-4">
+                            {article.excerpt}
+                          </p>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-auto">
+                            <CalendarDays className="h-4 w-4" />
+                            <span>{formatDate(article.createdAt)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* News Categories Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-wrap gap-4 mb-8">
+            {categories.map((category) => (
+              <Button
+                key={category.id}
+                variant={selectedCategory === category.id ? "default" : "outline"}
+                onClick={() => setSelectedCategory(category.id)}
+                className="rounded-full"
+              >
+                {category.label}
+              </Button>
+            ))}
+          </div>
+
+          {filteredNews.length === 0 ? (
+            <Card className="p-6 text-center">
+              <p className="text-muted-foreground">No news articles available in this category.</p>
+            </Card>
+          ) : (
+            <motion.div 
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            >
+              {filteredNews.map((article) => (
+                <motion.div key={article.id} variants={item}>
+                  <Link href={`/news/${article.slug}`} className="block group">
+                    <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
+                      {article.coverImage && (
+                        <div className="relative w-full pt-[56.25%] overflow-hidden">
+                          <Image
+                            src={article.coverImage}
+                            alt={article.title}
+                            fill
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        </div>
+                      )}
+                      <CardHeader>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Badge variant="secondary">News</Badge>
+                          {article.category && (
+                            <Badge variant="outline" className="text-primary">
+                              {article.category}
+                            </Badge>
+                          )}
+                        </div>
+                        <CardTitle className="group-hover:text-primary transition-colors">
+                          {article.title}
+                        </CardTitle>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                          <CalendarDays className="h-4 w-4" />
+                          <span>{formatDate(article.createdAt)}</span>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground line-clamp-2 mb-4">
+                          {article.excerpt}
+                        </p>
+                        <div className="flex items-center text-primary font-medium group-hover:text-primary/80 transition-colors">
+                          Read More
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </div>
+      </section>
+
+      {/* Upcoming Events Section */}
+      {events.length > 0 && (
+        <section className="py-16 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-3xl font-bold">Upcoming Events</h2>
+              <Link href="/events">
+                <Button variant="ghost" className="group">
+                  View All Events
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+            </div>
+            <motion.div 
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            >
+              {events.map((event) => (
+                <motion.div key={event.id} variants={item}>
+                  <Link href={`/events/${event.slug}`} className="block group">
+                    <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
+                      {event.coverImage && (
+                        <div className="relative w-full pt-[56.25%] overflow-hidden">
+                          <Image
+                            src={event.coverImage}
+                            alt={event.title}
+                            fill
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        </div>
+                      )}
+                      <CardHeader>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Badge variant="secondary">Event</Badge>
+                          {event.category && (
+                            <Badge variant="outline" className="text-primary">
+                              {event.category}
+                            </Badge>
+                          )}
+                        </div>
+                        <CardTitle className="group-hover:text-primary transition-colors">
+                          {event.title}
+                        </CardTitle>
+                        <div className="space-y-2 mt-3 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <CalendarDays className="h-4 w-4" />
+                            <span>{formatDate(event.date)}</span>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground line-clamp-2">
+                          {event.excerpt}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

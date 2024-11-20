@@ -33,8 +33,8 @@ import { useAuth } from '@/app/hooks/useAuth';
 import { Post } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
 import { toast } from '@/hooks/use-toast';
-import '@/app/components/editor/styles.css';
-import { Editor } from '@/app/components/editor';
+
+import { Editor } from '@/components/editor';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -157,6 +157,7 @@ export function PostEditor({ post }: PostEditorProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="overview">Overview</SelectItem>
                         <SelectItem value="values-principles">Values & Principles</SelectItem>
                         <SelectItem value="partners">Partners</SelectItem>
                         <SelectItem value="merits">Merits & Achievements</SelectItem>
@@ -167,6 +168,7 @@ export function PostEditor({ post }: PostEditorProps) {
                         <SelectItem value="case-stories">Case Stories</SelectItem>
                         <SelectItem value="news">News</SelectItem>
                         <SelectItem value="events">Events</SelectItem>
+                        <SelectItem value="about">About</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormDescription>

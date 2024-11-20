@@ -33,8 +33,8 @@ export const menuItems: MenuItem[] = [
     title: "Where We Work",
     href: "/where-we-work",
     items: [
-      { title: "City Area Program Offices", href: "/city-offices", description: "Our urban program locations" },
-      { title: "Regional Area Program Offices", href: "/regional-offices", description: "Our presence across different regions" },
+      { title: "City Area Program Offices", href: "/where-we-work/city-offices", description: "Our urban program locations" },
+      { title: "Regional Area Program Offices", href: "/where-we-work/regional-offices", description: "Our presence across different regions" },
     ],
   },
   {
@@ -46,12 +46,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     title: "Resources",
-    href: "/resources",
-    items: [
-      { title: "Reports and Reviews", href: "/reports", description: "Our published findings and evaluations" },
-      { title: "FSCE Publications", href: "/publications", description: "Official documents and literature" },
-      { title: "Case Stories", href: "/case-stories", description: "Real-life impact stories" },
-    ],
+    href: "/resources"
   },
   {
     title: "Contact Us",

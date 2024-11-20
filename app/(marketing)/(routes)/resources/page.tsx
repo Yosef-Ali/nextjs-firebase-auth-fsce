@@ -1,185 +1,114 @@
 'use client';
 
-import { Metadata } from 'next';
-import { Suspense, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
 import { resourcesService } from '@/app/services/resources';
-import { ResourceCard } from './_components/resource-card';
-import { ResourceStats } from './_components/resource-stats';
-import { ResourcesGrid } from './_components/resources-grid';
-import { ResourceUploader } from '@/components/resource-uploader';
-import { useAuth } from '@/app/hooks/useAuth';
+import { Resource } from '@/app/types/post';
 import { toast } from '@/hooks/use-toast';
-
-export const metadata: Metadata = {
-  title: 'Resources | FSCE',
-  description: 'Access publications, reports, toolkits, and research materials from FSCE.',
-};
+import { ResourceGrid } from '@/app/(marketing)/_components/resources/resource-grid';
 
 export default function ResourcesPage() {
-  const { user } = useAuth();
-  const [showUploader, setShowUploader] = useState(false);
   const [resources, setResources] = useState<Resource[]>([]);
-  const [stats, setStats] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState('publications');
+  const [activeTab, setActiveTab] = useState('all');
+  const [isLoading, setIsLoading] = useState(true);
 
-  const loadResources = async () => {
+  useEffect(() => {
+    loadResources();
+  }, []);
+
+  const loadResources = async (category?: string) => {
     try {
-      const [allResources, stats] = await Promise.all([
-        resourcesService.getPublishedResources(),
-        resourcesService.getResourceStatistics(),
-      ]);
+      setIsLoading(true);
+      const allResources = await resourcesService.getAllResources(category);
       setResources(allResources);
-      setStats(stats);
     } catch (error) {
-      console.error('Error loading resources:', error);
+      console.error('Error getting resources:', error);
       toast({
         title: 'Error',
         description: 'Failed to load resources',
         variant: 'destructive',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  useState(() => {
-    loadResources();
-  }, []);
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    loadResources(value === 'all' ? undefined : value);
+  };
 
-  // Split resources by type
-  const publications = resources.filter(resource => resource.type === 'publication');
-  const reports = resources.filter(resource => resource.type === 'report');
-  const toolkits = resources.filter(resource => resource.type === 'toolkit');
-  const research = resources.filter(resource => resource.type === 'research');
+  const handleDownload = async (resource: Resource) => {
+    try {
+      await resourcesService.incrementDownloadCount(resource.id);
+      window.open(resource.fileUrl, '_blank');
+    } catch (error) {
+      console.error('Error downloading resource:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to download resource',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
+    <div className="container mx-auto py-24 space-y-8">
       <div className="flex justify-between items-center">
-        <div className="text-center space-y-4">
+        <div className="space-y-4">
           <h1 className="text-4xl font-bold">Resources</h1>
           <p className="text-muted-foreground max-w-2xl">
-            Access our comprehensive collection of publications, reports, toolkits, and research materials
+            Access our comprehensive collection of publications, reports, and media resources
             to learn more about child protection and our work.
           </p>
         </div>
-        {user && (
-          <div className="flex gap-4">
-            <Button
-              onClick={() => setShowUploader(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add Resource
-            </Button>
-            <Button
-              onClick={() => setShowUploader(true)}
-              className="flex items-center gap-2"
-              variant="outline"
-            >
-              <Plus className="h-4 w-4" />
-              Add Resource
-            </Button>
-          </div>
-        )}
       </div>
 
-      {showUploader && (
-        <div className="mb-8 p-6 border rounded-lg bg-gray-50">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-semibold">Add New Resource</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowUploader(false)}
-            >
-              Cancel
-            </Button>
-          </div>
-          <ResourceUploader
-            onChange={async (data) => {
-              try {
-                await resourcesService.createResource({
-                  title: data.title,
-                  description: data.description,
-                  type: activeTab === 'publications' ? 'publication' : activeTab.slice(0, -1) as ResourceType,
-                  fileUrl: data.url,
-                  published: true,
-                  publishedDate: Date.now(),
-                  slug: resourcesService.createSlug(data.title),
-                  downloadCount: 0,
-                });
-                await loadResources();
-                setShowUploader(false);
-                toast({
-                  title: 'Success',
-                  description: 'Resource added successfully',
-                });
-              } catch (error) {
-                console.error('Error creating resource:', error);
-                toast({
-                  title: 'Error',
-                  description: 'Failed to create resource',
-                  variant: 'destructive',
-                });
-              }
-            }}
-            onRemove={() => setShowUploader(false)}
-            value=""
-          />
-        </div>
-      )}
-
-      <ResourceStats stats={stats} />
-
-      <Tabs defaultValue="publications" className="w-full" onValueChange={setActiveTab}>
-        <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4">
-          <TabsTrigger value="publications">Publications</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
-          <TabsTrigger value="toolkits">Toolkits</TabsTrigger>
-          <TabsTrigger value="research">Research</TabsTrigger>
+      <Tabs defaultValue="all" value={activeTab} onValueChange={handleTabChange}>
+        <TabsList>
+          <TabsTrigger value="all">All Resources</TabsTrigger>
+          <TabsTrigger value="report">Reports</TabsTrigger>
+          <TabsTrigger value="publication">Publications</TabsTrigger>
+          <TabsTrigger value="media">Media</TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="publications">
-          <Suspense fallback={<div>Loading publications...</div>}>
-            <ResourcesGrid>
-              {publications.map((resource) => (
-                <ResourceCard key={resource.id} resource={resource} />
-              ))}
-            </ResourcesGrid>
-          </Suspense>
+
+        <TabsContent value="all" className="mt-6">
+          {isLoading ? (
+            <div className="flex justify-center items-center min-h-[200px]">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+            </div>
+          ) : (
+            <ResourceGrid resources={resources} onDownload={handleDownload} />
+          )}
         </TabsContent>
-        
-        <TabsContent value="reports">
-          <Suspense fallback={<div>Loading reports...</div>}>
-            <ResourcesGrid>
-              {reports.map((resource) => (
-                <ResourceCard key={resource.id} resource={resource} />
-              ))}
-            </ResourcesGrid>
-          </Suspense>
+        <TabsContent value="report" className="mt-6">
+          {isLoading ? (
+            <div className="flex justify-center items-center min-h-[200px]">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+            </div>
+          ) : (
+            <ResourceGrid resources={resources} onDownload={handleDownload} />
+          )}
         </TabsContent>
-        
-        <TabsContent value="toolkits">
-          <Suspense fallback={<div>Loading toolkits...</div>}>
-            <ResourcesGrid>
-              {toolkits.map((resource) => (
-                <ResourceCard key={resource.id} resource={resource} />
-              ))}
-            </ResourcesGrid>
-          </Suspense>
+        <TabsContent value="publication" className="mt-6">
+          {isLoading ? (
+            <div className="flex justify-center items-center min-h-[200px]">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+            </div>
+          ) : (
+            <ResourceGrid resources={resources} onDownload={handleDownload} />
+          )}
         </TabsContent>
-        
-        <TabsContent value="research">
-          <Suspense fallback={<div>Loading research...</div>}>
-            <ResourcesGrid>
-              {research.map((resource) => (
-                <ResourceCard key={resource.id} resource={resource} />
-              ))}
-            </ResourcesGrid>
-          </Suspense>
+        <TabsContent value="media" className="mt-6">
+          {isLoading ? (
+            <div className="flex justify-center items-center min-h-[200px]">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+            </div>
+          ) : (
+            <ResourceGrid resources={resources} onDownload={handleDownload} />
+          )}
         </TabsContent>
       </Tabs>
-    </div>
-  );
+   </div>
+  )
 }

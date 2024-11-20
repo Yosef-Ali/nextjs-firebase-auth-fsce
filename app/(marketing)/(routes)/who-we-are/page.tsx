@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react';
 import { whoWeAreService } from '@/app/services/who-we-are';
 import { AboutContent } from '@/app/types/about';
 import CarouselSection from '@/components/carousel';
-import MapComponent from '@/components/ethiopian-map';
+
 import VisionMissionGoals from '@/components/VisionMissionGoals';
 import GoodGovernance from '@/components/good-governance';
 import Partners from '@/components/partners';
+import MapComponent from '@/components/ethiopian-map';
 import FSCESkeleton from '@/components/FSCESkeleton';
+
 
 export default function WhoWeArePage() {
   const [aboutData, setAboutData] = useState<AboutContent[]>([]);

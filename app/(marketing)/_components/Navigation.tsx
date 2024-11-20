@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/app/hooks/useAuth";
 import {
   NavigationMenu,
@@ -13,6 +14,8 @@ import {
   navigationMenuTriggerStyle,
 } from "@/app/(marketing)/navigation-menu";
 import { menuItems } from '@/app/lib/menuItems';
+import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 const ListItem = React.forwardRef<
   React.ElementRef<"a">,
@@ -23,7 +26,7 @@ const ListItem = React.forwardRef<
       <NavigationMenuLink asChild>
         <a
           ref={ref}
-          className={`block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground ${className}`}
+          className={`block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-blue-50/80 hover:text-primary ${className}`}
           {...props}
         >
           <div className="text-sm font-medium leading-none">{title}</div>
@@ -39,15 +42,36 @@ ListItem.displayName = "ListItem";
 
 export default function Navigation() {
   const { user, logout } = useAuth();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <div className="w-full border-b bg-white">
+    <div className={cn(
+      "fixed top-0 w-full z-50 transition-all duration-300 bg-white/75 border-b",
+      isScrolled 
+        ? "backdrop-blur-md shadow-sm" 
+        : ""
+    )}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center">
           {/* Logo - Fixed width on the left */}
           <div className="w-48">
             <Link href="/" className="flex items-center space-x-2">
-              <span className="text-xl font-bold">FSCE</span>
+              <Image 
+                src="/Logo.svg" 
+                alt="FSCE Logo" 
+                width={80} 
+                height={80}
+                className="object-contain"
+              />
             </Link>
           </div>
 
@@ -61,7 +85,7 @@ export default function Navigation() {
                       <>
                         <NavigationMenuTrigger className="px-3">{item.title}</NavigationMenuTrigger>
                         <NavigationMenuContent>
-                          <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                          <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] bg-white shadow-lg rounded-lg">
                             {item.items.map((subItem) => (
                               <ListItem
                                 key={subItem.title}
@@ -76,7 +100,7 @@ export default function Navigation() {
                       </>
                     ) : (
                       <Link href={item.href ?? ''} legacyBehavior passHref>
-                        <NavigationMenuLink className={`${navigationMenuTriggerStyle()} px-3`}>
+                        <NavigationMenuLink className={`${navigationMenuTriggerStyle()} px-3 bg-transparent hover:bg-transparent hover:text-primary`}>
                           {item.title}
                         </NavigationMenuLink>
                       </Link>
@@ -92,12 +116,12 @@ export default function Navigation() {
             {user ? (
               <button
                 onClick={logout}
-                className={navigationMenuTriggerStyle()}
+                className={`${navigationMenuTriggerStyle()} bg-transparent hover:bg-transparent hover:text-primary`}
               >
                 Sign Out
               </button>
             ) : (
-              <Link href="/sign-in" className={navigationMenuTriggerStyle()}>
+              <Link href="/sign-in" className={`${navigationMenuTriggerStyle()} bg-transparent hover:bg-transparent hover:text-primary`}>
                 Login
               </Link>
             )}

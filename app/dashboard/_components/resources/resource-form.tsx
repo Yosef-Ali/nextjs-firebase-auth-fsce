@@ -14,8 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { ResourceUploader } from "@/app/components/resource-uploader";
-import { ImageUpload } from "@/app/components/image-upload";
+import { ResourceUploader } from "@/components/resource-uploader";
+import { ImageUpload } from "@/components/image-upload";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),

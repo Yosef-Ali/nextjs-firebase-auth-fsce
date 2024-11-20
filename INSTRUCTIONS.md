@@ -9,6 +9,7 @@ This document provides instructions for setting up, developing, and deploying th
 - [Development](#development)
 - [Firebase Setup](#firebase-setup)
 - [Project Structure](#project-structure)
+- [URL Structure](#url-structure)
 - [Available Scripts](#available-scripts)
 - [Common Tasks](#common-tasks)
 - [UI Components (shadcn/ui)](#ui-components-shadcnui)
@@ -98,18 +99,57 @@ service cloud.firestore {
 ```
 nextjs-firebase-auth-app/
 ├── app/
-│   ├── (marketing)/        # Public pages
-│   ├── dashboard/          # Protected dashboard pages
-│   ├── api/               # API routes
-│   ├── components/        # Shared components
-│   ├── hooks/            # Custom hooks
-│   ├── lib/              # Utility functions
-│   ├── services/         # Firebase services
-│   └── types/            # TypeScript types
-├── components/           # UI components
-├── public/              # Static files
+│   ├── (auth)/            # Authentication routes
+│   │   └── (routes)/
+│   │       ├── sign-in/   # Sign in page
+│   │       └── sign-up/   # Sign up page
+│   ├── (dashboard)/       # Protected dashboard routes
+│   │   └── (routes)/
+│   │       ├── posts/     # Posts management
+│   │       └── settings/  # User settings
+│   └── (marketing)/       # Public pages
+│       └── (routes)/
+│           ├── what-we-do/             # What We Do section
+│           │   ├── [category]/         # Dynamic category pages
+│           │   │   └── [slug]/         # Dynamic program pages
+│           │   └── page.tsx            # Main What We Do page
+│           ├── where-we-work/          # Where We Work section
+│           │   ├── [region]/           # Dynamic region pages
+│           │   │   └── [slug]/         # Dynamic office pages
+│           │   └── page.tsx            # Main Where We Work page
+│           └── who-we-are/             # Who We Are section
+│               ├── [section]/          # Dynamic section pages
+│               │   └── [slug]/         # Dynamic content pages
+│               └── page.tsx            # Main Who We Are page
+├── components/            # Reusable components
+├── lib/                  # Utility functions and configurations
+├── public/              # Static assets
 └── styles/             # Global styles
 ```
+
+### URL Structure
+
+The application follows a consistent URL structure for all sections:
+
+1. What We Do Section:
+   - Main page: `/what-we-do`
+   - Category page: `/what-we-do/[category]` (e.g., `/what-we-do/prevention-promotion`)
+   - Program page: `/what-we-do/[category]/[slug]` (e.g., `/what-we-do/prevention-promotion/early-childhood-education`)
+
+2. Where We Work Section:
+   - Main page: `/where-we-work`
+   - Region page: `/where-we-work/[region]` (e.g., `/where-we-work/addis-ababa`)
+   - Office page: `/where-we-work/[region]/[slug]` (e.g., `/where-we-work/addis-ababa/head-office`)
+
+3. Who We Are Section:
+   - Main page: `/who-we-are`
+   - Section page: `/who-we-are/[section]` (e.g., `/who-we-are/partners`)
+   - Content page: `/who-we-are/[section]/[slug]` (e.g., `/who-we-are/partners/unicef`)
+
+This consistent structure makes the application:
+- Easy to navigate
+- SEO-friendly
+- Maintainable and scalable
 
 ## Available Scripts
 
