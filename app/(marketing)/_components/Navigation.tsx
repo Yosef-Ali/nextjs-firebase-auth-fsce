@@ -69,8 +69,9 @@ export default function Navigation() {
                 src="/Logo.svg" 
                 alt="FSCE Logo" 
                 width={80} 
-                height={80}
-                className="object-contain"
+                height={32}
+                priority
+                className="object-contain w-auto h-8"
               />
             </Link>
           </div>

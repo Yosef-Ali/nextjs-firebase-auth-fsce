@@ -2,15 +2,15 @@ import { db } from '@/app/firebase';
 import { collection, getDocs, query, where, limit } from 'firebase/firestore';
 import { Post } from '@/app/types/post';
 
-class NewsService {
+class ProgramsService {
   private collectionName = 'posts';
 
-  async getLatestNews(count: number = 5): Promise<Post[]> {
+  async getLatestPrograms(count: number = 5): Promise<Post[]> {
     try {
       // Simple query without ordering
       const q = query(
         collection(db, this.collectionName),
-        where('category', '==', 'news'),
+        where('category', '==', 'programs'),
         limit(count)
       );
 
@@ -23,25 +23,10 @@ class NewsService {
       // Sort in memory instead
       return posts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     } catch (error) {
-      console.error('Error getting news:', error);
-      return [];
-    }
-  }
-
-  async getAllPosts(): Promise<Post[]> {
-    try {
-      const querySnapshot = await getDocs(collection(db, this.collectionName));
-      const posts = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Post));
-
-      return posts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    } catch (error) {
-      console.error('Error getting all posts:', error);
+      console.error('Error getting programs:', error);
       return [];
     }
   }
 }
 
-export const newsService = new NewsService();
+export const programsService = new ProgramsService();

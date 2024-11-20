@@ -1,5 +1,5 @@
 import { db } from '@/app/firebase';
-import { collection, doc, getDoc, getDocs, query, where, orderBy, Timestamp, addDoc, updateDoc, deleteDoc, limit } from 'firebase/firestore';
+import { collection, getDocs, query, where, limit } from 'firebase/firestore';
 import { Post } from '@/app/types/post';
 
 // Helper function to generate slug from title
@@ -15,38 +15,24 @@ class EventsService {
 
   async getAllEvents(includeUnpublished = false, includePastEvents = false): Promise<Post[]> {
     try {
-      let constraints = [
-        where('category', '==', 'events')
-      ];
-
-      if (!includeUnpublished) {
-        constraints.push(where('published', '==', true));
-      }
-
-      if (!includePastEvents) {
-        constraints.push(where('date', '>=', new Date().toISOString().split('T')[0]));
-      }
-
+      // Simple query without ordering
       const q = query(
         collection(db, this.collectionName),
-        ...constraints,
-        orderBy('date', 'asc') // Upcoming events first
+        where('category', '==', 'events'),
+        limit(5)
       );
 
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
+      const posts = querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt instanceof Timestamp 
-          ? doc.data().createdAt.toMillis() 
-          : Date.now(),
-        updatedAt: doc.data().updatedAt instanceof Timestamp 
-          ? doc.data().updatedAt.toMillis() 
-          : Date.now(),
-      })) as Post[];
+        ...doc.data()
+      } as Post));
+
+      // Sort in memory instead
+      return posts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     } catch (error) {
       console.error('Error getting events:', error);
-      throw error;
+      return [];
     }
   }
 

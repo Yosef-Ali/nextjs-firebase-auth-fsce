@@ -10,6 +10,7 @@ import GoodGovernance from '@/components/good-governance';
 import Partners from '@/components/partners';
 import MapComponent from '@/components/ethiopian-map';
 import FSCESkeleton from '@/components/FSCESkeleton';
+import FeaturedSection from '@/components/featured-section';
 
 
 export default function WhoWeArePage() {
@@ -54,6 +55,7 @@ export default function WhoWeArePage() {
       <CarouselSection />
       <VisionMissionGoals aboutData={aboutData} />
       <GoodGovernance aboutData={aboutData} />
+      <FeaturedSection />
       <MapComponent />
       <Partners />
     </div>

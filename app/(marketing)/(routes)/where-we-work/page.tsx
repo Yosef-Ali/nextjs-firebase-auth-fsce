@@ -7,7 +7,6 @@ import EthiopianMap from './_components/EthiopianMap';
 import { Building2, MapPin } from 'lucide-react';
 import CarouselSection from "@/components/carousel";
 import LocationsGrid from './_components/LocationsGrid';
-import LocationsMap from './_components/locations-map';
 
 const locations = [
   {

@@ -27,7 +27,7 @@ const RegionPath: React.FC<RegionPathProps> = ({
   return (
     <motion.svg role="img" initial={initial} animate={animate} variants={variants} custom={custom}>
       <motion.path
-        {...region}
+        d={region.d}
         fill={hoveredRegion === region ? region.hoverFillColor : region.fillColor}
         stroke={region.strokeColor}
         strokeWidth={region.strokeWidth}
