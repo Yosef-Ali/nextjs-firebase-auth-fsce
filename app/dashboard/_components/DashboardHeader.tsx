@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { 
   Bell, 
   Search, 
@@ -21,18 +21,43 @@ import {
   Menu,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useSidebar } from '@/app/context/sidebar-context';
+import { useSearch } from '@/app/context/search-context';
+import debounce from 'lodash/debounce';
 
 const DashboardHeader = () => {
   const { user, signOut } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
   const { isCollapsed, toggleSidebar } = useSidebar();
+  const { searchQuery, setSearchQuery } = useSearch();
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
   const [notifications] = useState([
     { id: 1, text: 'New comment on your post', time: '5m ago' },
     { id: 2, text: 'Your post is trending', time: '1h ago' },
     { id: 3, text: 'Weekly analytics report', time: '1d ago' },
   ]);
+
+  // Debounce the search query update
+  const debouncedSetSearchQuery = useCallback(
+    debounce((query: string) => {
+      setSearchQuery(query);
+    }, 300),
+    [setSearchQuery]
+  );
+
+  // Handle local search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setLocalSearchQuery(query);
+    debouncedSetSearchQuery(query);
+  };
+
+  // Update local search when global search changes
+  useEffect(() => {
+    setLocalSearchQuery(searchQuery);
+  }, [searchQuery]);
 
   const getPageTitle = () => {
     const path = pathname.split('/').pop();
@@ -54,16 +79,20 @@ const DashboardHeader = () => {
             <span className="sr-only">Toggle sidebar</span>
           </Button>
           <h2 className="text-2xl font-semibold">{getPageTitle()}</h2>
-          <div className="max-w-md flex items-center">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-              <Input
-                type="search"
-                placeholder="Search..."
-                className="pl-9 w-[300px] bg-gray-50 border-gray-200 focus:bg-white"
-              />
+          {pathname.includes('/dashboard/posts') && (
+            <div className="max-w-md flex items-center">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                <Input
+                  type="search"
+                  placeholder="Search posts..."
+                  className="pl-9 w-[300px] bg-gray-50 border-gray-200 focus:bg-white"
+                  value={localSearchQuery}
+                  onChange={handleSearchChange}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="flex items-center gap-4">

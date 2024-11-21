@@ -1,7 +1,7 @@
 export interface AboutContent {
   id: string;
   title: string;
-  content: any[] | any;
+  content: string;
   section: string;
   published: boolean;
   coverImage?: string;
@@ -10,6 +10,9 @@ export interface AboutContent {
   updatedAt: number;
   category: string;
   excerpt?: string;
+  authorId: string;
+  authorEmail: string;
+  slug: string;
 }
 
 export interface VisionMissionGoal {

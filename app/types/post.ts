@@ -11,6 +11,7 @@ export interface Post {
   content: string;
   excerpt?: string;
   category: string;
+  section?: string;  
   slug: string;
   coverImage?: string;
   images?: string[];

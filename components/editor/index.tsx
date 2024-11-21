@@ -3,9 +3,15 @@
 import { Color } from '@tiptap/extension-color';
 import ListItem from '@tiptap/extension-list-item';
 import TextStyle from '@tiptap/extension-text-style';
-import { EditorContent, useEditor } from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import React from 'react';
+import Highlight from '@tiptap/extension-highlight';
+import Typography from '@tiptap/extension-typography';
+import Table from '@tiptap/extension-table';
+import TableRow from '@tiptap/extension-table-row';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -25,158 +31,260 @@ import {
   Pilcrow,
   CodeSquare,
   Minus,
+  Sparkles,
+  Bot,
+  Check,
+  Wand2,
+  Maximize2,
+  Minimize2,
+  Copy,
+  Table as TableIcon,
 } from 'lucide-react';
+import { Separator } from '../ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { aiService } from '@/app/services/ai';
+import { toast } from '@/hooks/use-toast';
+import { MarkdownPreview } from './markdown-preview';
 
-const MenuBar = ({ editor }: { editor: any }) => {
+interface MenuBarProps {
+  editor: any;
+  isFullscreen: boolean;
+  isPreview: boolean;
+  onToggleFullscreen: () => void;
+  onTogglePreview: () => void;
+  onCopyToClipboard: () => void;
+}
+
+const MenuBar = ({
+  editor,
+  isFullscreen,
+  isPreview,
+  onToggleFullscreen,
+  onTogglePreview,
+  onCopyToClipboard,
+}: MenuBarProps) => {
   if (!editor) {
     return null;
   }
 
+  const onClickHandler = (e: React.MouseEvent, callback: () => boolean) => {
+    e.preventDefault();
+    callback();
+  };
+
+  const handleAIAction = async (action: string) => {
+    if (!editor) return;
+
+    // Get the selected text from the editor
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to, ' ');
+    
+    if (!selectedText.trim()) {
+      toast({
+        title: "No text selected",
+        description: "Please select some text to apply AI improvements.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      let result = '';
+      switch(action) {
+        case 'enhance':
+          result = await aiService.enhanceContent(selectedText);
+          break;
+        case 'fix':
+          result = await aiService.fixSpellingAndGrammar(selectedText);
+          break;
+        case 'format':
+          result = await aiService.improveFormatting(selectedText);
+          break;
+      }
+
+      if (result) {
+        // The result already contains HTML tags for formatting
+        // We just need to ensure it's wrapped in a paragraph if it isn't already
+        const formattedContent = result.startsWith('<p>') ? result : `<p>${result}</p>`;
+        
+        // Replace the selected text with the AI-improved version
+        editor
+          .chain()
+          .focus()
+          .deleteRange({ from, to })
+          .insertContent(formattedContent)
+          .run();
+        
+        toast({
+          title: "Success",
+          description: "Text has been improved with formatting!",
+        });
+      }
+    } catch (error) {
+      console.error('Error processing text:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process the text. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const insertTable = () => {
+    editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+  };
+
   return (
-    <div className="border border-input bg-transparent rounded-t-md">
-      <div className="flex flex-wrap gap-1 p-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          disabled={!editor.can().chain().focus().toggleBold().run()}
-          className={cn("h-8 w-8", editor.isActive('bold') && "bg-muted")}
-        >
-          <Bold className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          disabled={!editor.can().chain().focus().toggleItalic().run()}
-          className={cn("h-8 w-8", editor.isActive('italic') && "bg-muted")}
-        >
-          <Italic className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => editor.chain().focus().toggleStrike().run()}
-          disabled={!editor.can().chain().focus().toggleStrike().run()}
-          className={cn("h-8 w-8", editor.isActive('strike') && "bg-muted")}
-        >
-          <Strikethrough className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => editor.chain().focus().toggleCode().run()}
-          disabled={!editor.can().chain().focus().toggleCode().run()}
-          className={cn("h-8 w-8", editor.isActive('code') && "bg-muted")}
-        >
-          <Code className="h-4 w-4" />
-        </Button>
+    <div className="flex items-center justify-between px-3 py-2 border-b">
+      {/* Left side of toolbar */}
+      <div className="flex items-center gap-1">
+        {/* Text formatting buttons */}
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={(e) => onClickHandler(e, () => editor.chain().focus().toggleBold().run())}
+            disabled={!editor.can().chain().focus().toggleBold().run()}
+            className={cn("h-8 w-8", editor.isActive('bold') && "bg-muted")}
+          >
+            <Bold className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={(e) => onClickHandler(e, () => editor.chain().focus().toggleItalic().run())}
+            disabled={!editor.can().chain().focus().toggleItalic().run()}
+            className={cn("h-8 w-8", editor.isActive('italic') && "bg-muted")}
+          >
+            <Italic className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={(e) => onClickHandler(e, () => editor.chain().focus().toggleStrike().run())}
+            disabled={!editor.can().chain().focus().toggleStrike().run()}
+            className={cn("h-8 w-8", editor.isActive('strike') && "bg-muted")}
+          >
+            <Strikethrough className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={(e) => onClickHandler(e, () => editor.chain().focus().toggleCode().run())}
+            disabled={!editor.can().chain().focus().toggleCode().run()}
+            className={cn("h-8 w-8", editor.isActive('code') && "bg-muted")}
+          >
+            <Code className="h-4 w-4" />
+          </Button>
+        </div>
 
-        <div className="w-px h-8 bg-border mx-1" />
+        <Separator orientation="vertical" className="h-6" />
+
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={(e) => onClickHandler(e, () => editor.chain().focus().toggleHeading({ level: 1 }).run())}
+            className={cn("h-8 w-8", editor.isActive('heading', { level: 1 }) && "bg-muted")}
+          >
+            <Heading1 className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={(e) => onClickHandler(e, () => editor.chain().focus().toggleHeading({ level: 2 }).run())}
+            className={cn("h-8 w-8", editor.isActive('heading', { level: 2 }) && "bg-muted")}
+          >
+            <Heading2 className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={(e) => onClickHandler(e, () => editor.chain().focus().toggleHeading({ level: 3 }).run())}
+            className={cn("h-8 w-8", editor.isActive('heading', { level: 3 }) && "bg-muted")}
+          >
+            <Heading3 className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <Separator orientation="vertical" className="h-6" />
 
         <Button
+          type="button"
           variant="ghost"
           size="icon"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={cn("h-8 w-8", editor.isActive('heading', { level: 1 }) && "bg-muted")}
-        >
-          <Heading1 className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={cn("h-8 w-8", editor.isActive('heading', { level: 2 }) && "bg-muted")}
-        >
-          <Heading2 className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          className={cn("h-8 w-8", editor.isActive('heading', { level: 3 }) && "bg-muted")}
-        >
-          <Heading3 className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => editor.chain().focus().setParagraph().run()}
-          className={cn("h-8 w-8", editor.isActive('paragraph') && "bg-muted")}
-        >
-          <Pilcrow className="h-4 w-4" />
-        </Button>
-
-        <div className="w-px h-8 bg-border mx-1" />
-
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={cn("h-8 w-8", editor.isActive('bulletList') && "bg-muted")}
-        >
-          <List className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={cn("h-8 w-8", editor.isActive('orderedList') && "bg-muted")}
-        >
-          <ListOrdered className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          className={cn("h-8 w-8", editor.isActive('codeBlock') && "bg-muted")}
-        >
-          <CodeSquare className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={cn("h-8 w-8", editor.isActive('blockquote') && "bg-muted")}
-        >
-          <Quote className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => editor.chain().focus().setHorizontalRule().run()}
+          onClick={insertTable}
           className="h-8 w-8"
         >
-          <Minus className="h-4 w-4" />
+          <TableIcon className="h-4 w-4" />
         </Button>
 
-        <div className="w-px h-8 bg-border mx-1" />
+        <Separator orientation="vertical" className="h-6" />
 
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Sparkles className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => handleAIAction("enhance")}>
+              Enhance Content
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleAIAction("fix")}>
+              Fix Spelling & Grammar
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleAIAction("format")}>
+              Improve Formatting
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Right side of toolbar */}
+      <div className="flex items-center gap-1">
         <Button
+          type="button"
           variant="ghost"
           size="icon"
-          onClick={() => editor.chain().focus().undo().run()}
-          disabled={!editor.can().chain().focus().undo().run()}
+          onClick={onCopyToClipboard}
           className="h-8 w-8"
         >
-          <Undo className="h-4 w-4" />
+          <Copy className="h-4 w-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="icon"
-          onClick={() => editor.chain().focus().redo().run()}
-          disabled={!editor.can().chain().focus().redo().run()}
+          onClick={onToggleFullscreen}
           className="h-8 w-8"
         >
-          <Redo className="h-4 w-4" />
+          {isFullscreen ? (
+            <Minimize2 className="h-4 w-4" />
+          ) : (
+            <Maximize2 className="h-4 w-4" />
+          )}
         </Button>
         <Button
+          type="button"
           variant="ghost"
-          size="icon"
-          onClick={() => editor.chain().focus().clearNodes().run()}
-          className="h-8 w-8"
+          size="sm"
+          onClick={onTogglePreview}
+          className={cn(isPreview && "bg-muted")}
         >
-          <RotateCcw className="h-4 w-4" />
+          Preview
         </Button>
       </div>
     </div>
@@ -184,8 +292,16 @@ const MenuBar = ({ editor }: { editor: any }) => {
 };
 
 const extensions = [
-  Color.configure({ types: [TextStyle.name, ListItem.name] }),
-  TextStyle.configure({ types: [ListItem.name] }),
+  Color,
+  TextStyle,
+  Highlight,
+  Typography,
+  Table.configure({
+    resizable: true,
+  }),
+  TableRow,
+  TableHeader,
+  TableCell,
   StarterKit.configure({
     bulletList: {
       keepMarks: true,
@@ -194,6 +310,26 @@ const extensions = [
     orderedList: {
       keepMarks: true,
       keepAttributes: false,
+    },
+    bold: {
+      HTMLAttributes: {
+        class: 'font-bold text-foreground',
+      },
+    },
+    paragraph: {
+      HTMLAttributes: {
+        class: 'text-base leading-7 my-4',
+      },
+    },
+    listItem: {
+      HTMLAttributes: {
+        class: 'ml-4 my-1',
+      },
+    },
+    heading: {
+      HTMLAttributes: {
+        class: 'font-bold text-foreground tracking-tight mb-2',
+      },
     },
   }),
 ];
@@ -204,23 +340,122 @@ interface EditorProps {
 }
 
 export function Editor({ value, onChange }: EditorProps) {
+  const [isPreview, setIsPreview] = React.useState(false);
+  const [isFullscreen, setIsFullscreen] = React.useState(false);
+  const [editorContent, setEditorContent] = React.useState(value);
+
+  const copyToClipboard = async () => {
+    if (editor) {
+      const content = editor.getHTML();
+      await navigator.clipboard.writeText(content);
+      toast({
+        title: "Copied!",
+        description: "Content copied to clipboard",
+      });
+    }
+  };
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
   const editor = useEditor({
-    extensions,
+    extensions: [
+      Color,
+      TextStyle,
+      Highlight,
+      Typography,
+      Table.configure({
+        resizable: true,
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
+      StarterKit.configure({
+        bulletList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+        orderedList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+      }),
+    ],
     content: value,
     editorProps: {
       attributes: {
-        class: 'min-h-[150px] w-full rounded-b-md border border-t-0 border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+        class: 'min-h-[350px] w-full rounded-md outline-none',
+      },
+      handleKeyDown: (view, event) => {
+        // Command/Ctrl + / for quick formatting help
+        if (event.key === '/' && (event.metaKey || event.ctrlKey)) {
+          toast({
+            title: "Keyboard Shortcuts",
+            description: `
+              Ctrl/⌘ + B: Bold
+              Ctrl/⌘ + I: Italic
+              Ctrl/⌘ + U: Underline
+              Ctrl/⌘ + Shift + 1: Heading 1
+              Ctrl/⌘ + Shift + 2: Heading 2
+              Ctrl/⌘ + Shift + 3: Heading 3
+              Ctrl/⌘ + K: Copy to Clipboard
+              Ctrl/⌘ + F: Toggle Fullscreen
+            `,
+          });
+          return true;
+        }
+        // Command/Ctrl + K to copy
+        if (event.key === 'k' && (event.metaKey || event.ctrlKey)) {
+          copyToClipboard();
+          return true;
+        }
+        // Command/Ctrl + F to toggle fullscreen
+        if (event.key === 'f' && (event.metaKey || event.ctrlKey)) {
+          event.preventDefault();
+          toggleFullscreen();
+          return true;
+        }
+        return false;
       },
     },
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      const newContent = editor.getHTML();
+      setEditorContent(newContent);
+      onChange(newContent);
     },
   });
 
   return (
-    <div className="relative">
-      <MenuBar editor={editor} />
-      <EditorContent editor={editor} />
+    <div className={cn(
+      "border border-input bg-background rounded-md transition-all duration-200",
+      isFullscreen && "fixed inset-0 z-50 m-0 rounded-none"
+    )}>
+      <MenuBar 
+        editor={editor} 
+        isFullscreen={isFullscreen}
+        isPreview={isPreview}
+        onToggleFullscreen={toggleFullscreen}
+        onTogglePreview={() => setIsPreview(!isPreview)}
+        onCopyToClipboard={copyToClipboard}
+      />
+      <div className={cn(
+        "relative",
+        isFullscreen && "h-[calc(100vh-4rem)] overflow-auto"
+      )}>
+        <div className={cn(
+          "w-full p-4 transition-opacity duration-200",
+          isPreview ? "opacity-0 pointer-events-none" : "opacity-100"
+        )}>
+          <EditorContent editor={editor} />
+        </div>
+        <div className={cn(
+          "w-full p-4 absolute top-0 left-0 transition-opacity duration-200",
+          isPreview ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}>
+          <MarkdownPreview content={editorContent} />
+        </div>
+      </div>
     </div>
   );
 }

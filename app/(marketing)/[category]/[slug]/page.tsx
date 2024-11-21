@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { marketingService } from '../../services/firebase/marketing';
+import { marketingService } from '@/app/services/firebase/marketing';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ContentPageProps {

@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import DashboardAside from './_components/DashboardAside';
 import DashboardHeader from './_components/DashboardHeader';
 import { SidebarProvider, useSidebar } from '@/app/context/sidebar-context';
+import { SearchProvider } from '@/app/context/search-context';
 import { cn } from '@/lib/utils';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -59,9 +60,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <TooltipProvider>
       <SidebarProvider>
-        <DashboardContent>
-          {children}
-        </DashboardContent>
+        <SearchProvider>
+          <DashboardContent>
+            {children}
+          </DashboardContent>
+        </SearchProvider>
       </SidebarProvider>
     </TooltipProvider>
   );

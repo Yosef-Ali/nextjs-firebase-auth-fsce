@@ -46,6 +46,7 @@ const formSchema = z.object({
   images: z.array(z.string().url()).optional(),
   published: z.boolean().default(false),
   category: z.string().min(1, 'Category is required'),
+  section: z.string().optional(),
 });
 
 type PostFormData = z.infer<typeof formSchema>;
@@ -70,6 +71,7 @@ export function PostEditor({ post }: PostEditorProps) {
       images: post?.images || [],
       published: post?.published || false,
       category: post?.category || '',
+      section: post?.section || '',
     },
   });
 
@@ -179,35 +181,52 @@ export function PostEditor({ post }: PostEditorProps) {
                 )}
               />
 
-              <Tabs defaultValue="write" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="write">Write</TabsTrigger>
-                  <TabsTrigger value="preview">Preview</TabsTrigger>
-                </TabsList>
-                <TabsContent value="write" className="mt-4">
-                  <FormField
-                    control={form.control}
-                    name="content"
-                    render={({ field }) => (
-                      <FormItem className="space-y-0">
+              {form.watch('category') === 'about' && (
+                <FormField
+                  control={form.control}
+                  name="section"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Section</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
-                          <div className="min-h-[400px] max-h-[600px] overflow-y-auto border rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                            <Editor {...field} />
-                          </div>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a section" />
+                          </SelectTrigger>
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </TabsContent>
-                <TabsContent value="preview" className="mt-4">
-                  <div className="min-h-[400px] max-h-[600px] overflow-y-auto border rounded-md">
-                    <div className="prose prose-sm w-full max-w-none p-6">
-                      <div dangerouslySetInnerHTML={{ __html: form.getValues('content') }} />
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
+                        <SelectContent>
+                          <SelectItem value="vision">Vision</SelectItem>
+                          <SelectItem value="mission">Mission</SelectItem>
+                          <SelectItem value="goals">Goals</SelectItem>
+                          <SelectItem value="governance">Governance</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Select which section this content belongs to
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              <FormField
+                control={form.control}
+                name="content"
+                render={({ field }) => (
+                  <FormItem className="space-y-0">
+                    <FormControl>
+                      <div className="min-h-[400px] overflow-y-auto">
+                        <Editor {...field} />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}

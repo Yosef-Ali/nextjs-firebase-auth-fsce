@@ -1,5 +1,5 @@
 import { db } from '@/app/firebase';
-import { collection, doc, getDoc, getDocs, query, where, orderBy, Timestamp, addDoc, updateDoc, deleteDoc, limit } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where, orderBy, Timestamp, addDoc, updateDoc, deleteDoc, limit, setDoc } from 'firebase/firestore';
 import { Post } from '@/app/types/post';
 
 // Helper function to generate slug from title
@@ -118,30 +118,34 @@ class WhatWeDoService {
     }
   }
 
-  async createProgram(program: Omit<Post, 'id' | 'slug'>): Promise<Post> {
+  // Helper function to generate a unique ID for a program
+  private async generateUniqueId(title: string, category: string): Promise<string> {
+    const baseId = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    
+    const categoryPrefix = category.split('-')[0];
+    const timestamp = Date.now().toString(36);
+    
+    return `${categoryPrefix}-${baseId}-${timestamp}`;
+  }
+
+  async createProgram(data: Omit<Post, 'id'>): Promise<Post> {
     try {
-      // Generate slug from title if not provided
-      const slug = generateSlug(program.title);
-
-      // Check if slug already exists
-      const existingPost = await this.getProgramBySlug(slug);
-      if (existingPost) {
-        throw new Error('A program with this title already exists');
-      }
-
-      const docRef = await addDoc(collection(db, this.collectionName), {
-        ...program,
-        slug,
-        tags: [...(program.tags || []), 'programs'],
+      const uniqueId = await this.generateUniqueId(data.title, data.category);
+      const programData = {
+        ...data,
+        id: uniqueId,
         createdAt: Date.now(),
         updatedAt: Date.now(),
-      });
+        tags: ['programs', ...(data.tags || [])],
+      };
 
-      const doc = await getDoc(docRef);
-      return {
-        id: doc.id,
-        ...doc.data(),
-      } as Post;
+      const docRef = doc(db, this.collectionName, uniqueId);
+      await setDoc(docRef, programData);
+
+      return programData as Post;
     } catch (error) {
       console.error('Error creating program:', error);
       throw error;

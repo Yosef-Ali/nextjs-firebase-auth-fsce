@@ -18,7 +18,7 @@ export default function ResourcesPage() {
     const loadInitialResourcesAndPosts = async () => {
       if (!user) return;
       try {
-        const allResources = await resourcesService.getPublishedResources();
+        const allResources = await resourcesService.getAllResources();
         setResources(allResources);
         const allPosts = await postsService.getPublishedPosts();
         setPosts(allPosts);

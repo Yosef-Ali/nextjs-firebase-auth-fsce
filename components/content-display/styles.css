@@ -1,0 +1,86 @@
+/* Base styles for content display */
+.prose {
+  @apply text-foreground;
+}
+
+/* Headings */
+.prose h1 {
+  @apply text-3xl font-bold mb-4 mt-8;
+}
+
+.prose h2 {
+  @apply text-2xl font-bold mb-3 mt-6;
+}
+
+.prose h3 {
+  @apply text-xl font-bold mb-2 mt-4;
+}
+
+/* Paragraphs and spacing */
+.prose p {
+  @apply mb-4 leading-relaxed;
+}
+
+/* Lists */
+.prose ul {
+  @apply list-disc pl-6 mb-4;
+}
+
+.prose ol {
+  @apply list-decimal pl-6 mb-4;
+}
+
+.prose li {
+  @apply mb-1;
+}
+
+/* Links */
+.prose a {
+  @apply text-primary hover:underline;
+}
+
+/* Blockquotes */
+.prose blockquote {
+  @apply border-l-4 border-muted pl-4 italic my-4;
+}
+
+/* Code blocks */
+.prose pre {
+  @apply bg-muted p-4 rounded-lg overflow-x-auto my-4;
+}
+
+.prose code {
+  @apply bg-muted px-1.5 py-0.5 rounded text-sm;
+}
+
+/* Tables */
+.prose table {
+  @apply w-full border-collapse my-4;
+}
+
+.prose th {
+  @apply bg-muted px-4 py-2 text-left font-bold border border-border;
+}
+
+.prose td {
+  @apply px-4 py-2 border border-border;
+}
+
+/* Images */
+.prose img {
+  @apply max-w-full h-auto rounded-lg my-4;
+}
+
+/* Dark mode adjustments */
+.dark .prose {
+  @apply text-foreground;
+}
+
+.dark .prose a {
+  @apply text-primary-foreground;
+}
+
+.dark .prose code,
+.dark .prose pre {
+  @apply bg-secondary;
+}

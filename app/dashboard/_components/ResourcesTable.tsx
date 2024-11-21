@@ -48,7 +48,7 @@ export function ResourcesTable({ initialResources }: ResourcesTableProps) {
     const loadResources = async () => {
       if (!user) return;
       try {
-        const allResources = await resourcesService.getPublishedResources();
+        const allResources = await resourcesService.getAllResources();
         setResources(allResources);
       } catch (error) {
         console.error('Error loading resources:', error);

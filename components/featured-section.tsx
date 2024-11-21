@@ -4,6 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { motion, useAnimation, Variants } from "framer-motion";
+import { useInView } from "react-intersection-observer";
 
 import { newsService } from '@/app/services/news';
 import { eventsService } from '@/app/services/events';
@@ -20,7 +22,27 @@ interface ContentCardProps {
   category: string;
   date?: string;
   createdAt?: number;
+  index: number;
 }
+
+const cardVariants: Variants = {
+  hidden: { 
+    opacity: 0, 
+    y: 50,
+    transition: {
+      duration: 0.3
+    }
+  },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: i * 0.1,
+      duration: 0.5,
+      ease: "easeOut"
+    }
+  })
+};
 
 const ContentCard: React.FC<ContentCardProps> = ({ 
   title, 
@@ -28,14 +50,11 @@ const ContentCard: React.FC<ContentCardProps> = ({
   image, 
   slug, 
   category,
-  createdAt 
+  createdAt,
+  index 
 }) => {
   const formatDate = (timestamp?: number) => {
-    if (!timestamp) return new Date().toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    if (!timestamp) return '';
     return new Date(timestamp).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -44,58 +63,64 @@ const ContentCard: React.FC<ContentCardProps> = ({
   };
 
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-0">
-        <div className="flex flex-col md:flex-row h-full">
-          <div className="relative w-full md:w-2/5 aspect-[4/3] bg-slate-100">
-            <Image
-              src={image || "/images/placeholder.svg"}
-              alt={title}
-              fill
-              className="object-cover"
-              style={{ objectFit: 'cover' }}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                target.parentElement!.innerHTML = `<div class="absolute inset-0 flex items-center justify-center p-4">
-                  <p class="text-sm text-slate-600 text-center line-clamp-3">${title}</p>
-                </div>`;
-              }}
-            />
-          </div>
-          
-          <div className="w-full md:w-3/5 p-6 bg-slate-50 flex flex-col">
-            <div className="flex-grow space-y-4">
-              <h2 className="text-2xl font-bold tracking-tight line-clamp-2">
-                {title}
-              </h2>
-              
-              <p className="text-base text-muted-foreground line-clamp-4">
-                {excerpt}
-              </p>
-              
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span>Posted on {formatDate(createdAt)}</span>
-              </div>
-              
-              <Badge variant="secondary" className="w-fit capitalize">
-                {category}
-              </Badge>
+    <motion.div
+      variants={cardVariants}
+      custom={index}
+      className="h-full"
+    >
+      <Card className="overflow-hidden h-full">
+        <CardContent className="p-0">
+          <div className="flex flex-col md:flex-row h-full">
+            <div className="relative w-full md:w-2/5 aspect-[4/3] bg-slate-100">
+              <Image
+                src={image || "/images/placeholder.svg"}
+                alt={title}
+                fill
+                className="object-cover"
+                style={{ objectFit: 'cover' }}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  target.parentElement!.innerHTML = `<div class="absolute inset-0 flex items-center justify-center p-4">
+                    <p class="text-sm text-slate-600 text-center line-clamp-3">${title}</p>
+                  </div>`;
+                }}
+              />
             </div>
             
-            <div className="flex justify-end mt-6">
-              <Link href={`/${category}/${slug}`}>
-                <Button variant="link" className="text-blue-800 font-semibold hover:no-underline p-0">
-                  Read More
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+            <div className="w-full md:w-3/5 p-6 bg-slate-50 flex flex-col">
+              <div className="flex-grow space-y-4">
+                <h2 className="text-2xl font-bold tracking-tight line-clamp-2">
+                  {title}
+                </h2>
+                
+                <p className="text-base text-muted-foreground line-clamp-4">
+                  {excerpt}
+                </p>
+                
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  <span>Posted on {formatDate(createdAt)}</span>
+                </div>
+                
+                <Badge variant="secondary" className="w-fit capitalize">
+                  {category}
+                </Badge>
+              </div>
+              
+              <div className="flex justify-end mt-6">
+                <Link href={`/${category}/${slug}`}>
+                  <Button variant="link" className="text-blue-800 font-semibold hover:no-underline p-0">
+                    Read More
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 };
 
@@ -106,41 +131,59 @@ interface TabContentProps {
 }
 
 const TabContent: React.FC<TabContentProps> = ({ posts, category, emptyMessage }) => {
+  const controls = useAnimation();
+  const [ref, inView] = useInView({
+    triggerOnce: false,
+    threshold: 0,
+    rootMargin: "100px 0px"
+  });
+
+  useEffect(() => {
+    if (inView) {
+      controls.start('visible');
+    } else {
+      controls.start('hidden');
+    }
+  }, [controls, inView]);
+
   // Limit posts to 4 items
   const limitedPosts = posts.slice(0, 4);
   
-  return limitedPosts.length > 0 ? (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-      {limitedPosts.map((post) => (
-        <ContentCard 
-          key={post.id}
-          title={post.title}
-          excerpt={post.excerpt || post.content.slice(0, 100)}
-          image={post.images?.[0]}
-          slug={post.slug || post.id}
-          category={category}
-          createdAt={post.createdAt}
-        />
-      ))}
-    </div>
-  ) : (
-    <Card>
-      <CardContent className="p-4 md:p-6">
-        <div className="flex flex-col items-center">
-          <div className="w-full aspect-[4/3] relative mb-4">
-            <Image
-              src="/images/placeholder.svg"
-              alt={`No ${category} available`}
-              fill
-              className="rounded-lg object-cover"
-            />
-          </div>
-          <p className="text-center text-muted-foreground">
-            {emptyMessage || `No ${category} available at this time.`}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+  return (
+    <motion.div 
+      ref={ref}
+      initial="hidden"
+      animate={controls}
+      className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6"
+    >
+      {limitedPosts.length > 0 ? (
+        limitedPosts.map((post, index) => (
+          <ContentCard 
+            key={post.id}
+            title={post.title}
+            excerpt={post.excerpt || post.content.slice(0, 100)}
+            image={post.images?.[0]}
+            slug={post.slug || post.id}
+            category={category}
+            createdAt={post.createdAt}
+            index={index}
+          />
+        ))
+      ) : (
+        <motion.div
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { 
+              opacity: 1,
+              transition: { delay: 0.2 }
+            }
+          }}
+          className="col-span-full text-center py-8 text-gray-500"
+        >
+          {emptyMessage || `No ${category} available at the moment.`}
+        </motion.div>
+      )}
+    </motion.div>
   );
 };
 
@@ -179,10 +222,17 @@ export default function FeaturedSection() {
 
   if (loading) {
     return (
-      <section className="bg-white">
+      <section className="py-16 px-4">
+        <motion.h2 
+          className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-12"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          Featured Content
+        </motion.h2>
         <div className="container mx-auto px-4 py-8 flex justify-center">
           <div className="max-w-6xl w-full">
-            <h1 className="text-4xl font-bold mb-4 text-center">Featured Content</h1>
             <div className="animate-pulse space-y-4">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="h-24 bg-gray-200 rounded"></div>
@@ -198,7 +248,14 @@ export default function FeaturedSection() {
     <section className="bg-white">
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-4xl font-bold mb-4 text-center">Featured Content</h1>
+          <motion.h2 
+            className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-12"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            Featured Content
+          </motion.h2>
           <p className="text-xl text-muted-foreground mb-8 text-center">
             Stay updated with our latest news, upcoming events, and ongoing programs.
           </p>

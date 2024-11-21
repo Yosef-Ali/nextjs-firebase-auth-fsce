@@ -15,6 +15,7 @@ import {
   FileText,
   ChevronLeft,
   Archive,
+  Users2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -68,6 +69,11 @@ const DashboardAside = () => {
       href: '/dashboard/categories',
       label: 'Categories',
       icon: TagIcon,
+    },
+    {
+      href: '/dashboard/board-members',
+      label: 'Board Members',
+      icon: Users2,
     },
     {
       href: '/dashboard/analytics',

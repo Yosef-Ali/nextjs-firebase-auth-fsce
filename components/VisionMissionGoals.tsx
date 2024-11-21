@@ -1,10 +1,9 @@
 import React, { useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Eye, BarChart2, GraduationCap } from 'lucide-react';
+import { AboutContent } from '@/app/types/about';
 import { motion, useAnimation, Variants } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { AboutContent } from '@/app/types/about';
-import { PortableText } from '@portabletext/react';
 
 interface VisionMissionGoalsProps {
   aboutData: AboutContent[];
@@ -20,75 +19,103 @@ const VisionMissionGoals: React.FC<VisionMissionGoalsProps> = ({ aboutData }) =>
   useEffect(() => {
     if (inView) {
       controls.start('visible');
-    } else {
-      controls.start('hidden');
     }
   }, [controls, inView]);
 
-  const itemVariants = (delay: number): Variants => ({
-    hidden: { opacity: 0, y: 50 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, delay } },
-  });
+  useEffect(() => {
+    console.log('VisionMissionGoals received data:', {
+      count: aboutData.length,
+      data: aboutData.map(item => ({
+        id: item.id,
+        title: item.title,
+        section: item.section,
+        category: item.category,
+        content: typeof item.content === 'string' ? item.content.substring(0, 50) + '...' : 'Non-string content'
+      }))
+    });
+  }, [aboutData]);
 
-  const items = [
+  // Filter content by section
+  const visionContent = aboutData.find(item => item.section === 'vision');
+  const missionContent = aboutData.find(item => item.section === 'mission');
+  const goalsContent = aboutData.find(item => item.section === 'goals');
+
+  // Function to render content safely
+  const renderContent = (content: string) => {
+    const plainText = content.replace(/<[^>]*>/g, '');
+    return plainText;
+  };
+
+  const cardVariants: Variants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.2,
+        duration: 0.5,
+        ease: "easeOut"
+      }
+    })
+  };
+
+  const cards = [
     {
-      section: 'vision',
-      title: 'Our Vision',
+      title: "Our Vision",
       icon: Eye,
-      delay: 0.2,
+      content: visionContent,
+      index: 0
     },
     {
-      section: 'mission',
-      title: 'Our Mission',
+      title: "Our Mission",
       icon: BarChart2,
-      delay: 0.4,
+      content: missionContent,
+      index: 1
     },
     {
-      section: 'core-values',
-      title: 'Our Core Values',
+      title: "Our Goals",
       icon: GraduationCap,
-      delay: 0.6,
+      content: goalsContent,
+      index: 2
     }
   ];
 
   return (
     <section className="max-w-5xl mx-auto px-4 py-16">
-      <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-12">
+      <motion.h2 
+        className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-12"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         Our Vision, Mission and Goals
-      </h2>
+      </motion.h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8" ref={ref}>
-        {items.map((item) => {
-          const content = aboutData.find(d => d.section === item.section);
-          
-          return (
-            <motion.div
-              key={item.section}
-              variants={itemVariants(item.delay)}
-              initial="hidden"
-              animate={controls}
-            >
-              <Card className="h-full flex flex-col items-center p-6 gap-5 hover:shadow-lg transition-shadow duration-300">
-                <div className="flex flex-col items-center gap-5">
-                  <div className="bg-gray-100 p-3 rounded-full">
-                    {React.createElement(item.icon, { 
-                      className: "w-6 h-6 text-primary"
-                    })}
-                  </div>
-                  <h3 className="text-xl font-semibold text-primary">
-                    {item.title}
-                  </h3>
+        {cards.map(({ title, icon: Icon, content, index }) => (
+          <motion.div
+            key={title}
+            custom={index}
+            initial="hidden"
+            animate={controls}
+            variants={cardVariants}
+          >
+            <Card className="p-6 h-full flex flex-col">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Icon className="h-6 w-6 text-primary" />
                 </div>
-                <div className="text-muted-foreground text-center prose prose-sm">
-                  {content ? (
-                    <PortableText value={content.content} />
-                  ) : (
-                    <p>Content not available</p>
-                  )}
-                </div>
-              </Card>
-            </motion.div>
-          );
-        })}
+                <h3 className="text-xl font-semibold">{title}</h3>
+              </div>
+              <div className="flex-grow prose prose-sm">
+                {content?.content ? (
+                  <p>{renderContent(content.content)}</p>
+                ) : (
+                  <p className="text-muted-foreground">{title} content coming soon...</p>
+                )}
+              </div>
+            </Card>
+          </motion.div>
+        ))}
       </div>
     </section>
   );

@@ -1,85 +1,132 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import CarouselSection from "@/components/carousel";
 import BoardMemberGrid from './_components/BoardMemberGrid';
+import Partners from '@/components/partners';
+import SectionHeader from '@/components/section-header';
+import { boardMemberService } from '@/app/services/board-members';
+import { BoardMember } from '@/app/types/board-member';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
 
-const members = [
+// Sample data for testing
+const sampleMembers: BoardMember[] = [
   {
-    name: 'Dr. Sarah Alemayehu',
+    id: '1',
+    name: 'John Smith',
     position: 'Executive Director',
-    image: '/images/profile.webp',
-    bio: 'Dr. Sarah brings over 15 years of experience in child welfare and organizational leadership. She has led numerous successful initiatives focused on improving the lives of vulnerable children in Ethiopia.',
-    featured: true
+    bio: 'John has over 20 years of experience in nonprofit leadership.',
+    image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e',
+    featured: true,
+    order: 1,
+    status: 'published',
+    createdAt: Date.now(),
+    updatedAt: Date.now()
   },
   {
-    name: 'Ato Bekele Tadesse',
-    position: 'Board Chairman',
-    image: '/images/profile.webp',
-    bio: 'With 20+ years of experience in nonprofit governance, Ato Bekele has been instrumental in shaping strategic directions and ensuring organizational sustainability.',
-    featured: true
-  },
-  {
-    name: 'W/ro Tigist Haile',
-    position: 'Vice Chairperson',
-    image: '/images/profile.webp',
-    bio: 'W/ro Tigist has extensive experience in community development and child protection programs, bringing valuable insights to our organization.',
-    featured: true
-  },
-  {
-    name: 'Dr. Yohannes Wolde',
-    position: 'Secretary',
-    image: '/images/profile.webp',
-    bio: 'An expert in educational policy and child development, Dr. Yohannes ensures our programs align with best practices in child welfare.'
-  },
-  {
-    name: 'Ato Girma Kebede',
-    position: 'Treasurer',
-    image: '/images/profile.webp',
-    bio: 'A certified accountant with expertise in nonprofit financial management, Ato Girma oversees our financial sustainability and transparency.'
-  },
-  {
-    name: 'W/ro Bethlehem Alemu',
-    position: 'Board Member',
-    image: '/images/profile.webp',
-    bio: 'A successful entrepreneur and philanthropist, W/ro Bethlehem contributes valuable business acumen and social impact expertise.'
-  },
-  {
-    name: 'Dr. Solomon Tekle',
-    position: 'Board Member',
-    image: '/images/profile.webp',
-    bio: 'As a pediatrician and public health expert, Dr. Solomon provides crucial guidance on child health and welfare programs.'
-  },
-  {
-    name: 'W/ro Meseret Worku',
-    position: 'Board Member',
-    image: '/images/profile.webp',
-    bio: 'With a background in social work and community organizing, W/ro Meseret ensures our programs remain community-centered.'
-  },
-  {
-    name: 'Ato Dawit Gebre',
-    position: 'Board Member',
-    image: '/images/profile.webp',
-    bio: 'An expert in project management and strategic planning, Ato Dawit helps guide our organizational growth and program effectiveness.'
+    id: '2',
+    name: 'Sarah Johnson',
+    position: 'Board Chair',
+    bio: 'Sarah brings extensive experience in community development.',
+    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
+    featured: true,
+    order: 2,
+    status: 'published',
+    createdAt: Date.now(),
+    updatedAt: Date.now()
   }
 ];
 
 export default function BoardMembersPage() {
+  const [members, setMembers] = useState<BoardMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [useTestData, setUseTestData] = useState(true); // Toggle this for testing
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        if (useTestData) {
+          console.log('Using test data:', sampleMembers);
+          setMembers(sampleMembers);
+        } else {
+          console.log('Fetching board members from Firebase...');
+          const data = await boardMemberService.getBoardMembers();
+          console.log('Firebase data:', data);
+          setMembers(data);
+        }
+      } catch (err) {
+        console.error('Error:', err);
+        setError('Failed to load board members. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMembers();
+  }, [useTestData]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <CarouselSection />
+        <div className="py-16 px-4">
+          <div className="max-w-7xl mx-auto text-center space-y-4">
+            <p className="text-red-500">{error}</p>
+            <Button
+              variant="outline"
+              onClick={() => setUseTestData(!useTestData)}
+              className="mx-auto"
+              disabled={loading}
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              Toggle Test Data
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <CarouselSection />
+        <section className="py-16 px-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="space-y-4">
+              <Skeleton className="h-12 w-[300px] mx-auto" />
+              <Skeleton className="h-24 max-w-3xl mx-auto" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <Skeleton key={i} className="h-[400px]" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <CarouselSection />
       <section className="py-16 px-4">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4">Our Board Members</h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Meet our dedicated board members who bring their expertise and passion to guide our organization
-              in making a positive impact in the lives of children and communities across Ethiopia.
-            </p>
-          </div>
+          <SectionHeader
+            title="Our Board Members"
+            description="Meet our dedicated board members who bring their expertise and passion to guide our organization in making a positive impact in the lives of children and communities across Ethiopia."
+          />
           <BoardMemberGrid members={members} />
         </div>
       </section>
+      <Partners />
     </div>
   );
 }

@@ -11,6 +11,7 @@ import {
   Settings,
   TagIcon,
   UsersIcon,
+  Users2Icon,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import IsAdminsOnly from "./is-admin"
@@ -37,7 +38,6 @@ const Aside: React.FC = () => {
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold">
-              {/* <img src="/logo.svg" alt="logo" className="h-8" /> */}
               <Logo size={0.5} />
             </Link>
             <div className="relative ml-auto h-8 w-8">
@@ -68,6 +68,16 @@ const Aside: React.FC = () => {
               >
                 <TagIcon className="h-4 w-4" />
                 Categories
+              </Link>
+              <Link
+                href="/dashboard/board-members"
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${isActive("/dashboard/board-members")
+                  ? "text-primary bg-muted"
+                  : "text-muted-foreground hover:text-primary"
+                  }`}
+              >
+                <Users2Icon className="h-4 w-4" />
+                Board Members
               </Link>
               <IsAdminsOnly>
                 <Link

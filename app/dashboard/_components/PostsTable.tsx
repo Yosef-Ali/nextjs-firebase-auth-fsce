@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Table,
@@ -25,7 +25,9 @@ import { MoreHorizontal } from 'lucide-react';
 import { Post } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
 import { useAuth } from '@/app/hooks/useAuth';
+import { useSearch } from '@/app/context/search-context';
 import { toast } from '@/hooks/use-toast';
+import { ContentDisplay } from '@/components/content-display';
 
 interface PostsTableProps {
   initialPosts: Post[];
@@ -34,12 +36,12 @@ interface PostsTableProps {
 function PostsTable({ initialPosts }: PostsTableProps) {
   const { user } = useAuth();
   const router = useRouter();
+  const { searchQuery } = useSearch();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    console.log('PostsTable received initialPosts:', initialPosts);
     if (Array.isArray(initialPosts)) {
       setPosts(initialPosts);
     }
@@ -68,12 +70,38 @@ function PostsTable({ initialPosts }: PostsTableProps) {
     }
   };
 
+  // Filter posts based on search query
+  const filteredPosts = useMemo(() => {
+    if (!searchQuery) return posts;
+
+    const query = searchQuery.toLowerCase();
+    return posts.filter((post) => {
+      return (
+        post.title?.toLowerCase().includes(query) ||
+        post.excerpt?.toLowerCase().includes(query) ||
+        post.content?.toLowerCase().includes(query) ||
+        post.category?.toLowerCase().includes(query)
+      );
+    });
+  }, [posts, searchQuery]);
+
   if (!Array.isArray(posts)) {
     return <div>Error loading posts</div>;
   }
 
-  if (posts.length === 0) {
-    return <div>No posts found</div>;
+  if (filteredPosts.length === 0) {
+    if (searchQuery) {
+      return (
+        <div className="text-center py-10 text-muted-foreground">
+          No posts found matching "{searchQuery}"
+        </div>
+      );
+    }
+    return (
+      <div className="text-center py-10 text-muted-foreground">
+        No posts found
+      </div>
+    );
   }
 
   return (
@@ -90,8 +118,8 @@ function PostsTable({ initialPosts }: PostsTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {posts.map((post) => (
-            <TableRow key={post.id}>
+          {filteredPosts.map((post) => (
+            <TableRow key={`${post.category}-${post.id}-${post.createdAt}`}>
               <TableCell>
                 <div>
                   <h3 className="text-lg font-semibold">{post.title}</h3>
@@ -118,6 +146,11 @@ function PostsTable({ initialPosts }: PostsTableProps) {
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {new Date(post.updatedAt).toLocaleDateString()}
+              </TableCell>
+              <TableCell>
+                <div className="max-h-32 overflow-y-auto">
+                  <ContentDisplay content={post.content || ''} />
+                </div>
               </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>

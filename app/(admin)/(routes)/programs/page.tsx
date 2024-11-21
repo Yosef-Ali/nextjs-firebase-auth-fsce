@@ -17,6 +17,24 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 
+// Simple hash function for strings
+const hashString = (str: string): string => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash).toString(36).substring(0, 6);
+};
+
+// Utility function to generate a unique key for each program
+const generateProgramKey = (program: Program): string => {
+  const titleHash = hashString(program.title || '');
+  const timestamp = program.updatedAt ? `-${program.updatedAt}` : '';
+  return `${program.category}-${program.id}-${titleHash}${timestamp}`;
+};
+
 export default function ProgramsAdminPage() {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +89,7 @@ export default function ProgramsAdminPage() {
           </TableHeader>
           <TableBody>
             {programs.map((program) => (
-              <TableRow key={program.id}>
+              <TableRow key={generateProgramKey(program)}>
                 <TableCell className="font-medium">{program.title}</TableCell>
                 <TableCell>
                   <Badge variant="secondary" className={getCategoryColor(program.category)}>

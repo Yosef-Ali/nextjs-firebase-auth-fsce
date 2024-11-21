@@ -1,5 +1,5 @@
 import { db } from '@/app/firebase';
-import { Resource } from '@/app/types/post';
+import { Resource } from '@/app/types/resource';
 import {
   collection,
   getDocs,
@@ -27,18 +27,23 @@ class ResourcesService {
       
       // Convert and filter in memory
       const resources = querySnapshot.docs
-        .map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: this.convertTimestampToMillis(doc.data().createdAt),
-          updatedAt: this.convertTimestampToMillis(doc.data().updatedAt),
-        } as Resource))
+        .map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            createdAt: this.convertTimestampToMillis(data.createdAt),
+            updatedAt: this.convertTimestampToMillis(data.updatedAt),
+            publishedDate: this.convertTimestampToMillis(data.publishedDate),
+            slug: data.slug || doc.id, // Fallback to id if slug is not present
+          } as Resource;
+        })
         .filter(resource => resource.published) // Only published resources
         .sort((a, b) => b.createdAt - a.createdAt); // Sort by createdAt desc
 
       // Filter by category if specified
       if (category && category !== 'all') {
-        return resources.filter(resource => resource.category === category);
+        return resources.filter(resource => resource.type === category);
       }
 
       return resources;

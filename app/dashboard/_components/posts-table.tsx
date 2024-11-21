@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { EditIcon, Trash2Icon } from "lucide-react";
-import { Post } from '@/app/(marketing)/services/firebase/dashboard';
+import { Post } from '@/app/services/firebase/dashboard';
 
 interface PostTableProps {
   posts: Post[];

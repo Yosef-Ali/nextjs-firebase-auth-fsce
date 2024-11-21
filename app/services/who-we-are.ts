@@ -25,27 +25,71 @@ class WhoWeAreService {
 
   private documentToAboutContent(doc: QueryDocumentSnapshot<DocumentData>): AboutContent {
     const data = doc.data();
+    console.log('Converting document:', {
+      id: doc.id,
+      data: {
+        title: data.title,
+        section: data.section,
+        content: data.content,
+        category: data.category,
+        published: data.published
+      }
+    });
+
     return {
       id: doc.id,
-      ...data,
+      title: data.title,
+      content: data.content,
+      section: data.section,
+      published: data.published,
+      category: data.category,
+      excerpt: data.excerpt || '',
+      coverImage: data.coverImage || '',
+      images: data.images || [],
+      authorId: data.authorId || 'system',
+      authorEmail: data.authorEmail || 'system@fsce.org',
+      slug: data.slug || '',
       createdAt: this.convertTimestamp(data.createdAt),
-      updatedAt: this.convertTimestamp(data.updatedAt),
-    } as AboutContent;
+      updatedAt: this.convertTimestamp(data.updatedAt)
+    };
   }
 
   async getAboutContent(): Promise<AboutContent[]> {
     try {
+      console.log('Fetching about content...');
       const q = query(
         collection(db, this.collectionName),
         where('published', '==', true),
         where('category', '==', this.category)
       );
+      console.log('Query parameters:', {
+        collection: this.collectionName,
+        category: this.category,
+        published: true
+      });
 
       const querySnapshot = await getDocs(q);
-      const documents = querySnapshot.docs.map((doc) => this.documentToAboutContent(doc));
+      console.log('Query results:', {
+        totalDocs: querySnapshot.size,
+        empty: querySnapshot.empty
+      });
+
+      const documents = querySnapshot.docs.map((doc) => {
+        const content = this.documentToAboutContent(doc);
+        console.log('Processed document:', {
+          id: doc.id,
+          title: content.title,
+          section: content.section,
+          category: content.category,
+          contentPreview: typeof content.content === 'string' ? content.content.substring(0, 50) + '...' : 'Non-string content'
+        });
+        return content;
+      });
       
       if (documents.length === 0) {
         console.log('No about content available. Please check the database for posts with category about and status published.');
+      } else {
+        console.log(`Found ${documents.length} about content documents`);
       }
       
       return documents.sort((a, b) => b.createdAt - a.createdAt);
@@ -79,14 +123,40 @@ class WhoWeAreService {
       const docRef = doc(db, this.collectionName, id);
       const docSnap = await getDoc(docRef);
 
-      if (!docSnap.exists()) {
-        console.log('No about content available. Please check the database for posts with category about and status published.');
-        return null;
+      if (docSnap.exists()) {
+        return this.documentToAboutContent(docSnap as any);
       }
 
-      return this.documentToAboutContent(docSnap as QueryDocumentSnapshot<DocumentData>);
+      return null;
     } catch (error) {
-      console.error('Error fetching content by ID:', error);
+      console.error('Error fetching content by id:', error);
+      throw error;
+    }
+  }
+
+  async getVisionMissionContent(): Promise<AboutContent[]> {
+    try {
+      const q = query(
+        collection(db, this.collectionName),
+        where('published', '==', true),
+        where('category', '==', this.category),
+        where('section', 'in', ['vision', 'mission', 'core-values'])
+      );
+
+      const querySnapshot = await getDocs(q);
+      const documents = querySnapshot.docs.map((doc) => this.documentToAboutContent(doc));
+      
+      if (documents.length === 0) {
+        console.log('No vision/mission content available.');
+      }
+      
+      return documents.sort((a, b) => {
+        // Custom sort order for sections
+        const order = { vision: 1, mission: 2, 'core-values': 3 };
+        return order[a.section as keyof typeof order] - order[b.section as keyof typeof order];
+      });
+    } catch (error) {
+      console.error('Error fetching vision/mission content:', error);
       throw error;
     }
   }
