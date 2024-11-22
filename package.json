@@ -55,6 +55,7 @@
     "framer-motion": "11.11.17",
     "github-slugger": "^2.0.0",
     "install": "0.13.0",
+    "lodash": "4.17.21",
     "lucide-react": "^0.456.0",
     "mammoth": "^1.6.0",
     "marked": "15.0.2",
