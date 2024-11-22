@@ -11,7 +11,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { usePathname, useRouter } from 'next/navigation';
 import { 
   Bell, 
   Search, 
@@ -20,16 +19,13 @@ import {
   LogOut,
   Menu,
 } from 'lucide-react';
-import Link from 'next/link';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSidebar } from '@/app/context/sidebar-context';
 import { useSearch } from '@/app/context/search-context';
 
 const DashboardHeader = () => {
-  const { user, signOut } = useAuth();
-  const pathname = usePathname();
-  const router = useRouter();
-  const { isCollapsed, toggleSidebar } = useSidebar();
+  const { signOut } = useAuth();
+  const { toggleSidebar } = useSidebar();
   const { searchQuery, setSearchQuery } = useSearch();
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
   const [notifications] = useState([
