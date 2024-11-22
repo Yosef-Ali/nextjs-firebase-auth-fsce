@@ -30,8 +30,8 @@ export const categoriesService = {
         parentId: data.parentId || null,
         type: data.type || 'post',
         count: data.count || 0,
-        createdAt: new Date(data.createdAt?.toDate()),
-        updatedAt: new Date(data.updatedAt?.toDate()),
+        createdAt: data.createdAt instanceof Date ? data.createdAt : data.createdAt?.toDate?.() || new Date(),
+        updatedAt: data.updatedAt instanceof Date ? data.updatedAt : data.updatedAt?.toDate?.() || new Date(),
       } as Category;
     });
   },
