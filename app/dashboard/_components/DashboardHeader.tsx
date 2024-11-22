@@ -21,10 +21,9 @@ import {
   Menu,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSidebar } from '@/app/context/sidebar-context';
 import { useSearch } from '@/app/context/search-context';
-import debounce from 'lodash/debounce';
 
 const DashboardHeader = () => {
   const { user, signOut } = useAuth();
@@ -39,13 +38,28 @@ const DashboardHeader = () => {
     { id: 3, text: 'Weekly analytics report', time: '1d ago' },
   ]);
 
-  // Debounce the search query update
+  // Custom debounce implementation using useCallback and useRef
+  const timeoutRef = useRef<NodeJS.Timeout>();
   const debouncedSetSearchQuery = useCallback(
-    debounce((query: string) => {
-      setSearchQuery(query);
-    }, 300),
+    (query: string) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        setSearchQuery(query);
+      }, 300);
+    },
     [setSearchQuery]
   );
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   // Handle local search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
