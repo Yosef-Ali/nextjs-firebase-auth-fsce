@@ -15,34 +15,31 @@ class WhatWeDoService {
 
   async getAllPrograms(includeUnpublished = false): Promise<Post[]> {
     try {
-      let constraints = [
-        where('tags', 'array-contains', 'programs')
-      ];
-
-      if (!includeUnpublished) {
-        constraints.push(where('published', '==', true));
-      }
-
-      // Create separate queries for filtering and sorting
+      // Simple query with just the collection
       const q = query(
         collection(db, this.collectionName),
-        ...constraints
+        where('tags', 'array-contains', 'programs')
       );
 
       const querySnapshot = await getDocs(q);
-      const posts = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt instanceof Timestamp 
-          ? doc.data().createdAt.toMillis() 
-          : Date.now(),
-        updatedAt: doc.data().updatedAt instanceof Timestamp 
-          ? doc.data().updatedAt.toMillis() 
-          : Date.now(),
-      })) as Post[];
+      const posts = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt instanceof Timestamp 
+            ? data.createdAt.toMillis() 
+            : Date.now(),
+          updatedAt: data.updatedAt instanceof Timestamp 
+            ? data.updatedAt.toMillis() 
+            : Date.now(),
+        } as Post;
+      });
 
-      // Sort in memory for now to avoid complex indexes
-      return posts.sort((a, b) => b.createdAt - a.createdAt);
+      // Filter and sort in memory
+      return posts
+        .filter(post => includeUnpublished || post.published)
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     } catch (error) {
       console.error('Error getting programs:', error);
       throw error;
@@ -51,35 +48,34 @@ class WhatWeDoService {
 
   async getProgramsByCategory(category: string, includeUnpublished = false): Promise<Post[]> {
     try {
-      let constraints = [
-        where('category', '==', category),
-        where('tags', 'array-contains', 'programs')
-      ];
-
-      if (!includeUnpublished) {
-        constraints.push(where('published', '==', true));
-      }
-
-      // Create separate queries for filtering and sorting
+      // Simple query with just category filter
       const q = query(
         collection(db, this.collectionName),
-        ...constraints
+        where('category', '==', category)
       );
 
       const querySnapshot = await getDocs(q);
-      const posts = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt instanceof Timestamp 
-          ? doc.data().createdAt.toMillis() 
-          : Date.now(),
-        updatedAt: doc.data().updatedAt instanceof Timestamp 
-          ? doc.data().updatedAt.toMillis() 
-          : Date.now(),
-      })) as Post[];
+      const posts = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt instanceof Timestamp 
+            ? data.createdAt.toMillis() 
+            : Date.now(),
+          updatedAt: data.updatedAt instanceof Timestamp 
+            ? data.updatedAt.toMillis() 
+            : Date.now(),
+        } as Post;
+      });
 
-      // Sort in memory for now to avoid complex indexes
-      return posts.sort((a, b) => b.createdAt - a.createdAt);
+      // Filter and sort in memory
+      return posts
+        .filter(post => 
+          (includeUnpublished || post.published) && 
+          post.tags?.includes('programs')
+        )
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     } catch (error) {
       console.error('Error getting programs by category:', error);
       throw error;

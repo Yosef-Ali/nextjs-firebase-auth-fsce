@@ -62,7 +62,7 @@ export default function NewPostPage() {
       </div>
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">Create New Post</h1>
-        <PostEditor mode="create" />
+        <PostEditor />
       </div>
     </div>
   );

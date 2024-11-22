@@ -10,6 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { EditIcon, Trash2Icon } from "lucide-react";
 import { Post } from '@/app/services/firebase/dashboard';
+import { format } from 'date-fns';
+import { Card, CardContent } from "@/components/ui/card";
 
 interface PostTableProps {
   posts: Post[];
@@ -35,52 +37,92 @@ export default function PostTable({ posts, isLoading, onEdit, onDelete }: PostTa
     );
   }
 
+  // Calculate stats
+  const totalPosts = posts.length;
+  const publishedPosts = posts.filter(post => post.status === 'published').length;
+  const draftPosts = totalPosts - publishedPosts;
+  const categories = [...new Set(posts.map(post => post.category))];
+
+  // Sort posts by updatedAt in descending order (newest first)
+  const sortedPosts = [...posts].sort((a, b) => {
+    return b.updatedAt.toMillis() - a.updatedAt.toMillis();
+  });
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Title</TableHead>
-          <TableHead>Category</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Created</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {posts.map((post) => (
-          <TableRow key={post.id}>
-            <TableCell className="font-medium">{post.title}</TableCell>
-            <TableCell>{post.category}</TableCell>
-            <TableCell>
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                ${post.status === 'published' ? 'bg-green-100 text-green-800' : 
-                  post.status === 'draft' ? 'bg-yellow-100 text-yellow-800' : 
-                  'bg-gray-100 text-gray-800'}`}>
-                {post.status}
-              </span>
-            </TableCell>
-            <TableCell>
-              {post.createdAt.toDate().toLocaleDateString()}
-            </TableCell>
-            <TableCell className="text-right space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onEdit(post.id)}
-              >
-                <EditIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(post.id)}
-              >
-                <Trash2Icon className="h-4 w-4" />
-              </Button>
-            </TableCell>
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-2xl font-bold">{totalPosts}</div>
+            <p className="text-xs text-muted-foreground">Total Posts</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-2xl font-bold">{publishedPosts}</div>
+            <p className="text-xs text-muted-foreground">Published Posts</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-2xl font-bold">{draftPosts}</div>
+            <p className="text-xs text-muted-foreground">Draft Posts</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-2xl font-bold">{categories.length}</div>
+            <p className="text-xs text-muted-foreground">Categories</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Title</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Updated</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {sortedPosts.map((post) => (
+            <TableRow key={post.id}>
+              <TableCell className="font-medium">{post.title}</TableCell>
+              <TableCell>{post.category}</TableCell>
+              <TableCell>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                  ${post.status === 'published' ? 'bg-green-100 text-green-800' : 
+                    post.status === 'draft' ? 'bg-yellow-100 text-yellow-800' : 
+                    'bg-gray-100 text-gray-800'}`}>
+                  {post.status}
+                </span>
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {format(post.updatedAt.toDate(), 'MMM d, yyyy')}
+              </TableCell>
+              <TableCell className="text-right space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onEdit(post.id)}
+                >
+                  <EditIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onDelete(post.id)}
+                >
+                  <Trash2Icon className="h-4 w-4" />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }

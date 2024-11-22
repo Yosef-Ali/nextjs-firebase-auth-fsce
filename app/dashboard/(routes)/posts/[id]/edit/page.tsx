@@ -61,9 +61,10 @@ export default function EditPostPage({ params }: PageProps) {
         }
 
         const data = postDoc.data();
-        const postData = {
+        const postData: Post = {
           id: postDoc.id,
           ...data,
+          date: data.date ? new Date(data.date).toISOString() : new Date(data.createdAt?.toMillis() || Date.now()).toISOString(),
           createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
           updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() : Date.now(),
           title: data.title || '',
@@ -77,7 +78,7 @@ export default function EditPostPage({ params }: PageProps) {
           coverImage: data.coverImage || '',
           images: data.images || [],
           tags: data.tags || [],
-        } as Post;
+        };
 
         setPost(postData);
         setIsLoading(false);
@@ -145,7 +146,7 @@ export default function EditPostPage({ params }: PageProps) {
       </div>
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">Edit Post</h1>
-        <PostEditor post={post} mode="edit" />
+        <PostEditor post={post} />
       </div>
     </div>
   );

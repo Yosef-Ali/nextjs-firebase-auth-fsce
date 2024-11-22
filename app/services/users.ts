@@ -7,6 +7,7 @@ import {
   setDoc,
   Timestamp,
 } from 'firebase/firestore';
+import { User as FirebaseUser } from 'firebase/auth';
 
 const COLLECTION_NAME = 'users';
 
@@ -36,10 +37,37 @@ export const usersService = {
     }
   },
 
+  async createUserIfNotExists(firebaseUser: FirebaseUser): Promise<void> {
+    const { uid, email, displayName, photoURL } = firebaseUser;
+    const userData = {
+      ...(email && { email }),
+      ...(displayName && { displayName }),
+      ...(photoURL && { photoURL }),
+    };
+    await this.createOrUpdateUser(uid, userData);
+  },
+
+  async createUser(uid: string, { email, displayName, photoURL }: FirebaseUser) {
+    if (!email) {
+      throw new Error('Email is required for user creation');
+    }
+    
+    const userData = {
+      email,
+      displayName: displayName || undefined,
+      photoURL: photoURL || undefined,
+    };
+    await this.createOrUpdateUser(uid, userData);
+  },
+
   async createOrUpdateUser(userId: string, data: Partial<User>): Promise<void> {
     try {
       const userRef = doc(db, COLLECTION_NAME, userId);
       const now = Timestamp.now();
+      
+      if (!data.email) {
+        throw new Error('Email is required for user creation');
+      }
       
       const userDoc = await getDoc(userRef);
       if (!userDoc.exists()) {
@@ -53,9 +81,8 @@ export const usersService = {
         });
       } else {
         // Update existing user
-        const existingData = userDoc.data();
         await setDoc(userRef, {
-          ...existingData,
+          ...userDoc.data(),
           ...data,
           updatedAt: now,
         }, { merge: true });
@@ -68,5 +95,5 @@ export const usersService = {
 
   async setAdminRole(userId: string): Promise<void> {
     await this.createOrUpdateUser(userId, { role: 'admin' });
-  }
+  },
 };

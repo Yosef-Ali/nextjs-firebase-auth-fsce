@@ -1,131 +1,173 @@
-"use client";
+'use client';
 
 import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { MapPin, Phone, Mail, Building2, GraduationCap, Users } from 'lucide-react';
+import CarouselSection from '@/components/carousel';
+import Partners from '@/components/partners';
 import { motion } from 'framer-motion';
-import EthiopianMap from '../_components/EthiopianMap';
-import LocationsGrid from '../_components/LocationsGrid';
 
-const regionalOffices = [
+interface RegionalOffice {
+  region: string;
+  location: string;
+  address: string;
+  phone: string;
+  email: string;
+  beneficiaries: string;
+  programs: string[];
+}
+
+const regionalOffices: RegionalOffice[] = [
   {
     region: "Amhara",
-    city: "Bahir Dar",
-    address: "Belay Zeleke Street, Building 123",
-    contact: "+251 58 220 1234",
-    beneficiaries: "Supporting 2,500 children",
+    location: "Bahir Dar",
+    address: "Kebele 14, Near Ghion Hotel",
+    phone: "+251-918-123456",
+    email: "bahirdar@fsce.org",
+    beneficiaries: "Supporting over 3,000 children",
     programs: [
       "Child Protection",
-      "Family Support",
-      "Education"
+      "Education Support",
+      "Family Strengthening",
+      "Youth Empowerment"
+    ]
+  },
+  {
+    region: "Oromia",
+    location: "Adama",
+    address: "Kebele 08, Main Street",
+    phone: "+251-918-234567",
+    email: "adama@fsce.org",
+    beneficiaries: "Serving 2,500+ families",
+    programs: [
+      "Youth Development",
+      "Community Outreach",
+      "Child Welfare",
+      "Education Programs"
     ]
   },
   {
     region: "SNNPR",
-    city: "Hawassa",
-    address: "Piazza Area, Behind Hawassa University",
-    contact: "+251 46 220 5678",
-    beneficiaries: "Serving 2,000+ families",
+    location: "Hawassa",
+    address: "Kebele 03, Lake View Area",
+    phone: "+251-918-345678",
+    email: "hawassa@fsce.org",
+    beneficiaries: "Reaching 1,800+ children",
     programs: [
-      "Youth Development",
-      "Community Outreach",
-      "Child Welfare"
-    ]
-  },
-  {
-    region: "Tigray",
-    city: "Mekelle",
-    address: "Hadnet Sub-City, Near Mekelle University",
-    contact: "+251 34 440 9876",
-    beneficiaries: "Reaching 1,800 children",
-    programs: [
-      "Emergency Response",
-      "Child Protection",
-      "Education Support"
+      "Child Rights Advocacy",
+      "Skills Training",
+      "Emergency Support",
+      "Health Programs"
     ]
   }
 ];
 
 export default function RegionalOfficesPage() {
-  const [selectedRegion, setSelectedRegion] = React.useState<string | null>(null);
-
-  const filteredOffices = selectedRegion
-    ? regionalOffices.filter(office => office.region === selectedRegion)
-    : regionalOffices;
-
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto py-12 px-4">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Regional Offices</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Our regional offices serve as vital hubs for FSCE's work across Ethiopia,
-            ensuring we can effectively reach and support children in every corner of the nation.
-          </p>
-        </div>
+    <>
+      <CarouselSection />
+      <div className="min-h-screen bg-background">
+        <section className="py-20 bg-primary/5">
+          <div className="container mx-auto px-4">
+            <h1 className="text-4xl md:text-5xl font-bold text-center mb-6">
+              Regional Offices
+            </h1>
+            <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto">
+              Our regional offices serve as vital hubs for FSCE's work across Ethiopia,
+              ensuring we can effectively reach and support children in every corner of the nation.
+            </p>
+          </div>
+        </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-          {/* Interactive Map */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-white p-6 rounded-xl shadow-lg"
-          >
-            <h2 className="text-2xl font-semibold mb-6 text-center">Interactive Map</h2>
-            <EthiopianMap
-              selectedRegion={selectedRegion}
-              onRegionSelect={setSelectedRegion}
-              highlightedRegions={regionalOffices.map(office => office.region)}
-            />
-            {selectedRegion && (
-              <button
-                onClick={() => setSelectedRegion(null)}
-                className="mt-4 w-full py-2 px-4 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-              >
-                Clear Selection
-              </button>
-            )}
-          </motion.div>
-
-          {/* Statistics and Info */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="space-y-8"
-          >
-            <div className="grid grid-cols-2 gap-6">
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl">
-                <h3 className="text-3xl font-bold text-blue-600 mb-2">3+</h3>
-                <p className="text-gray-600">Regional Offices</p>
-              </div>
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl">
-                <h3 className="text-3xl font-bold text-blue-600 mb-2">6,300+</h3>
-                <p className="text-gray-600">Children Supported</p>
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+              <div className="space-y-6">
+                <Card className="hover:shadow-lg transition-shadow border-2 border-primary/10">
+                  <CardHeader>
+                    <CardTitle>Our Regional Impact</CardTitle>
+                    <CardDescription>Key statistics about our regional presence</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                        <h3 className="text-3xl font-bold text-primary mb-2">3+</h3>
+                        <p className="text-muted-foreground">Regional Offices</p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                        <h3 className="text-3xl font-bold text-primary mb-2">7,300+</h3>
+                        <p className="text-muted-foreground">Children Supported</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h3 className="text-xl font-semibold mb-4">Regional Impact</h3>
-              <p className="text-gray-600 mb-4">
-                Our regional offices are strategically located to maximize our reach
-                and impact across Ethiopia. Each office is equipped to provide comprehensive
-                support and implement our core programs effectively.
-              </p>
-              {selectedRegion && (
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <h4 className="font-semibold text-blue-600 mb-2">
-                    Selected Region: {selectedRegion}
-                  </h4>
-                  <p className="text-sm text-gray-600">
-                    Click on the office below to see detailed information about our
-                    work in this region.
-                  </p>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        </div>
 
-        {/* Locations Grid */}
-        <LocationsGrid locations={filteredOffices} />
+            <div className="mt-12">
+              <h2 className="text-3xl font-bold text-center mb-8">Our Regional Presence</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {regionalOffices.map((office) => (
+                  <motion.div
+                    key={office.region}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-card rounded-lg shadow-lg hover:shadow-xl transition-shadow p-6 border-2 border-primary/10"
+                  >
+                    <div className="flex items-center gap-2 mb-4">
+                      <Building2 className="h-6 w-6 text-primary" />
+                      <h3 className="text-xl font-semibold">{office.region}</h3>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-2">
+                        <MapPin className="h-5 w-5 text-muted-foreground mt-1" />
+                        <div>
+                          <p className="font-medium">Location</p>
+                          <p className="text-muted-foreground">{office.location}</p>
+                          <p className="text-muted-foreground">{office.address}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Phone className="h-5 w-5 text-muted-foreground mt-1" />
+                        <div>
+                          <p className="font-medium">Contact</p>
+                          <p className="text-muted-foreground">{office.phone}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Mail className="h-5 w-5 text-muted-foreground mt-1" />
+                        <div>
+                          <p className="font-medium">Email</p>
+                          <p className="text-muted-foreground">{office.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Users className="h-5 w-5 text-muted-foreground mt-1" />
+                        <div>
+                          <p className="font-medium">Impact</p>
+                          <p className="text-muted-foreground">{office.beneficiaries}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <GraduationCap className="h-5 w-5 text-muted-foreground mt-1" />
+                        <div>
+                          <p className="font-medium">Programs</p>
+                          <ul className="list-disc list-inside text-muted-foreground">
+                            {office.programs.map((program, index) => (
+                              <li key={index} className="text-sm">{program}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
-    </div>
+      <Partners />
+    </>
   );
 }

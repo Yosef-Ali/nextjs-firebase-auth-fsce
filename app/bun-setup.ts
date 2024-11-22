@@ -1,17 +1,13 @@
-import { type BunFile } from "bun";
+import { promises as fs } from 'fs';
 
-// Enable Bun's optimizations
-process.env.NODE_ENV = process.env.NODE_ENV || 'development';
-
-// Configure Bun's file handling
+// File handling using Node.js fs promises
 export const readFile = async (path: string): Promise<string> => {
-  const file: BunFile = Bun.file(path);
-  return file.text();
+  return fs.readFile(path, 'utf-8');
 };
 
 export const writeFile = async (path: string, content: string): Promise<void> => {
-  await Bun.write(path, content);
+  await fs.writeFile(path, content, 'utf-8');
 };
 
-// Configure Bun's fetch
+// Use global fetch
 export const fetch = globalThis.fetch.bind(globalThis);

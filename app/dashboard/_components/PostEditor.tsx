@@ -47,6 +47,7 @@ const formSchema = z.object({
   published: z.boolean().default(false),
   category: z.string().min(1, 'Category is required'),
   section: z.string().optional(),
+  slug: z.string().min(1, 'Slug is required'),
 });
 
 type PostFormData = z.infer<typeof formSchema>;
@@ -72,6 +73,7 @@ export function PostEditor({ post }: PostEditorProps) {
       published: post?.published || false,
       category: post?.category || '',
       section: post?.section || '',
+      slug: post?.slug || '',
     },
   });
 
@@ -80,12 +82,26 @@ export function PostEditor({ post }: PostEditorProps) {
 
     try {
       setIsSaving(true);
+      const currentUser = user;
+      if (!currentUser?.email) {
+        throw new Error("User must be logged in to create/edit posts");
+      }
+
       const postData = {
-        ...data,
-        authorId: user.uid,
-        authorEmail: user.email || '',
-        slug: post?.slug || postsService.createSlug(data.title),
-        updatedAt: Date.now(),
+        title: form.getValues('title'),
+        content: form.getValues('content'),
+        excerpt: form.getValues('excerpt'),
+        category: form.getValues('category'),
+        coverImage: form.getValues('coverImage'),
+        published: form.getValues('published'),
+        section: form.getValues('section'),
+        images: form.getValues('images'),
+        authorId: currentUser.uid,
+        authorEmail: currentUser.email,
+        slug: postsService.createSlug(form.getValues('title')),
+        date: new Date().toISOString(),
+        tags: [],
+        featured: false,
       };
 
       if (post) {
@@ -95,15 +111,17 @@ export function PostEditor({ post }: PostEditorProps) {
           description: "Post updated successfully",
         });
       } else {
-        await postsService.createPost(postData);
+        const newPost = await postsService.createPost(postData);
         toast({
           title: "Success",
           description: "Post created successfully",
         });
+        // Navigate to the edit page of the new post
+        router.push(`/dashboard/posts/${newPost.id}/edit`);
       }
       
-      router.push('/dashboard/posts');
-      router.refresh();
+      // router.push('/dashboard/posts');
+      // router.refresh();
     } catch (error) {
       console.error('Error saving post:', error);
       toast({
@@ -240,6 +258,20 @@ export function PostEditor({ post }: PostEditorProps) {
                         className="resize-none"
                         {...field}
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="slug"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Slug</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Post slug" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

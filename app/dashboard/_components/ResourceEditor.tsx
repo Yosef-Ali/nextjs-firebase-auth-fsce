@@ -29,12 +29,12 @@ import FileUploadCard from './FileUploadCard';
 import { useAuth } from '@/app/hooks/useAuth';
 import { Resource } from '@/app/types/resource';
 import { resourcesService } from '@/app/services/resources';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().min(1, 'Description is required'),
-  type: z.enum(['publication', 'report', 'toolkit', 'research'], {
+  type: z.enum(['pdf', 'docx', 'xlsx', 'pptx', 'mp3', 'mp4', 'jpg', 'png'], {
     required_error: 'Please select a resource type',
   }),
   fileUrl: z.string().url('Please upload a file').min(1, 'File is required'),
@@ -58,47 +58,41 @@ export function ResourceEditor({ resource, mode = 'create' }: ResourceEditorProp
     defaultValues: {
       title: resource?.title || '',
       description: resource?.description || '',
-      type: resource?.type || 'publication',
+      type: resource?.type || 'pdf',
       fileUrl: resource?.fileUrl || '',
       published: resource?.published ?? true,
     },
   });
 
   const onSubmit = async (data: ResourceFormData) => {
-    if (!user) return;
+    if (!user) {
+      toast.error('You must be logged in to save resources');
+      return;
+    }
 
     try {
       setIsSaving(true);
       const resourceData = {
         ...data,
-        slug: resource?.slug || resourcesService.createSlug(data.title),
         downloadCount: resource?.downloadCount || 0,
         updatedAt: Date.now(),
         createdAt: resource?.createdAt || Date.now(),
         publishedDate: data.published ? Date.now() : null,
+        slug: data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        category: 'media' as const,
       };
 
       if (resource) {
         await resourcesService.updateResource(resource.id, resourceData);
-        toast({
-          title: "Success",
-          description: "Resource updated successfully",
-        });
+        toast.success('Resource updated successfully');
       } else {
         await resourcesService.createResource(resourceData);
-        toast({
-          title: "Success",
-          description: "Resource created successfully",
-        });
+        toast.success('Resource created successfully');
       }
       router.push('/dashboard/resources');
     } catch (error) {
       console.error('Error saving resource:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save resource",
-        variant: "destructive",
-      });
+      toast.error('Failed to save resource');
     } finally {
       setIsSaving(false);
     }
@@ -153,10 +147,14 @@ export function ResourceEditor({ resource, mode = 'create' }: ResourceEditorProp
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="publication">Publication</SelectItem>
-                    <SelectItem value="report">Report</SelectItem>
-                    <SelectItem value="toolkit">Toolkit</SelectItem>
-                    <SelectItem value="research">Research</SelectItem>
+                    <SelectItem value="pdf">PDF</SelectItem>
+                    <SelectItem value="docx">DOCX</SelectItem>
+                    <SelectItem value="xlsx">XLSX</SelectItem>
+                    <SelectItem value="pptx">PPTX</SelectItem>
+                    <SelectItem value="mp3">MP3</SelectItem>
+                    <SelectItem value="mp4">MP4</SelectItem>
+                    <SelectItem value="jpg">JPG</SelectItem>
+                    <SelectItem value="png">PNG</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -178,6 +176,11 @@ export function ResourceEditor({ resource, mode = 'create' }: ResourceEditorProp
                       // Auto-fill title if empty
                       if (!form.getValues('title')) {
                         form.setValue('title', name.split('.')[0]);
+                      }
+                      // Auto-select type based on file extension
+                      const extension = name.split('.').pop()?.toLowerCase();
+                      if (extension) {
+                        form.setValue('type', extension as any);
                       }
                     }}
                   />

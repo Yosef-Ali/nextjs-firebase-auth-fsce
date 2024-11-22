@@ -27,7 +27,6 @@ import { postsService } from '@/app/services/posts';
 import { useAuth } from '@/app/hooks/useAuth';
 import { useSearch } from '@/app/context/search-context';
 import { toast } from '@/hooks/use-toast';
-import { ContentDisplay } from '@/components/content-display';
 
 interface PostsTableProps {
   initialPosts: Post[];
@@ -112,7 +111,6 @@ function PostsTable({ initialPosts }: PostsTableProps) {
             <TableHead className="w-[300px]">Title & Excerpt</TableHead>
             <TableHead>Category</TableHead>
             <TableHead>Author</TableHead>
-            <TableHead>Created</TableHead>
             <TableHead>Updated</TableHead>
             <TableHead className="text-right">Action</TableHead>
           </TableRow>
@@ -142,15 +140,7 @@ function PostsTable({ initialPosts }: PostsTableProps) {
                 </div>
               </TableCell>
               <TableCell className="text-muted-foreground">
-                {new Date(post.createdAt).toLocaleDateString()}
-              </TableCell>
-              <TableCell className="text-muted-foreground">
                 {new Date(post.updatedAt).toLocaleDateString()}
-              </TableCell>
-              <TableCell>
-                <div className="max-h-32 overflow-y-auto">
-                  <ContentDisplay content={post.content || ''} />
-                </div>
               </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>

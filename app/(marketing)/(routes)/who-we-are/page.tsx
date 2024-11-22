@@ -3,13 +3,9 @@
 import { useEffect, useState } from 'react';
 import { whoWeAreService } from '@/app/services/who-we-are';
 import { AboutContent } from '@/app/types/about';
-import CarouselSection from '@/components/carousel';
 import VisionMissionGoals from '@/components/VisionMissionGoals';
-import GoodGovernance from '@/components/good-governance';
-import Partners from '@/components/partners';
-import MapComponent from '@/components/ethiopian-map';
 import FSCESkeleton from '@/components/FSCESkeleton';
-import FeaturedSection from '@/components/featured-section';
+import SectionHeader from '@/components/section-header';
 
 export default function WhoWeArePage() {
   const [aboutData, setAboutData] = useState<AboutContent[]>([]);
@@ -33,8 +29,8 @@ export default function WhoWeArePage() {
         });
         setAboutData(data);
       } catch (err) {
-        console.error('Error in fetchAboutData:', err);
-        setError('Failed to load content. Please try again later.');
+        console.error('Error fetching about data:', err);
+        setError(err instanceof Error ? err : 'Failed to load content');
       } finally {
         setLoading(false);
       }
@@ -43,57 +39,26 @@ export default function WhoWeArePage() {
     fetchAboutData();
   }, []);
 
-  useEffect(() => {
-    console.log('About data state updated:', {
-      count: aboutData.length,
-      data: aboutData.map(item => ({
-        id: item.id,
-        title: item.title,
-        section: item.section,
-        category: item.category,
-        published: item.published
-      }))
-    });
-  }, [aboutData]);
-
   if (loading) {
     return <FSCESkeleton />;
   }
 
   if (error) {
     return (
-      <div className="text-center py-8">
-        <div className="text-red-500 font-medium mb-2">
-          {error instanceof Error ? 'Error occurred:' : 'Something went wrong:'}
-        </div>
-        <pre className="mt-2 text-sm bg-red-50 p-4 rounded-md overflow-auto max-w-2xl mx-auto">
-          {error instanceof Error ? error.message : error}
-        </pre>
-      </div>
-    );
-  }
-
-  if (aboutData.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <p>No about content available. Please check the database for posts with category about and status published.</p>
-        <pre className="mt-4 text-sm">
-          Looking for:
-          - category: about
-          - published: true
-          - section: vision, mission, or goals
-        </pre>
+      <div className="text-center py-8 text-red-500">
+        {error instanceof Error ? error.message : error}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <CarouselSection /> 
+    <div className="flex flex-col gap-16 py-12">
+      <SectionHeader
+        title="Who We Are"
+        description="Learn about our organization, our mission, and our commitment to child welfare and empowerment."
+      />
+      
       <VisionMissionGoals aboutData={aboutData} />
-      <FeaturedSection />
-       <MapComponent />
-      <Partners />
     </div>
   );
 }

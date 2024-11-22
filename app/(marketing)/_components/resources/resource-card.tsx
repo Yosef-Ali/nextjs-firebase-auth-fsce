@@ -61,7 +61,7 @@ export function ResourceCard({ resource }: ResourceCardProps) {
             <div className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
               <span>
-                {format(new Date(resource.publishedDate), 'MMM d, yyyy')}
+                {resource.publishedDate && format(new Date(resource.publishedDate), 'MMM d, yyyy')}
               </span>
             </div>
             <div className="flex items-center gap-1">

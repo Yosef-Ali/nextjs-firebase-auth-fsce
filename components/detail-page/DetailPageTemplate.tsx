@@ -36,7 +36,7 @@ const formatCategoryName = (category: string) => {
 };
 
 // Related Post Card Component
-const RelatedPostCard = ({ post }: { post: DetailPageProps["relatedPosts"][0] }) => (
+const RelatedPostCard = ({ post }: { post: NonNullable<DetailPageProps["relatedPosts"]>[number] }) => (
   <a href={`/what-we-do/${post.category}/${post.slug}`} className="block h-full">
     <Card className="group h-full overflow-hidden hover:shadow-lg transition-all duration-300">
       <div className="flex flex-col sm:flex-row h-full">

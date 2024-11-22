@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { cn } from '@/lib/utils';
+import type { Components } from 'react-markdown';
 
 interface MarkdownPreviewProps {
   content: string;
@@ -26,49 +27,49 @@ function cleanMarkdown(content: string): string {
     .trim();
 }
 
-const components = {
-  h1: ({ children }: { children: React.ReactNode }) => (
-    <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mb-6">
+const components: Partial<Components> = {
+  h1: ({ children, ...props }) => (
+    <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mb-6" {...props}>
       {children}
     </h1>
   ),
-  h2: ({ children }: { children: React.ReactNode }) => (
-    <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight mb-4">
+  h2: ({ children, ...props }) => (
+    <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight mb-4" {...props}>
       {children}
     </h2>
   ),
-  h3: ({ children }: { children: React.ReactNode }) => (
-    <h3 className="scroll-m-20 text-xl font-semibold tracking-tight mb-3">
+  h3: ({ children, ...props }) => (
+    <h3 className="scroll-m-20 text-xl font-semibold tracking-tight mb-3" {...props}>
       {children}
     </h3>
   ),
-  p: ({ children }: { children: React.ReactNode }) => (
-    <p className="leading-7 [&:not(:first-child)]:mt-6 text-base text-muted-foreground">
+  p: ({ children, ...props }) => (
+    <p className="leading-7 [&:not(:first-child)]:mt-6 text-base text-muted-foreground" {...props}>
       {children}
     </p>
   ),
-  ul: ({ children }: { children: React.ReactNode }) => (
-    <ul className="my-6 ml-6 list-disc [&>li]:mt-2">
+  ul: ({ children, ...props }) => (
+    <ul className="my-6 ml-6 list-disc [&>li]:mt-2" {...props}>
       {children}
     </ul>
   ),
-  ol: ({ children }: { children: React.ReactNode }) => (
-    <ol className="my-6 ml-6 list-decimal [&>ol>li]:mt-2">
+  ol: ({ children, ...props }) => (
+    <ol className="my-6 ml-6 list-decimal [&>ol>li]:mt-2" {...props}>
       {children}
     </ol>
   ),
-  li: ({ children }: { children: React.ReactNode }) => (
-    <li className="text-base text-muted-foreground">
+  li: ({ children, ...props }) => (
+    <li className="text-base text-muted-foreground" {...props}>
       {children}
     </li>
   ),
-  strong: ({ children }: { children: React.ReactNode }) => (
-    <strong className="font-bold text-foreground">
+  strong: ({ children, ...props }) => (
+    <strong className="font-bold text-foreground" {...props}>
       {children}
     </strong>
   ),
-  blockquote: ({ children }: { children: React.ReactNode }) => (
-    <blockquote className="mt-6 border-l-2 border-primary/40 pl-6 italic text-muted-foreground">
+  blockquote: ({ children, ...props }) => (
+    <blockquote className="mt-6 border-l-2 border-primary/40 pl-6 italic text-muted-foreground" {...props}>
       {children}
     </blockquote>
   ),

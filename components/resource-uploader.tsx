@@ -9,24 +9,19 @@ import type { OurFileRouter } from "@/app/api/uploadthing/core";
 const UploadButton = generateUploadButton<OurFileRouter>();
 
 interface ResourceUploaderProps {
-  onSuccess: () => void;
-  onError: (error: Error) => void;
+  value: string;
+  disabled?: boolean;
+  onChange: (url: string) => void;
+  onRemove: () => void;
 }
 
 export function ResourceUploader({
-  onSuccess,
-  onError,
+  value,
+  disabled,
+  onChange,
+  onRemove,
 }: ResourceUploaderProps) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("publication");
   const [uploading, setUploading] = useState(false);
-
-  const categories = [
-    { value: "publication", label: "Publication" },
-    { value: "report", label: "Report" },
-    { value: "media", label: "Media" },
-  ];
 
   const handleUploadComplete = async (res: any) => {
     try {
@@ -34,76 +29,52 @@ export function ResourceUploader({
         throw new Error("No file uploaded");
       }
 
-      if (!title.trim()) {
-        throw new Error("Title is required");
-      }
-
-      if (!description.trim()) {
-        throw new Error("Description is required");
-      }
-
-      // Here you would typically call your API to create the resource
-      // For now, we'll just simulate success
-      onSuccess();
-      
-      // Reset form
-      setTitle("");
-      setDescription("");
-      setCategory("publication");
-      setUploading(false);
+      const fileUrl = res[0].url;
+      onChange(fileUrl);
     } catch (error) {
+      console.error("Upload error:", error);
+    } finally {
       setUploading(false);
-      onError(error instanceof Error ? error : new Error("Failed to upload resource"));
     }
   };
 
+  const handleUploadError = (error: Error) => {
+    console.error("Upload error:", error);
+    setUploading(false);
+  };
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="space-y-4">
-        <div className="flex flex-col gap-4">
-          <select 
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            disabled={uploading}
+    <div className="flex items-center gap-4">
+      {value && (
+        <div className="flex items-center gap-2 overflow-hidden rounded-md border p-2">
+          <FileIcon className="h-4 w-4 flex-shrink-0" />
+          <p className="text-xs truncate">{value}</p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 p-0"
+            onClick={onRemove}
+            disabled={disabled}
           >
-            {categories.map(({ value, label }) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-
-          <input
-            type="text"
-            placeholder="Enter title"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            disabled={uploading}
-            required
-          />
-
-          <textarea
-            placeholder="Enter description"
-            className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            disabled={uploading}
-            required
-          />
+            <X className="h-4 w-4" />
+          </Button>
         </div>
-        
+      )}
+      {!value && (
         <UploadButton
           endpoint="resourceUploader"
-          onUploadBegin={() => setUploading(true)}
           onClientUploadComplete={handleUploadComplete}
-          onUploadError={(error: Error) => {
-            setUploading(false);
-            onError(error);
+          onUploadError={handleUploadError}
+          onUploadBegin={() => setUploading(true)}
+          appearance={{
+            button: {
+              pointerEvents: disabled || uploading ? 'none' : 'auto',
+              opacity: disabled || uploading ? 0.5 : 1,
+            },
           }}
         />
-      </div>
+      )}
     </div>
   );
 }

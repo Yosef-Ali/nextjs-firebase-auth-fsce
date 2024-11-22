@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { whatWeDoService } from '@/app/services/what-we-do';
+import { Post } from '@/app/types/post';
 import { Program } from '@/app/types/program';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +11,8 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import FSCESkeleton from '@/components/FSCESkeleton';
+import Partners from '@/components/partners';
+import CarouselSection from '@/components/carousel';
 
 const categories = [
   {
@@ -35,7 +38,7 @@ const categories = [
 ];
 
 export default function WhatWeDoPage() {
-  const [programs, setPrograms] = useState<Program[]>([]);
+  const [programs, setPrograms] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('prevention-promotion');
 
@@ -74,6 +77,8 @@ export default function WhatWeDoPage() {
   };
 
   return (
+    <>
+    <CarouselSection/>
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="py-20 bg-primary/5">
@@ -135,16 +140,21 @@ export default function WhatWeDoPage() {
                             <CardDescription>{program.excerpt}</CardDescription>
                           </CardHeader>
                           <CardContent className="flex-grow">
-                            {program.objectives && (
+                            {program.content && (
                               <div className="mb-4">
-                                <h4 className="font-semibold mb-2">Objectives:</h4>
-                                <ul className="list-disc list-inside space-y-1">
-                                  {program.objectives.slice(0, 3).map((objective, index) => (
-                                    <li key={index} className="text-sm text-muted-foreground">
-                                      {objective}
-                                    </li>
-                                  ))}
-                                </ul>
+                                <h4 className="font-semibold mb-2">Overview:</h4>
+                                <p className="text-sm text-muted-foreground">
+                                  {program.excerpt || program.content.substring(0, 150)}...
+                                </p>
+                              </div>
+                            )}
+                            {program.tags && program.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {program.tags.map((tag, index) => (
+                                  <span key={index} className="px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">
+                                    {tag}
+                                  </span>
+                                ))}
                               </div>
                             )}
                           </CardContent>
@@ -166,5 +176,7 @@ export default function WhatWeDoPage() {
         </div>
       </section>
     </div>
+    <Partners/>
+    </>
   );
 }

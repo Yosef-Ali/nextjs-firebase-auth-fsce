@@ -4,7 +4,7 @@ import React from 'react';
 
 
 import { FacebookIcon, TwitterIcon, GithubIcon, InstagramIcon, HomeIcon, EmailIcon, TelephoneIcon, FaxIcon,} from '@/app/icons';
-import Logo from '@/app/dashboard/_components/old codes/components/logo';
+import { Logo } from './Logo';
 
 
 interface FooterNavItem {
@@ -190,7 +190,7 @@ const Footer: React.FC = () => {
           ))}
         </div>
         <div className="mt-10 py-10 border-t border-gray-700 items-center justify-between sm:flex">
-          <p className="text-gray-300">© 2022 Float UI Inc. All rights reserved.</p>
+          <p className="text-gray-300"> 2022 Float UI Inc. All rights reserved.</p>
           <div className="flex items-center gap-x-6 text-gray-400 mt-6">
             <a href="#" onClick={(e) => e.preventDefault()}>
               <FacebookIcon />

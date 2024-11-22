@@ -11,6 +11,8 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { whatWeDoService } from '@/app/services/what-we-do';
 import FSCESkeleton from '@/components/FSCESkeleton';
 import { Post } from '@/app/types/post';
+import CarouselSection from '@/components/carousel';
+import Partners from '@/components/partners';
 
 // Helper function to format category name
 const formatCategoryName = (category: string) => {
@@ -48,20 +50,16 @@ export default function CategoryPage() {
   }
 
   return (
+    <>
+    <CarouselSection/>
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="py-20 bg-[rgb(var(--primary)/0.05)]">
-        <div className="container mx-auto px-4">
-          <Link href="/what-we-do">
-            <Button variant="outline" className="mb-6">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to What We Do
-            </Button>
-          </Link>
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">
+      <section className="py-12">
+        <div className="container mx-auto px-4 py-8 text-center">
+          <h1 className="text-4xl  font-bold mb-6">
             {formatCategoryName(category)}
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Explore our {formatCategoryName(category)} programs and initiatives
           </p>
         </div>
@@ -127,5 +125,7 @@ export default function CategoryPage() {
         </div>
       </section>
     </div>
+    <Partners />
+    </>
   );
 }

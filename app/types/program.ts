@@ -8,14 +8,14 @@ export interface Program {
   id: string;
   title: string;
   description: string;
+  content: string;
   category: ProgramCategory;
   coverImage?: string;
   images?: string[];
-  content: any; // Rich text content
   excerpt: string;
   published: boolean;
-  createdAt: number;
-  updatedAt: number;
+  createdAt: Date;
+  updatedAt: Date;
   location?: string;
   beneficiaries?: string[];
   objectives?: string[];
@@ -29,6 +29,7 @@ export interface Program {
     url: string;
     type: 'pdf' | 'doc' | 'video' | 'link';
   }[];
+  metadata: Record<string, unknown>;
 }
 
 export interface ProgramStatistics {

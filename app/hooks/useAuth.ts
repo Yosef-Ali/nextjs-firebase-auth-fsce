@@ -4,6 +4,8 @@ import {
   GoogleAuthProvider, 
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   User as FirebaseUser
 } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -35,6 +37,28 @@ export function useAuth() {
     }
   };
 
+  // Sign in with email and password
+  const signin = async (email: string, password: string) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push('/dashboard/posts');
+    } catch (error) {
+      console.error('Email/password sign in error:', error);
+      throw error;
+    }
+  };
+
+  // Sign up with email and password
+  const signup = async (email: string, password: string) => {
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      router.push('/dashboard/posts');
+    } catch (error) {
+      console.error('Sign up error:', error);
+      throw error;
+    }
+  };
+
   // Sign out
   const signOut = async () => {
     try {
@@ -49,6 +73,8 @@ export function useAuth() {
     user,
     loading,
     signInWithGoogle,
-    signOut
+    signOut,
+    signin,
+    signup
   };
 }

@@ -8,7 +8,7 @@ class BoardMemberService {
   async getBoardMembers(includeUnpublished = false): Promise<BoardMember[]> {
     try {
       console.log('Fetching board members...');
-      let q = query(
+      const q = query(
         collection(db, COLLECTION),
         orderBy('order')  // Single ordering by 'order' field only
       );

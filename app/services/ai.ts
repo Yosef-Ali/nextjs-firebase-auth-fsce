@@ -20,7 +20,11 @@ export const aiService = {
         ],
       });
 
-      return response.choices[0]?.message?.content?.replace(/^(Here's|This is) .+?:\s*/i, '').trim() || text;
+      const content = response?.choices?.[0]?.message?.content;
+      if (typeof content === 'string') {
+        return content.replace(/^(Here's|This is) .+?:\s*/i, '').trim() || text;
+      }
+      return text;
     } catch (error) {
       console.error('Error enhancing content:', error);
       return text;
@@ -43,7 +47,11 @@ export const aiService = {
         ],
       });
 
-      return response.choices[0]?.message?.content?.replace(/^(Here's|This is) .+?:\s*/i, '').trim() || text;
+      const content = response?.choices?.[0]?.message?.content;
+      if (typeof content === 'string') {
+        return content.replace(/^(Here's|This is) .+?:\s*/i, '').trim() || text;
+      }
+      return text;
     } catch (error) {
       console.error('Error fixing spelling and grammar:', error);
       return text;
@@ -66,7 +74,11 @@ export const aiService = {
         ],
       });
 
-      return response.choices[0]?.message?.content?.replace(/^(Here's|This is) .+?:\s*/i, '').trim() || text;
+      const content = response?.choices?.[0]?.message?.content;
+      if (typeof content === 'string') {
+        return content.replace(/^(Here's|This is) .+?:\s*/i, '').trim() || text;
+      }
+      return text;
     } catch (error) {
       console.error('Error improving formatting:', error);
       return text;

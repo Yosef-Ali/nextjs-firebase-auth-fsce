@@ -69,7 +69,7 @@ export function ResourceList({ resources, onDelete }: ResourceListProps) {
               </div>
             </TableCell>
             <TableCell>
-              {format(new Date(resource.publishedDate), "MMM d, yyyy")}
+              {resource.publishedDate ? format(new Date(resource.publishedDate), "MMM d, yyyy") : "Not published"}
             </TableCell>
             <TableCell className="text-right">
               <DropdownMenu>

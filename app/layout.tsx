@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'FSCE - Foundation for Social Care and Empowerment',
-  description: 'Working together for child welfare and empowerment',
+  description: 'FSCE is an Ethiopian resident charity organization working on child protection and empowerment.',
 }
 
 export default function RootLayout({
@@ -17,12 +17,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
         <AuthProvider>
-          <main className="flex min-h-screen flex-col">
-            {children}
-          </main>
+          {children}
           <Toaster />
         </AuthProvider>
       </body>

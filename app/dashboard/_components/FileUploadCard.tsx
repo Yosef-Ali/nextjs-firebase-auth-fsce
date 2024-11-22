@@ -8,6 +8,7 @@ import { useCallback, useState, useEffect } from 'react'
 import { Upload, X, FileText } from 'lucide-react'
 import { useDropzone } from 'react-dropzone'
 import { cn } from "@/lib/utils"
+import { toast } from 'sonner'
 
 interface FileUploadCardProps {
   onFileUpload: (url: string, name: string) => void
@@ -30,13 +31,23 @@ export default function FileUploadCard({ onFileUpload, initialFile, accept }: Fi
   const handleUpload = async (file: File) => {
     try {
       setUploading(true)
+
+      // Validate file size (16MB limit)
+      if (file.size > 16 * 1024 * 1024) {
+        throw new Error('File size exceeds 16MB limit')
+      }
+
       const storageRef = ref(storage, `resources/${file.name}-${Date.now()}`)
       const snapshot = await uploadBytes(storageRef, file)
       const url = await getDownloadURL(snapshot.ref)
       setPreview({ url, name: file.name })
       onFileUpload(url, file.name)
+      toast.success('File uploaded successfully')
     } catch (error) {
       console.error('Error uploading file:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to upload file')
+      setPreview(null)
+      onFileUpload('', '')
     } finally {
       setUploading(false)
     }
@@ -58,14 +69,20 @@ export default function FileUploadCard({ onFileUpload, initialFile, accept }: Fi
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
       'application/vnd.ms-powerpoint': ['.ppt'],
       'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
+      'audio/mpeg': ['.mp3'],
+      'video/mp4': ['.mp4'],
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/png': ['.png']
     },
-    multiple: false
+    multiple: false,
+    maxSize: 16 * 1024 * 1024 // 16MB
   })
 
   const removeFile = (e: React.MouseEvent) => {
     e.stopPropagation()
     setPreview(null)
     onFileUpload('', '')
+    toast.success('File removed')
   }
 
   return (
@@ -106,7 +123,7 @@ export default function FileUploadCard({ onFileUpload, initialFile, accept }: Fi
                 {uploading ? 'Uploading...' : isDragActive ? 'Drop your file here' : 'Drag & drop your file here'}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                PDF, Word, Excel, PowerPoint up to 16MB
+                PDF, Word, Excel, PowerPoint, MP3, MP4, JPG, PNG up to 16MB
               </p>
             </div>
           </div>

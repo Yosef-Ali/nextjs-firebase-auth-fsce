@@ -24,49 +24,72 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        // Create or update user in Firestore
-        await usersService.createOrUpdateUser(user.uid, {
-          email: user.email || '',
-          displayName: user.displayName || '',
-          photoURL: user.photoURL || '',
-        });
-      }
-      setUser(user);
-      setLoading(false);
-    });
+    try {
+      console.log('Setting up auth state listener...');
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        console.log('Auth state changed:', user ? 'User logged in' : 'No user');
+        if (user) {
+          try {
+            await usersService.createUserIfNotExists(user);
+          } catch (err) {
+            console.error('Error creating user:', err);
+          }
+        }
+        setUser(user);
+        setLoading(false);
+      }, (error) => {
+        console.error('Auth state change error:', error);
+        setError(error);
+        setLoading(false);
+      });
 
-    return () => unsubscribe();
+      return () => {
+        console.log('Cleaning up auth state listener...');
+        unsubscribe();
+      };
+    } catch (err) {
+      console.error('Error setting up auth state listener:', err);
+      setError(err instanceof Error ? err : new Error('Failed to setup auth'));
+      setLoading(false);
+    }
   }, []);
 
   const signInWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      // Create or update user in Firestore
-      await usersService.createOrUpdateUser(result.user.uid, {
-        email: result.user.email || '',
-        displayName: result.user.displayName || '',
-        photoURL: result.user.photoURL || '',
-      });
-      router.push('/dashboard/posts');
-    } catch (error) {
-      console.error('Google sign in error:', error);
+      await signInWithPopup(auth, provider);
+      router.push('/dashboard');
+    } catch (err) {
+      console.error('Error signing in with Google:', err);
+      throw err;
     }
   };
 
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
-      router.push('/signin');
-    } catch (error) {
-      console.error('Sign out error:', error);
+      router.push('/');
+    } catch (err) {
+      console.error('Error signing out:', err);
+      throw err;
     }
   };
+
+  if (error) {
+    console.error('Auth provider error:', error);
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-500">Authentication Error</h1>
+          <p className="mt-2 text-gray-600">{error.message}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut }}>

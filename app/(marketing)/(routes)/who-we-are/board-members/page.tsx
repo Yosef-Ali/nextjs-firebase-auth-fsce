@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import CarouselSection from "@/components/carousel";
 import BoardMemberGrid from './_components/BoardMemberGrid';
+import BoardMemberGridSkeleton from './_components/BoardMemberGridSkeleton';
 import Partners from '@/components/partners';
 import SectionHeader from '@/components/section-header';
 import { boardMemberService } from '@/app/services/board-members';
@@ -97,19 +98,17 @@ export default function BoardMembersPage() {
     return (
       <div className="min-h-screen bg-background">
         <CarouselSection />
-        <section className="py-16 px-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="space-y-4">
-              <Skeleton className="h-12 w-[300px] mx-auto" />
-              <Skeleton className="h-24 max-w-3xl mx-auto" />
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <Skeleton key={i} className="h-[400px]" />
-                ))}
-              </div>
-            </div>
+        <div className="py-16">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+              Our Board Members
+            </h1>
+            <p className="text-xl text-gray-600/90 max-w-3xl mx-auto">
+              Meet our dedicated board members who guide our organization's mission and vision.
+            </p>
           </div>
-        </section>
+          <BoardMemberGridSkeleton />
+        </div>
       </div>
     );
   }
@@ -117,15 +116,17 @@ export default function BoardMembersPage() {
   return (
     <div className="min-h-screen bg-background">
       <CarouselSection />
-      <section className="py-16 px-4">
-        <div className="max-w-7xl mx-auto">
-          <SectionHeader
-            title="Our Board Members"
-            description="Meet our dedicated board members who bring their expertise and passion to guide our organization in making a positive impact in the lives of children and communities across Ethiopia."
-          />
-          <BoardMemberGrid members={members} />
+      <div className="py-16">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+            Our Board Members
+          </h1>
+          <p className="text-xl text-gray-600/90 max-w-3xl mx-auto">
+            Meet our dedicated board members who guide our organization's mission and vision.
+          </p>
         </div>
-      </section>
+        <BoardMemberGrid members={members} />
+      </div>
       <Partners />
     </div>
   );

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth } from '@/app/hooks/useAuth'
 
 export default function SignUp() {
   const [email, setEmail] = useState('')

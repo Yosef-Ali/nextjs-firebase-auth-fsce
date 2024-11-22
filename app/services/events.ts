@@ -1,25 +1,22 @@
 import { db } from '@/app/firebase';
-import { collection, getDocs, query, where, limit } from 'firebase/firestore';
+import { collection, getDocs, query, where, limit, orderBy, addDoc, doc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 import { Post } from '@/app/types/post';
 
 // Helper function to generate slug from title
-const generateSlug = (title: string): string => {
+function generateSlug(title: string): string {
   return title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
-};
+}
 
 class EventsService {
   private collectionName = 'posts';
 
   async getAllEvents(includeUnpublished = false, includePastEvents = false): Promise<Post[]> {
     try {
-      // Simple query without ordering
       const q = query(
-        collection(db, this.collectionName),
-        where('category', '==', 'events'),
-        limit(5)
+        collection(db, this.collectionName)
       );
 
       const querySnapshot = await getDocs(q);
@@ -28,8 +25,16 @@ class EventsService {
         ...doc.data()
       } as Post));
 
-      // Sort in memory instead
-      return posts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      // Filter and sort in memory
+      return posts
+        .filter(post => {
+          const eventDate = new Date(post.date);
+          return post.category === 'events' &&
+            (includeUnpublished || post.published) &&
+            (includePastEvents || eventDate >= new Date());
+        })
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+        .slice(0, 5); // Apply limit in memory
     } catch (error) {
       console.error('Error getting events:', error);
       return [];
@@ -38,36 +43,29 @@ class EventsService {
 
   async getUpcomingEvents(count: number = 3, includeUnpublished = false): Promise<Post[]> {
     try {
-      let constraints = [
-        where('category', '==', 'events'),
-        where('date', '>=', new Date().toISOString().split('T')[0])
-      ];
-
-      if (!includeUnpublished) {
-        constraints.push(where('published', '==', true));
-      }
-
       const q = query(
-        collection(db, this.collectionName),
-        ...constraints,
-        orderBy('date', 'asc'),
-        limit(count)
+        collection(db, this.collectionName)
       );
 
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
+      const posts = querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt instanceof Timestamp 
-          ? doc.data().createdAt.toMillis() 
-          : Date.now(),
-        updatedAt: doc.data().updatedAt instanceof Timestamp 
-          ? doc.data().updatedAt.toMillis() 
-          : Date.now(),
-      })) as Post[];
+        ...doc.data()
+      } as Post));
+
+      // Filter and sort in memory
+      return posts
+        .filter(post => {
+          const eventDate = new Date(post.date);
+          return post.category === 'events' &&
+            (includeUnpublished || post.published) &&
+            eventDate >= new Date();
+        })
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+        .slice(0, count);
     } catch (error) {
       console.error('Error getting upcoming events:', error);
-      throw error;
+      return [];
     }
   }
 
@@ -75,13 +73,11 @@ class EventsService {
     try {
       const q = query(
         collection(db, this.collectionName),
-        where('category', '==', 'events'),
         where('slug', '==', slug),
-        limit(1)
+        where('category', '==', 'events')
       );
 
       const querySnapshot = await getDocs(q);
-      
       if (querySnapshot.empty) {
         return null;
       }
@@ -89,34 +85,25 @@ class EventsService {
       const doc = querySnapshot.docs[0];
       return {
         id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt instanceof Timestamp 
-          ? doc.data().createdAt.toMillis() 
-          : Date.now(),
-        updatedAt: doc.data().updatedAt instanceof Timestamp 
-          ? doc.data().updatedAt.toMillis() 
-          : Date.now(),
+        ...doc.data()
       } as Post;
     } catch (error) {
       console.error('Error getting event by slug:', error);
-      throw error;
+      return null;
     }
   }
 
   async createEvent(data: Partial<Post>): Promise<string> {
     try {
-      const slug = generateSlug(data.title || '');
-      const timestamp = Timestamp.now();
-
-      const docRef = await addDoc(collection(db, this.collectionName), {
+      const eventData = {
         ...data,
         category: 'events',
-        slug,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-        tags: [...(data.tags || []), 'events']
-      });
+        slug: generateSlug(data.title || ''),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
+      };
 
+      const docRef = await addDoc(collection(db, this.collectionName), eventData);
       return docRef.id;
     } catch (error) {
       console.error('Error creating event:', error);
@@ -126,13 +113,12 @@ class EventsService {
 
   async updateEvent(id: string, data: Partial<Post>): Promise<void> {
     try {
-      const docRef = doc(db, this.collectionName, id);
-      const timestamp = Timestamp.now();
-
-      await updateDoc(docRef, {
+      const eventRef = doc(db, this.collectionName, id);
+      const updateData = {
         ...data,
-        updatedAt: timestamp
-      });
+        updatedAt: Timestamp.now()
+      };
+      await updateDoc(eventRef, updateData);
     } catch (error) {
       console.error('Error updating event:', error);
       throw error;
@@ -141,7 +127,8 @@ class EventsService {
 
   async deleteEvent(id: string): Promise<void> {
     try {
-      await deleteDoc(doc(db, this.collectionName, id));
+      const eventRef = doc(db, this.collectionName, id);
+      await deleteDoc(eventRef);
     } catch (error) {
       console.error('Error deleting event:', error);
       throw error;

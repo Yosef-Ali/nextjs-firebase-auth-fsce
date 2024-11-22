@@ -21,6 +21,7 @@ This document provides instructions for setting up, developing, and deploying th
 - [Need Help?](#need-help)
 - [Authentication & User Management](#authentication--user-management)
 - [Posts Management](#posts-management)
+- [Query Strategy](#query-strategy)
 
 ## Prerequisites
 
@@ -238,79 +239,114 @@ If you encounter any issues:
 
 ## Posts Management
 
-The application includes a full-featured posts management system accessible through the dashboard. Here are the key features:
+### Post Categories
 
-### Posts Features
-- View all posts in a table format with elegant design
-- Create new posts with title, content, and category
-- Edit any post (no restrictions)
-- Delete any post (no restrictions)
-- Posts are visible to all authenticated users
-- Posts are sorted by creation date (newest first)
-- Each post displays:
-  - Title and excerpt
-  - Author information with avatar
-  - Category badge
-  - Creation and update dates
+All content types (news, events, programs, etc.) are managed through a single `posts` collection with different categories:
 
-### Posts Security
-Posts are protected with the following security rules:
-```javascript
-match /posts/{postId} {
-  allow read: if request.auth != null;
-  allow create, update, delete: if request.auth != null;
-}
-```
+- `news`: News articles and updates
+- `events`: Upcoming and past events
+- `programs`: Program information and details
+- `who-we-are`: Organization information
+- `what-we-do`: Activity descriptions
 
-### Posts Data Structure
-Posts are stored in Firestore with the following structure:
+### Query Strategy
+
+We use a simplified query approach to minimize Firestore index requirements and improve maintainability:
+
+1. Simple Queries
+   - Basic collection queries without complex conditions
+   - Client-side filtering by category and status
+   - In-memory sorting by date
+
+2. Example Usage:
 ```typescript
-interface Post {
-  id: string;
-  title: string;
-  content: string;
-  excerpt?: string;
-  category: string;
-  coverImage?: string;
-  images?: string[];
-  published: boolean;
-  authorId: string;
-  authorEmail: string;
-  author?: {
-    id: string;
-    name: string;
-    email: string;
-    avatar?: string;
-  };
-  createdAt: number;
-  updatedAt: number;
-  tags?: string[];
-  slug: string;
-}
+// Get all programs
+const programs = await postsService.getPrograms();
+
+// Get latest news
+const news = await postsService.getLatestNews(5);
+
+// Get upcoming events
+const events = await postsService.getUpcomingEvents();
 ```
 
-### Posts Service Implementation
-The posts service (`app/services/posts.ts`) implements the following functionality:
-- `getUserPosts`: Retrieves all posts for authenticated users
-- `createPost`: Creates a new post
-- `updatePost`: Updates any existing post
-- `deletePost`: Deletes any post
-- `canEditPost`: Verifies post exists (all authenticated users can edit)
+### Benefits
 
-### Query Optimization
-As this application uses Firebase's free tier (Spark plan), queries are optimized to avoid requiring composite indexes:
+- No complex Firestore indexes required
+- Easier to maintain and modify
+- Better performance for small to medium datasets
+- Simpler debugging and testing
 
-#### Simple Queries Used
-- Basic queries without complex combinations of filters
-- Single-field ordering (e.g., `orderBy('createdAt', 'desc')`)
-- Simple equality filters
-- No composite indexes required
+### Considerations
 
-#### Benefits
-- Works within free tier limitations
-- Better performance
-- No index management needed
-- Reduced operational complexity
+- Best for collections with < 1000 documents
+- May need pagination for larger datasets
+- Monitor client-side performance
+
+## Query Strategy
+
+We use a simplified query approach to minimize Firestore index requirements and improve maintainability:
+
+### Core Principles
+
+1. Simple Queries
+   - Use basic queries without complex compound conditions
+   - Avoid using multiple `where` clauses that would require composite indexes
+   - Prefer client-side filtering over complex database queries
+
+2. In-Memory Processing
+   - Filtering: Apply additional filters in memory (e.g., published status, dates)
+   - Sorting: Sort data in memory using JavaScript's native sort methods
+   - Pagination: Use array slicing for limiting results
+
+### Implementation Example
+
+```typescript
+// Instead of this complex query:
+const q = query(
+  collection(db, 'posts'),
+  where('category', '==', 'events'),
+  where('published', '==', true),
+  where('date', '>=', today),
+  orderBy('date', 'asc'),
+  limit(5)
+);
+
+// Use this simple query and filter in memory:
+const q = query(collection(db, 'posts'));
+const posts = await getDocs(q);
+
+return posts
+  .filter(post => 
+    post.category === 'events' &&
+    post.published &&
+    new Date(post.date) >= today
+  )
+  .sort((a, b) => new Date(a.date) - new Date(b.date))
+  .slice(0, 5);
+```
+
+### Benefits
+
+1. No complex Firestore indexes required
+2. Easier to maintain and modify filters
+3. Better performance for small to medium datasets
+4. More predictable query behavior
+5. Simpler debugging and testing
+
+### Considerations
+
+- Best suited for collections with < 1000 documents
+- May need pagination for larger datasets
+- Monitor client-side performance with large result sets
+- Consider implementing server-side filtering for sensitive data
+
+### Services Using This Pattern
+
+- Posts Service (`app/services/posts.ts`)
+- Events Service (`app/services/events.ts`)
+- News Service (`app/services/news.ts`)
+- What We Do Service (`app/services/what-we-do.ts`)
 
 ## UI Components (shadcn/ui)
 
@@ -390,17 +426,19 @@ import { Input } from "@/components/ui/input"
   render={({ field }) => (
     <FormItem>
       <FormLabel>Category</FormLabel>
-      <Select onValueChange={field.onChange} defaultValue={field.value}>
-        <FormControl>
-          <SelectTrigger>
-            <SelectValue placeholder="Select category" />
-          </SelectTrigger>
-        </FormControl>
-        <SelectContent>
-          <SelectItem value="who-we-are">Who We Are</SelectItem>
-          <SelectItem value="what-we-do">What We Do</SelectItem>
-        </SelectContent>
-      </Select>
+      <FormControl>
+        <Select onValueChange={field.onChange} defaultValue={field.value}>
+          <FormControl>
+            <SelectTrigger>
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+          </FormControl>
+          <SelectContent>
+            <SelectItem value="who-we-are">Who We Are</SelectItem>
+            <SelectItem value="what-we-do">What We Do</SelectItem>
+          </SelectContent>
+        </Select>
+      </FormControl>
       <FormMessage />
     </FormItem>
   )}

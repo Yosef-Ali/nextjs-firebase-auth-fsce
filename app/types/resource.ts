@@ -6,16 +6,17 @@ export interface Resource {
   id: string;
   title: string;
   description: string;
-  type: ResourceType;
+  type: 'pdf' | 'docx' | 'xlsx' | 'pptx' | 'mp3' | 'mp4' | 'jpg' | 'png';
   slug: string;
   content?: string;
   coverImage?: string;
   fileUrl: string;
   downloadCount: number;
   published: boolean;
-  publishedDate: number;
+  publishedDate?: number | null;
   createdAt: number;
   updatedAt: number;
+  category: 'report' | 'publication' | 'media';
 }
 
 export interface ResourceStatistics {

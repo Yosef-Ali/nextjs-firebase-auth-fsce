@@ -7,9 +7,7 @@ import { Button } from "@/components/ui/button";
 import { motion, useAnimation, Variants } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 
-import { newsService } from '@/app/services/news';
-import { eventsService } from '@/app/services/events';
-import { programsService } from '@/app/services/programs';
+import { postsService } from '@/app/services/posts';
 import { Post } from '@/app/types/post';
 import Link from 'next/link';
 import { ArrowRight, Calendar } from "lucide-react";
@@ -207,7 +205,7 @@ export default function FeaturedSection() {
     const fetchPosts = async () => {
       try {
         console.log('Fetching posts...');
-        const fetchedPosts = await newsService.getAllPosts();
+        const fetchedPosts = await postsService.getPublishedPosts();
         console.log('Fetched posts:', fetchedPosts);
         setPosts(fetchedPosts);
       } catch (error) {

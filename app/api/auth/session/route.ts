@@ -45,7 +45,8 @@ export async function POST(request: NextRequest) {
       };
 
       // Set the cookie
-      cookies().set(cookieOptions);
+      const cookieStore = await cookies();
+      cookieStore.set(cookieOptions);
 
       console.log('Session cookie created successfully for user:', decodedToken.uid);
       return NextResponse.json(
@@ -85,7 +86,8 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE() {
   try {
-    cookies().delete('session');
+    const cookieStore = await cookies();
+    cookieStore.delete('session');
     console.log('Session cookie deleted successfully');
     return NextResponse.json({ status: 'success' }, { status: 200 });
   } catch (error) {

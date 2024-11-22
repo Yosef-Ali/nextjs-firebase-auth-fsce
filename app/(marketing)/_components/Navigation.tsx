@@ -12,7 +12,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
-} from "@/app/(marketing)/navigation-menu";
+} from "@/components/ui/navigation-menu";
 import { menuItems } from '@/app/lib/menuItems';
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
@@ -41,7 +41,7 @@ const ListItem = React.forwardRef<
 ListItem.displayName = "ListItem";
 
 export default function Navigation() {
-  const { user, logout } = useAuth();
+  const { user, signOut  } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -84,7 +84,7 @@ export default function Navigation() {
                   <NavigationMenuItem key={item.title}>
                     {item.items ? (
                       <>
-                        <NavigationMenuTrigger className="px-3">{item.title}</NavigationMenuTrigger>
+                        <NavigationMenuTrigger className={navigationMenuTriggerStyle()}>{item.title}</NavigationMenuTrigger>
                         <NavigationMenuContent>
                           <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] bg-white shadow-lg rounded-lg">
                             {item.items.map((subItem) => (
@@ -101,7 +101,7 @@ export default function Navigation() {
                       </>
                     ) : (
                       <Link href={item.href ?? ''} legacyBehavior passHref>
-                        <NavigationMenuLink className={`${navigationMenuTriggerStyle()} px-3 bg-transparent hover:bg-transparent hover:text-primary`}>
+                        <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                           {item.title}
                         </NavigationMenuLink>
                       </Link>
@@ -113,17 +113,25 @@ export default function Navigation() {
           </div>
 
           {/* Sign Out/Login - Fixed width on the right */}
-          <div className="w-48 flex justify-end">
+          <div className="w-48 flex justify-end gap-2 items-center">
             {user ? (
-              <button
-                onClick={logout}
-                className={`${navigationMenuTriggerStyle()} bg-transparent hover:bg-transparent hover:text-primary`}
-              >
-                Sign Out
-              </button>
+              <>
+                <Link 
+                  href="/dashboard/posts" 
+                  className={navigationMenuTriggerStyle()}
+                >
+                  Dashboard
+                </Link>
+                <button
+                  onClick={signOut}
+                  className={navigationMenuTriggerStyle()}
+                >
+                  Sign Out
+                </button>
+              </>
             ) : (
-              <Link href="/sign-in" className={`${navigationMenuTriggerStyle()} bg-transparent hover:bg-transparent hover:text-primary`}>
-                Login
+              <Link href="/sign-in" className={navigationMenuTriggerStyle()}>
+                Sign in
               </Link>
             )}
           </div>

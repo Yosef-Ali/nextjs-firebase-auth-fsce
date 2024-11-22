@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Region } from './Map/regions';
+import { Region } from '@/components/Map/regions';
 
 interface CaptionsProps {
   data?: { id: string; title: string; apo: string; dis: string; }[];

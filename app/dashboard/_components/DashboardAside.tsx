@@ -16,6 +16,8 @@ import {
   ChevronLeft,
   Archive,
   Users2,
+  FolderTree,
+  Image,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -51,6 +53,11 @@ const DashboardAside = () => {
       icon: BookOpenIcon,
     },
     {
+      href: '/dashboard/categories',
+      label: 'Categories',
+      icon: TagIcon,
+    },
+    {
       href: '/dashboard/pages',
       label: 'Pages',
       icon: FileText,
@@ -61,14 +68,9 @@ const DashboardAside = () => {
       icon: Archive,
     },
     {
-      href: '/dashboard/media',
-      label: 'Media',
-      icon: ImageIcon,
-    },
-    {
-      href: '/dashboard/categories',
-      label: 'Categories',
-      icon: TagIcon,
+      href: '/dashboard/media-library',
+      label: 'Media Library',
+      icon: Image,
     },
     {
       href: '/dashboard/board-members',

@@ -20,10 +20,10 @@ export interface Post {
   authorId: string;
   authorEmail: string;
   author?: Author;
-  createdAt: number;
-  updatedAt: number;
+  date: string;
+  createdAt: number;  // timestamp in milliseconds
+  updatedAt: number;  // timestamp in milliseconds
   tags?: string[];
-  date?: string;  
   time?: string;  
   location?: string;  
 }
@@ -33,7 +33,7 @@ export interface Resource {
   title: string;
   description?: string;
   category: 'report' | 'publication' | 'media';
-  type: 'pdf' | 'doc' | 'image';
+  type: 'pdf' | 'docx' | 'xlsx' | 'pptx' | 'mp3' | 'mp4' | 'jpg' | 'png';
   fileUrl: string;
   fileSize?: string;
   downloadCount?: number;
