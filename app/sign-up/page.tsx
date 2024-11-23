@@ -5,10 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { SignInForm } from '@/app/_components/SignInForm'
+import { SignUpForm } from '@/app/_components/SignUpForm'
 import { Separator } from '@/components/ui/separator'
 
-export default function SignIn() {
+export default function SignUp() {
   const { user, loading, signInWithGoogle } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -20,7 +20,7 @@ export default function SignIn() {
     }
   }, [user, loading, router, callbackUrl])
 
-  const handleSignIn = async () => {
+  const handleSignUp = async () => {
     await signInWithGoogle()
   }
 
@@ -36,11 +36,11 @@ export default function SignIn() {
     <main className="flex min-h-screen flex-col items-center justify-center p-6">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-2">Sign in to Blog App</h1>
-          <p className="text-gray-600 mb-8">Sign in with email or Google</p>
+          <h1 className="text-4xl font-bold mb-2">Create an Account</h1>
+          <p className="text-gray-600 mb-8">Sign up with email or Google</p>
         </div>
         
-        <SignInForm callbackUrl={callbackUrl} />
+        <SignUpForm callbackUrl={callbackUrl} />
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
@@ -54,23 +54,23 @@ export default function SignIn() {
         </div>
 
         <Button
-          onClick={handleSignIn}
+          onClick={handleSignUp}
           className="w-full"
           variant="outline"
         >
-          Sign in with Google
+          Sign up with Google
         </Button>
 
         <div className="text-center space-y-2">
           <div>
             <span className="text-sm text-muted-foreground">
-              Don't have an account?{' '}
+              Already have an account?{' '}
             </span>
             <Link 
-              href="/sign-up" 
+              href="/sign-in" 
               className="text-sm underline underline-offset-4 hover:text-primary"
             >
-              Sign up
+              Sign in
             </Link>
           </div>
           <div>

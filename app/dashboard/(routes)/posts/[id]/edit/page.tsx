@@ -45,7 +45,7 @@ export default function EditPostPage({ params }: PageProps) {
             description: 'You do not have permission to edit this post.',
             variant: 'destructive',
           });
-          router.push('/dashboard/posts');
+          router.push('/');  // Redirect to home page
           return;
         }
 
@@ -56,7 +56,7 @@ export default function EditPostPage({ params }: PageProps) {
             description: 'Post not found.',
             variant: 'destructive',
           });
-          router.push('/dashboard/posts');
+          router.push('/');  // Redirect to home page
           return;
         }
 
@@ -89,7 +89,7 @@ export default function EditPostPage({ params }: PageProps) {
           description: 'Failed to load post. Please try again.',
           variant: 'destructive',
         });
-        router.push('/dashboard/posts');
+        router.push('/');  // Redirect to home page
       }
     };
 

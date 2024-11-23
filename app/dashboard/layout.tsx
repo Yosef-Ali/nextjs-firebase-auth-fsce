@@ -41,7 +41,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/signin');
+      router.push('/');  // Redirect to home page
     }
   }, [user, loading, router]);
 

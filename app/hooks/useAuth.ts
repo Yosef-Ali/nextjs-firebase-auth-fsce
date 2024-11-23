@@ -63,7 +63,7 @@ export function useAuth() {
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
-      router.push('/signin');
+      router.push('/');  
     } catch (error) {
       console.error('Sign out error:', error);
     }

@@ -14,7 +14,7 @@ export default function NewPostPage() {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/signin');
+      router.push('/');  // Redirect to home page
     }
   }, [loading, user, router]);
 
