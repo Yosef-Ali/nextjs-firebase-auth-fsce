@@ -14,6 +14,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  WhereFilterOp,
 } from 'firebase/firestore';
 import { db } from './firebase-config';
 
@@ -22,15 +23,14 @@ export const useFirestoreCollection = (
   path: string,
   constraints: QueryConstraint[] = []
 ) => {
-  const ref = collection(db, path);
-  const q = query(ref, ...constraints);
-  return useCollection(q);
+  const collectionRef = collection(db, path);
+  return useCollection(constraints.length > 0 ? query(collectionRef, ...constraints) : collectionRef);
 };
 
 // Document hooks
 export const useFirestoreDocument = (path: string, id: string) => {
-  const ref = doc(db, path, id);
-  return useDocument(ref);
+  const docRef = doc(db, path, id);
+  return useDocument(docRef);
 };
 
 // Firestore operations
@@ -39,12 +39,13 @@ export const addDocument = async (
   data: DocumentData
 ) => {
   try {
-    const ref = collection(db, collectionPath);
-    return await addDoc(ref, {
+    const collectionRef = collection(db, collectionPath);
+    const docRef = await addDoc(collectionRef, {
       ...data,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+    return docRef;
   } catch (error) {
     console.error('Error adding document:', error);
     throw error;
@@ -57,8 +58,8 @@ export const updateDocument = async (
   data: Partial<DocumentData>
 ) => {
   try {
-    const ref = doc(db, collectionPath, id);
-    return await updateDoc(ref, {
+    const docRef = doc(db, collectionPath, id);
+    await updateDoc(docRef, {
       ...data,
       updatedAt: new Date(),
     });
@@ -70,8 +71,8 @@ export const updateDocument = async (
 
 export const deleteDocument = async (collectionPath: string, id: string) => {
   try {
-    const ref = doc(db, collectionPath, id);
-    return await deleteDoc(ref);
+    const docRef = doc(db, collectionPath, id);
+    await deleteDoc(docRef);
   } catch (error) {
     console.error('Error deleting document:', error);
     throw error;
@@ -85,7 +86,7 @@ export const createQueryConstraints = ({
   orderByDirection = 'desc',
   limitCount,
 }: {
-  whereConstraints?: [string, string, any][];
+  whereConstraints?: [string, WhereFilterOp, any][];
   orderByField?: string;
   orderByDirection?: 'asc' | 'desc';
   limitCount?: number;
