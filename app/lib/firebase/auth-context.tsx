@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, ReactNode, useEffect } from 'react';
+import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { useAuthState, useSignOut } from 'react-firebase-hooks/auth';
 import { auth } from './firebase-config';
 import { 
@@ -8,40 +8,37 @@ import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
-  onAuthStateChanged
+  onAuthStateChanged,
+  User
 } from 'firebase/auth';
 import { setCookie, deleteCookie } from 'cookies-next';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
-  user: any;
+  user: User | null;
   loading: boolean;
-  error: Error | undefined;
-  signIn: (email: string, password: string) => Promise<any>;
-  signUp: (email: string, password: string) => Promise<any>;
-  signInWithGoogle: () => Promise<any>;
+  error: Error | null;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, loading, error] = useAuthState(auth);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [signOut] = useSignOut(auth);
   const googleProvider = new GoogleAuthProvider();
   const router = useRouter();
 
   // Handle auth state changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        // User is signed in
-        const token = await user.getIdToken();
-        setCookie('firebase-token', token);
-      } else {
-        // User is signed out
-        deleteCookie('firebase-token');
-      }
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -49,27 +46,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      return await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push('/dashboard');
     } catch (error) {
       console.error('Error signing in:', error);
+      setError(error instanceof Error ? error : new Error('An error occurred'));
       throw error;
     }
   };
 
   const signUp = async (email: string, password: string) => {
     try {
-      return await createUserWithEmailAndPassword(auth, email, password);
+      await createUserWithEmailAndPassword(auth, email, password);
+      router.push('/dashboard');
     } catch (error) {
       console.error('Error signing up:', error);
+      setError(error instanceof Error ? error : new Error('An error occurred'));
       throw error;
     }
   };
 
   const signInWithGoogle = async () => {
     try {
-      return await signInWithPopup(auth, googleProvider);
+      await signInWithPopup(auth, googleProvider);
+      router.push('/dashboard');
     } catch (error) {
       console.error('Error signing in with Google:', error);
+      setError(error instanceof Error ? error : new Error('An error occurred'));
       throw error;
     }
   };
@@ -77,25 +80,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       await signOut();
-      deleteCookie('firebase-token');
       router.push('/');
     } catch (error) {
       console.error('Error signing out:', error);
+      setError(error instanceof Error ? error : new Error('An error occurred'));
       throw error;
     }
   };
 
-  const value = {
-    user,
-    loading,
-    error,
-    signIn,
-    signUp,
-    signInWithGoogle,
-    logout,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        error,
+        signIn,
+        signUp,
+        signInWithGoogle,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

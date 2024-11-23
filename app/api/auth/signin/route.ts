@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { adminAuth } from '@/app/firebase-admin';
+import { auth } from '@/app/firebase-admin';
 
 const COOKIE_NAME = 'session';
 const MAX_AGE = 60 * 60 * 24 * 5; // 5 days
@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   try {
     const { idToken } = await request.json();
     const expiresIn = MAX_AGE * 1000;
-    const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
+    const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn });
 
     // Set the session cookie
     const cookieStore = await cookies();

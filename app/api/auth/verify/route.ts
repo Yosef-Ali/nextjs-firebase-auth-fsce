@@ -1,4 +1,4 @@
-import { adminAuth } from '@/app/firebase-admin';
+import { auth } from '@/app/firebase-admin';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Force Node.js runtime
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     try {
       // Verify the session cookie
-      const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true);
+      const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
       
       return NextResponse.json({ 
         isValid: true,

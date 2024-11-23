@@ -1,4 +1,4 @@
-import { adminAuth } from '@/app/firebase-admin';
+import { auth } from '@/app/firebase-admin';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -6,7 +6,7 @@ export const runtime = 'nodejs';
 export async function GET() {
   try {
     // Try a simpler operation first - getting the tenant
-    const tenantManager = await adminAuth.tenantManager();
+    const tenantManager = await auth.tenantManager();
     
     return NextResponse.json({ 
       status: 'success',

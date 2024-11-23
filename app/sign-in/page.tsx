@@ -2,13 +2,13 @@
 
 import { useAuth } from '@/app/lib/firebase/auth-context'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { SignInForm } from '@/app/_components/SignInForm'
 import { Separator } from '@/components/ui/separator'
 
-export default function SignIn() {
+function SignInContent() {
   const { user, loading, signInWithGoogle } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -84,5 +84,17 @@ export default function SignIn() {
         </div>
       </div>
     </main>
+  )
+}
+
+export default function SignIn() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    }>
+      <SignInContent />
+    </Suspense>
   )
 }

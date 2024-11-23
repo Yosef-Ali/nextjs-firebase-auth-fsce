@@ -1,5 +1,4 @@
-import { adminAuth } from '@/app/firebase-admin';
-import { cookies } from 'next/headers';
+import { auth } from '@/app/firebase-admin';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Force Node.js runtime
@@ -19,81 +18,68 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // First verify the ID token
-      const decodedToken = await adminAuth.verifyIdToken(idToken);
-      console.log('ID Token verified for user:', decodedToken.uid);
+      // Verify the ID token
+      const decodedToken = await auth.verifyIdToken(idToken);
       
-      // Create session cookie
+      // Create a session cookie
       const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
-      const sessionCookie = await adminAuth.createSessionCookie(idToken, {
-        expiresIn
-      });
+      const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn });
       
-      if (!sessionCookie) {
-        throw new Error('Failed to create session cookie');
-      }
-
-      // Set cookie options
-      const cookieOptions = {
-        name: 'session',
-        value: sessionCookie,
+      // Set the cookie
+      const response = NextResponse.json({ status: 'success' });
+      response.cookies.set('session', sessionCookie, {
         maxAge: expiresIn / 1000, // Convert to seconds
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
         path: '/',
-        sameSite: 'lax' as const,
-      };
-
-      // Set the cookie
-      const cookieStore = await cookies();
-      cookieStore.set(cookieOptions);
-
-      console.log('Session cookie created successfully for user:', decodedToken.uid);
+      });
+      return response;
+    } catch (error) {
+      console.error('Error creating session:', error);
       return NextResponse.json(
-        { 
-          status: 'success',
-          uid: decodedToken.uid,
-          // Include these for debugging
-          cookieSet: true,
-          expiresIn: expiresIn / 1000,
-        },
-        { status: 200 }
+        { error: 'Invalid ID token' },
+        { status: 401 }
       );
-    } catch (error: any) {
-      console.error('Firebase Auth error:', error?.message || error);
-      if (error?.code === 'auth/invalid-id-token') {
-        return NextResponse.json(
-          { error: 'Invalid ID token' },
-          { status: 401 }
-        );
-      }
-      throw error;
     }
-  } catch (error: any) {
-    console.error('Session creation error:', error?.message || error);
+  } catch (error) {
+    console.error('Error in POST /api/auth/session:', error);
     return NextResponse.json(
-      { 
-        error: 'Internal Server Error',
-        details: error?.message,
-        // Include these for debugging
-        errorCode: error?.code,
-        errorName: error?.name,
-      },
+      { error: 'Internal Server Error' },
       { status: 500 }
     );
   }
 }
 
+export async function GET(request: NextRequest) {
+  try {
+    const sessionCookie = request.cookies.get('session')?.value;
+
+    if (!sessionCookie) {
+      return NextResponse.json({ authenticated: false });
+    }
+
+    // Verify the session cookie
+    const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+    
+    return NextResponse.json({
+      authenticated: true,
+      decodedClaims,
+    });
+  } catch (error) {
+    return NextResponse.json({ authenticated: false });
+  }
+}
+
 export async function DELETE() {
   try {
-    const cookieStore = await cookies();
-    cookieStore.delete('session');
-    console.log('Session cookie deleted successfully');
-    return NextResponse.json({ status: 'success' }, { status: 200 });
+    const response = NextResponse.json({ status: 'success' });
+    response.cookies.delete('session');
+    return response;
   } catch (error) {
-    console.error('Error deleting session:', error);
+    console.error('Error in DELETE /api/auth/session:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
