@@ -123,17 +123,16 @@ const Footer: React.FC = () => {
   const ContactSection = () => {
     const { label, items } = footerNavs.find(section => section.label === 'Contact') || { label: '', items: [] };
     return (
-      <div>
-        {/* ... */}
+      <div className="space-y-4">
         {items.map((item, index) => (
-          <p key={index} className={`mb-4 flex items-center justify-center md:justify-start ${index === items.length - 1 ? '' : 'mb-4'}`}>
-            {item.icon ? (
-              <span className="me-3 [&>svg]:h-5 [&>svg]:w-5">
-                <item.icon /> {/* Call the icon component as a function */}
+          <li key={index} className="flex items-center text-gray-300">
+            {item.icon && (
+              <span className="mr-3 [&>svg]:h-5 [&>svg]:w-5">
+                <item.icon />
               </span>
-            ) : null}
-            {item.name}
-          </p>
+            )}
+            <span className="duration-150 hover:text-gray-400">{item.name}</span>
+          </li>
         ))}
       </div>
     );
@@ -168,10 +167,10 @@ const Footer: React.FC = () => {
             </form>
           </div>
         </div>
-        <div className="flex-1 mt-16 space-y-6 justify-between sm:flex md:space-y-0">
+        <div className="grid grid-cols-2 gap-8 mt-16 sm:grid-cols-3 lg:grid-cols-4">
           {footerNavs.map((item, idx) => (
-            <ul className="space-y-4 text-gray-300" key={idx}>
-              <h4 className="text-gray-200 font-semibold sm:pb-2">{item.label}</h4>
+            <ul className="space-y-4" key={idx}>
+              <h4 className="text-gray-200 font-semibold">{item.label}</h4>
               {item.label === 'Contact' ? (
                 <ContactSection />
               ) : (
@@ -179,7 +178,7 @@ const Footer: React.FC = () => {
                   <li key={idx}>
                     <a
                       onClick={el.onClick}
-                      className="duration-150 hover:text-gray-400 cursor-pointer"
+                      className="text-gray-300 duration-150 hover:text-gray-400 cursor-pointer"
                     >
                       {el.name}
                     </a>
@@ -191,7 +190,7 @@ const Footer: React.FC = () => {
         </div>
         <div className="mt-10 py-10 border-t border-gray-700 items-center justify-between sm:flex">
           <p className="text-gray-300"> 2022 Float UI Inc. All rights reserved.</p>
-          <div className="flex items-center gap-x-6 text-gray-400 mt-6">
+          <div className="flex items-center gap-x-6 text-gray-400 mt-6 sm:mt-0">
             <a href="#" onClick={(e) => e.preventDefault()}>
               <FacebookIcon />
             </a>

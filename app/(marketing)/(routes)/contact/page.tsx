@@ -1,8 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from '@/components/ui/card';
+import { MapPin, Mail, Phone, Clock } from 'lucide-react';
+import { motion } from 'framer-motion';
+import React from 'react';
 
-export default function ContactPage() {
+const ContactPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -12,11 +21,10 @@ export default function ContactPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
     console.log('Form submitted:', formData);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -24,143 +32,164 @@ export default function ContactPage() {
     }));
   };
 
+  const contactInfo = [
+    {
+      title: "Address",
+      icon: <MapPin className="h-6 w-6 text-muted-foreground" />,
+      content: "123 Main Street, Addis Ababa, Ethiopia",
+    },
+    {
+      title: "Email",
+      icon: <Mail className="h-6 w-6 text-muted-foreground" />,
+      content: "info@example.com",
+    },
+    {
+      title: "Phone",
+      icon: <Phone className="h-6 w-6 text-muted-foreground" />,
+      content: "+251 11 123 4567",
+    },
+    {
+      title: "Working Hours",
+      icon: <Clock className="h-6 w-6 text-muted-foreground" />,
+      content: "Monday - Friday: 8:30 AM - 5:30 PM\nSaturday: 9:00 AM - 1:00 PM\nSunday: Closed",
+    },
+  ];
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-4xl font-bold text-gray-900 mb-8">Contact Us</h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,transparent,black)] pointer-events-none" />
+      
+      <div className="container mx-auto px-4 py-16 relative">
+        {/* Page Title */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12"
+        >
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Get in Touch</h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+          </p>
+        </motion.div>
 
-      <div className="grid gap-8 md:grid-cols-2">
-        <div>
-          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              Get in Touch
-            </h2>
-            <p className="text-gray-600 mb-6">
-              We'd love to hear from you. Please fill out this form or use our 
-              contact information below.
-            </p>
-            
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900">Main Office</h3>
-                <p className="text-gray-600">Addis Ababa, Ethiopia</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {/* Contact Form Card */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="lg:col-span-2"
+          >
+            <Card className="p-6 h-full flex flex-col">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Mail className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold">Send us a Message</h3>
               </div>
-              
-              <div>
-                <h3 className="text-lg font-medium text-gray-900">Email</h3>
-                <a 
-                  href="mailto:info@fsce.org" 
-                  className="text-blue-600 hover:text-blue-800"
-                >
-                  info@fsce.org
-                </a>
+              <div className="flex-grow">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="name" className="text-sm font-medium text-gray-700">Name</label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className="w-full p-3 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="email" className="text-sm font-medium text-gray-700">Email</label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="w-full p-3 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="subject" className="text-sm font-medium text-gray-700">Subject</label>
+                    <input
+                      type="text"
+                      id="subject"
+                      name="subject"
+                      value={formData.subject}
+                      onChange={handleChange}
+                      className="w-full p-3 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="message" className="text-sm font-medium text-gray-700">Message</label>
+                    <textarea
+                      id="message"
+                      name="message"
+                      value={formData.message}
+                      onChange={handleChange}
+                      rows={4}
+                      className="w-full p-3 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      required
+                    />
+                  </div>
+                  <motion.button
+                    type="submit"
+                    className="w-full bg-primary text-white py-3 px-6 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Send Message
+                  </motion.button>
+                </form>
               </div>
-              
-              <div>
-                <h3 className="text-lg font-medium text-gray-900">Phone</h3>
-                <p className="text-gray-600">+251 11 123 4567</p>
+            </Card>
+          </motion.div>
+
+          {/* Contact Information Card */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <Card className="p-6 h-full flex flex-col">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Phone className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold">Contact Information</h3>
               </div>
-            </div>
-          </div>
-
-          <div className="bg-blue-50 rounded-lg p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-2">
-              Working Hours
-            </h2>
-            <p className="text-gray-600">
-              Monday - Friday: 8:30 AM - 5:30 PM<br />
-              Saturday: 9:00 AM - 1:00 PM<br />
-              Sunday: Closed
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-            Send us a Message
-          </h2>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label 
-                htmlFor="name" 
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Your Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label 
-                htmlFor="email" 
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Email Address
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label 
-                htmlFor="subject" 
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Subject
-              </label>
-              <input
-                type="text"
-                id="subject"
-                name="subject"
-                value={formData.subject}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label 
-                htmlFor="message" 
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Message
-              </label>
-              <textarea
-                id="message"
-                name="message"
-                value={formData.message}
-                onChange={handleChange}
-                rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
-            >
-              Send Message
-            </button>
-          </form>
+              <div className="flex-grow space-y-6">
+                {contactInfo.map((info, index) => (
+                  <motion.div
+                    key={info.title}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 + 0.4 }}
+                    className="flex items-start gap-4"
+                  >
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      {React.cloneElement(info.icon, { className: "h-6 w-6 text-primary" })}
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-900">{info.title}</h3>
+                      <p className="text-muted-foreground whitespace-pre-line mt-1">{info.content}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </Card>
+          </motion.div>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default ContactPage;
