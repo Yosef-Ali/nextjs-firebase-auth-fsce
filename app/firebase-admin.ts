@@ -10,15 +10,26 @@ if (!admin.apps.length) {
       throw new Error('FIREBASE_PRIVATE_KEY is not set in environment variables');
     }
 
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: privateKey.startsWith('-----BEGIN PRIVATE KEY-----') 
-          ? privateKey 
-          : privateKey.replace(/\\n/g, '\n'),
-      } as admin.ServiceAccount)
-    });
+    // Try to initialize with the raw private key
+    try {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: privateKey,
+        } as admin.ServiceAccount)
+      });
+    } catch (e) {
+      // If raw private key fails, try with newline replacement
+      const formattedKey = privateKey.replace(/\\n/g, '\n');
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: formattedKey,
+        } as admin.ServiceAccount)
+      });
+    }
     
     console.log('Firebase Admin initialized successfully');
   } catch (error) {
