@@ -13,6 +13,8 @@ import FSCESkeleton from '@/components/FSCESkeleton';
 import { Post } from '@/app/types/post';
 import CarouselSection from '@/components/carousel';
 import Partners from '@/components/partners';
+import { motion } from 'framer-motion';
+import { CalendarDays, Image as ImageIcon } from 'lucide-react';
 
 // Helper function to format category name
 const formatCategoryName = (category: string) => {
@@ -33,6 +35,7 @@ export default function CategoryPage() {
       try {
         if (category) {
           const data = await whatWeDoService.getProgramsByCategory(category);
+          console.log('Post data:', data[0]); // Temporary log to check data structure
           setPosts(data);
         }
       } catch (error) {
@@ -48,6 +51,11 @@ export default function CategoryPage() {
   if (loading) {
     return <FSCESkeleton />;
   }
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 },
+  };
 
   return (
     <>
@@ -76,51 +84,62 @@ export default function CategoryPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" variants={item}>
               {posts.map((post) => (
-                <Card key={post.id} className="flex flex-col h-full">
-                  {post.coverImage && (
-                    <div className="relative w-full pt-[56.25%]">
-                      <Image
-                        src={post.coverImage}
-                        alt={post.title}
-                        fill
-                        className="object-cover rounded-t-lg"
-                      />
-                    </div>
-                  )}
-                  <CardHeader>
-                    <CardTitle>{post.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-1 flex flex-col">
-                    <p className="text-muted-foreground mb-4">
-                      {post.excerpt}
-                    </p>
-                    {post.tags && post.tags.length > 0 && (
-                      <div className="mb-4">
-                        <ul className="flex flex-wrap gap-2">
-                          {post.tags.map((tag) => (
-                            <li key={tag}>
-                              <Badge variant="secondary">
-                                {tag}
-                              </Badge>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    <div className="mt-auto">
-                      <Link href={`/what-we-do/${category}/${post.slug}`}>
-                        <Button className="w-full">
-                          Learn More
+                <motion.div key={post.id} variants={item}>
+                  <Link href={`/what-we-do/${category}/${post.slug}`} className="block group">
+                    <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
+                      {post.coverImage ? (
+                        <div className="relative w-full pt-[56.25%] overflow-hidden">
+                          <Image
+                            src={post.coverImage}
+                            alt={post.title}
+                            fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            unoptimized={post.coverImage.startsWith('data:')}
+                          />
+                        </div>
+                      ) : (
+                        <div className="relative w-full pt-[56.25%] bg-gray-100">
+                          <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                            <ImageIcon className="h-12 w-12" />
+                          </div>
+                        </div>
+                      )}
+                      <CardHeader>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Badge variant="secondary">Programs</Badge>
+                          <Badge variant="outline" className="text-primary">
+                            {category}
+                          </Badge>
+                        </div>
+                        <CardTitle className="group-hover:text-primary transition-colors">
+                          {post.title}
+                        </CardTitle>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                          <CalendarDays className="h-4 w-4" />
+                          <span>{post.createdAt ? new Date(post.createdAt).toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          }) : 'Ongoing'}</span>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground line-clamp-2 mb-4">
+                          {post.excerpt}
+                        </p>
+                        <div className="flex items-center text-primary font-medium">
+                          Read More
                           <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           )}
         </div>
       </section>

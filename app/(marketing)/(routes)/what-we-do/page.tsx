@@ -7,9 +7,10 @@ import { Program } from '@/app/types/program';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2, CalendarDays } from 'lucide-react';
 import FSCESkeleton from '@/components/FSCESkeleton';
 import Partners from '@/components/partners';
 import CarouselSection from '@/components/carousel';
@@ -125,48 +126,47 @@ export default function WhatWeDoPage() {
                     .filter((program) => program.category === category.id)
                     .map((program) => (
                       <motion.div key={program.id} variants={item}>
-                        <Card className="h-full flex flex-col">
-                          <CardHeader>
+                        <Link href={`/what-we-do/${category.id}/${program.id}`} className="block group">
+                          <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
                             {program.coverImage && (
-                              <div className="w-full h-48 mb-4 overflow-hidden rounded-lg">
+                              <div className="relative w-full pt-[56.25%] overflow-hidden">
                                 <img
                                   src={program.coverImage}
                                   alt={program.title}
-                                  className="w-full h-full object-cover"
+                                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                 />
                               </div>
                             )}
-                            <CardTitle>{program.title}</CardTitle>
-                            <CardDescription>{program.excerpt}</CardDescription>
-                          </CardHeader>
-                          <CardContent className="flex-grow">
-                            {program.content && (
-                              <div className="mb-4">
-                                <h4 className="font-semibold mb-2">Overview:</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  {program.excerpt || program.content.substring(0, 150)}...
-                                </p>
+                            <CardHeader>
+                              <div className="flex items-center gap-2 mb-3">
+                                <Badge variant="secondary">Programs</Badge>
+                                <Badge variant="outline" className="text-primary">
+                                  {category.title}
+                                </Badge>
                               </div>
-                            )}
-                            {program.tags && program.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-2">
-                                {program.tags.map((tag, index) => (
-                                  <span key={index} className="px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">
-                                    {tag}
-                                  </span>
-                                ))}
+                              <CardTitle className="group-hover:text-primary transition-colors">
+                                {program.title}
+                              </CardTitle>
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                                <CalendarDays className="h-4 w-4" />
+                                <span>{program.createdAt ? new Date(program.createdAt).toLocaleDateString('en-US', { 
+                                  year: 'numeric', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                }) : 'Ongoing'}</span>
                               </div>
-                            )}
-                          </CardContent>
-                          <div className="p-6 pt-0 mt-auto">
-                            <Link href={`/what-we-do/${category.id}/${program.id}`}>
-                              <Button className="w-full">
-                                Learn More
+                            </CardHeader>
+                            <CardContent>
+                              <p className="text-muted-foreground line-clamp-2 mb-4">
+                                {program.excerpt || program.content?.substring(0, 150)}
+                              </p>
+                              <div className="flex items-center text-primary font-medium">
+                                Read More
                                 <ArrowRight className="ml-2 h-4 w-4" />
-                              </Button>
-                            </Link>
-                          </div>
-                        </Card>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </Link>
                       </motion.div>
                     ))}
                 </motion.div>

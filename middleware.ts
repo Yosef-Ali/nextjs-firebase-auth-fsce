@@ -2,13 +2,13 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Add paths that should be accessible without authentication
-const publicPaths = ['/', '/sign-in', '/sign-up'];
+const publicPaths = ['/', '/sign-in', '/sign-up', '/resources'];
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Allow access to public paths
-  if (publicPaths.includes(pathname)) {
+  if (publicPaths.includes(pathname) || pathname.startsWith('/resources/')) {
     return NextResponse.next();
   }
 
@@ -31,6 +31,5 @@ export const config = {
     '/dashboard/:path*',
     '/posts/:path*',
     '/media/:path*',
-    '/resources/:path*',
   ],
 };
