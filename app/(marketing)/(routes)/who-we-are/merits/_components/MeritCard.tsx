@@ -17,7 +17,7 @@ export const MeritCard = ({ title, description, icon }: MeritCardProps) => {
       <Card className="p-6 h-full flex flex-col bg-white">
         <div className="flex items-center gap-4 mb-4">
           <div className="p-2 rounded-lg bg-primary/10">
-            {React.cloneElement(icon as React.ReactElement, { className: 'h-6 w-6 text-primary' })}
+            {icon}
           </div>
           <h3 className="text-xl font-semibold text-foreground">{title}</h3>
         </div>

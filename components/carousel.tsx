@@ -29,28 +29,60 @@ const imageList = [
 ];
 
 const slideContent = [
-  { h1: 'Child Protection', h3: 'Protecting children from abuse, exploitation, and neglect.' },
-  { h1: 'Youth Empowerment', h3: 'Empowering youth through education, skills, and livelihood support.' },
-  { h1: 'Advocacy', h3: "Advocating for children's and youth's rights and welfare." },
-  { h1: 'Humanitarian Response', h3: 'Responding to humanitarian crises, providing relief and support.' },
-  { h1: 'Community Development', h3: 'Developing communities through sustainable development programs.' },
+  { 
+    title: 'Child Protection', 
+    subtitle: 'Protecting children from abuse, exploitation, and neglect.',
+    description: 'Join us in our mission to create a safer future for every child.'
+  },
+  { 
+    title: 'Youth Empowerment', 
+    subtitle: 'Empowering youth through education, skills, and livelihood support.',
+    description: 'Building tomorrow\'s leaders through comprehensive development programs.'
+  },
+  { 
+    title: 'Advocacy', 
+    subtitle: "Advocating for children's and youth's rights and welfare.",
+    description: 'Raising voices for those who need it most.'
+  },
+  { 
+    title: 'Humanitarian Response', 
+    subtitle: 'Responding to humanitarian crises, providing relief and support.',
+    description: 'Immediate action when it matters most.'
+  },
+  { 
+    title: 'Community Development', 
+    subtitle: 'Developing communities through sustainable development programs.',
+    description: 'Creating lasting change through community empowerment.'
+  },
 ];
 
 const CarouselSection = () => {
-
   return (
-    <div className="relative w-full h-[500px]">
+    <div className="relative w-full h-[600px]">
       <ClientCarousel>
         {imageList.map((imagePath, index) => (
-          <div key={index} className="relative w-full h-[500px]">
+          <div key={index} className="relative w-full h-[600px]">
             <div
               className="absolute inset-0 bg-cover bg-center"
               style={{ backgroundImage: `url(${imagePath})` }}
             >
-              <div className="absolute inset-0 bg-blue-500 bg-opacity-40" />
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-white md:items-center md:justify-center sm:items-start sm:justify-end sm:pb-8 sm:px-6 md:items-start md:justify-end md:p-8">
-                <h2 className="text-4xl font-bold mb-4 sm:text-3xl">{slideContent[index].h1}</h2>
-                <p className="text-xl sm:text-lg">{slideContent[index].h3}</p>
+              {/* Lighter blue overlay */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-900/60 to-blue-700/40" />
+              <div className="absolute inset-0 bg-gradient-to-b from-blue-800/20 to-blue-900/40" />
+              
+              {/* Content container with more bottom padding */}
+              <div className="absolute inset-0 container mx-auto flex flex-col justify-center text-white px-4 md:px-8 lg:px-16 pb-24">
+                <div className="max-w-3xl mt-20">
+                  <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight text-white">
+                    {slideContent[index].title}
+                  </h1>
+                  <p className="text-2xl md:text-3xl mb-5 text-blue-100 max-w-2xl">
+                    {slideContent[index].subtitle}
+                  </p>
+                  <p className="text-lg md:text-xl text-blue-200 max-w-xl">
+                    {slideContent[index].description}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
