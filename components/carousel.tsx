@@ -48,9 +48,9 @@ const CarouselSection = () => {
               style={{ backgroundImage: `url(${imagePath})` }}
             >
               <div className="absolute inset-0 bg-blue-500 bg-opacity-40" />
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-                <h2 className="text-4xl font-bold mb-4">{slideContent[index].h1}</h2>
-                <p className="text-xl">{slideContent[index].h3}</p>
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-white md:items-center md:justify-center sm:items-start sm:justify-end sm:pb-8 sm:px-6 md:items-start md:justify-end md:p-8">
+                <h2 className="text-4xl font-bold mb-4 sm:text-3xl">{slideContent[index].h1}</h2>
+                <p className="text-xl sm:text-lg">{slideContent[index].h3}</p>
               </div>
             </div>
           </div>
