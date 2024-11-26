@@ -55,7 +55,7 @@ const MeritsGrid: React.FC<MeritsGridProps> = ({ merits, awards }) => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {featuredMerits.map((merit, index) => (
-              <Card key={index} className="p-6 h-full flex flex-col bg-white">
+              <Card key={index} className="p-6 h-full flex flex-col bg-card">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="p-2 rounded-lg bg-primary/10">
                     {IconComponent(merit.icon)}
@@ -114,7 +114,7 @@ const MeritsGrid: React.FC<MeritsGridProps> = ({ merits, awards }) => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {otherMerits.map((merit, index) => (
-              <Card key={index} className="p-6 h-full flex flex-col bg-white">
+              <Card key={index} className="p-6 h-full flex flex-col bg-card">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="p-2 rounded-lg bg-primary/10">
                     {IconComponent(merit.icon)}
