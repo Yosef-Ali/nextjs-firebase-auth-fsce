@@ -259,14 +259,60 @@ export default function FeaturedSection() {
           </p>
           
           <Tabs defaultValue="news" className="w-full">
-            <TabsList className="grid grid-cols-6 w-full mb-6">
-              <TabsTrigger value="news">News</TabsTrigger>
-              <TabsTrigger value="events">Events</TabsTrigger>
-              <TabsTrigger value="prevention">Prevention</TabsTrigger>
-              <TabsTrigger value="protection">Protection</TabsTrigger>
-              <TabsTrigger value="rehabilitation">Rehabilitation</TabsTrigger>
-              <TabsTrigger value="resource">Resources</TabsTrigger>
-            </TabsList>
+            <div className="relative">
+              <div className="overflow-x-auto pb-2 hide-scrollbar">
+                <TabsList className="inline-flex min-w-full sm:min-w-0 space-x-2 px-1">
+                  <TabsTrigger 
+                    className="flex-none px-4 py-2 text-sm rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" 
+                    value="news"
+                  >
+                    News
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    className="flex-none px-4 py-2 text-sm rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" 
+                    value="events"
+                  >
+                    Events
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    className="flex-none px-4 py-2 text-sm rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" 
+                    value="prevention"
+                  >
+                    Prevention
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    className="flex-none px-4 py-2 text-sm rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" 
+                    value="protection"
+                  >
+                    Protection
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    className="flex-none px-4 py-2 text-sm rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" 
+                    value="rehabilitation"
+                  >
+                    Rehabilitation
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    className="flex-none px-4 py-2 text-sm rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" 
+                    value="resource"
+                  >
+                    Resources
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+              <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-background to-transparent pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-background to-transparent pointer-events-none" />
+            </div>
+
+            <style jsx global>{`
+              .hide-scrollbar {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+              }
+              .hide-scrollbar::-webkit-scrollbar {
+                display: none;
+              }
+            `}</style>
 
             <div className="mt-6">
               <TabsContent value="news">
