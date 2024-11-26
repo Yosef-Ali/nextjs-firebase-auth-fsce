@@ -10,17 +10,19 @@ interface MeritCardProps {
 export const MeritCard = ({ title, description, icon }: MeritCardProps) => {
   return (
     <motion.div
-      whileHover={{ scale: 1.05 }}
+      whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.2 }}
       className="w-full"
     >
-      <Card className="p-6 h-full bg-white/5 backdrop-blur-sm border-neutral-200/10 hover:bg-white/10 transition-all duration-300">
-        <div className="flex flex-col items-center text-center space-y-4">
-          <div className="p-4 rounded-full bg-primary/10 text-primary">
-            {icon}
+      <Card className="p-6 h-full flex flex-col bg-white">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="p-2 rounded-lg bg-primary/10">
+            {React.cloneElement(icon as React.ReactElement, { className: 'h-6 w-6 text-primary' })}
           </div>
-          <h3 className="text-xl font-semibold text-white">{title}</h3>
-          <p className="text-sm text-neutral-400">{description}</p>
+          <h3 className="text-xl font-semibold text-foreground">{title}</h3>
+        </div>
+        <div className="flex-grow">
+          <p className="text-muted-foreground">{description}</p>
         </div>
       </Card>
     </motion.div>
