@@ -42,7 +42,7 @@ const MeritsGrid: React.FC<MeritsGridProps> = ({ merits, awards }) => {
 
   const IconComponent = (iconName: string) => {
     const Icon = iconMap[iconName as keyof typeof iconMap];
-    return Icon ? <Icon className="w-12 h-12 text-blue-600/80" /> : null;
+    return Icon ? <Icon className="h-6 w-6 text-primary" /> : null;
   };
 
   return (
@@ -55,17 +55,19 @@ const MeritsGrid: React.FC<MeritsGridProps> = ({ merits, awards }) => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {featuredMerits.map((merit, index) => (
-              <Card key={index} className="bg-blue-50/40 hover:bg-blue-50/50 transition-colors rounded-xl shadow-sm p-8">
-                <div className="flex flex-col items-center space-y-6">
-                  <div className="p-4 bg-white rounded-full shadow-md">
+              <Card key={index} className="p-6 h-full flex flex-col bg-white">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="p-2 rounded-lg bg-primary/10">
                     {IconComponent(merit.icon)}
                   </div>
-                  <div className="text-center space-y-4">
-                    <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                      {merit.title}
-                    </h3>
-                    <p className="text-gray-600/90">{merit.longDescription || merit.description}</p>
-                  </div>
+                  <h3 className="text-xl font-semibold text-foreground">
+                    {merit.title}
+                  </h3>
+                </div>
+                <div className="flex-grow">
+                  <p className="text-muted-foreground">
+                    {merit.longDescription || merit.description}
+                  </p>
                 </div>
               </Card>
             ))}
@@ -112,15 +114,19 @@ const MeritsGrid: React.FC<MeritsGridProps> = ({ merits, awards }) => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {otherMerits.map((merit, index) => (
-              <Card key={index} className="bg-blue-50/30 hover:bg-blue-50/40 transition-colors rounded-lg shadow-sm p-6">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="p-3 bg-white rounded-full shadow-md">
+              <Card key={index} className="p-6 h-full flex flex-col bg-white">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="p-2 rounded-lg bg-primary/10">
                     {IconComponent(merit.icon)}
                   </div>
-                  <h3 className="text-lg font-semibold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                  <h3 className="text-xl font-semibold text-foreground">
                     {merit.title}
                   </h3>
-                  <p className="text-sm text-gray-600/90 text-center">{merit.description}</p>
+                </div>
+                <div className="flex-grow">
+                  <p className="text-muted-foreground">
+                    {merit.description}
+                  </p>
                 </div>
               </Card>
             ))}
