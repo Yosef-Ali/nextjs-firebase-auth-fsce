@@ -56,43 +56,18 @@ class WhoWeAreService {
 
   async getAboutContent(): Promise<AboutContent[]> {
     try {
-      console.log('Fetching about content...');
       const q = query(
-        collection(db, this.collectionName),
-        where('published', '==', true),
-        where('category', '==', this.category)
+        collection(db, 'about'),
+        where('section', 'in', ['vision', 'mission', 'values'])
       );
-      console.log('Query parameters:', {
-        collection: this.collectionName,
-        category: this.category,
-        published: true
-      });
 
       const querySnapshot = await getDocs(q);
-      console.log('Query results:', {
-        totalDocs: querySnapshot.size,
-        empty: querySnapshot.empty
-      });
+      const aboutData: AboutContent[] = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as AboutContent));
 
-      const documents = querySnapshot.docs.map((doc) => {
-        const content = this.documentToAboutContent(doc);
-        console.log('Processed document:', {
-          id: doc.id,
-          title: content.title,
-          section: content.section,
-          category: content.category,
-          contentPreview: typeof content.content === 'string' ? content.content.substring(0, 50) + '...' : 'Non-string content'
-        });
-        return content;
-      });
-      
-      if (documents.length === 0) {
-        console.log('No about content available. Please check the database for posts with category about and status published.');
-      } else {
-        console.log(`Found ${documents.length} about content documents`);
-      }
-      
-      return documents.sort((a, b) => b.createdAt - a.createdAt);
+      return aboutData;
     } catch (error) {
       console.error('Error fetching about content:', error);
       throw error;

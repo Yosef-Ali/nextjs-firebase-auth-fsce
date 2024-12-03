@@ -23,7 +23,10 @@ export const postsService = {
   async getUserPosts(userId: string): Promise<Post[]> {
     try {
       const postsRef = collection(db, COLLECTION_NAME);
-      const q = query(postsRef);
+      const q = query(
+        postsRef, 
+        orderBy('createdAt', 'desc')  
+      );
       
       const querySnapshot = await getDocs(q);
       const posts = querySnapshot.docs.map(doc => {
@@ -51,8 +54,7 @@ export const postsService = {
         } as Post;
       });
 
-      // Sort in memory by createdAt
-      return posts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      return posts;
     } catch (error) {
       console.error('Error getting user posts:', error);
       return [];
@@ -86,8 +88,28 @@ export const postsService = {
     });
   },
 
-  async deletePost(id: string): Promise<void> {
-    await deleteDoc(doc(db, COLLECTION_NAME, id));
+  async deletePost(userId: string, postId: string): Promise<boolean> {
+    try {
+      // First, check if the user is the author of the post
+      const postDoc = await getDoc(doc(db, COLLECTION_NAME, postId));
+      if (!postDoc.exists()) {
+        console.error('Post not found');
+        return false;
+      }
+
+      const postData = postDoc.data();
+      if (postData.authorId !== userId) {
+        console.error('User not authorized to delete this post');
+        return false;
+      }
+
+      // If authorized, proceed with deletion
+      await deleteDoc(doc(db, COLLECTION_NAME, postId));
+      return true;
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      return false;
+    }
   },
 
   async canEditPost(userId: string, postId: string): Promise<boolean> {
@@ -114,14 +136,16 @@ export const postsService = {
     try {
       let q = query(
         collection(db, COLLECTION_NAME),
-        where('published', '==', true)
+        where('published', '==', true),
+        orderBy('createdAt', 'desc')  
       );
 
       if (category) {
         q = query(
           collection(db, COLLECTION_NAME),
           where('published', '==', true),
-          where('category', '==', category)
+          where('category', '==', category),
+          orderBy('createdAt', 'desc')  
         );
       }
 
@@ -151,7 +175,7 @@ export const postsService = {
         } as Post;
       });
 
-      return posts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      return posts;
     } catch (error) {
       console.error('Error getting published posts:', error);
       return [];

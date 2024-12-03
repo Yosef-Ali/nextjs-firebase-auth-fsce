@@ -38,7 +38,7 @@ const VisionMissionGoals: React.FC<VisionMissionGoalsProps> = ({ aboutData }) =>
   // Filter content by section
   const visionContent = aboutData.find(item => item.section === 'vision');
   const missionContent = aboutData.find(item => item.section === 'mission');
-  const goalsContent = aboutData.find(item => item.section === 'goals');
+  const valuesContent = aboutData.find(item => item.section === 'values');
 
   // Function to render content safely
   const renderContent = (content: string) => {
@@ -73,9 +73,9 @@ const VisionMissionGoals: React.FC<VisionMissionGoalsProps> = ({ aboutData }) =>
       index: 1
     },
     {
-      title: "Our Goals",
+      title: "Our Values",
       icon: GraduationCap,
-      content: goalsContent,
+      content: valuesContent,
       index: 2
     }
   ];
@@ -88,7 +88,7 @@ const VisionMissionGoals: React.FC<VisionMissionGoalsProps> = ({ aboutData }) =>
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        Our Vision, Mission and Goals
+        Our Vision, Mission and Values
       </motion.h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8" ref={ref}>
         {cards.map(({ title, icon: Icon, content, index }) => (
@@ -110,7 +110,7 @@ const VisionMissionGoals: React.FC<VisionMissionGoalsProps> = ({ aboutData }) =>
                 {content?.content ? (
                   <p>{renderContent(content.content)}</p>
                 ) : (
-                  <p className="text-muted-foreground">{title} content coming soon...</p>
+                  <p className="text-muted-foreground">We're working on {title.toLowerCase()} content. Stay tuned!</p>
                 )}
               </div>
             </Card>

@@ -7,6 +7,7 @@ import { SidebarProvider, useSidebar } from '@/app/context/sidebar-context';
 import { SearchProvider } from '@/app/context/search-context';
 import { cn } from '@/lib/utils';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { AuthProvider } from '@/app/providers/AuthProvider';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -35,14 +36,16 @@ function DashboardContent({ children }: DashboardLayoutProps) {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <ProtectedRoute>
-      <TooltipProvider>
-        <SidebarProvider>
-          <SearchProvider>
-            <DashboardContent>{children}</DashboardContent>
-          </SearchProvider>
-        </SidebarProvider>
-      </TooltipProvider>
-    </ProtectedRoute>
+    <AuthProvider>
+      <ProtectedRoute>
+        <TooltipProvider>
+          <SidebarProvider>
+            <SearchProvider>
+              <DashboardContent>{children}</DashboardContent>
+            </SearchProvider>
+          </SidebarProvider>
+        </TooltipProvider>
+      </ProtectedRoute>
+    </AuthProvider>
   );
 }

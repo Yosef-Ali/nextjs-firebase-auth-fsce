@@ -53,6 +53,11 @@ const DashboardAside = () => {
       icon: BookOpenIcon,
     },
     {
+      href: '/dashboard/about',
+      label: 'About',
+      icon: FileText,
+    },
+    {
       href: '/dashboard/categories',
       label: 'Categories',
       icon: TagIcon,

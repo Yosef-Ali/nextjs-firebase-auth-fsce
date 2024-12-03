@@ -51,12 +51,21 @@ function PostsTable({ initialPosts }: PostsTableProps) {
 
     try {
       setIsDeleting(true);
-      await postsService.deletePost(postId);
-      setPosts(posts.filter(post => post.id !== postId));
-      toast({
-        title: 'Success',
-        description: 'Post deleted successfully',
-      });
+      const deleteResult = await postsService.deletePost(user.uid, postId);
+      
+      if (deleteResult) {
+        setPosts(posts.filter(post => post.id !== postId));
+        toast({
+          title: 'Success',
+          description: 'Post deleted successfully',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: 'You are not authorized to delete this post',
+          variant: 'destructive',
+        });
+      }
     } catch (error) {
       console.error('Error deleting post:', error);
       toast({

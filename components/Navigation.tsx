@@ -106,12 +106,12 @@ export default function Navigation() {
         <div className="flex items-center space-x-4">
           {user ? (
             <>
-              <Link href="/dashboard" passHref>
+              <Link href="/dashboard/posts" passHref>
                 <Button
                   variant="ghost"
                   className={cn(
                     'text-sm font-medium hidden md:inline-flex',
-                    isActive('/dashboard') ? 'text-primary' : ''
+                    isActive('/dashboard/posts') ? 'text-primary' : ''
                   )}
                 >
                   Dashboard
@@ -203,10 +203,10 @@ export default function Navigation() {
             ))}
             {user && (
               <Link
-                href="/dashboard"
+                href="/dashboard/posts"
                 className={cn(
                   'block px-3 py-2 rounded-md text-base font-medium',
-                  isActive('/dashboard') ? 'bg-accent text-primary' : 'text-foreground/60'
+                  isActive('/dashboard/posts') ? 'bg-accent text-primary' : 'text-foreground/60'
                 )}
               >
                 Dashboard

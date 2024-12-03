@@ -1,9 +1,12 @@
 export interface User {
   id: string;
   email: string;
-  role: 'admin' | 'user';
+  role: 'user' | 'author' | 'admin';
   displayName?: string;
   photoURL?: string;
-  createdAt: number;  // timestamp in milliseconds
-  updatedAt: number;  // timestamp in milliseconds
+  createdAt: number;
+  updatedAt: number;
+  status?: 'active' | 'invited' | 'suspended';
+  invitedBy?: string;
+  invitationToken?: string;
 }

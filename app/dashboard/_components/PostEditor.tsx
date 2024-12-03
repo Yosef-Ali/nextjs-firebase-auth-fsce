@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -76,6 +77,40 @@ export function PostEditor({ post }: PostEditorProps) {
       slug: post?.slug || '',
     },
   });
+
+  React.useEffect(() => {
+    const title = form.getValues('title');
+    const content = form.getValues('content');
+    
+    if (title) {
+      const generatedSlug = postsService.createSlug(title);
+      form.setValue('slug', generatedSlug, { shouldValidate: true });
+      
+      // Improved excerpt generation
+      const currentExcerpt = form.getValues('excerpt');
+      
+      // Generate excerpt from content, stripping HTML if present
+      const stripHtml = (html: string) => {
+        return html.replace(/<[^>]*>?/gm, '').trim();
+      };
+
+      const cleanContent = content ? stripHtml(content) : '';
+      
+      const generatedExcerpt = cleanContent 
+        ? (cleanContent.length > 160 
+          ? cleanContent.substring(0, 160) + '...' 
+          : cleanContent)
+        : (title.length > 160 
+          ? title.substring(0, 160) + '...' 
+          : title);
+      
+      // Only set excerpt if it's currently empty
+      if (!currentExcerpt) {
+        console.log('Generating excerpt:', generatedExcerpt);
+        form.setValue('excerpt', generatedExcerpt, { shouldValidate: true });
+      }
+    }
+  }, [form.watch('title'), form.watch('content')]);
 
   const onSubmit = async (data: PostFormData) => {
     if (!user) return;
