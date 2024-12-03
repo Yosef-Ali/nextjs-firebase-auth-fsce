@@ -1,13 +1,12 @@
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
+import { Merit } from './Merit';
 
 interface MeritCardProps {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
+  merit: Merit;
 }
 
-export const MeritCard = ({ title, description, icon }: MeritCardProps) => {
+export const MeritCard = ({ merit }: MeritCardProps) => {
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
@@ -17,12 +16,12 @@ export const MeritCard = ({ title, description, icon }: MeritCardProps) => {
       <Card className="p-6 h-full flex flex-col bg-white">
         <div className="flex items-center gap-4 mb-4">
           <div className="p-2 rounded-lg bg-primary/10">
-            {icon}
+            {merit.icon}
           </div>
-          <h3 className="text-xl font-semibold text-foreground">{title}</h3>
+          <h3 className="text-xl font-semibold text-foreground">{merit.title}</h3>
         </div>
         <div className="flex-grow">
-          <p className="text-muted-foreground">{description}</p>
+          <p className="text-muted-foreground">{merit.description}</p>
         </div>
       </Card>
     </motion.div>

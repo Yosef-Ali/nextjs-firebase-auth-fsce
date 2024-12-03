@@ -2,11 +2,11 @@ import React from 'react';
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card } from "@/components/ui/card"
 
-const MeritsGridSkeleton = () => {
+const AchievementsGridSkeleton = () => {
   return (
     <section className="py-16 px-4">
       <div className="container mx-auto opacity-50">
-        {/* Featured Merits */}
+        {/* Featured Achievements */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
           {[...Array(2)].map((_, i) => (
             <Card key={i} className="bg-blue-50/40 hover:bg-blue-50/50 transition-colors rounded-xl shadow-sm p-8">
@@ -40,7 +40,7 @@ const MeritsGridSkeleton = () => {
           ))}
         </div>
 
-        {/* Other Merits Grid */}
+        {/* Other Achievements Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {[...Array(6)].map((_, i) => (
             <Card key={i} className="bg-blue-50/30 hover:bg-blue-50/40 transition-colors rounded-lg shadow-sm p-6">
@@ -58,4 +58,4 @@ const MeritsGridSkeleton = () => {
   );
 };
 
-export default MeritsGridSkeleton;
+export default AchievementsGridSkeleton;

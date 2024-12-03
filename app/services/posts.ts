@@ -134,24 +134,31 @@ export const postsService = {
 
   async getPublishedPosts(category?: string): Promise<Post[]> {
     try {
+      console.log('Fetching published posts with category:', category);
+      
       let q = query(
         collection(db, COLLECTION_NAME),
-        where('published', '==', true),
-        orderBy('createdAt', 'desc')  
+        where('published', '==', true)
       );
 
       if (category) {
         q = query(
           collection(db, COLLECTION_NAME),
           where('published', '==', true),
-          where('category', '==', category),
-          orderBy('createdAt', 'desc')  
+          where('category', '==', category)
         );
       }
 
       const querySnapshot = await getDocs(q);
+      console.log('Query snapshot size:', querySnapshot.size);
+
       const posts = querySnapshot.docs.map(doc => {
         const data = doc.data();
+        console.log('Individual post data:', {
+          id: doc.id,
+          published: data.published,
+          category: data.category
+        });
         return {
           id: doc.id,
           title: data.title || '',
@@ -175,7 +182,10 @@ export const postsService = {
         } as Post;
       });
 
-      return posts;
+      console.log('Total posts found:', posts.length);
+
+      // Sort posts by createdAt in memory instead of using orderBy
+      return posts.sort((a, b) => b.createdAt - a.createdAt);
     } catch (error) {
       console.error('Error getting published posts:', error);
       return [];
@@ -261,6 +271,8 @@ export const postsService = {
   async getLatestNews(count: number = 3): Promise<Post[]> {
     try {
       const posts = await this.getPublishedPosts('news');
+      console.log('Fetched news posts:', posts);
+      console.log('Number of news posts:', posts.length);
       return posts.slice(0, count);
     } catch (error) {
       console.error('Error getting latest news:', error);
