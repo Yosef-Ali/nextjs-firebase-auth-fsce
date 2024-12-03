@@ -8,14 +8,12 @@ import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
-  onAuthStateChanged,
   User
 } from 'firebase/auth';
-import { setCookie, deleteCookie } from 'cookies-next';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
-  user: User | null;
+  user: User | null | undefined;
   loading: boolean;
   error: Error | null;
   signIn: (email: string, password: string) => Promise<void>;
@@ -27,22 +25,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [user, loading, error] = useAuthState(auth);
   const [signOut] = useSignOut(auth);
   const googleProvider = new GoogleAuthProvider();
   const router = useRouter();
-
-  // Handle auth state changes
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -50,7 +36,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.push('/dashboard');
     } catch (error) {
       console.error('Error signing in:', error);
-      setError(error instanceof Error ? error : new Error('An error occurred'));
       throw error;
     }
   };
@@ -61,7 +46,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.push('/dashboard');
     } catch (error) {
       console.error('Error signing up:', error);
-      setError(error instanceof Error ? error : new Error('An error occurred'));
       throw error;
     }
   };
@@ -72,7 +56,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.push('/dashboard');
     } catch (error) {
       console.error('Error signing in with Google:', error);
-      setError(error instanceof Error ? error : new Error('An error occurred'));
       throw error;
     }
   };
@@ -83,7 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.push('/');
     } catch (error) {
       console.error('Error signing out:', error);
-      setError(error instanceof Error ? error : new Error('An error occurred'));
       throw error;
     }
   };
@@ -93,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         loading,
-        error,
+        error: error ?? null,
         signIn,
         signUp,
         signInWithGoogle,
@@ -107,8 +89,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
+  
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+  
   return context;
 }

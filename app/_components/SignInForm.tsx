@@ -37,9 +37,12 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
         password: { value: string };
       };
 
+      console.log('Attempting to sign in...');
       await signIn(target.email.value, target.password.value);
+      console.log('Sign in successful, redirecting...');
       router.push(callbackUrl || '/dashboard/posts');
     } catch (error: any) {
+      console.error('SignInForm error:', error);
       toast({
         title: 'Error',
         description: error.message,

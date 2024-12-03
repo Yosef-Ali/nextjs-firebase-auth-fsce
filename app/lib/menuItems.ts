@@ -11,9 +11,9 @@ export interface MenuItem {
 export const menuItems: MenuItem[] = [
   {
     title: "Who We Are",
-    href: "/who-we-are",
+    href: "/",
     items: [
-      { title: "Values and Principles", href: "/who-we-are", description: "Our core beliefs and guiding principles" },
+      { title: "Values and Principles", href: "/", description: "Our core beliefs and guiding principles" },
       { title: "Board Members", href: "/who-we-are/board-members", description: "Meet our leadership team" },
       { title: "Partners", href: "/who-we-are/partners", description: "Our collaborators and supporters" },
       { title: "Merits", href: "/who-we-are/merits", description: "Our achievements and recognitions" },

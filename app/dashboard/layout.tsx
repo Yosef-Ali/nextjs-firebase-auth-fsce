@@ -1,8 +1,6 @@
 'use client';
 
-import { useAuth } from '@/app/hooks/useAuth';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardAside from './_components/DashboardAside';
 import DashboardHeader from './_components/DashboardHeader';
 import { SidebarProvider, useSidebar } from '@/app/context/sidebar-context';
@@ -36,36 +34,15 @@ function DashboardContent({ children }: DashboardLayoutProps) {
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/');  // Redirect to home page
-    }
-  }, [user, loading, router]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
-
   return (
-    <TooltipProvider>
-      <SidebarProvider>
-        <SearchProvider>
-          <DashboardContent>
-            {children}
-          </DashboardContent>
-        </SearchProvider>
-      </SidebarProvider>
-    </TooltipProvider>
+    <ProtectedRoute>
+      <TooltipProvider>
+        <SidebarProvider>
+          <SearchProvider>
+            <DashboardContent>{children}</DashboardContent>
+          </SearchProvider>
+        </SidebarProvider>
+      </TooltipProvider>
+    </ProtectedRoute>
   );
 }
