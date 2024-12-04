@@ -14,6 +14,7 @@ import { postsService } from '@/app/services/posts';
 import UpcomingEvents from '@/components/upcoming-events';
 import CarouselSection from '@/components/carousel';
 import { motion } from 'framer-motion';
+import { ProgramSearch } from '@/components/program-search';
 
 // Dummy events data for testing
 const dummyEvents: Post[] = [
@@ -86,6 +87,7 @@ export default function EventsPage() {
   const [events, setEvents] = useState<Post[]>([]);
   const [news, setNews] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -109,9 +111,25 @@ export default function EventsPage() {
     fetchData();
   }, []);
 
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const filterEvents = () => {
+    return events.filter((event) => 
+      (searchQuery === '' || 
+        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    );
+  };
+
   if (loading) {
     return <FSCESkeleton />;
   }
+
+  const filteredEvents = filterEvents();
 
   return (
     <div className="min-h-screen bg-background">
@@ -119,7 +137,21 @@ export default function EventsPage() {
       <CarouselSection />
 
       {/* Upcoming Events Section */}
-      <UpcomingEvents events={events} showTitle={false} />
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl text-center mb-4">Upcoming Events</h2>
+          <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
+            Join us in our mission. Explore our upcoming and past events that drive change and create impact.
+          </p>
+          
+          {/* Search Box */}
+          <ProgramSearch 
+            onSearch={handleSearch} 
+            placeholder="Search events..."
+            className="mt-10"
+          />
+        </div>
+      </section>
 
       {/* Latest News Section */}
       <section className="py-16 bg-white">
