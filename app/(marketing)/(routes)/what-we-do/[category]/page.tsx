@@ -15,6 +15,7 @@ import CarouselSection from '@/components/carousel';
 import Partners from '@/components/partners';
 import { motion } from 'framer-motion';
 import { CalendarDays, Image as ImageIcon } from 'lucide-react';
+import { ProgramSearch } from '@/components/program-search';
 
 // Helper function to format category name
 const formatCategoryName = (category: string) => {
@@ -28,6 +29,7 @@ export default function CategoryPage() {
   const params = useParams();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const category = params.category as string;
 
   useEffect(() => {
@@ -48,9 +50,24 @@ export default function CategoryPage() {
     fetchPosts();
   }, [category]);
 
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const filterPosts = () => {
+    return posts.filter((post) => 
+      searchQuery === '' || 
+      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  };
+
   if (loading) {
     return <FSCESkeleton />;
   }
+
+  const filteredPosts = filterPosts();
 
   const item = {
     hidden: { opacity: 0, y: 20 },
@@ -67,16 +84,21 @@ export default function CategoryPage() {
           <h1 className="text-4xl  font-bold mb-6">
             {formatCategoryName(category)}
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
             Explore our {formatCategoryName(category)} programs and initiatives
           </p>
+          <ProgramSearch 
+            onSearch={handleSearch} 
+            placeholder={`Search ${formatCategoryName(category).toLowerCase()} programs...`}
+            className="mt-10"
+          />
         </div>
       </section>
 
       {/* Programs Grid */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          {posts.length === 0 ? (
+          {filteredPosts.length === 0 ? (
             <div className="text-center py-12">
               <h2 className="text-2xl font-semibold mb-4">No Programs Found</h2>
               <p className="text-muted-foreground">
@@ -85,7 +107,7 @@ export default function CategoryPage() {
             </div>
           ) : (
             <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" variants={item}>
-              {posts.map((post) => (
+              {filteredPosts.map((post) => (
                 <motion.div key={post.id} variants={item}>
                   <Link href={`/what-we-do/${category}/${post.slug}`} className="block group">
                     <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">

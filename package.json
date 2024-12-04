@@ -10,7 +10,8 @@
     "format": "prettier --write .",
     "type-check": "tsc --noEmit",
     "set-admin": "bun run scripts/set-admin.ts",
-    "seed-partners": "bun run scripts/seed-partners.ts"
+    "seed-partners": "bun run scripts/seed-partners.ts",
+    "seed-programs": "bun run scripts/seed-programs.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -75,6 +76,7 @@
     "react-multi-carousel": "2.8.5",
     "rehype-raw": "7.0.0",
     "remark-gfm": "4.0.0",
+    "sharp": "0.33.5",
     "slugify": "^1.6.6",
     "sonner": "1.7.0",
     "tailwind-merge": "^2.5.4",

@@ -131,15 +131,32 @@ export default function EventsPage() {
 
   const filteredEvents = filterEvents();
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <CarouselSection />
 
       {/* Upcoming Events Section */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-primary/5">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl text-center mb-4">Upcoming Events</h2>
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-6">
+            Upcoming Events
+          </h2>
           <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
             Join us in our mission. Explore our upcoming and past events that drive change and create impact.
           </p>
@@ -150,6 +167,55 @@ export default function EventsPage() {
             placeholder="Search events..."
             className="mt-10"
           />
+        </div>
+      </section>
+
+      {/* Events Section */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <motion.div 
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+          >
+            {filteredEvents.map((event) => (
+              <motion.div key={event.id} variants={item}>
+                <Link href={`/events/${event.slug}`} className="block group">
+                  <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
+                    {event.coverImage && (
+                      <div className="relative w-full pt-[56.25%] overflow-hidden">
+                        <Image
+                          src={event.coverImage}
+                          alt={event.title}
+                          fill
+                          className="object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      </div>
+                    )}
+                    <CardHeader>
+                      <CardTitle className="group-hover:text-primary transition-colors">
+                        {event.title}
+                      </CardTitle>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                        <CalendarDays className="h-4 w-4" />
+                        <span>{formatDate(event.date)}</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground line-clamp-2 mb-4">
+                        {event.excerpt}
+                      </p>
+                      <div className="flex items-center text-primary font-medium group-hover:text-primary/80 transition-colors">
+                        Read More
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </section>
 

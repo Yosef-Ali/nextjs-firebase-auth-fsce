@@ -51,16 +51,12 @@ export default function NewsPage() {
     setSearchQuery(query);
   };
 
-  const filterNews = () => {
-    return news.filter((newsItem) => 
-      searchQuery === '' || 
-      newsItem.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      newsItem.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      newsItem.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  };
-
-  const filteredNews = filterNews();
+  const filteredNews = news.filter((newsItem) => 
+    searchQuery === '' || 
+    newsItem.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    newsItem.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    newsItem.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (loading) {
     return <FSCESkeleton />;
@@ -83,17 +79,18 @@ export default function NewsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
+      {/* Carousel Section as Hero */}
       <CarouselSection />
 
-      {/* Search Section */}
-      <section className="py-16 bg-gray-50">
+      {/* Hero Section */}
+      <section className="py-20 bg-primary/5">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl text-center mb-4">News & Updates</h2>
+          <h1 className="text-4xl md:text-5xl font-bold text-center mb-6">
+            News & Updates
+          </h1>
           <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
             Stay updated with the latest news and developments from FSCE. Learn about our impact and ongoing initiatives.
           </p>
-          
           <ProgramSearch 
             onSearch={handleSearch} 
             placeholder="Search news articles..."
@@ -104,7 +101,7 @@ export default function NewsPage() {
 
       {/* Featured News Section */}
       {featuredNews.length > 0 && (
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-2 mb-8">
               <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
@@ -164,64 +161,58 @@ export default function NewsPage() {
       {/* News Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          {filteredNews.length === 0 ? (
-            <Card className="p-6 text-center">
-              <p className="text-muted-foreground">No news articles available.</p>
-            </Card>
-          ) : (
-            <motion.div 
-              variants={container}
-              initial="hidden"
-              animate="show"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-            >
-              {filteredNews.map((article) => (
-                <motion.div key={article.id} variants={item}>
-                  <Link href={`/news/${article.slug}`} className="block group">
-                    <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
-                      {article.coverImage && (
-                        <div className="relative w-full pt-[56.25%] overflow-hidden">
-                          <Image
-                            src={article.coverImage}
-                            alt={article.title}
-                            fill
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                        </div>
-                      )}
-                      <CardHeader>
-                        <div className="flex items-center gap-2 mb-3">
-                          {article.category && (
-                            <Badge variant="outline" className="capitalize">
-                              {article.category}
-                            </Badge>
-                          )}
-                        </div>
-                        <CardTitle className="group-hover:text-primary transition-colors line-clamp-2">
-                          {article.title}
-                        </CardTitle>
-                        <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
-                          <CalendarDays className="h-4 w-4" />
-                          <span>{formatDate(article.createdAt)}</span>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-muted-foreground line-clamp-3">
-                          {article.excerpt}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
+          <motion.div 
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+          >
+            {filteredNews.map((article) => (
+              <motion.div key={article.id} variants={item}>
+                <Link href={`/news/${article.slug}`} className="block group">
+                  <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
+                    {article.coverImage && (
+                      <div className="relative w-full pt-[56.25%] overflow-hidden">
+                        <Image
+                          src={article.coverImage}
+                          alt={article.title}
+                          fill
+                          className="object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      </div>
+                    )}
+                    <CardHeader>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Badge variant="secondary">News</Badge>
+                      </div>
+                      <CardTitle className="group-hover:text-primary transition-colors">
+                        {article.title}
+                      </CardTitle>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                        <CalendarDays className="h-4 w-4" />
+                        <span>{formatDate(article.createdAt)}</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground line-clamp-2 mb-4">
+                        {article.excerpt}
+                      </p>
+                      <div className="flex items-center text-primary font-medium group-hover:text-primary/80 transition-colors">
+                        Read More
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </section>
 
       {/* Upcoming Events Section */}
       {events.length > 0 && (
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-3xl font-bold">Upcoming Events</h2>

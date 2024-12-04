@@ -6,11 +6,13 @@ import { resourcesService } from '@/app/services/resources';
 import { Resource } from '@/app/types/post';
 import { toast } from '@/hooks/use-toast';
 import { ResourceGrid } from '@/app/(marketing)/_components/resources/resource-grid';
+import { ProgramSearch } from '@/components/program-search';
 
 export default function ResourcesPage() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [activeTab, setActiveTab] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadResources();
@@ -52,15 +54,34 @@ export default function ResourcesPage() {
     }
   };
 
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const filterResources = () => {
+    return resources.filter((resource) => 
+      (searchQuery === '' || 
+        resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (resource.description && resource.description.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    );
+  };
+
   return (
     <div className="container mx-auto py-24 space-y-8">
       <div className="flex justify-between items-center">
         <div className="space-y-4">
           <h1 className="text-4xl font-bold">Resources</h1>
-          <p className="text-muted-foreground max-w-2xl">
-            Access our comprehensive collection of publications, reports, and media resources
-            to learn more about child protection and our work.
+          <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
+            Explore our comprehensive collection of reports, research papers, and impact stories that showcase our work and insights.
           </p>
+          
+          {/* Search Box */}
+          <ProgramSearch 
+            onSearch={handleSearch} 
+            placeholder="Search resources..."
+            className="mt-10"
+          />
         </div>
       </div>
 
@@ -78,7 +99,7 @@ export default function ResourcesPage() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
             </div>
           ) : (
-            <ResourceGrid resources={resources} onDownload={handleDownload} />
+            <ResourceGrid resources={filterResources()} onDownload={handleDownload} />
           )}
         </TabsContent>
         <TabsContent value="report" className="mt-6">
@@ -87,7 +108,7 @@ export default function ResourcesPage() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
             </div>
           ) : (
-            <ResourceGrid resources={resources} onDownload={handleDownload} />
+            <ResourceGrid resources={filterResources()} onDownload={handleDownload} />
           )}
         </TabsContent>
         <TabsContent value="publication" className="mt-6">
@@ -96,7 +117,7 @@ export default function ResourcesPage() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
             </div>
           ) : (
-            <ResourceGrid resources={resources} onDownload={handleDownload} />
+            <ResourceGrid resources={filterResources()} onDownload={handleDownload} />
           )}
         </TabsContent>
         <TabsContent value="media" className="mt-6">
@@ -105,7 +126,7 @@ export default function ResourcesPage() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
             </div>
           ) : (
-            <ResourceGrid resources={resources} onDownload={handleDownload} />
+            <ResourceGrid resources={filterResources()} onDownload={handleDownload} />
           )}
         </TabsContent>
       </Tabs>

@@ -23,10 +23,10 @@ export const menuItems: MenuItem[] = [
     title: "What We Do",
     href: "/what-we-do",
     items: [
-      { title: "Prevention and Promotion Program", href: "/what-we-do/prevention-promotion", description: "Proactive measures for child welfare" },
-      { title: "Protection", href: "/what-we-do/protection", description: "Safeguarding children's rights and safety" },
-      { title: "Rehabilitation and Reintegration", href: "/what-we-do/rehabilitation", description: "Supporting children's recovery and social integration" },
-      { title: "Child Resource Center", href: "/what-we-do/resource-center", description: "Educational and support facilities for children" },
+      { title: "Child Protection", href: "/what-we-do/child-protection", description: "Ensuring safety and well-being of children" },
+      { title: "Youth Empowerment", href: "/what-we-do/youth-empowerment", description: "Empowering youth for a better future" },
+      { title: "Advocacy", href: "/what-we-do/advocacy", description: "Speaking up for children's rights and needs" },
+      { title: "Humanitarian Response", href: "/what-we-do/humanitarian-response", description: "Providing critical support in times of need" },
     ],
   },
   {
