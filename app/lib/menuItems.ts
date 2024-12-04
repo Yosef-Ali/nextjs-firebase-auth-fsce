@@ -53,3 +53,14 @@ export const menuItems: MenuItem[] = [
     href: "/contact",
   },
 ];
+
+export const dashboardMenuItems: MenuItem[] = [
+  {
+    title: "Dashboard",
+    href: "/dashboard",
+  },
+  {
+    title: "Partners",
+    href: "/dashboard/partners",
+  },
+];

@@ -83,6 +83,11 @@ const DashboardAside = () => {
       icon: Users2,
     },
     {
+      href: '/dashboard/partners',
+      label: 'Partners',
+      icon: Users2,
+    },
+    {
       href: '/dashboard/analytics',
       label: 'Analytics',
       icon: BarChart,

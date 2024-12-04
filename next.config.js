@@ -5,7 +5,12 @@ const nextConfig = {
     domains: [
       'images.unsplash.com',
       'firebasestorage.googleapis.com',
-      'lh3.googleusercontent.com'
+      'lh3.googleusercontent.com',
+      'www.unicef.org',
+      'www.savethechildren.org',
+      'www.wvi.org',
+      'plan-international.org',
+      'www.sos-childrensvillages.org'
     ],
   },
   async headers() {
@@ -21,6 +26,6 @@ const nextConfig = {
       },
     ];
   },
-}
+};
 
 module.exports = nextConfig

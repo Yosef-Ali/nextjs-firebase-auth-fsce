@@ -8,6 +8,8 @@ import { useCallback, useState, useEffect } from 'react'
 import { Upload, X, ImageIcon } from 'lucide-react'
 import { useDropzone } from 'react-dropzone'
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/app/providers/AuthProvider"
+import { toast } from "@/components/ui/use-toast"
 
 interface ImageUploadCardProps {
   type: 'cover' | 'additional'
@@ -20,6 +22,7 @@ interface ImageUploadCardProps {
 export default function ImageUploadCard({ type, aspectRatio, onImageUpload, initialImage, index }: ImageUploadCardProps) {
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(initialImage || null)
+  const { user } = useAuth()
 
   useEffect(() => {
     if (initialImage) {
@@ -29,14 +32,52 @@ export default function ImageUploadCard({ type, aspectRatio, onImageUpload, init
 
   const handleUpload = async (file: File) => {
     try {
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to upload images",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid File Type",
+          description: "Please upload an image file",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File Too Large",
+          description: "Image size should be less than 5MB",
+          variant: "destructive"
+        });
+        return;
+      }
+
       setUploading(true)
-      const storageRef = ref(storage, `images/${file.name}-${Date.now()}`)
+      const fileName = `${file.name.replace(/[^a-zA-Z0-9.-]/g, '-')}-${Date.now()}`
+      const storageRef = ref(storage, `images/${fileName}`)
       const snapshot = await uploadBytes(storageRef, file)
       const url = await getDownloadURL(snapshot.ref)
       setPreview(url)
       onImageUpload(url)
+      
+      toast({
+        title: "Success",
+        description: "Image uploaded successfully"
+      });
     } catch (error) {
       console.error('Error uploading file:', error)
+      toast({
+        title: "Upload Failed",
+        description: error instanceof Error ? error.message : "Failed to upload image",
+        variant: "destructive"
+      });
     } finally {
       setUploading(false)
     }
@@ -50,66 +91,65 @@ export default function ImageUploadCard({ type, aspectRatio, onImageUpload, init
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
-    accept: { 'image/*': [] },
+    accept: {
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif']
+    },
+    maxSize: 5 * 1024 * 1024, // 5MB
     multiple: false
   })
 
-  const removeImage = (e: React.MouseEvent) => {
-    e.stopPropagation()
+  const removeImage = () => {
     setPreview(null)
     onImageUpload('')
   }
 
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-0">
+    <Card className="relative">
+      <CardContent className="p-3">
         <div
           {...getRootProps()}
           className={cn(
-            "relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer transition-all duration-300 ease-in-out hover:border-primary hover:bg-primary/5 overflow-hidden group",
-            type === 'cover' ? 'aspect-[16/9]' : 'aspect-square'
+            "relative border-2 border-dashed border-gray-200 rounded-lg transition-all",
+            "hover:border-gray-400 cursor-pointer",
+            aspectRatio,
+            "flex items-center justify-center"
           )}
         >
           <input {...getInputProps()} />
           {preview ? (
-            <div className="relative w-full h-full">
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={preview}
-                alt="Preview"
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                alt="Uploaded"
+                className="w-full h-full object-cover rounded-lg"
               />
-              <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="rounded-full"
-                  onClick={removeImage}
-                >
-                  <X className="h-4 w-4" />
-                  <span className="sr-only">Remove image</span>
-                </Button>
-              </div>
+              <Button
+                variant="destructive"
+                size="icon"
+                className="absolute -top-2 -right-2 h-6 w-6"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  removeImage()
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </>
+          ) : uploading ? (
+            <div className="text-center">
+              <Upload className="mx-auto h-10 w-10 text-gray-400 animate-bounce" />
+              <p className="mt-2 text-sm text-gray-500">Uploading...</p>
             </div>
           ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
-              {uploading ? (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
-                  <p className="text-sm font-medium">Uploading...</p>
-                </div>
-              ) : (
-                <>
-                  <Upload className={cn(
-                    "text-primary mb-2",
-                    type === 'cover' ? "h-6 w-6" : "h-4 w-4"
-                  )} />
-                  {type === 'cover' && (
-                    <p className="text-sm font-medium">
-                      Upload cover image
-                    </p>
-                  )}
-                </>
-              )}
+            <div className="text-center">
+              <ImageIcon className="mx-auto h-10 w-10 text-gray-400" />
+              <p className="mt-2 text-sm text-gray-500">
+                {type === 'cover' ? 'Upload cover image' : `Upload image ${index ? index + 1 : ''}`}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Click or drag and drop • Max 5MB
+              </p>
             </div>
           )}
         </div>
