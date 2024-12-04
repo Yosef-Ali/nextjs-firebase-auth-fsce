@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push('/dashboard');
+      router.push('/dashboard/posts');
     } catch (error) {
       console.error('Error signing in:', error);
       throw error;
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string) => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      router.push('/dashboard');
+      router.push('/dashboard/posts');
     } catch (error) {
       console.error('Error signing up:', error);
       throw error;
@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-      router.push('/dashboard');
+      router.push('/dashboard/posts');
     } catch (error) {
       console.error('Error signing in with Google:', error);
       throw error;
