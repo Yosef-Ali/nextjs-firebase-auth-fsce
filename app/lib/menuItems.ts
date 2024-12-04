@@ -33,8 +33,7 @@ export const menuItems: MenuItem[] = [
     title: "Where We Work",
     href: "/where-we-work",
     items: [
-      { title: "City Area Program Offices", href: "/where-we-work/city-offices", description: "Our urban program locations" },
-      { title: "Regional Area Program Offices", href: "/where-we-work/regional-offices", description: "Our presence across different regions" },
+      { title: "Program Offices", href: "/where-we-work", description: "Our comprehensive network of city and regional offices" },
     ],
   },
   {

@@ -7,9 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import CarouselSection from '@/components/carousel';
 import Partners from '@/components/partners';
 
-interface CityOffice {
+interface ProgramOffice {
+  type: 'Program';
   region: string;
-  city: string;
+  location: string;
   address: string;
   contact: string;
   email: string;
@@ -17,10 +18,11 @@ interface CityOffice {
   programs: string[];
 }
 
-const cityOffices: CityOffice[] = [
+const programOffices: ProgramOffice[] = [
   {
+    type: 'Program',
     region: "Addis Ababa",
-    city: "Addis Ababa",
+    location: "Addis Ababa",
     address: "Bole Sub-City, Woreda 03, Building No. 345",
     contact: "+251 11 551 2696",
     email: "addisababa@fsce.org",
@@ -33,8 +35,9 @@ const cityOffices: CityOffice[] = [
     ]
   },
   {
+    type: 'Program',
     region: "SNNPR",
-    city: "Hawassa",
+    location: "Hawassa",
     address: "Piazza Area, Behind Hawassa University",
     contact: "+251 46 220 5678",
     email: "hawassa@fsce.org",
@@ -45,10 +48,100 @@ const cityOffices: CityOffice[] = [
       "Child Welfare",
       "Education Programs"
     ]
+  },
+  {
+    type: 'Program',
+    region: "Amhara",
+    location: "Bahir Dar",
+    address: "Kebele 14, Near Ghion Hotel",
+    contact: "+251-918-123456",
+    email: "bahirdar@fsce.org",
+    beneficiaries: "Supporting over 3,000 children",
+    programs: [
+      "Child Protection",
+      "Education Support",
+      "Family Strengthening",
+      "Youth Empowerment"
+    ]
+  },
+  {
+    type: 'Program',
+    region: "Oromia",
+    location: "Adama",
+    address: "Kebele 08, Main Street",
+    contact: "+251-918-234567",
+    email: "adama@fsce.org",
+    beneficiaries: "Serving 2,500+ families",
+    programs: [
+      "Youth Development",
+      "Community Outreach",
+      "Child Welfare",
+      "Education Programs"
+    ]
+  },
+  {
+    type: 'Program',
+    region: "SNNPR",
+    location: "Hawassa",
+    address: "Kebele 03, Lake View Area",
+    contact: "+251-918-345678",
+    email: "hawassa@fsce.org",
+    beneficiaries: "Reaching 1,800+ children",
+    programs: [
+      "Child Rights Advocacy",
+      "Skills Training",
+      "Emergency Support",
+      "Health Programs"
+    ]
+  },
+  {
+    type: 'Program',
+    region: "Tigray",
+    location: "Mekelle",
+    address: "Kebele 05, University Road",
+    contact: "+251-918-456789",
+    email: "mekelle@fsce.org",
+    beneficiaries: "Supporting 2,200+ vulnerable children",
+    programs: [
+      "Conflict Resolution",
+      "Trauma Healing",
+      "Education Support",
+      "Community Resilience"
+    ]
+  },
+  {
+    type: 'Program',
+    region: "Somali",
+    location: "Jigjiga",
+    address: "Kebele 12, Main Business District",
+    contact: "+251-918-567890",
+    email: "jigjiga@fsce.org",
+    beneficiaries: "Empowering 1,500+ youth and families",
+    programs: [
+      "Pastoralist Community Support",
+      "Girl Child Education",
+      "Livelihood Development",
+      "Health Awareness"
+    ]
+  },
+  {
+    type: 'Program',
+    region: "Afar",
+    location: "Semera",
+    address: "Kebele 03, Government Area",
+    contact: "+251-918-678901",
+    email: "semera@fsce.org",
+    beneficiaries: "Reaching 1,000+ marginalized communities",
+    programs: [
+      "Nomadic Education",
+      "Water and Sanitation",
+      "Child Protection",
+      "Women Empowerment"
+    ]
   }
 ];
 
-export default function CityOfficesPage() {
+export default function ProgramOfficesPage() {
   return (
     <>
       <CarouselSection />
@@ -56,11 +149,11 @@ export default function CityOfficesPage() {
         <section className="py-20 bg-primary/5">
           <div className="container mx-auto px-4">
             <h1 className="text-4xl md:text-5xl font-bold text-center mb-6">
-              City Offices
+              Our Program Offices
             </h1>
             <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto">
-              Our city offices are strategically located in Ethiopia's major urban centers,
-              providing vital support and services to children and families in metropolitan areas.
+              Our offices are strategically located across Ethiopia, providing vital support 
+              and services to children and families in urban and regional areas.
             </p>
           </div>
         </section>
@@ -71,17 +164,17 @@ export default function CityOfficesPage() {
               <div className="space-y-6">
                 <Card className="hover:shadow-lg transition-shadow border-2 border-primary/10">
                   <CardHeader>
-                    <CardTitle>Our Urban Impact</CardTitle>
-                    <CardDescription>Key statistics about our city presence</CardDescription>
+                    <CardTitle>Our Comprehensive Impact</CardTitle>
+                    <CardDescription>Key statistics about our presence</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-                        <h3 className="text-3xl font-bold text-primary mb-2">2+</h3>
-                        <p className="text-muted-foreground">City Offices</p>
+                        <h3 className="text-3xl font-bold text-primary mb-2">8+</h3>
+                        <p className="text-muted-foreground">Program Offices</p>
                       </div>
                       <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-                        <h3 className="text-3xl font-bold text-primary mb-2">7,000+</h3>
+                        <h3 className="text-3xl font-bold text-primary mb-2">20,000+</h3>
                         <p className="text-muted-foreground">Children & Families Supported</p>
                       </div>
                     </div>
@@ -91,18 +184,17 @@ export default function CityOfficesPage() {
             </div>
 
             <div className="mt-12">
-              <h2 className="text-3xl font-bold text-center mb-8">Our City Presence</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {cityOffices.map((office) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {programOffices.map((office) => (
                   <motion.div
-                    key={office.city}
+                    key={office.location}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-card rounded-lg shadow-lg hover:shadow-xl transition-shadow p-6 border-2 border-primary/10"
                   >
                     <div className="flex items-center gap-2 mb-4">
                       <Building2 className="h-6 w-6 text-primary" />
-                      <h3 className="text-xl font-semibold">{office.city} Office</h3>
+                      <h3 className="text-xl font-semibold">{office.location} Office</h3>
                     </div>
                     <div className="space-y-4">
                       <div className="flex items-start gap-2">
