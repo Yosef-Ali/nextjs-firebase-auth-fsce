@@ -13,6 +13,7 @@ import { formatDate } from '@/lib/utils';
 import { postsService } from '@/app/services/posts';
 import { motion } from 'framer-motion';
 import { ProgramSearch } from '@/components/program-search';
+import CarouselSection from '@/components/carousel';
 
 export default function NewsPage() {
   const [news, setNews] = useState<Post[]>([]);
@@ -83,14 +84,16 @@ export default function NewsPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="py-20 bg-primary/5">
+      <CarouselSection />
+
+      {/* Search Section */}
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <h1 className="text-4xl md:text-5xl font-bold text-center mb-6">
-            News & Updates
-          </h1>
+          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl text-center mb-4">News & Updates</h2>
           <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
             Stay updated with the latest news and developments from FSCE. Learn about our impact and ongoing initiatives.
           </p>
+          
           <ProgramSearch 
             onSearch={handleSearch} 
             placeholder="Search news articles..."
@@ -158,7 +161,7 @@ export default function NewsPage() {
         </section>
       )}
 
-      {/* News Categories Section */}
+      {/* News Section */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           {filteredNews.length === 0 ? (
