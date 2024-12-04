@@ -23,6 +23,10 @@ interface SignUpFormProps {
 
 export function SignUpForm({ callbackUrl }: SignUpFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const { signUp } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -36,13 +40,14 @@ export function SignUpForm({ callbackUrl }: SignUpFormProps) {
         email: { value: string };
         password: { value: string };
         confirmPassword: { value: string };
+        displayName: { value: string };
       };
 
       if (target.password.value !== target.confirmPassword.value) {
         throw new Error('Passwords do not match');
       }
 
-      await signUp(target.email.value, target.password.value);
+      await signUp(target.email.value, target.password.value, target.displayName.value);
       router.push(callbackUrl || '/dashboard/posts');
     } catch (error: any) {
       toast({
@@ -57,52 +62,58 @@ export function SignUpForm({ callbackUrl }: SignUpFormProps) {
 
   return (
     <Card>
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">Create an account</CardTitle>
-        <CardDescription>
-          Enter your email and create a password to sign up
-        </CardDescription>
+      <CardHeader>
+        <CardTitle>Create an Account</CardTitle>
+        <CardDescription>Enter your details to create your account</CardDescription>
       </CardHeader>
-      <form onSubmit={onSubmit}>
-        <CardContent className="grid gap-4">
-          <div className="grid gap-2">
+      <CardContent>
+        <form onSubmit={onSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="displayName">Name</Label>
+            <Input
+              id="displayName"
+              name="displayName"
+              type="text"
+              placeholder="Your name"
+              required
+            />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
-              type="email"
               name="email"
+              type="email"
               placeholder="name@example.com"
               required
             />
           </div>
-          <div className="grid gap-2">
+          <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
-              type="password"
               name="password"
+              type="password"
               required
             />
           </div>
-          <div className="grid gap-2">
+          <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm Password</Label>
             <Input
               id="confirmPassword"
-              type="password"
               name="confirmPassword"
+              type="password"
               required
             />
           </div>
-        </CardContent>
-        <CardFooter>
-          <Button className="w-full" type="submit" disabled={isLoading}>
-            {isLoading && (
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
               <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-            )}
-            Create Account
+            ) : null}
+            Sign Up
           </Button>
-        </CardFooter>
-      </form>
+        </form>
+      </CardContent>
     </Card>
   );
 }
