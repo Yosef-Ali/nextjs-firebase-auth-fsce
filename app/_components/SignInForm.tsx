@@ -15,7 +15,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Icons } from '@/components/icons';
-import { useToast } from '@/components/ui/use-toast';
 
 interface SignInFormProps {
   callbackUrl?: string | null;
@@ -23,31 +22,27 @@ interface SignInFormProps {
 
 export function SignInForm({ callbackUrl }: SignInFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const { signIn } = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
 
   async function onSubmit(event: React.SyntheticEvent) {
     event.preventDefault();
     setIsLoading(true);
+    setError('');
 
     try {
-      const target = event.target as typeof event.target & {
-        email: { value: string };
-        password: { value: string };
-      };
-
-      console.log('Attempting to sign in...');
-      await signIn(target.email.value, target.password.value);
-      console.log('Sign in successful, redirecting...');
-      router.push(callbackUrl || '/dashboard/posts');
+      await signIn(email, password);
+      if (callbackUrl) {
+        router.push(callbackUrl);
+      } else {
+        router.push('/dashboard');
+      }
     } catch (error: any) {
       console.error('SignInForm error:', error);
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
+      setError(error.message || 'Failed to sign in');
     } finally {
       setIsLoading(false);
     }
@@ -55,43 +50,43 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
 
   return (
     <Card>
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">Sign in</CardTitle>
-        <CardDescription>
-          Enter your email and password to sign in to your account
-        </CardDescription>
+      <CardHeader>
+        <CardTitle>Sign In</CardTitle>
+        <CardDescription>Enter your credentials to access your account</CardDescription>
       </CardHeader>
-      <form onSubmit={onSubmit}>
-        <CardContent className="grid gap-4">
-          <div className="grid gap-2">
+      <CardContent>
+        <form onSubmit={onSubmit} className="space-y-4">
+          <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
-              name="email"
-              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
               required
             />
           </div>
-          <div className="grid gap-2">
+          <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               type="password"
-              name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
               required
             />
           </div>
-        </CardContent>
-        <CardFooter>
-          <Button className="w-full" type="submit" disabled={isLoading}>
-            {isLoading && (
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
               <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-            )}
+            ) : null}
             Sign In
           </Button>
-        </CardFooter>
-      </form>
+        </form>
+      </CardContent>
     </Card>
   );
 }

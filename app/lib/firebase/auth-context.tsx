@@ -1,81 +1,58 @@
 'use client';
 
-import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
-import { useAuthState, useSignOut } from 'react-firebase-hooks/auth';
+import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { auth } from './firebase-config';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
-  User
+  signOut,
+  User,
+  updateProfile
 } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
-  user: User | null | undefined;
-  loading: boolean;
-  error: Error | null;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
+  user: User | null;
+  signIn: (email: string, password: string) => Promise<any>;
+  signUp: (email: string, password: string, displayName: string) => Promise<void>;
+  signInWithGoogle: () => Promise<any>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, loading, error] = useAuthState(auth);
-  const [signOut] = useSignOut(auth);
+  const [user, setUser] = useState<User | null>(null);
   const googleProvider = new GoogleAuthProvider();
-  const router = useRouter();
 
-  const signIn = async (email: string, password: string) => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push('/dashboard/posts');
-    } catch (error) {
-      console.error('Error signing in:', error);
-      throw error;
-    }
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(setUser);
+    return () => unsubscribe();
+  }, []);
+
+  const signIn = (email: string, password: string) => {
+    return signInWithEmailAndPassword(auth, email, password);
   };
 
-  const signUp = async (email: string, password: string) => {
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      router.push('/dashboard/posts');
-    } catch (error) {
-      console.error('Error signing up:', error);
-      throw error;
-    }
+  const signUp = async (email: string, password: string, displayName: string) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(userCredential.user, { displayName });
+    setUser(userCredential.user);
   };
 
-  const signInWithGoogle = async () => {
-    try {
-      await signInWithPopup(auth, googleProvider);
-      router.push('/dashboard/posts');
-    } catch (error) {
-      console.error('Error signing in with Google:', error);
-      throw error;
-    }
+  const signInWithGoogle = () => {
+    return signInWithPopup(auth, googleProvider);
   };
 
-  const logout = async () => {
-    try {
-      await signOut();
-      router.push('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
-      throw error;
-    }
+  const logout = () => {
+    return signOut(auth);
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        loading,
-        error: error ?? null,
         signIn,
         signUp,
         signInWithGoogle,
