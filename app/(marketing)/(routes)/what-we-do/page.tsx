@@ -30,7 +30,7 @@ const categories = [
   {
     id: 'advocacy',
     title: 'Advocacy',
-    description: 'Speaking up and taking action for children's rights and needs',
+    description: "Speaking up and taking action for children's rights and needs",
   },
   {
     id: 'humanitarian-response',
