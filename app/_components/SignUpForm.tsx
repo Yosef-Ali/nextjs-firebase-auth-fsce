@@ -35,24 +35,51 @@ export function SignUpForm({ callbackUrl }: SignUpFormProps) {
     event.preventDefault();
     setIsLoading(true);
 
+    // Client-side validation
+    if (password.length < 8) {
+      toast({
+        title: 'Password Too Short',
+        description: 'Password must be at least 8 characters long',
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast({
+        title: 'Password Mismatch',
+        description: 'Passwords do not match',
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const target = event.target as typeof event.target & {
-        email: { value: string };
-        password: { value: string };
-        confirmPassword: { value: string };
-        displayName: { value: string };
-      };
-
-      if (target.password.value !== target.confirmPassword.value) {
-        throw new Error('Passwords do not match');
-      }
-
-      await signUp(target.email.value, target.password.value, target.displayName.value);
+      await signUp(email, password, displayName);
       router.push(callbackUrl || '/dashboard/posts');
     } catch (error: any) {
+      let errorMessage = 'An unexpected error occurred';
+      
+      // More specific error handling
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          errorMessage = 'Email is already registered';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Invalid email address';
+          break;
+        case 'auth/weak-password':
+          errorMessage = 'Password is too weak';
+          break;
+        default:
+          errorMessage = error.message || 'Sign up failed';
+      }
+
       toast({
-        title: 'Error',
-        description: error.message,
+        title: 'Sign Up Error',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -75,6 +102,8 @@ export function SignUpForm({ callbackUrl }: SignUpFormProps) {
               name="displayName"
               type="text"
               placeholder="Your name"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
               required
             />
           </div>
@@ -85,6 +114,8 @@ export function SignUpForm({ callbackUrl }: SignUpFormProps) {
               name="email"
               type="email"
               placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
@@ -94,6 +125,9 @@ export function SignUpForm({ callbackUrl }: SignUpFormProps) {
               id="password"
               name="password"
               type="password"
+              placeholder="At least 8 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
@@ -103,6 +137,9 @@ export function SignUpForm({ callbackUrl }: SignUpFormProps) {
               id="confirmPassword"
               name="confirmPassword"
               type="password"
+              placeholder="Repeat your password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               required
             />
           </div>
