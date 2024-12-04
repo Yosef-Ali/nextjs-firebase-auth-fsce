@@ -87,7 +87,7 @@ export default function NewsPage() {
       <CarouselSection />
 
       {/* Search Section */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl text-center mb-4">News & Updates</h2>
           <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
@@ -104,7 +104,7 @@ export default function NewsPage() {
 
       {/* Featured News Section */}
       {featuredNews.length > 0 && (
-        <section className="py-16 bg-white">
+        <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-2 mb-8">
               <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
@@ -162,7 +162,7 @@ export default function NewsPage() {
       )}
 
       {/* News Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           {filteredNews.length === 0 ? (
             <Card className="p-6 text-center">
@@ -221,7 +221,7 @@ export default function NewsPage() {
 
       {/* Upcoming Events Section */}
       {events.length > 0 && (
-        <section className="py-16 bg-white">
+        <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-3xl font-bold">Upcoming Events</h2>
