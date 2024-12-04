@@ -11,10 +11,21 @@ import { Separator } from "@/components/ui/separator";
 import { PartnerForm } from "../_components/partner-form";
 import { db } from "@/lib/firebase";
 
-export default function PartnerPage({ params }: { params: { partnerId: string } }) {
+interface PageProps {
+  params: {
+    partnerId: string;
+  };
+}
+
+interface Partner {
+  id: string;
+  [key: string]: any;
+}
+
+const PartnerPage: React.FC<PageProps> = ({ params }) => {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [partner, setPartner] = useState<any>(null);
+  const [partner, setPartner] = useState<Partner | null>(null);
 
   useEffect(() => {
     const fetchPartner = async () => {
