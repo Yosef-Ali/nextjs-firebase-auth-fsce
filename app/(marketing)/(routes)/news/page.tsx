@@ -18,7 +18,6 @@ export default function NewsPage() {
   const [news, setNews] = useState<Post[]>([]);
   const [featuredNews, setFeaturedNews] = useState<Post[]>([]);
   const [events, setEvents] = useState<Post[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -60,9 +59,7 @@ export default function NewsPage() {
     );
   };
 
-  const filteredNews = news.filter(article => 
-    selectedCategory === 'all' || article.category === selectedCategory
-  );
+  const filteredNews = filterNews();
 
   if (loading) {
     return <FSCESkeleton />;
@@ -164,28 +161,9 @@ export default function NewsPage() {
       {/* News Categories Section */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="flex flex-wrap gap-4 mb-8">
-            {[
-              { id: 'all', label: 'All News' },
-              { id: 'major', label: 'Major Updates' },
-              { id: 'program', label: 'Program News' },
-              { id: 'impact', label: 'Impact Stories' },
-              { id: 'partnership', label: 'Partnerships' },
-            ].map((category) => (
-              <Button
-                key={category.id}
-                variant={selectedCategory === category.id ? "default" : "outline"}
-                onClick={() => setSelectedCategory(category.id)}
-                className="rounded-full"
-              >
-                {category.label}
-              </Button>
-            ))}
-          </div>
-
-          {filterNews().length === 0 ? (
+          {filteredNews.length === 0 ? (
             <Card className="p-6 text-center">
-              <p className="text-muted-foreground">No news articles available in this category.</p>
+              <p className="text-muted-foreground">No news articles available.</p>
             </Card>
           ) : (
             <motion.div 
@@ -194,7 +172,7 @@ export default function NewsPage() {
               animate="show"
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
             >
-              {filterNews().map((article) => (
+              {filteredNews.map((article) => (
                 <motion.div key={article.id} variants={item}>
                   <Link href={`/news/${article.slug}`} className="block group">
                     <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
@@ -210,29 +188,24 @@ export default function NewsPage() {
                       )}
                       <CardHeader>
                         <div className="flex items-center gap-2 mb-3">
-                          <Badge variant="secondary">News</Badge>
                           {article.category && (
-                            <Badge variant="outline" className="text-primary">
+                            <Badge variant="outline" className="capitalize">
                               {article.category}
                             </Badge>
                           )}
                         </div>
-                        <CardTitle className="group-hover:text-primary transition-colors">
+                        <CardTitle className="group-hover:text-primary transition-colors line-clamp-2">
                           {article.title}
                         </CardTitle>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                        <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
                           <CalendarDays className="h-4 w-4" />
                           <span>{formatDate(article.createdAt)}</span>
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-muted-foreground line-clamp-2 mb-4">
+                        <p className="text-muted-foreground line-clamp-3">
                           {article.excerpt}
                         </p>
-                        <div className="flex items-center text-primary font-medium group-hover:text-primary/80 transition-colors">
-                          Read More
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </div>
                       </CardContent>
                     </Card>
                   </Link>
