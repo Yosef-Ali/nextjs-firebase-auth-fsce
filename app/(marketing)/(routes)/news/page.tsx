@@ -12,6 +12,7 @@ import { Post } from '@/app/types/post';
 import { formatDate } from '@/lib/utils';
 import { postsService } from '@/app/services/posts';
 import { motion } from 'framer-motion';
+import { ProgramSearch } from '@/components/program-search';
 
 export default function NewsPage() {
   const [news, setNews] = useState<Post[]>([]);
@@ -19,14 +20,7 @@ export default function NewsPage() {
   const [events, setEvents] = useState<Post[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [loading, setLoading] = useState(true);
-
-  const categories = [
-    { id: 'all', label: 'All News' },
-    { id: 'major', label: 'Major Updates' },
-    { id: 'program', label: 'Program News' },
-    { id: 'impact', label: 'Impact Stories' },
-    { id: 'partnership', label: 'Partnerships' },
-  ];
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,6 +46,19 @@ export default function NewsPage() {
 
     fetchData();
   }, []);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const filterNews = () => {
+    return news.filter((newsItem) => 
+      searchQuery === '' || 
+      newsItem.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      newsItem.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      newsItem.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  };
 
   const filteredNews = news.filter(article => 
     selectedCategory === 'all' || article.category === selectedCategory
@@ -84,9 +91,14 @@ export default function NewsPage() {
           <h1 className="text-4xl md:text-5xl font-bold text-center mb-6">
             News & Updates
           </h1>
-          <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
             Stay updated with the latest news and developments from FSCE. Learn about our impact and ongoing initiatives.
           </p>
+          <ProgramSearch 
+            onSearch={handleSearch} 
+            placeholder="Search news articles..."
+            className="mt-10"
+          />
         </div>
       </section>
 
@@ -153,7 +165,13 @@ export default function NewsPage() {
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap gap-4 mb-8">
-            {categories.map((category) => (
+            {[
+              { id: 'all', label: 'All News' },
+              { id: 'major', label: 'Major Updates' },
+              { id: 'program', label: 'Program News' },
+              { id: 'impact', label: 'Impact Stories' },
+              { id: 'partnership', label: 'Partnerships' },
+            ].map((category) => (
               <Button
                 key={category.id}
                 variant={selectedCategory === category.id ? "default" : "outline"}
@@ -165,7 +183,7 @@ export default function NewsPage() {
             ))}
           </div>
 
-          {filteredNews.length === 0 ? (
+          {filterNews().length === 0 ? (
             <Card className="p-6 text-center">
               <p className="text-muted-foreground">No news articles available in this category.</p>
             </Card>
@@ -176,7 +194,7 @@ export default function NewsPage() {
               animate="show"
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
             >
-              {filteredNews.map((article) => (
+              {filterNews().map((article) => (
                 <motion.div key={article.id} variants={item}>
                   <Link href={`/news/${article.slug}`} className="block group">
                     <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
