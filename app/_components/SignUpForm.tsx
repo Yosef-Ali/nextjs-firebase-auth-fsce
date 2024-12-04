@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Icons } from '@/components/icons';
 import { useToast } from '@/components/ui/use-toast';
+import Link from 'next/link';
 
 interface SignUpFormProps {
   callbackUrl?: string | null;
@@ -149,6 +150,17 @@ export function SignUpForm({ callbackUrl }: SignUpFormProps) {
             ) : null}
             Sign Up
           </Button>
+          <div className="text-center mt-4">
+            <p className="text-sm text-gray-600">
+              Already have an account?{' '}
+              <Link 
+                href="/sign-in" 
+                className="text-blue-600 hover:underline font-semibold"
+              >
+                Login
+              </Link>
+            </p>
+          </div>
         </form>
       </CardContent>
     </Card>
