@@ -18,12 +18,14 @@ interface AuthContextType {
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signInWithGoogle: () => Promise<any>;
   logout: () => Promise<void>;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(false);
   const googleProvider = new GoogleAuthProvider();
 
   useEffect(() => {
@@ -32,21 +34,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = (email: string, password: string) => {
-    return signInWithEmailAndPassword(auth, email, password);
+    setLoading(true);
+    return signInWithEmailAndPassword(auth, email, password).finally(() => setLoading(false));
   };
 
   const signUp = async (email: string, password: string, displayName: string) => {
+    setLoading(true);
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName });
     setUser(userCredential.user);
+    setLoading(false);
   };
 
   const signInWithGoogle = () => {
-    return signInWithPopup(auth, googleProvider);
+    setLoading(true);
+    return signInWithPopup(auth, googleProvider).finally(() => setLoading(false));
   };
 
   const logout = () => {
-    return signOut(auth);
+    setLoading(true);
+    return signOut(auth).finally(() => setLoading(false));
   };
 
   return (
@@ -57,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUp,
         signInWithGoogle,
         logout,
+        loading,
       }}
     >
       {children}
