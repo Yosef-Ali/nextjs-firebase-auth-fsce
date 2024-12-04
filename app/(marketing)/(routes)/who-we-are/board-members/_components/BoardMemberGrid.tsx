@@ -31,7 +31,7 @@ const BoardMemberGrid: React.FC<BoardMemberGridProps> = ({ members }) => {
         {featuredMembers.length > 0 && (
           <div className="space-y-8">
             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center">
-              Executive Board
+              Board Members
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {featuredMembers.map((member, index) => (
@@ -57,7 +57,7 @@ const BoardMemberGrid: React.FC<BoardMemberGridProps> = ({ members }) => {
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <div className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-md text-sm font-medium">
-                            Executive Member
+                            Board Member
                           </div>
                           <h3 className="text-xl font-semibold text-foreground">
                             {member.name}

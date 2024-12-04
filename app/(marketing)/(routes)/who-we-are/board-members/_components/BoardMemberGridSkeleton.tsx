@@ -6,7 +6,7 @@ const BoardMemberGridSkeleton = () => {
   return (
     <section className="py-16 px-4">
       <div className="max-w-7xl mx-auto opacity-50">
-        {/* Executive Board Members */}
+        {/* Board Members */}
         <div className="space-y-8 mb-16">
           <Skeleton className="h-10 w-64 mx-auto bg-gradient-to-r from-blue-100/40 to-blue-50/40" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
