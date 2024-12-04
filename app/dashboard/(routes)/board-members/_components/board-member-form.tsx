@@ -36,13 +36,13 @@ const formSchema = z.object({
   image: z.string().optional(),
   featured: z.boolean().default(false),
   order: z.coerce.number().min(1),
-  status: z.enum(["draft", "published"]).default("draft"),
+  status: z.enum(["draft", "published", "archived"]).default("draft"),
 });
 
 type BoardMemberFormValues = z.infer<typeof formSchema>;
 
 interface BoardMemberFormProps {
-  initialData?: BoardMemberFormValues & { id: string };
+  initialData?: (BoardMemberFormValues & { id: string }) | null;
 }
 
 export const BoardMemberForm: React.FC<BoardMemberFormProps> = ({ initialData }) => {
@@ -212,6 +212,7 @@ export const BoardMemberForm: React.FC<BoardMemberFormProps> = ({ initialData })
                   <SelectContent>
                     <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

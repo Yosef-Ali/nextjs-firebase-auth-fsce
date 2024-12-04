@@ -55,9 +55,17 @@ type PostFormData = z.infer<typeof formSchema>;
 
 interface PostEditorProps {
   post?: Post;
+  initialData?: {
+    title: string;
+    content: string;
+    section?: string;
+    category: string;
+    published: boolean;
+  };
+  onSuccess?: () => void;
 }
 
-export function PostEditor({ post }: PostEditorProps) {
+export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
@@ -66,14 +74,14 @@ export function PostEditor({ post }: PostEditorProps) {
   const form = useForm<PostFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: post?.title || '',
-      content: post?.content || '',
+      title: post?.title || initialData?.title || '',
+      content: post?.content || initialData?.content || '',
       excerpt: post?.excerpt || '',
       coverImage: post?.coverImage || '',
       images: post?.images || [],
-      published: post?.published || false,
-      category: post?.category || '',
-      section: post?.section || '',
+      published: post?.published || initialData?.published || false,
+      category: post?.category || initialData?.category || '',
+      section: post?.section || initialData?.section || '',
       slug: post?.slug || '',
     },
   });
@@ -157,6 +165,7 @@ export function PostEditor({ post }: PostEditorProps) {
       
       // router.push('/dashboard/posts');
       // router.refresh();
+      onSuccess?.();
     } catch (error) {
       console.error('Error saving post:', error);
       toast({

@@ -8,6 +8,8 @@ export interface AboutContent {
   images?: string[];
   createdAt: number;
   updatedAt: number;
+  createdBy?: string;
+  updatedBy?: string;
   category: string;
   excerpt?: string;
   authorId: string;

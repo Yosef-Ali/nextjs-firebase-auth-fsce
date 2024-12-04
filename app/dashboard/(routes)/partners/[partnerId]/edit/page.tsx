@@ -38,10 +38,17 @@ export default function EditPartnerPage({
     return null;
   }
 
-  const partner = {
+  const partner = partnerDoc?.exists() ? {
     id: partnerDoc.id,
-    ...partnerDoc.data(),
-  };
+    name: partnerDoc.data().name,
+    email: partnerDoc.data().email,
+    order: partnerDoc.data().order,
+    phone: partnerDoc.data().phone,
+    partnerType: partnerDoc.data().partnerType,
+    description: partnerDoc.data().description,
+    website: partnerDoc.data().website,
+    logoUrl: partnerDoc.data().logo,
+  } : null;
 
   return (
     <div className="p-6 space-y-4">
@@ -61,7 +68,7 @@ export default function EditPartnerPage({
         />
       </div>
       <Separator />
-      <PartnerForm initialData={partner} />
+      {partner && <PartnerForm initialData={partner} />}
     </div>
   );
 }

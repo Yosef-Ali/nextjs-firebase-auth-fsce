@@ -90,7 +90,7 @@ export default function AboutPage() {
                     </DialogHeader>
                     {selectedSection === section.id && (
                       <AboutSectionForm
-                        section={section.id}
+                        section={section.id as "values" | "vision" | "mission"}
                         initialData={sectionContent}
                         onSuccess={refreshContent}
                       />

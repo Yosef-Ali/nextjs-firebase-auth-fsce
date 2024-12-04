@@ -44,9 +44,10 @@ type PartnerFormValues = z.infer<typeof formSchema>;
 
 interface PartnerFormProps {
   initialData?: PartnerFormValues & { id: string };
+  partnerId?: string;
 }
 
-export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData }) => {
+export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId }) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 

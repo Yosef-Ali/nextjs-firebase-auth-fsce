@@ -11,7 +11,7 @@ import { AboutContent } from '@/app/types/about';
 
 interface AboutContentFormProps {
   initialData?: AboutContent;
-  section: string;
+  section: "values" | "vision" | "mission";
   onSuccess?: () => void;
 }
 

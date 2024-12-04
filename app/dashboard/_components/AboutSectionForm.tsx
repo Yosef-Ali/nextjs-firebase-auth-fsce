@@ -41,7 +41,7 @@ export default function AboutSectionForm({
   // Determine user's authorization context
   const authContext = Authorization.createContext(
     user, 
-    initialData?.createdBy // Pass the original creator's ID
+    initialData?.authorId // Pass the original creator's ID
   );
 
   const sectionDetails = {
@@ -83,7 +83,7 @@ export default function AboutSectionForm({
         section,
         category: 'about',
         published: true,
-        createdBy: initialData?.createdBy || user?.uid,
+        createdBy: initialData?.authorId || user?.uid,
         updatedBy: user?.uid,
         updatedAt: Timestamp.now(),
         ...(initialData ? {} : { 
