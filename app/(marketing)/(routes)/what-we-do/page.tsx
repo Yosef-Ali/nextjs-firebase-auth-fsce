@@ -30,7 +30,7 @@ const categories = [
   {
     id: 'advocacy',
     title: 'Advocacy',
-    description: "Speaking up and taking action for children's rights and needs",
+    description: "Speaking up and taking action for children\'s rights and needs",
   },
   {
     id: 'humanitarian-response',
@@ -86,7 +86,7 @@ export default function WhatWeDoPage() {
         searchQuery === '' || 
         program.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         program.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        program.excerpt.toLowerCase().includes(searchQuery.toLowerCase())
+        (program.excerpt && program.excerpt.toLowerCase().includes(searchQuery.toLowerCase()))
       );
   };
 
