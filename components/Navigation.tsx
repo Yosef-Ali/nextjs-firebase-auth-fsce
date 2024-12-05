@@ -126,7 +126,7 @@ export default function Navigation() {
               </Button>
             </>
           ) : (
-            <Link href="/login" passHref>
+            <Link href="/sign-in" passHref>
               <Button variant="default" size="sm">
                 Sign In
               </Button>
