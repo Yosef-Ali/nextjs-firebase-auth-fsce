@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { SignInForm } from '@/app/_components/SignInForm'
 import { Separator } from '@/components/ui/separator'
+import Image from 'next/image'
 
 function SignInContent() {
   const { user, loading, signInWithGoogle } = useAuth()
@@ -36,8 +37,15 @@ function SignInContent() {
     <main className="flex min-h-screen flex-col items-center justify-center p-6">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-2">Sign in to Blog App</h1>
-          <p className="text-gray-600 mb-8">Sign in with email or Google</p>
+          <Image
+            src="/Logo.svg"
+            alt="FSCE Logo"
+            width={100}
+            height={100}
+            className="mx-auto"
+          />
+          <p className="text-gray-600 mb-2">Sign in with email or Google</p>
+          <p className="text-sm text-red-500 italic">* For internal use only</p>
         </div>
         
         <SignInForm callbackUrl={callbackUrl} />
@@ -48,7 +56,7 @@ function SignInContent() {
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-background px-2 text-muted-foreground">
-              Or continue with
+              OR CONTINUE WITH
             </span>
           </div>
         </div>

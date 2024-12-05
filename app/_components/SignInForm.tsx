@@ -15,6 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Icons } from '@/components/icons';
+import Image from 'next/image';
 
 interface SignInFormProps {
   callbackUrl?: string | null;
@@ -49,9 +50,9 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Sign In</CardTitle>
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader className="space-y-4 items-center text-center">
+        <CardTitle className="text-2xl font-bold">Sign in to FSCE</CardTitle>
         <CardDescription>Enter your credentials to access your account</CardDescription>
       </CardHeader>
       <CardContent>
@@ -79,7 +80,7 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
             />
           </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full bg-[#1e3a8a] hover:bg-[#1e3a8a]/90" disabled={isLoading}>
             {isLoading ? (
               <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
             ) : null}
