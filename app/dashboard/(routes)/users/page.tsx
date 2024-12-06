@@ -42,17 +42,6 @@ import {
   DropdownMenuSubTrigger
 } from '@/components/ui/dropdown-menu';
 import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle, 
-  AlertDialogTrigger 
-} from '@/components/ui/alert-dialog';
-import { 
   MoreHorizontal, 
   Edit, 
   Trash2, 
@@ -69,7 +58,6 @@ import { Authorization } from '@/app/lib/authorization';
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const { user } = useAuth();
@@ -101,92 +89,51 @@ export default function UsersPage() {
     }
   }, [user]);
 
-  const handleSetAdmin = async (userId: string) => {
+  const handleSetRole = async (userId: string, role: 'admin' | 'author') => {
+    if (!user || !Authorization.isAdmin(user)) {
+      toast({
+        title: 'Access Denied',
+        description: 'Only administrators can manage user roles',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
-      await usersService.setAdminRole(userId);
+      await usersService.createOrUpdateUser(userId, { role });
       setUsers(users.map(u => 
-        u.id === userId ? { ...u, role: 'admin' } : u
+        u.id === userId ? { ...u, role } : u
       ));
       toast({
         title: 'Success',
-        description: 'User role updated to admin',
+        description: `User role updated to ${role}`,
       });
+      fetchUsers();
     } catch (error) {
-      console.error('Error setting admin role:', error);
+      console.error('Error updating role:', error);
       toast({
         title: 'Error',
         description: 'Failed to update user role',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleRemoveAdmin = async (userId: string) => {
-    try {
-      await usersService.createOrUpdateUser(userId, { role: 'user' });
-      setUsers(users.map(u => 
-        u.id === userId ? { ...u, role: 'user' } : u
-      ));
-      toast({
-        title: 'Success',
-        description: 'User role updated to user',
-      });
-    } catch (error) {
-      console.error('Error removing admin role:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update user role',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleSuspendUser = async (userId: string) => {
-    try {
-      await usersService.suspendUser(userId);
-      setUsers(users.map(u => 
-        u.id === userId ? { ...u, status: 'suspended' } : u
-      ));
-      toast({
-        title: 'User Suspended',
-        description: 'User has been suspended',
-      });
-    } catch (error) {
-      console.error('Error suspending user:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to suspend user',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleActivateUser = async (userId: string) => {
-    try {
-      await usersService.activateUser(userId);
-      setUsers(users.map(u => 
-        u.id === userId ? { ...u, status: 'active' } : u
-      ));
-      toast({
-        title: 'User Activated',
-        description: 'User has been activated',
-      });
-    } catch (error) {
-      console.error('Error activating user:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to activate user',
         variant: 'destructive',
       });
     }
   };
 
   const handleResetPassword = async (email: string) => {
+    if (!user || !Authorization.isAdmin(user)) {
+      toast({
+        title: 'Access Denied',
+        description: 'Only administrators can reset passwords',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       await usersService.resetUserPassword(email);
       toast({
-        title: 'Password Reset',
-        description: 'Password reset link sent to user',
+        title: 'Success',
+        description: 'Password reset link sent',
       });
     } catch (error) {
       console.error('Error resetting password:', error);
@@ -199,12 +146,21 @@ export default function UsersPage() {
   };
 
   const handleDeleteUser = async (userId: string) => {
+    if (!user || !Authorization.isAdmin(user)) {
+      toast({
+        title: 'Access Denied',
+        description: 'Only administrators can delete users',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       await usersService.deleteUser(userId);
       setUsers(users.filter(u => u.id !== userId));
       toast({
-        title: 'User Deleted',
-        description: 'User has been permanently deleted',
+        title: 'Success',
+        description: 'User has been deleted',
       });
     } catch (error) {
       console.error('Error deleting user:', error);
@@ -267,50 +223,11 @@ export default function UsersPage() {
     }
   };
 
-  const handleSetAuthorRole = async (userEmail: string) => {
-    if (!user || !Authorization.isAdmin(user) || !user.email) {
-      toast({
-        title: 'Unauthorized',
-        description: 'Only admin can set author role',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      const success = await usersService.setAuthorRole(
-        user.email,
-        userEmail
-      );
-
-      if (success) {
-        toast({
-          title: 'Author Role Assigned',
-          description: `${userEmail} is now an author`,
-        });
-        // Optionally refresh users list
-        fetchUsers();
-      } else {
-        toast({
-          title: 'Role Assignment Failed',
-          description: 'Could not set author role',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      console.error('Error setting author role:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to set author role',
-        variant: 'destructive',
-      });
-    }
-  };
-
+  // Only show the management interface to admins
   if (!user || !Authorization.isAdmin(user)) {
     return (
       <div className="flex justify-center items-center h-full">
-        <p>Access Denied: Admin privileges required</p>
+        <p className="text-lg">Access Denied: Only administrators can manage users</p>
       </div>
     );
   }
@@ -339,7 +256,6 @@ export default function UsersPage() {
             <TableHead>Name</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Role</TableHead>
-            <TableHead>Status</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -363,16 +279,15 @@ export default function UsersPage() {
               <TableCell>{userData.email}</TableCell>
               <TableCell>
                 <Badge 
-                  variant={userData.role === 'admin' ? 'default' : 'secondary'}
+                  variant={
+                    userData.role === 'admin' 
+                      ? 'default' 
+                      : userData.role === 'author' 
+                        ? 'secondary'
+                        : 'outline'
+                  }
                 >
                   {userData.role}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Badge 
-                  variant={userData.status === 'suspended' ? 'destructive' : 'outline'}
-                >
-                  {userData.status || 'active'}
                 </Badge>
               </TableCell>
               <TableCell>
@@ -386,89 +301,53 @@ export default function UsersPage() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>User Actions</DropdownMenuLabel>
                     
-                    {/* Role Management */}
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <ShieldCheck className="mr-2 h-4 w-4" />
-                        Manage Role
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent>
-                        {userData.role !== 'admin' && (
-                          <DropdownMenuItem 
-                            onClick={() => handleSetAdmin(userData.id)}
-                          >
+                    {Authorization.isAdmin(user) && (
+                      <>
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger>
                             <ShieldCheck className="mr-2 h-4 w-4" />
-                            Set as Admin
-                          </DropdownMenuItem>
-                        )}
-                        {userData.role === 'admin' && (
-                          <DropdownMenuItem 
-                            onClick={() => handleRemoveAdmin(userData.id)}
-                          >
-                            <ShieldOff className="mr-2 h-4 w-4" />
-                            Remove Admin
-                          </DropdownMenuItem>
-                        )}
-                        {userData.role !== 'author' && (
-                          <DropdownMenuItem 
-                            onClick={() => handleSetAuthorRole(userData.email)}
-                            className="text-green-600 focus:bg-green-50"
-                          >
-                            <ShieldCheck className="mr-2 h-4 w-4" /> 
-                            Make Author
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
+                            Manage Role
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuSubContent>
+                            {userData.role !== 'author' && (
+                              <DropdownMenuItem 
+                                onClick={() => handleSetRole(userData.id, 'author')}
+                              >
+                                <ShieldCheck className="mr-2 h-4 w-4" /> 
+                                Make Author
+                              </DropdownMenuItem>
+                            )}
+                            {userData.role !== 'admin' && (
+                              <DropdownMenuItem 
+                                onClick={() => handleSetRole(userData.id, 'admin')}
+                              >
+                                <ShieldCheck className="mr-2 h-4 w-4" />
+                                Make Admin
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuSubContent>
+                        </DropdownMenuSub>
 
-                    {/* User Status */}
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        {userData.status === 'suspended' ? <Unlock className="mr-2 h-4 w-4" /> : <Lock className="mr-2 h-4 w-4" />}
-                        Manage Status
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent>
-                        {userData.status !== 'suspended' && (
-                          <DropdownMenuItem 
-                            onClick={() => handleSuspendUser(userData.id)}
-                          >
-                            <Lock className="mr-2 h-4 w-4" />
-                            Suspend User
-                          </DropdownMenuItem>
-                        )}
-                        {userData.status === 'suspended' && (
-                          <DropdownMenuItem 
-                            onClick={() => handleActivateUser(userData.id)}
-                          >
-                            <Unlock className="mr-2 h-4 w-4" />
-                            Activate User
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
+                        <DropdownMenuSeparator />
 
-                    <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          onClick={() => handleResetPassword(userData.email)}
+                        >
+                          <Key className="mr-2 h-4 w-4" />
+                          Reset Password
+                        </DropdownMenuItem>
 
-                    {/* Other Actions */}
-                    <DropdownMenuItem 
-                      onClick={() => handleResetPassword(userData.email)}
-                    >
-                      <Key className="mr-2 h-4 w-4" />
-                      Reset Password
-                    </DropdownMenuItem>
+                        <DropdownMenuSeparator />
 
-                    <DropdownMenuSeparator />
-
-                    <DropdownMenuItem 
-                      className="text-red-600"
-                      onClick={() => {
-                        setSelectedUser(userData);
-                        // Trigger delete confirmation dialog
-                      }}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete User
-                    </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="text-red-600"
+                          onClick={() => handleDeleteUser(userData.id)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete User
+                        </DropdownMenuItem>
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
@@ -476,28 +355,6 @@ export default function UsersPage() {
           ))}
         </TableBody>
       </Table>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the user {selectedUser?.email}. 
-              This action cannot be undone and will remove all user data.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => selectedUser && handleDeleteUser(selectedUser.id)}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Delete User
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Author Invitation Dialog */}
       <Dialog 
