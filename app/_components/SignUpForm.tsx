@@ -1,34 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/app/lib/firebase/auth-context';
+import { useAuth } from '../lib/firebase/auth-context';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Icons } from '@/components/icons';
-import { useToast } from '@/components/ui/use-toast';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
+import { createUserData } from '@/app/lib/firebase/user-service';
 
 interface SignUpFormProps {
   callbackUrl?: string | null;
 }
 
 export function SignUpForm({ callbackUrl }: SignUpFormProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const { signUp } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const { signUp, signInWithGoogle, user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -36,12 +28,11 @@ export function SignUpForm({ callbackUrl }: SignUpFormProps) {
     event.preventDefault();
     setIsLoading(true);
 
-    // Client-side validation
-    if (password.length < 8) {
+    if (!email || !password || !confirmPassword || !displayName) {
       toast({
-        title: 'Password Too Short',
-        description: 'Password must be at least 8 characters long',
-        variant: 'destructive',
+        title: "Error",
+        description: "All fields are required",
+        variant: "destructive",
       });
       setIsLoading(false);
       return;
@@ -49,9 +40,19 @@ export function SignUpForm({ callbackUrl }: SignUpFormProps) {
 
     if (password !== confirmPassword) {
       toast({
-        title: 'Password Mismatch',
-        description: 'Passwords do not match',
-        variant: 'destructive',
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password should be at least 6 characters",
+        variant: "destructive",
       });
       setIsLoading(false);
       return;
@@ -59,110 +60,173 @@ export function SignUpForm({ callbackUrl }: SignUpFormProps) {
 
     try {
       await signUp(email, password, displayName);
-      router.push(callbackUrl || '/dashboard/posts');
+      toast({
+        title: "Account Created",
+        description: "Your account has been created successfully",
+        variant: "default",
+      });
+      router.push('/sign-in');
     } catch (error: any) {
-      let errorMessage = 'An unexpected error occurred';
-      
-      // More specific error handling
+      let errorMessage = 'Failed to create account';
       switch (error.code) {
         case 'auth/email-already-in-use':
-          errorMessage = 'Email is already registered';
+          errorMessage = 'An account with this email already exists';
           break;
         case 'auth/invalid-email':
           errorMessage = 'Invalid email address';
           break;
         case 'auth/weak-password':
-          errorMessage = 'Password is too weak';
+          errorMessage = 'Password should be at least 6 characters';
           break;
         default:
-          errorMessage = error.message || 'Sign up failed';
+          errorMessage = error.message || 'An unexpected error occurred';
       }
-
       toast({
-        title: 'Sign Up Error',
+        title: "Error",
         description: errorMessage,
-        variant: 'destructive',
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   }
 
+  const handleGoogleSignUp = async () => {
+    try {
+      setIsLoading(true);
+      const userCredential = await signInWithGoogle();
+      
+      if (userCredential) {
+        await createUserData(userCredential, userCredential.displayName || 'Unknown');
+        toast({
+          title: "Account Created",
+          description: "Your account is pending approval. Please wait for admin confirmation.",
+          variant: "default",
+        });
+        router.push('/pending-approval');
+      }
+    } catch (error: any) {
+      console.error('Google sign up error:', error);
+      let errorMessage = 'Failed to sign up with Google';
+      
+      switch (error.code) {
+        case 'auth/popup-closed-by-user':
+          errorMessage = 'Sign up cancelled - popup was closed';
+          break;
+        case 'auth/account-exists-with-different-credential':
+          errorMessage = 'An account already exists with this email';
+          break;
+        default:
+          errorMessage = error.message || 'An unexpected error occurred';
+      }
+      
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Create an Account</CardTitle>
-        <CardDescription>Enter your details to create your account</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="displayName">Name</Label>
+    <div className="grid gap-6">
+      <form onSubmit={onSubmit}>
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="displayName">Full Name</Label>
             <Input
               id="displayName"
-              name="displayName"
+              placeholder="John Doe"
               type="text"
-              placeholder="Your name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
+              autoCapitalize="none"
+              autoComplete="name"
+              autoCorrect="off"
+              disabled={isLoading}
               required
             />
           </div>
-          <div className="space-y-2">
+          <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
-              name="email"
-              type="email"
               placeholder="name@example.com"
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect="off"
+              disabled={isLoading}
               required
             />
           </div>
-          <div className="space-y-2">
+          <div className="grid gap-2">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
-              name="password"
+              placeholder="Create a password"
               type="password"
-              placeholder="At least 8 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoCapitalize="none"
+              autoComplete="new-password"
+              autoCorrect="off"
+              disabled={isLoading}
               required
             />
           </div>
-          <div className="space-y-2">
+          <div className="grid gap-2">
             <Label htmlFor="confirmPassword">Confirm Password</Label>
             <Input
               id="confirmPassword"
-              name="confirmPassword"
+              placeholder="Confirm your password"
               type="password"
-              placeholder="Repeat your password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              autoCapitalize="none"
+              autoComplete="new-password"
+              autoCorrect="off"
+              disabled={isLoading}
               required
             />
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? (
-              <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-            ) : null}
-            Sign Up
+          <Button className="w-full bg-[#1e3a8a] hover:bg-[#1e3a8a]/90" disabled={isLoading}>
+            {isLoading ? 'Creating Account...' : 'Sign Up with Email'}
           </Button>
-          <div className="text-center mt-4">
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link 
-                href="/sign-in" 
-                className="text-blue-600 hover:underline font-semibold"
-              >
-                Login
-              </Link>
-            </p>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+        </div>
+      </form>
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">
+            Or continue with
+          </span>
+        </div>
+      </div>
+      <Button
+        variant="outline"
+        type="button"
+        onClick={handleGoogleSignUp}
+        disabled={isLoading}
+        className="w-full"
+      >
+        {isLoading ? 'Creating Account...' : 'Sign up with Google'}
+      </Button>
+      <p className="px-8 text-center text-sm text-muted-foreground">
+        Already have an account?{" "}
+        <Link
+          href="/sign-in"
+          className="underline underline-offset-4 hover:text-primary"
+        >
+          Sign in
+        </Link>
+      </p>
+    </div>
   );
 }

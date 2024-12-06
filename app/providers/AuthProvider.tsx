@@ -2,9 +2,9 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { auth } from '@/app/firebase';
-import { 
-  signInWithPopup, 
-  GoogleAuthProvider, 
+import {
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User as FirebaseUser
@@ -14,15 +14,18 @@ import { usersService } from '@/app/services/users';
 
 interface AuthContextType {
   user: FirebaseUser | null;
+  userData: UserMetadata | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  auth: any;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [userData, setUserData] = useState<UserMetadata | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const router = useRouter();
@@ -34,12 +37,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('Auth state changed:', user ? 'User logged in' : 'No user');
         if (user) {
           try {
-            await usersService.createUserIfNotExists(user);
+            const metadata = await usersService.createUserIfNotExists(user);
+            setUserData(metadata);
+            setUser(user);
           } catch (err) {
             console.error('Error creating user:', err);
+            setError(err instanceof Error ? err : new Error('Failed to setup user'));
           }
+        } else {
+          setUser(null);
+          setUserData(null);
         }
-        setUser(user);
         setLoading(false);
       }, (error) => {
         console.error('Auth state change error:', error);
@@ -92,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, userData, loading, signInWithGoogle, signOut, auth }}>
       {children}
     </AuthContext.Provider>
   );

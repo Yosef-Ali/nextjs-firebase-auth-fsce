@@ -23,28 +23,35 @@ export const useAuth = () => {
     return () => unsubscribe();
   }, []);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (): Promise<User | null> => {
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      return result.user;
     } catch (error) {
       console.error('Error signing in with Google:', error);
       throw error;
     }
   };
 
-  const signInWithEmail = async (email: string, password: string) => {
+  const signInWithEmail = async (email: string, password: string): Promise<User | null> => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      return result.user;
     } catch (error) {
       console.error('Error signing in with email:', error);
       throw error;
     }
   };
 
-  const signUpWithEmail = async (email: string, password: string) => {
+  const signUpWithEmail = async (email: string, password: string, displayName: string): Promise<User | null> => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      // Update the user's display name
+      if (result.user) {
+        await result.user.updateProfile({ displayName });
+      }
+      return result.user;
     } catch (error) {
       console.error('Error signing up with email:', error);
       throw error;

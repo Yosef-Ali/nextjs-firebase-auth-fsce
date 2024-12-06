@@ -15,6 +15,7 @@ import {
   HelpCircle,
   Image,
   Laptop,
+  Lock,
   Loader2,
   Moon,
   MoreVertical,
@@ -51,6 +52,7 @@ export const Icons = {
   moon: Moon,
   laptop: Laptop,
   check: Check,
+  lock: Lock,
 }
 
 export const InstagramIcon: React.FC<IconProps> = ({ title, ...props }) => (

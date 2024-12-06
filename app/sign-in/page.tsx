@@ -1,108 +1,106 @@
-'use client'
+'use client';
 
-import { useAuth } from '@/app/lib/firebase/auth-context'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, Suspense } from 'react'
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
-import { SignInForm } from '@/app/_components/SignInForm'
-import { Separator } from '@/components/ui/separator'
-import Image from 'next/image'
+import React from 'react';
+import { useSearchParams } from 'next/navigation';
+import { SignInForm } from '@/app/_components/SignInForm';
+import { Separator } from '@/components/ui/separator';
+import Image from 'next/image';
+import { useAuth } from '@/app/lib/firebase/auth-context';
+import { useRouter } from 'next/navigation';
+import { getUserData } from '@/app/lib/firebase/user-service';
 
 function SignInContent() {
-  const { user, loading, signInWithGoogle } = useAuth()
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl')
+  const { user, loading, signInWithGoogle } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl');
 
-  useEffect(() => {
-    if (!loading && user) {
-      router.push(callbackUrl || '/dashboard/posts')
+  React.useEffect(() => {
+    async function checkUserStatus() {
+      if (!loading && user) {
+        const userData = await getUserData(user);
+        
+        if (!userData) {
+          router.push('/pending-approval');
+          return;
+        }
+
+        switch (userData.status) {
+          case 'pending':
+            router.push('/pending-approval');
+            break;
+          case 'suspended':
+            router.push('/unauthorized');
+            break;
+          case 'active':
+            if (userData.role === 'admin' || userData.role === 'author') {
+              router.push(callbackUrl || '/dashboard/posts');
+            } else {
+              router.push('/unauthorized');
+            }
+            break;
+          default:
+            router.push('/pending-approval');
+        }
+      }
     }
-  }, [user, loading, router, callbackUrl])
-
-  const handleSignIn = async () => {
-    await signInWithGoogle()
-  }
+    checkUserStatus();
+  }, [user, loading, router, callbackUrl]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
-    )
+    );
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-6">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
+    <div className="container relative min-h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+      <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
+        <div className="absolute inset-0 bg-[#1e3a8a] opacity-80" />
+        <div className="absolute inset-0">
+          <Image
+            src="/images/fsce-achieves-91-percent-target.jpeg"
+            alt="FSCE Achievement"
+            layout="fill"
+            objectFit="cover"
+            quality={100}
+            priority
+          />
+        </div>
+        <div className="relative z-20 flex items-center text-lg font-medium">
           <Image
             src="/Logo.svg"
             alt="FSCE Logo"
-            width={100}
-            height={100}
-            className="mx-auto"
+            width={40}
+            height={40}
+            className="mr-2"
           />
-          <p className="text-gray-600 mb-2">Sign in with email or Google</p>
-          <p className="text-sm text-red-500 italic">* For internal use only</p>
+          FSCE Admin
         </div>
-        
-        <SignInForm callbackUrl={callbackUrl} />
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <Separator className="w-full" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
-              OR CONTINUE WITH
-            </span>
-          </div>
-        </div>
-
-        <Button
-          onClick={handleSignIn}
-          className="w-full"
-          variant="outline"
-        >
-          Sign in with Google
-        </Button>
-
-        <div className="text-center space-y-2">
-          <div>
-            <span className="text-sm text-muted-foreground">
-              Don't have an account?{' '}
-            </span>
-            <Link 
-              href="/sign-up" 
-              className="text-sm underline underline-offset-4 hover:text-primary"
-            >
-              Sign up
-            </Link>
-          </div>
-          <div>
-            <Link 
-              href="/" 
-              className="text-sm text-muted-foreground hover:text-primary"
-            >
-              Back to Home
-            </Link>
-          </div>
+        <div className="relative z-20 mt-auto">
+          <blockquote className="space-y-2">
+            <p className="text-lg">
+              Welcome to FSCE Admin Portal. Please sign in to continue.
+            </p>
+          </blockquote>
         </div>
       </div>
-    </main>
-  )
+      <div className="p-4 lg:p-8 h-full flex items-center">
+        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+          <div className="flex flex-col space-y-2 text-center">
+            <h1 className="text-2xl font-semibold tracking-tight">FSCE Authentication</h1>
+            <p className="text-sm text-muted-foreground">Sign in to access your dashboard</p>
+            <p className="text-sm text-red-500 italic">* For authorized users only</p>
+          </div>
+          <SignInForm callbackUrl={callbackUrl || undefined} />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function SignIn() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    }>
-      <SignInContent />
-    </Suspense>
-  )
+  return <SignInContent />;
 }
