@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { usersService } from '@/app/services/users';
+import { deleteUserService } from '@/app/services/deleteUser';
 import { useAuth } from '@/app/hooks/useAuth';
 import { User } from '@/app/types/user';
 import { Button } from '@/components/ui/button';
@@ -50,16 +51,23 @@ import {
   ShieldCheck, 
   ShieldOff, 
   Key,
-  UserPlus 
+  UserPlus,
+  ChevronDown,
+  UserIcon,
+  Loader2
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Authorization } from '@/app/lib/authorization';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [selectedRole, setSelectedRole] = useState<'user' | 'author' | 'admin'>('author');
+  const [isInviting, setIsInviting] = useState(false);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [existingUser, setExistingUser] = useState<{ email: string; role: string } | null>(null);
   const { user } = useAuth();
 
   const fetchUsers = async () => {
@@ -145,81 +153,99 @@ export default function UsersPage() {
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (!user || !Authorization.isAdmin(user)) {
-      toast({
-        title: 'Access Denied',
-        description: 'Only administrators can delete users',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+  const handleDeleteUser = async (email: string) => {
     try {
-      await usersService.deleteUser(userId);
-      setUsers(users.filter(u => u.id !== userId));
-      toast({
-        title: 'Success',
-        description: 'User has been deleted',
-      });
+      setIsLoading(true);
+      
+      // Show confirmation dialog
+      if (!confirm(`Are you sure you want to delete user ${email}? This action cannot be undone.`)) {
+        return;
+      }
+
+      const success = await usersService.deleteUser(email);
+      
+      if (success) {
+        toast({
+          title: 'Success',
+          description: 'User has been completely deleted from the system',
+        });
+        // Refresh the users list
+        fetchUsers();
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to delete user. Please try again.',
+          variant: 'destructive',
+        });
+      }
     } catch (error) {
       console.error('Error deleting user:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete user',
+        description: 'An error occurred while deleting the user',
         variant: 'destructive',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleInviteAuthor = async () => {
-    if (!user || !Authorization.isAdmin(user)) {
+  const handleCloseDialog = () => {
+    setShowInviteDialog(false);
+    setEmail('');
+    setSelectedRole('author');
+    setIsInviting(false);
+  };
+
+  const handleInviteUser = async () => {
+    if (!email || !selectedRole) {
       toast({
-        title: 'Unauthorized',
-        description: 'Only admin can invite authors',
+        title: 'Error',
+        description: 'Please provide both email and role',
         variant: 'destructive',
       });
       return;
     }
 
     try {
-      if (!user.email || !inviteEmail) {
-        toast({
-          title: 'Error',
-          description: 'Email information is missing',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const { success, token } = await usersService.inviteAuthor(
-        user.email,
-        inviteEmail
+      setIsInviting(true);
+      console.log('Inviting user with email:', email, 'and role:', selectedRole);
+      
+      const result = await usersService.inviteUser(
+        'dev.yosefali@gmail.com',
+        email.trim(),
+        selectedRole
       );
 
-      if (success) {
+      if (result.success) {
         toast({
-          title: 'Author Invited',
-          description: `Invitation sent to ${inviteEmail}`,
+          title: 'Success',
+          description: `User invited successfully as ${selectedRole}`,
         });
-        
-        // Optionally, refresh users list or add the new invited user
-        setIsInviteDialogOpen(false);
-        setInviteEmail('');
+        handleCloseDialog();
+        fetchUsers();
+      } else if (result.existingUser) {
+        toast({
+          title: 'User Exists',
+          description: `User already exists with role: ${result.existingUser.role}`,
+          variant: 'destructive',
+        });
       } else {
         toast({
-          title: 'Invitation Failed',
-          description: 'Could not invite author. User might already be an author.',
+          title: 'Error',
+          description: 'Failed to invite user',
           variant: 'destructive',
         });
       }
     } catch (error) {
-      console.error('Error inviting author:', error);
+      console.error('Error inviting user:', error);
       toast({
         title: 'Error',
-        description: 'Failed to invite author',
+        description: 'An error occurred while inviting the user',
         variant: 'destructive',
       });
+    } finally {
+      setIsInviting(false);
     }
   };
 
@@ -240,14 +266,12 @@ export default function UsersPage() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">User Management</h1>
-        {Authorization.isAdmin(user) && (
-          <Button 
-            onClick={() => setIsInviteDialogOpen(true)}
-            variant="outline"
-          >
-            <UserPlus className="mr-2 h-4 w-4" /> Invite Author
+        <div className="flex justify-end mb-4">
+          <Button onClick={() => setShowInviteDialog(true)}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Invite User
           </Button>
-        )}
+        </div>
       </div>
       <Table>
         <TableHeader>
@@ -341,7 +365,7 @@ export default function UsersPage() {
 
                         <DropdownMenuItem 
                           className="text-red-600"
-                          onClick={() => handleDeleteUser(userData.id)}
+                          onClick={() => handleDeleteUser(userData.email)}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete User
@@ -356,39 +380,71 @@ export default function UsersPage() {
         </TableBody>
       </Table>
 
-      {/* Author Invitation Dialog */}
-      <Dialog 
-        open={isInviteDialogOpen} 
-        onOpenChange={setIsInviteDialogOpen}
-      >
+      <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Invite New Author</DialogTitle>
+            <DialogTitle>Invite New User</DialogTitle>
             <DialogDescription>
-              Send an invitation to become an author in the system.
+              Enter the email address and role for the new user.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="email" className="text-right">
-                Email
-              </Label>
+
+          <div className="space-y-4 py-2 pb-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
-                placeholder="author@example.com"
-                className="col-span-3"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
+                type="email"
+                placeholder="Enter email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isInviting}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="role">Role</Label>
+              <Select
+                value={selectedRole}
+                onValueChange={(value: 'user' | 'author' | 'admin') => {
+                  console.log('Role selected:', value);
+                  setSelectedRole(value);
+                }}
+                disabled={isInviting}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue>
+                    {selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="author">Author</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
           <DialogFooter>
-            <Button 
-              type="submit" 
-              onClick={handleInviteAuthor}
-              disabled={!inviteEmail}
+            <Button
+              variant="outline"
+              onClick={handleCloseDialog}
+              disabled={isInviting}
             >
-              Send Invitation
+              Cancel
+            </Button>
+            <Button
+              onClick={handleInviteUser}
+              disabled={!email || isInviting}
+            >
+              {isInviting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Inviting...
+                </>
+              ) : (
+                'Invite User'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

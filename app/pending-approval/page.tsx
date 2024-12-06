@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/lib/firebase/auth-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Icons } from '@/components/icons';
+import { Icons } from '@/app/icons';
 
 export default function PendingApprovalPage() {
   const { user, logout } = useAuth();
@@ -37,7 +37,7 @@ export default function PendingApprovalPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="text-center space-y-4">
-            <Icons.clock className="mx-auto h-12 w-12 text-yellow-500" />
+            <Icons.spinner className="mx-auto h-12 w-12 text-yellow-500 animate-spin" />
             <p className="text-sm text-muted-foreground">
               An administrator will review your account shortly. You will receive an email notification once your account has been approved.
             </p>

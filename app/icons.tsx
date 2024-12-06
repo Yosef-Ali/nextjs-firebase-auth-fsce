@@ -8,6 +8,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Clock,
   Command,
   CreditCard,
   File,
@@ -53,6 +54,7 @@ export const Icons = {
   laptop: Laptop,
   check: Check,
   lock: Lock,
+  clock: Clock,
 }
 
 export const InstagramIcon: React.FC<IconProps> = ({ title, ...props }) => (

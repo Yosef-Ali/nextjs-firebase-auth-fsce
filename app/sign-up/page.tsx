@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { SignUpForm } from '@/app/_components/SignUpForm'
+import SignUpForm from '@/app/_components/SignUpForm'
 import { Separator } from '@/components/ui/separator'
 import Image from 'next/image'
 

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../lib/firebase/auth-context';
+import { useAuth } from '@/app/lib/firebase/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +14,7 @@ interface SignUpFormProps {
   callbackUrl?: string | null;
 }
 
-export function SignUpForm({ callbackUrl }: SignUpFormProps) {
+export default function SignUpForm({ callbackUrl }: SignUpFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
