@@ -1,19 +1,21 @@
-import { Suspense } from 'react';
 import { categoriesService } from '@/app/services/categories';
-import CategoriesContent from './_components/categories-content';
 import { Skeleton } from '@/components/ui/skeleton';
+import dynamic from 'next/dynamic';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
+
+// Dynamically import the client component
+const CategoriesContent = dynamic(() => import('./_components/categories-content'), {
+  loading: () => <Skeleton className="w-full h-[200px]" />,
+});
 
 async function CategoriesPage() {
   const categories = await categoriesService.getCategories();
 
   return (
     <div className="h-full p-6">
-      <Suspense fallback={<Skeleton className="w-full h-[200px]" />}>
-        <CategoriesContent initialCategories={categories} />
-      </Suspense>
+      <CategoriesContent initialCategories={categories} />
     </div>
   );
 }
