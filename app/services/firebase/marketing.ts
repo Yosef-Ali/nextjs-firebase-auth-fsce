@@ -88,24 +88,46 @@ class MarketingService {
     }
   }
 
-  async updatePost(id: string, input: UpdatePostInput): Promise<Post> {
+  async updatePost(id: string, input: UpdatePostInput, userId: string): Promise<Post | null> {
     try {
       const docRef = doc(db, this.collectionName, id);
+      const postDoc = await getDoc(docRef);
+      
+      if (!postDoc.exists()) {
+        console.error('Post not found');
+        return null;
+      }
+
+      // Get the user's data to check if they're an admin
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (!userDoc.exists()) {
+        console.error('User not found');
+        return null;
+      }
+
+      const userData = userDoc.data();
+      const postData = postDoc.data();
+      
+      // Allow editing if user is admin or the post author
+      if (userData.role !== 'admin' && postData.authorId !== userId) {
+        console.error('User not authorized to edit this post');
+        return null;
+      }
       
       await updateDoc(docRef, {
         ...input,
         updatedAt: serverTimestamp(),
       });
 
-      const docSnap = await getDoc(docRef);
+      const updatedDoc = await getDoc(docRef);
       
-      if (!docSnap.exists()) {
-        throw new Error('Post not found');
+      if (!updatedDoc.exists()) {
+        throw new Error('Post not found after update');
       }
 
       return {
-        id: docSnap.id,
-        ...docSnap.data(),
+        id: updatedDoc.id,
+        ...updatedDoc.data(),
       } as Post;
     } catch (error) {
       console.error('Error updating post:', error);

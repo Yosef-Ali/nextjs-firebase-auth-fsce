@@ -57,13 +57,18 @@ export const categoriesService = {
     };
   },
 
-  async updateCategory(id: string, category: Partial<Category>): Promise<void> {
+  async updateCategory(id: string, category: Partial<Category>): Promise<Category> {
     const categoryRef = doc(db, COLLECTION_NAME, id);
     const updateData = {
       ...category,
       updatedAt: serverTimestamp(),
     };
     await updateDoc(categoryRef, updateData);
+    return {
+      id,
+      ...category,
+      updatedAt: new Date(),
+    } as Category;
   },
 
   async deleteCategory(id: string): Promise<void> {

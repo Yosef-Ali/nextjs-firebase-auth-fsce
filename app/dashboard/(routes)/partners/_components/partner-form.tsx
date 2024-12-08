@@ -35,7 +35,7 @@ const formSchema = z.object({
   phone: z.string().min(1),
   website: z.string().optional(),
   description: z.string().optional(),
-  logoUrl: z.string().optional(),
+  logoUrl: z.array(z.string()).default([]),
   partnerType: z.enum(["partner", "membership"]),
   order: z.coerce.number().min(1),
 });
@@ -49,166 +49,201 @@ interface PartnerFormProps {
 
 export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId }) => {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<PartnerFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: initialData?.name || "",
-      email: initialData?.email || "",
-      phone: initialData?.phone || "",
-      website: initialData?.website || "",
-      description: initialData?.description || "",
-      logoUrl: initialData?.logoUrl || "",
-      partnerType: initialData?.partnerType || "partner",
-      order: initialData?.order || 1,
+    defaultValues: initialData || {
+      name: "",
+      email: "",
+      phone: "",
+      website: "",
+      description: "",
+      logoUrl: [],
+      partnerType: "partner",
+      order: 1,
     },
   });
 
   const onSubmit = async (data: PartnerFormValues) => {
     try {
-      setLoading(true);
-
-      if (initialData) {
-        // Update existing partner
-        await updateDocument("partners", initialData.id, data);
+      setIsLoading(true);
+      const submissionData = {
+        ...data,
+        logoUrl: data.logoUrl[0] || "", // Take the first URL or empty string
+        updatedAt: new Date(),
+      };
+      
+      if (partnerId) {
+        await updateDocument("partners", partnerId, submissionData);
         toast({
-          description: "Partner updated successfully.",
+          title: "Success",
+          description: "Partner updated successfully",
         });
       } else {
-        // Create new partner
-        await addDocument("partners", data);
+        await addDocument("partners", {
+          ...submissionData,
+          createdAt: new Date(),
+        });
         toast({
-          description: "Partner created successfully.",
+          title: "Success",
+          description: "Partner created successfully",
         });
       }
-
       router.push("/dashboard/partners");
-      router.refresh();
     } catch (error) {
-      console.error("Error saving partner:", error);
       toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Something went wrong",
         variant: "destructive",
-        description: "Something went wrong.",
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="logoUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Logo (optional)</FormLabel>
-              <FormControl>
-                <ImageUpload
-                  value={field.value ? [field.value] : []}
-                  disabled={loading}
-                  onChange={(url) => field.onChange(url)}
-                  onRemove={() => field.onChange("")}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="max-w-2xl mx-auto">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
             control={form.control}
-            name="name"
+            name="logoUrl"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Name</FormLabel>
+                <FormLabel>Logo</FormLabel>
                 <FormControl>
-                  <Input disabled={loading} placeholder="Partner name" {...field} />
+                  <ImageUpload
+                    value={field.value}
+                    onChange={(url) => field.onChange([url])}
+                    onRemove={() => field.onChange([])}
+                    disabled={isLoading}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input disabled={loading} placeholder="Email address" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone</FormLabel>
-                <FormControl>
-                  <Input disabled={loading} placeholder="Phone number" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="website"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Website (optional)</FormLabel>
-                <FormControl>
-                  <Input disabled={loading} placeholder="Website URL" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <FormField
-            control={form.control}
-            name="partnerType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Partner Type</FormLabel>
-                <FormControl>
-                  <Select
-                    disabled={loading}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input disabled={isLoading} placeholder="Partner name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input disabled={isLoading} placeholder="Email address" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone</FormLabel>
+                  <FormControl>
+                    <Input disabled={isLoading} placeholder="Phone number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="website"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Website</FormLabel>
+                  <FormControl>
+                    <Input disabled={isLoading} placeholder="Website URL" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="partnerType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Partner Type</FormLabel>
+                  <Select 
+                    disabled={isLoading}
                     onValueChange={field.onChange}
                     value={field.value}
                     defaultValue={field.value}
                   >
-                    <SelectTrigger>
-                      <SelectValue defaultValue={field.value} placeholder="Select partner type" />
-                    </SelectTrigger>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select partner type" />
+                      </SelectTrigger>
+                    </FormControl>
                     <SelectContent>
                       <SelectItem value="partner">Partner</SelectItem>
                       <SelectItem value="membership">Membership</SelectItem>
                     </SelectContent>
                   </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="order"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Display Order</FormLabel>
+                  <FormControl>
+                    <Input 
+                      disabled={isLoading}
+                      type="number" 
+                      min="1"
+                      placeholder="Display order" 
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
           <FormField
             control={form.control}
-            name="order"
+            name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Order</FormLabel>
+                <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <Input
-                    disabled={loading}
-                    type="number"
-                    placeholder="Order"
+                  <Textarea
+                    disabled={isLoading}
+                    placeholder="Partner description"
                     {...field}
                   />
                 </FormControl>
@@ -216,37 +251,29 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
               </FormItem>
             )}
           />
-        </div>
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description (optional)</FormLabel>
-              <FormControl>
-                <Textarea
-                  disabled={loading}
-                  placeholder="Partner description"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="flex items-center justify-end gap-4">
-          <Button
-            disabled={loading}
-            variant="outline"
-            onClick={() => router.push("/dashboard/partners")}
-          >
-            Cancel
-          </Button>
-          <Button disabled={loading} type="submit">
-            {initialData ? "Update Partner" : "Create Partner"}
-          </Button>
-        </div>
-      </form>
-    </Form>
+
+          <div className="flex items-center gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/dashboard/partners")}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <span className="loading loading-spinner loading-sm mr-2"></span>
+                  {partnerId ? "Updating..." : "Creating..."}
+                </>
+              ) : (
+                <>{partnerId ? "Update Partner" : "Create Partner"}</>
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
   );
 };

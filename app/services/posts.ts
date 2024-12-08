@@ -1,6 +1,7 @@
 import { db } from '@/app/firebase';
 import { Post } from '@/app/types/post';
 import { usersService } from './users';
+import { Authorization } from '@/app/lib/authorization';
 import {
   collection,
   query,
@@ -80,25 +81,47 @@ export const postsService = {
     } as Post;
   },
 
-  async updatePost(id: string, post: Partial<Post>): Promise<void> {
-    const postRef = doc(db, COLLECTION_NAME, id);
-    await updateDoc(postRef, {
-      ...post,
-      updatedAt: serverTimestamp()
-    });
+  async updatePost(id: string, post: Partial<Post>, userId: string): Promise<boolean> {
+    try {
+      const canEdit = await this.canEditPost(userId, id);
+      if (!canEdit) {
+        console.error('User not authorized to edit this post');
+        return false;
+      }
+
+      const postRef = doc(db, COLLECTION_NAME, id);
+      await updateDoc(postRef, {
+        ...post,
+        updatedAt: serverTimestamp()
+      });
+      return true;
+    } catch (error) {
+      console.error('Error updating post:', error);
+      return false;
+    }
   },
 
   async deletePost(userId: string, postId: string): Promise<boolean> {
     try {
-      // First, check if the user is the author of the post
+      // First, check if the post exists
       const postDoc = await getDoc(doc(db, COLLECTION_NAME, postId));
       if (!postDoc.exists()) {
         console.error('Post not found');
         return false;
       }
 
+      // Get the current user's data to check if they're an admin
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (!userDoc.exists()) {
+        console.error('User not found');
+        return false;
+      }
+
+      const userData = userDoc.data();
       const postData = postDoc.data();
-      if (postData.authorId !== userId) {
+      
+      // Allow deletion if user is admin or the post author
+      if (userData.role !== 'admin' && postData.authorId !== userId) {
         console.error('User not authorized to delete this post');
         return false;
       }
@@ -114,11 +137,25 @@ export const postsService = {
 
   async canEditPost(userId: string, postId: string): Promise<boolean> {
     try {
+      // Get the post
       const postDoc = await getDoc(doc(db, COLLECTION_NAME, postId));
-      if (!postDoc.exists()) return false;
+      if (!postDoc.exists()) {
+        console.error('Post not found');
+        return false;
+      }
+
+      // Get the user's data to check if they're an admin
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (!userDoc.exists()) {
+        console.error('User not found');
+        return false;
+      }
+
+      const userData = userDoc.data();
+      const postData = postDoc.data();
       
-      const post = postDoc.data();
-      return post.authorId === userId;
+      // Allow editing if user is admin or the post author
+      return userData.role === 'admin' || postData.authorId === userId;
     } catch (error) {
       console.error('Error checking edit permission:', error);
       return false;

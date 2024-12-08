@@ -148,11 +148,29 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
       };
 
       if (post) {
-        await postsService.updatePost(post.id, postData);
-        toast({
-          title: "Success",
-          description: "Post updated successfully",
-        });
+        if (!user) {
+          toast({
+            title: "Error",
+            description: "You must be logged in to update posts",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const updateResult = await postsService.updatePost(post.id, postData, user.uid);
+        if (updateResult) {
+          toast({
+            title: "Success",
+            description: "Post updated successfully",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "You are not authorized to edit this post",
+            variant: "destructive",
+          });
+          return;
+        }
       } else {
         const newPost = await postsService.createPost(postData);
         toast({
