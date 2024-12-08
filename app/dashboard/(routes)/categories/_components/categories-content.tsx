@@ -4,41 +4,84 @@ import { useState } from 'react';
 import { Category } from '@/app/types/category';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogTitle,
-  VisuallyHidden 
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CategoriesTable from '@/app/dashboard/_components/CategoriesTable';
 import CategoryEditor from '@/app/dashboard/_components/CategoryEditor';
+import { categoriesService } from '@/app/services/categories';
+import { toast } from '@/hooks/use-toast';
 
 interface CategoriesContentProps {
   initialCategories: Category[];
 }
 
-function CategoriesContent({ initialCategories }: CategoriesContentProps) {
+export default function CategoriesContent({ initialCategories }: CategoriesContentProps) {
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
   const [activeTab, setActiveTab] = useState<'post' | 'resource'>('post');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const postCategories = initialCategories.filter(cat => cat.type === 'post');
-  const resourceCategories = initialCategories.filter(cat => cat.type === 'resource');
+  const postCategories = categories.filter(cat => cat.type === 'post');
+  const resourceCategories = categories.filter(cat => cat.type === 'resource');
 
-  const handleEdit = (category: Category) => {
-    setSelectedCategory(category);
-    setIsEditorOpen(true);
+  const handleEdit = async (category: Category) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      setSelectedCategory(category);
+      setIsEditorOpen(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleCreate = () => {
-    setSelectedCategory(undefined);
-    setIsEditorOpen(true);
+  const handleDelete = async (category: Category) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      await categoriesService.deleteCategory(category.id);
+      setCategories(prevCategories => 
+        prevCategories.filter(cat => cat.id !== category.id)
+      );
+      toast({
+        title: 'Category deleted',
+        description: `${category.name} has been deleted successfully.`,
+      });
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete category. Please try again.',
+        variant: 'destructive',
+      });
+      setError(error instanceof Error ? error.message : 'Failed to delete category');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleEditorClose = () => {
     setIsEditorOpen(false);
     setSelectedCategory(undefined);
+  };
+
+  const handleSave = (savedCategory: Category) => {
+    setCategories(prevCategories => {
+      if (selectedCategory) {
+        // Update existing category
+        return prevCategories.map(cat => 
+          cat.id === savedCategory.id ? savedCategory : cat
+        );
+      } else {
+        // Add new category
+        return [...prevCategories, savedCategory];
+      }
+    });
+    handleEditorClose();
   };
 
   return (
@@ -47,56 +90,63 @@ function CategoriesContent({ initialCategories }: CategoriesContentProps) {
         <div>
           <h1 className="text-3xl font-bold">Categories</h1>
           <p className="text-sm text-muted-foreground">
-            Manage your post and resource categories
+            Manage your content categories
           </p>
         </div>
-        <Button onClick={handleCreate}>
+        <Button onClick={() => setIsEditorOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           New Category
         </Button>
       </div>
 
-      <Tabs defaultValue="post" className="w-full" onValueChange={(v: string) => setActiveTab(v as 'post' | 'resource')}>
-        <TabsList>
-          <TabsTrigger value="post">Post Categories</TabsTrigger>
-          <TabsTrigger value="resource">Resource Categories</TabsTrigger>
+      <Tabs defaultValue="post" onValueChange={(v) => setActiveTab(v as 'post' | 'resource')}>
+        <TabsList aria-label="Category types">
+          <TabsTrigger value="post">Posts</TabsTrigger>
+          <TabsTrigger value="resource">Resources</TabsTrigger>
         </TabsList>
-        <TabsContent value="post" className="mt-4">
+        <TabsContent value="post" role="tabpanel" aria-label="Post categories">
+          {error && (
+            <div className="text-red-500 mb-4">{error}</div>
+          )}
           <CategoriesTable
-            initialCategories={postCategories}
-            type="post"
+            categories={postCategories}
             onEdit={handleEdit}
+            onDelete={handleDelete}
+            isLoading={isLoading}
           />
         </TabsContent>
-        <TabsContent value="resource" className="mt-4">
+        <TabsContent value="resource" role="tabpanel" aria-label="Resource categories">
+          {error && (
+            <div className="text-red-500 mb-4">{error}</div>
+          )}
           <CategoriesTable
-            initialCategories={resourceCategories}
-            type="resource"
+            categories={resourceCategories}
             onEdit={handleEdit}
+            onDelete={handleDelete}
+            isLoading={isLoading}
           />
         </TabsContent>
       </Tabs>
 
       <Dialog open={isEditorOpen} onOpenChange={setIsEditorOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent>
           <DialogTitle>
-            <VisuallyHidden>
-              {selectedCategory ? 'Edit Category' : 'Create New Category'}
-            </VisuallyHidden>
+            {selectedCategory ? 'Edit Category' : 'Create New Category'}
           </DialogTitle>
+          <DialogDescription>
+            {selectedCategory 
+              ? 'Make changes to your category here. Click save when you\'re done.' 
+              : 'Add a new category to organize your content.'}
+          </DialogDescription>
           <CategoryEditor
             category={selectedCategory}
             type={activeTab}
-            parentCategories={
-              activeTab === 'post' ? postCategories : resourceCategories
-            }
-            onSave={handleEditorClose}
-            onCancel={handleEditorClose}
+            parentCategories={activeTab === 'post' ? postCategories : resourceCategories}
+            onSave={handleSave}
+            onCancel={() => handleEditorClose()}
           />
         </DialogContent>
       </Dialog>
     </div>
   );
 }
-
-export default CategoriesContent;

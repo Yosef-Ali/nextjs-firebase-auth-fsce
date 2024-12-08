@@ -94,35 +94,26 @@ export default function SignUpForm({ callbackUrl }: SignUpFormProps) {
   const handleGoogleSignUp = async () => {
     try {
       setIsLoading(true);
-      const userCredential = await signInWithGoogle();
+      const result = await signInWithGoogle();
       
-      if (userCredential) {
-        await createUserData(userCredential, userCredential.displayName || 'Unknown');
+      if (result) {
         toast({
-          title: "Account Created",
-          description: "Your account is pending approval. Please wait for admin confirmation.",
+          title: "Success",
+          description: "Successfully signed in with Google",
           variant: "default",
         });
-        router.push('/pending-approval');
+
+        if (result.userData?.status === 'pending') {
+          router.push('/pending-approval');
+        } else {
+          router.push(callbackUrl || '/dashboard');
+        }
       }
     } catch (error: any) {
       console.error('Google sign up error:', error);
-      let errorMessage = 'Failed to sign up with Google';
-      
-      switch (error.code) {
-        case 'auth/popup-closed-by-user':
-          errorMessage = 'Sign up cancelled - popup was closed';
-          break;
-        case 'auth/account-exists-with-different-credential':
-          errorMessage = 'An account already exists with this email';
-          break;
-        default:
-          errorMessage = error.message || 'An unexpected error occurred';
-      }
-      
       toast({
         title: "Error",
-        description: errorMessage,
+        description: error.message || "Failed to sign in with Google",
         variant: "destructive",
       });
     } finally {

@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { auth } from '@/app/firebase';
 import {
+  signInWithRedirect,
   signInWithPopup,
   GoogleAuthProvider,
   signOut as firebaseSignOut,
@@ -11,6 +12,7 @@ import {
 } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { usersService } from '@/app/services/users';
+import { UserMetadata } from '@/app/types/user';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -69,8 +71,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
+      provider.addScope('email');
+      provider.addScope('profile');
+      
+      const result = await signInWithPopup(auth, provider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      if (!credential) {
+        throw new Error('No credential returned');
+      }
+      
+      // Get user data and check role
+      const userData = await usersService.getUserData(result.user);
+      if (userData?.role === 'admin' && userData.status === 'active') {
+        router.push('/dashboard/posts');
+      } else {
+        router.push('/unauthorized');
+      }
+      
     } catch (err) {
       console.error('Error signing in with Google:', err);
       throw err;

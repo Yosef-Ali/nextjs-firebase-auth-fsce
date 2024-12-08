@@ -1,11 +1,19 @@
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
 import { User } from 'firebase/auth';
+import { UserRole } from '../authorization';
+
+// Define admin emails
+const ADMIN_EMAILS = [
+  process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+  'dev.yosefali@gmail.com',
+  'yosefmdsc@gmail.com'
+].filter(Boolean) as string[];
 
 export interface UserData {
   uid: string;
   email: string;
   displayName: string;
-  role: 'user' | 'author' | 'admin';
+  role: UserRole;
   status: 'pending' | 'active' | 'suspended';
   createdAt: string;
 }
@@ -14,25 +22,32 @@ export async function getUserData(user: User): Promise<UserData | null> {
   try {
     const db = getFirestore();
     
-    // Special case for admin user
-    if (user.email === 'dev.yosefali@gmail.com') {
+    // Check if user email is in admin list
+    if (user.email && ADMIN_EMAILS.includes(user.email)) {
       const adminData: UserData = {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName || '',
-        role: 'admin',
+        role: UserRole.ADMIN,
         status: 'active',
         createdAt: new Date().toISOString(),
       };
       // Ensure admin data is saved
-      await setDoc(doc(db, 'users', user.uid), adminData);
+      await setDoc(doc(db, 'users', user.uid), adminData, { merge: true });
       return adminData;
     }
 
     // Check regular users collection
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     if (userDoc.exists()) {
-      return userDoc.data() as UserData;
+      const userData = userDoc.data() as UserData;
+      // Double-check if user should be admin
+      if (user.email && ADMIN_EMAILS.includes(user.email)) {
+        userData.role = UserRole.ADMIN;
+        userData.status = 'active';
+        await setDoc(doc(db, 'users', user.uid), userData, { merge: true });
+      }
+      return userData;
     }
 
     // If not in users, check dashboard_users
@@ -40,7 +55,7 @@ export async function getUserData(user: User): Promise<UserData | null> {
     if (dashboardDoc.exists()) {
       const data = dashboardDoc.data() as UserData;
       // Copy dashboard user to regular users collection
-      await setDoc(doc(db, 'users', user.uid), data);
+      await setDoc(doc(db, 'users', user.uid), data, { merge: true });
       return data;
     }
 
@@ -55,13 +70,13 @@ export async function createUserData(user: User, displayName: string): Promise<U
   try {
     const db = getFirestore();
     
-    // Special case for admin user
-    if (user.email === 'dev.yosefali@gmail.com') {
+    // Check if user email is in admin list
+    if (user.email && ADMIN_EMAILS.includes(user.email)) {
       const adminData: UserData = {
         uid: user.uid,
         email: user.email,
         displayName: displayName,
-        role: 'admin',
+        role: UserRole.ADMIN,
         status: 'active',
         createdAt: new Date().toISOString(),
       };
@@ -88,7 +103,7 @@ export async function createUserData(user: User, displayName: string): Promise<U
       uid: user.uid,
       email: user.email || '',
       displayName: displayName,
-      role: 'user',
+      role: UserRole.USER,
       status: 'pending',
       createdAt: new Date().toISOString(),
     };
@@ -111,7 +126,7 @@ export async function updateUserStatus(uid: string, status: 'active' | 'pending'
   }
 }
 
-export async function updateUserRole(uid: string, role: 'user' | 'author' | 'admin'): Promise<void> {
+export async function updateUserRole(uid: string, role: UserRole): Promise<void> {
   try {
     const db = getFirestore();
     await updateDoc(doc(db, 'users', uid), { role });
@@ -127,6 +142,6 @@ export async function canAccessDashboard(user: User): Promise<boolean> {
   
   return (
     userData.status === 'active' && 
-    (userData.role === 'admin' || userData.role === 'author')
+    (userData.role === UserRole.ADMIN || userData.role === UserRole.AUTHOR)
   );
 }

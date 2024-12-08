@@ -1,5 +1,5 @@
 import { db } from '@/app/firebase';
-import { User } from '@/app/types/user';
+import { User, UserRole, UserStatus } from '@/app/types/user';
 import {
   collection,
   doc,
@@ -107,7 +107,7 @@ export const usersService = {
   },
 
   async setAdminRole(userId: string): Promise<void> {
-    await this.createOrUpdateUser(userId, { role: 'admin' });
+    await this.createOrUpdateUser(userId, { role: 'admin' as UserRole });
   },
 
   async getAllUsers(): Promise<User[]> {
@@ -139,7 +139,7 @@ export const usersService = {
 
   async suspendUser(userId: string): Promise<boolean> {
     try {
-      await this.createOrUpdateUser(userId, { status: 'suspended' });
+      await this.createOrUpdateUser(userId, { status: 'suspended' as UserStatus });
       return true;
     } catch (error) {
       console.error('Error suspending user:', error);
@@ -149,7 +149,7 @@ export const usersService = {
 
   async activateUser(userId: string): Promise<boolean> {
     try {
-      await this.createOrUpdateUser(userId, { status: 'active' });
+      await this.createOrUpdateUser(userId, { status: 'active' as UserStatus });
       return true;
     } catch (error) {
       console.error('Error activating user:', error);
@@ -157,7 +157,7 @@ export const usersService = {
     }
   },
 
-  async deleteUser(userId: string): Promise<boolean> {
+  async deleteUserById(userId: string): Promise<boolean> {
     try {
       // In a real-world scenario, you'd also want to:
       // 1. Delete user's authentication record
@@ -171,7 +171,7 @@ export const usersService = {
     }
   },
 
-  async deleteUser(email: string): Promise<boolean> {
+  async deleteUserByEmail(email: string): Promise<boolean> {
     try {
       console.log('Deleting user:', email);
       
@@ -231,8 +231,8 @@ export const usersService = {
 
         // Update existing user
         await this.createOrUpdateUser(existingUserSnapshot.docs[0].id, {
-          role: 'author',
-          status: 'invited',
+          role: 'author' as UserRole,
+          status: 'invited' as UserStatus,
           invitedBy: inviterEmail,
           invitationToken,
         });
@@ -245,7 +245,7 @@ export const usersService = {
       await setDoc(newAuthorRef, {
         id: newAuthorRef.id,
         email: authorEmail,
-        role: 'author',
+        role: 'author' as UserRole,
         status: 'invited',
         invitedBy: inviterEmail,
         invitationToken,
@@ -678,6 +678,29 @@ export const usersService = {
       return true;
     } catch (error) {
       console.error('Error setting up initial admin:', error);
+      return false;
+    }
+  },
+
+  async deleteUser(email: string): Promise<boolean> {
+    try {
+      // Make API call to backend route that handles Firebase Auth deletion
+      const response = await fetch('/api/users/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete user');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting user:', error);
       return false;
     }
   },
