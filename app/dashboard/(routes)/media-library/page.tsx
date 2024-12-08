@@ -1,12 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   Card,
   CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/app/hooks/useAuth';
 import { 
@@ -14,38 +18,46 @@ import {
   Link as LinkIcon,
   Upload,
   Loader2,
-  Trash2
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import { storage } from '@/app/firebase';
-import { ref, uploadBytes, listAll, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref, uploadBytes, listAll, getDownloadURL, deleteObject, getMetadata } from 'firebase/storage';
 import Image from 'next/image';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
+// Maximum storage limit (in bytes)
+const MAX_STORAGE_BYTES = 1 * 1024 * 1024 * 1024; // 1 GB
+const STORAGE_WARNING_THRESHOLD = 0.9 * MAX_STORAGE_BYTES; // 90% of max storage
 
 interface MediaItem {
   url: string;
   name: string;
   path: string;
+  size: number;
+  createdAt: Date;
 }
 
 export default function MediaLibraryPage() {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [totalStorageUsed, setTotalStorageUsed] = useState(0);
   const { toast } = useToast();
   const { user } = useAuth();
+
+  const storagePaths = [
+    'posts',
+    'partners',
+    'resources',
+    'uploads'
+  ];
 
   const fetchMediaItems = async () => {
     try {
       setIsLoading(true);
-      
-      // Define storage paths to search
-      const storagePaths = [
-        'posts',
-        'partners',
-        'resources',
-        'uploads'
-      ];
-
       const allItems: MediaItem[] = [];
+      let totalSize = 0;
 
       // Fetch items from multiple paths
       for (const path of storagePaths) {
@@ -56,10 +68,16 @@ export default function MediaLibraryPage() {
           const items = await Promise.all(
             result.items.map(async (item) => {
               const url = await getDownloadURL(item);
+              const metadata = await getMetadata(item);
+              
+              totalSize += metadata.size;
+              
               return {
                 url,
                 name: item.name,
                 path: item.fullPath,
+                size: metadata.size,
+                createdAt: metadata.timeCreated ? new Date(metadata.timeCreated) : new Date(),
               };
             })
           );
@@ -70,10 +88,11 @@ export default function MediaLibraryPage() {
         }
       }
       
-      // Sort items by name
-      allItems.sort((a, b) => a.name.localeCompare(b.name));
+      // Sort items by creation date (oldest first)
+      const sortedItems = allItems.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
       
-      setMediaItems(allItems);
+      setMediaItems(sortedItems);
+      setTotalStorageUsed(totalSize);
     } catch (error) {
       console.error('Error fetching media items:', error);
       toast({
@@ -93,6 +112,16 @@ export default function MediaLibraryPage() {
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // Check storage limit before upload
+    if (totalStorageUsed + file.size > MAX_STORAGE_BYTES) {
+      toast({
+        title: 'Storage Limit Exceeded',
+        description: 'Please delete some existing files before uploading.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     try {
       setIsUploading(true);
@@ -115,7 +144,7 @@ export default function MediaLibraryPage() {
     }
   };
 
-  const handleDelete = async (path: string) => {
+  const handleDelete = async (path: string, size: number) => {
     try {
       const fileRef = ref(storage, path);
       await deleteObject(fileRef);
@@ -159,6 +188,19 @@ export default function MediaLibraryPage() {
     document.body.removeChild(a);
   };
 
+  // Calculate storage usage percentage
+  const storageUsagePercentage = (totalStorageUsed / MAX_STORAGE_BYTES) * 100;
+
+  // Determine storage status
+  const storageStatus = useMemo(() => {
+    if (storageUsagePercentage >= 100) {
+      return 'danger';
+    } else if (storageUsagePercentage >= 90) {
+      return 'warning';
+    }
+    return 'normal';
+  }, [storageUsagePercentage]);
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
@@ -173,6 +215,45 @@ export default function MediaLibraryPage() {
 
   return (
     <div className="container mx-auto p-6">
+      {/* Storage Usage Progress */}
+      <div className="flex items-center space-x-4 mb-6">
+        <div className="flex-grow">
+          <div className="text-sm text-muted-foreground mb-1">
+            Storage: {`${(totalStorageUsed / (1024 * 1024)).toFixed(2)} MB / ${(MAX_STORAGE_BYTES / (1024 * 1024)).toFixed(2)} MB`}
+          </div>
+          <Progress 
+            value={storageUsagePercentage} 
+            className={`h-2 ${
+              storageStatus === 'danger' 
+                ? 'bg-destructive/20' 
+                : storageStatus === 'warning' 
+                ? 'bg-warning/20' 
+                : 'bg-primary/20'
+            }`}
+          />
+        </div>
+        {storageStatus !== 'normal' && (
+          <div className="flex items-center space-x-2 text-sm">
+            <AlertTriangle 
+              className={`h-5 w-5 ${
+                storageStatus === 'danger' 
+                  ? 'text-destructive' 
+                  : 'text-warning'
+              }`} 
+            />
+            <span className={
+              storageStatus === 'danger' 
+                ? 'text-destructive' 
+                : 'text-warning'
+            }>
+              {storageStatus === 'danger' 
+                ? 'Limit Reached' 
+                : 'Almost Full'}
+            </span>
+          </div>
+        )}
+      </div>
+
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold">Media Library</h2>
         <div className="flex items-center gap-4">
@@ -182,10 +263,11 @@ export default function MediaLibraryPage() {
             onChange={handleUpload}
             className="hidden"
             id="file-upload"
+            disabled={storageStatus !== 'normal'}
           />
           <Button
             asChild
-            disabled={isUploading}
+            disabled={isUploading || storageStatus !== 'normal'}
           >
             <label htmlFor="file-upload" className="cursor-pointer">
               {isUploading ? (
@@ -218,6 +300,9 @@ export default function MediaLibraryPage() {
               </div>
               <div className="p-4">
                 <p className="text-sm font-medium truncate mb-2">{item.name}</p>
+                <p className="text-xs text-muted-foreground mb-2">
+                  {`${(item.size / 1024).toFixed(2)} KB`}
+                </p>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -236,7 +321,7 @@ export default function MediaLibraryPage() {
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => handleDelete(item.path)}
+                    onClick={() => handleDelete(item.path, item.size)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
