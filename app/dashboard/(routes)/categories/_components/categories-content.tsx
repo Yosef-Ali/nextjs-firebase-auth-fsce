@@ -4,7 +4,12 @@ import { useState } from 'react';
 import { Category } from '@/app/types/category';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogTitle,
+  VisuallyHidden 
+} from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CategoriesTable from '@/app/dashboard/_components/CategoriesTable';
 import CategoryEditor from '@/app/dashboard/_components/CategoryEditor';
@@ -74,6 +79,11 @@ function CategoriesContent({ initialCategories }: CategoriesContentProps) {
 
       <Dialog open={isEditorOpen} onOpenChange={setIsEditorOpen}>
         <DialogContent className="sm:max-w-[600px]">
+          <DialogTitle>
+            <VisuallyHidden>
+              {selectedCategory ? 'Edit Category' : 'Create New Category'}
+            </VisuallyHidden>
+          </DialogTitle>
           <CategoryEditor
             category={selectedCategory}
             type={activeTab}
