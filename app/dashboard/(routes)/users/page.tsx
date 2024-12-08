@@ -58,6 +58,7 @@ import {
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Authorization } from '@/app/lib/authorization';
+import { auth } from '@/app/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function UsersPage() {
@@ -68,6 +69,8 @@ export default function UsersPage() {
   const [isInviting, setIsInviting] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [existingUser, setExistingUser] = useState<{ email: string; role: string } | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const { user } = useAuth();
 
   const fetchUsers = async () => {
@@ -108,15 +111,38 @@ export default function UsersPage() {
     }
 
     try {
-      await usersService.createOrUpdateUser(userId, { role });
-      setUsers(users.map(u => 
-        u.id === userId ? { ...u, role } : u
-      ));
-      toast({
-        title: 'Success',
-        description: `User role updated to ${role}`,
-      });
-      fetchUsers();
+      // Get the user's email first
+      const targetUser = users.find(u => u.id === userId);
+      if (!targetUser) {
+        toast({
+          title: 'Error',
+          description: 'User not found',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Update the role using the correct method
+      const success = await usersService.updateUserRole(
+        user.email!, // current admin's email
+        targetUser.email, // target user's email
+        role
+      );
+
+      if (success) {
+        toast({
+          title: 'Success',
+          description: `User role updated to ${role}`,
+        });
+        // Refresh the users list
+        fetchUsers();
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to update user role',
+          variant: 'destructive',
+        });
+      }
     } catch (error) {
       console.error('Error updating role:', error);
       toast({
@@ -154,22 +180,33 @@ export default function UsersPage() {
   };
 
   const handleDeleteUser = async (email: string) => {
+    setUserToDelete(email);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+
     try {
       setIsLoading(true);
-      
-      // Show confirmation dialog
-      if (!confirm(`Are you sure you want to delete user ${email}? This action cannot be undone.`)) {
-        return;
-      }
+      const currentUser = auth.currentUser;
+      const isCurrentUser = currentUser?.email === userToDelete;
 
-      const success = await usersService.deleteUser(email);
+      const success = await deleteUserService.deleteUserCompletely(userToDelete);
       
       if (success) {
-        toast({
-          title: 'Success',
-          description: 'User has been completely deleted from the system',
-        });
-        // Refresh the users list
+        if (isCurrentUser) {
+          toast({
+            title: 'Success',
+            description: 'Your account has been completely deleted. You will be logged out.',
+          });
+          await auth.signOut();
+        } else {
+          toast({
+            title: 'Success',
+            description: 'User data has been deleted. Note: The user will need to log in once to complete account deletion.',
+          });
+        }
         fetchUsers();
       } else {
         toast({
@@ -187,7 +224,14 @@ export default function UsersPage() {
       });
     } finally {
       setIsLoading(false);
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setUserToDelete(null);
   };
 
   const handleCloseDialog = () => {
@@ -379,6 +423,45 @@ export default function UsersPage() {
           ))}
         </TableBody>
       </Table>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Delete User</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {userToDelete}? This action cannot be undone.
+              {userToDelete === auth.currentUser?.email && (
+                <p className="mt-2 text-red-500">
+                  Warning: You are about to delete your own account. You will be logged out.
+                </p>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={cancelDelete}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
         <DialogContent>
