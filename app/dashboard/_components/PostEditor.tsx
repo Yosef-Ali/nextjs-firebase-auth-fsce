@@ -1,7 +1,6 @@
 'use client';
 
-import React from 'react';
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -29,11 +28,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { SelectOption } from '@/components/ui/select';
 
 import { useAuth } from '@/app/hooks/useAuth';
 import { Post } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
 import { toast } from '@/hooks/use-toast';
+import { categoriesService } from '@/app/services/categories';
+import { Category } from '@/app/types/category';
 
 import { Editor } from '@/components/editor';
 
@@ -70,6 +72,7 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
   const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [images, setImages] = useState<string[]>(post?.images || []);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const form = useForm<PostFormData>({
     resolver: zodResolver(formSchema),
@@ -85,6 +88,18 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
       slug: post?.slug || '',
     },
   });
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const fetchedCategories = await categoriesService.getCategories();
+        setCategories(fetchedCategories);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   React.useEffect(() => {
     const title = form.getValues('title');
@@ -228,34 +243,20 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
+                    <FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger>
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="overview">Overview</SelectItem>
-                        <SelectItem value="values-principles">Values & Principles</SelectItem>
-                        <SelectItem value="partners">Partners</SelectItem>
-                        <SelectItem value="merits">Merits & Achievements</SelectItem>
-                        <SelectItem value="prevention-promotion">Prevention & Promotion</SelectItem>
-                        <SelectItem value="protection">Protection</SelectItem>
-                        <SelectItem value="rehabilitation">Rehabilitation</SelectItem>
-                        <SelectItem value="resource-center">Resource Center</SelectItem>
-                        <SelectItem value="case-stories">Case Stories</SelectItem>
-                        <SelectItem value="news">News</SelectItem>
-                        <SelectItem value="events">Events</SelectItem>
-                        <SelectItem value="about">About</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Choose a category that best fits your post
-                    </FormDescription>
+                        <SelectContent>
+                          {categories.map((cat) => (
+                            <SelectItem key={cat.id} value={cat.id}>
+                              {cat.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -268,22 +269,19 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Section</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a section" />
                           </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="vision">Vision</SelectItem>
-                          <SelectItem value="mission">Mission</SelectItem>
-                          <SelectItem value="goals">Goals</SelectItem>
-                          <SelectItem value="governance">Governance</SelectItem>
-                        </SelectContent>
-                      </Select>
+                          <SelectContent>
+                            <SelectItem value="vision">Vision</SelectItem>
+                            <SelectItem value="mission">Mission</SelectItem>
+                            <SelectItem value="goals">Goals</SelectItem>
+                            <SelectItem value="governance">Governance</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
                       <FormDescription>
                         Select which section this content belongs to
                       </FormDescription>

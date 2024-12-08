@@ -18,7 +18,6 @@ import {
   Bold,
   Italic,
   Strikethrough,
-  Code,
   Heading1,
   Heading2,
   Heading3,
@@ -39,6 +38,7 @@ import {
   Minimize2,
   Copy,
   Table as TableIcon,
+  Link,
 } from 'lucide-react';
 import { Separator } from '../ui/separator';
 import {
@@ -179,11 +179,17 @@ const MenuBar = ({
             type="button"
             variant="ghost"
             size="icon"
-            onClick={(e) => onClickHandler(e, () => editor.chain().focus().toggleCode().run())}
-            disabled={!editor.can().chain().focus().toggleCode().run()}
-            className={cn("h-8 w-8", editor.isActive('code') && "bg-muted")}
+            onClick={(e) => onClickHandler(e, () => {
+              const url = prompt('Enter the URL');
+              if (url) {
+                editor.chain().focus().setLink({ href: url }).run();
+                return true;
+              }
+              return false;
+            })}
+            className={cn("h-8 w-8")}
           >
-            <Code className="h-4 w-4" />
+            <Link className="h-4 w-4" />
           </Button>
         </div>
 
