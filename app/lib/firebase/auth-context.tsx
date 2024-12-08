@@ -8,21 +8,20 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signOut,
-  User,
   updateProfile,
-  onAuthStateChanged
+  User
 } from 'firebase/auth';
-import { getFirestore, setDoc, doc, getDocs, collection } from 'firebase/firestore';
-import { createUserData, getUserData, canAccessDashboard, UserData } from './user-service';
+import { createUserData, getUserData, UserData } from './user-service';
+import { LoadingScreen } from '@/components/loading-screen';
 
 interface AuthContextType {
-  user: User | null;
+  user: any;
   userData: UserData | null;
+  loading: boolean;
   signIn: (email: string, password: string) => Promise<any>;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signInWithGoogle: () => Promise<any>;
   logout: () => Promise<void>;
-  loading: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,105 +30,122 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const googleProvider = new GoogleAuthProvider();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        try {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      try {
+        if (user) {
+          // Get the ID token
+          const idToken = await user.getIdToken();
+          
+          // Set the session cookie
+          await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ idToken }),
+          });
+
           const data = await getUserData(user);
           setUserData(data);
-          // Force refresh token to ensure latest claims
-          await user.getIdToken(true);
-        } catch (error) {
-          console.error('Error getting user data:', error);
+          setUser(user);
+        } else {
+          setUser(null);
           setUserData(null);
+          // Clear the session cookie
+          await fetch('/api/auth/session', { method: 'DELETE' });
         }
-      } else {
-        setUserData(null);
+      } catch (err) {
+        console.error('Auth state change error:', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    setLoading(true);
     try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      const data = await getUserData(result.user);
-      setUserData(data);
-      return result;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signUp = async (email: string, password: string, displayName: string) => {
-    setLoading(true);
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(userCredential.user, { displayName });
-      await createUserData(userCredential.user, displayName);
-      const data = await getUserData(userCredential.user);
-      setUserData(data);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signInWithGoogle = async () => {
-    setLoading(true);
-    try {
-      const googleProvider = new GoogleAuthProvider();
-      googleProvider.setCustomParameters({
-        prompt: 'select_account'
-      });
-
-      const result = await signInWithPopup(auth, googleProvider);
-      
-      // Get user data
-      let data = await getUserData(result.user);
-      if (!data) {
-        data = await createUserData(result.user, result.user.displayName || '');
+      setLoading(true);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      if (!userCredential?.user) {
+        throw new Error('No user data returned');
       }
-
-      setUserData(data);
-      return { user: result.user, userData: data };
-
+      const userData = await getUserData(userCredential.user);
+      setUserData(userData);
+      return userCredential;
     } catch (error: any) {
-      console.error('Google sign-in error:', error);
+      console.error('Sign in error:', error);
+      if (error.code === 'auth/invalid-action-code') {
+        throw new Error('Invalid action. Please try signing in again.');
+      }
       throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = async () => {
+  const signUp = async (email: string, password: string, displayName: string) => {
     try {
       setLoading(true);
-      await signOut(auth);
-      setUserData(null);
-      setUser(null);
-    } catch (error) {
-      console.error('Error signing out:', error);
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(result.user, { displayName });
+      await createUserData(result.user, displayName);
+      return result;
     } finally {
       setLoading(false);
     }
   };
+
+  const signInWithGoogle = async () => {
+    try {
+      setLoading(true);
+      const provider = new GoogleAuthProvider();
+      provider.addScope('profile');
+      provider.addScope('email');
+      
+      const result = await signInWithPopup(auth, provider);
+      if (!result?.user) {
+        throw new Error('No user data returned from Google sign in');
+      }
+      
+      let data = await getUserData(result.user);
+      if (!data) {
+        data = await createUserData(result.user, result.user.displayName || 'Unknown User');
+      }
+      
+      setUserData(data);
+      return { user: result.user, userData: data };
+    } catch (error: any) {
+      console.error('Google sign in error:', error);
+      if (error.code === 'auth/popup-blocked') {
+        throw new Error('Popup was blocked. Please allow popups and try again.');
+      }
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = () => signOut(auth);
+
+  // Return loading screen while initializing
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <AuthContext.Provider
       value={{
         user,
         userData,
+        loading,
         signIn,
         signUp,
         signInWithGoogle,
-        logout,
-        loading,
+        logout
       }}
     >
       {children}
@@ -139,10 +155,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  
   return context;
 }
