@@ -18,7 +18,7 @@ export interface Post {
   published: boolean;
   featured?: boolean;
   authorId: string;
-  authorEmail: string;
+  authorEmail: string | null;
   author?: Author;
   date: string;
   createdAt: number;  // timestamp in milliseconds

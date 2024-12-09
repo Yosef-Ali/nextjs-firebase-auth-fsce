@@ -28,25 +28,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { SelectOption } from '@/components/ui/select';
 
 import { useAuth } from '@/app/hooks/useAuth';
 import { Post } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
-import { toast } from '@/hooks/use-toast';
 import { categoriesService } from '@/app/services/categories';
 import { Category } from '@/app/types/category';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 import { Editor } from '@/components/editor';
+import { useToast } from "@/hooks/use-toast"
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   content: z.string().min(1, 'Content is required'),
   excerpt: z.string().min(1, 'Excerpt is required'),
-  coverImage: z.string().refine((val) => val === '' || val.startsWith('http'), {
-    message: 'Cover image must be a valid URL or empty',
-  }).optional().default(''),
-  images: z.array(z.string().url()).optional(),
+  coverImage: z.string().optional(),
+  images: z.array(z.string()).optional(),
   published: z.boolean().default(false),
   category: z.string().min(1, 'Category is required'),
   section: z.string().optional(),
@@ -70,9 +68,12 @@ interface PostEditorProps {
 export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
   const router = useRouter();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [images, setImages] = useState<string[]>(post?.images || []);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [uploadedCoverImageUrl, setUploadedCoverImageUrl] = useState('');
+  const storage = getStorage();
 
   const form = useForm<PostFormData>({
     resolver: zodResolver(formSchema),
@@ -91,8 +92,10 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
 
   useEffect(() => {
     const fetchCategories = async () => {
+      console.log('Fetching categories...');
       try {
         const fetchedCategories = await categoriesService.getCategories();
+        console.log('Fetched categories:', fetchedCategories);
         setCategories(fetchedCategories);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
@@ -135,65 +138,174 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
     }
   }, [form.watch('title'), form.watch('content')]);
 
+  const uploadImageToFirebase = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      throw new Error('Invalid file type. Please upload an image.');
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error('File size exceeds 5MB limit.');
+    }
+
+    const storageRef = ref(storage, `images/${file.name}-${Date.now()}`);
+    const snapshot = await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(snapshot.ref);
+    return url;
+  };
+
   const onSubmit = async (data: PostFormData) => {
     if (!user) return;
 
     try {
       setIsSaving(true);
       const currentUser = user;
-      if (!currentUser?.email) {
-        throw new Error("User must be logged in to create/edit posts");
+      const postAuthorId = post?.authorId; // Assuming post has an authorId
+
+      // Check if the user can edit the post
+      if (postAuthorId !== currentUser.uid) {
+        toast({
+          title: "Error",
+          description: "You are not authorized to edit this post.",
+          variant: "destructive",
+        });
+        return;
       }
 
-      const postData = {
-        title: form.getValues('title'),
-        content: form.getValues('content'),
-        excerpt: form.getValues('excerpt'),
-        category: form.getValues('category'),
-        coverImage: form.getValues('coverImage'),
-        published: form.getValues('published'),
-        section: form.getValues('section'),
-        images: form.getValues('images'),
-        authorId: currentUser.uid,
-        authorEmail: currentUser.email,
-        slug: postsService.createSlug(form.getValues('title')),
-        date: new Date().toISOString(),
-        tags: [],
-        featured: false,
+      const coverImageUrl = form.getValues('coverImage');
+      const isValidUrl = (url: string) => {
+        const pattern = new RegExp('^(https?:\/\/)?'+ // protocol
+          '((([a-z0-9-]+\.)+[a-z]{2,})|'+ // domain name
+          'localhost|'+ // localhost
+          '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|'+ // IP address
+          '\[?[a-f0-9:.]+\])'+ // IPv6
+          '(\:\d+)?(\/[-a-z0-9%_.~+]*)*'+ // port and path
+          '(\?[;&a-z0-9%_.~+=-]*)?'+ // query string
+          '(\#[-a-z0-9_]*)?$','i'); // fragment locator
+        return !!pattern.test(url);
       };
+      
+      if (coverImageUrl && !isValidUrl(coverImageUrl)) {
+        toast({
+          title: "Error",
+          description: "Cover image must be a valid URL or empty.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Proceed with uploading the image to Firebase if needed
+      if (coverImageUrl) {
+        const file = new File([coverImageUrl], 'cover-image', { type: 'image/jpeg' });
+        try {
+          const uploadTask = await uploadImageToFirebase(file);
+          const postData = {
+            title: form.getValues('title'),
+            content: form.getValues('content'),
+            excerpt: form.getValues('excerpt'),
+            category: categories.find(cat => cat.id === form.getValues('category'))?.name || '',
+            coverImage: uploadTask,
+            published: form.getValues('published'),
+            section: form.getValues('section'),
+            images: form.getValues('images'),
+            authorId: currentUser.uid,
+            authorEmail: currentUser.email || '',
+            slug: postsService.createSlug(form.getValues('title')),
+            date: new Date().toISOString(),
+            tags: [],
+            featured: false,
+          };
 
-      if (post) {
-        if (!user) {
-          toast({
-            title: "Error",
-            description: "You must be logged in to update posts",
-            variant: "destructive",
-          });
-          return;
-        }
+          if (post) {
+            if (!user) {
+              toast({
+                title: "Error",
+                description: "You must be logged in to update posts.",
+                variant: "destructive",
+              });
+              return;
+            }
 
-        const updateResult = await postsService.updatePost(post.id, postData, user.uid);
-        if (updateResult) {
-          toast({
-            title: "Success",
-            description: "Post updated successfully",
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: "You are not authorized to edit this post",
-            variant: "destructive",
-          });
-          return;
+            const updateResult = await postsService.updatePost(post.id, postData, user.uid);
+            if (updateResult) {
+              toast({
+                title: initialData?.title,
+                description: "Your post has been updated successfully.",
+                variant: "success",
+              });
+            } else {
+              toast({
+                title: initialData?.title,
+                description: "You are not authorized to edit this post.",
+                variant: "destructive",
+              });
+              return;
+            }
+          } else {
+            const newPost = await postsService.createPost(postData);
+            toast({
+              title: initialData?.title,
+              description: "Your post has been created successfully.",
+              variant: "success",
+            });
+            // Navigate to the edit page of the new post
+            router.push(`/dashboard/posts/${newPost.id}/edit`);
+          }
+        } catch (error) {
+          console.error('Error uploading image:', error);
         }
       } else {
-        const newPost = await postsService.createPost(postData);
-        toast({
-          title: "Success",
-          description: "Post created successfully",
-        });
-        // Navigate to the edit page of the new post
-        router.push(`/dashboard/posts/${newPost.id}/edit`);
+        const postData = {
+          title: form.getValues('title'),
+          content: form.getValues('content'),
+          excerpt: form.getValues('excerpt'),
+          category: categories.find(cat => cat.id === form.getValues('category'))?.name || '',
+          coverImage: '',
+          published: form.getValues('published'),
+          section: form.getValues('section'),
+          images: form.getValues('images'),
+          authorId: currentUser.uid,
+          authorEmail: currentUser.email || '',
+          slug: postsService.createSlug(form.getValues('title')),
+          date: new Date().toISOString(),
+          tags: [],
+          featured: false,
+        };
+
+        if (post) {
+          if (!user) {
+            toast({
+              title: "Error",
+              description: "You must be logged in to update posts.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          const updateResult = await postsService.updatePost(post.id, postData, user.uid);
+          if (updateResult) {
+            toast({
+              title: initialData?.title,
+              description: "Your post has been updated successfully.",
+              variant: "success",
+            });
+          } else {
+            toast({
+              title: initialData?.title,
+              description: "You are not authorized to edit this post.",
+              variant: "destructive",
+            });
+            return;
+          }
+        } else {
+          const newPost = await postsService.createPost(postData);
+          toast({
+            title: initialData?.title,
+            description: "Your post has been created successfully.",
+            variant: "success",
+          });
+          // Navigate to the edit page of the new post
+          router.push(`/dashboard/posts/${newPost.id}/edit`);
+        }
       }
       
       // router.push('/dashboard/posts');
@@ -244,18 +356,11 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((cat) => (
-                            <SelectItem key={cat.id} value={cat.id}>
-                              {cat.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Input 
+                        {...field}
+                        value={form.getValues('category')}
+                        onChange={(e) => form.setValue('category', e.target.value)}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
