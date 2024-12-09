@@ -41,7 +41,6 @@ export function CategoryEditor({ category, type, onSave, onCancel }: CategoryEdi
       name: category?.name || '',
       description: category?.description || '',
       type: type,
-      icon: category?.icon || '',
       featured: category?.featured || false
     }
   });

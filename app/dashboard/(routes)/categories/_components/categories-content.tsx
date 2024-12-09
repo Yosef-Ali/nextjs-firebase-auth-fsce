@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Category } from '@/app/types/category';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -22,6 +22,28 @@ export default function CategoriesContent({ initialCategories }: CategoriesConte
   const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const fetchCategories = async () => {
+    try {
+      const fetchedCategories = await categoriesService.getCategories();
+      const uniqueCategories = Array.from(new Set(fetchedCategories.map(category => category.id)))
+        .map(id => fetchedCategories.find(category => category.id === id));
+      setCategories(uniqueCategories);
+    } catch (error) {
+      setError('Failed to fetch categories. Please try again later.');
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch categories. Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   const handleEdit = async (category: Category) => {
     try {

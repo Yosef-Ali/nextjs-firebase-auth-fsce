@@ -3,6 +3,7 @@
 This document provides instructions for setting up, developing, and deploying the FSCE 2024 web application.
 
 ## Table of Contents
+
 - [Prerequisites](#prerequisites)
 - [Environment Setup](#environment-setup)
 - [Installation](#installation)
@@ -26,6 +27,7 @@ This document provides instructions for setting up, developing, and deploying th
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
+
 - [Bun](https://bun.sh/) (Latest version)
 - [Node.js](https://nodejs.org/) (v18 or higher)
 - [Git](https://git-scm.com/)
@@ -33,17 +35,20 @@ Before you begin, ensure you have the following installed:
 ## Environment Setup
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/yourusername/nextjs-firebase-auth-app.git
 cd nextjs-firebase-auth-app
 ```
 
 2. Create a `.env.local` file in the root directory:
+
 ```bash
 cp .env.example .env.local
 ```
 
 3. Update the `.env.local` file with your Firebase configuration:
+
 ```env
 NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
@@ -56,6 +61,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 ## Installation
 
 Install dependencies using Bun:
+
 ```bash
 bun install
 ```
@@ -63,6 +69,7 @@ bun install
 ## Development
 
 Start the development server:
+
 ```bash
 bun dev
 ```
@@ -76,10 +83,12 @@ The application will be available at `http://localhost:3000`
    - Email/Password
    - Google (optional)
 3. Create Firestore Database:
+
    - Start in production mode
    - Choose a location closest to your users
 
 4. Set up Firestore rules:
+
 ```javascript
 rules_version = '2';
 service cloud.firestore {
@@ -133,11 +142,13 @@ nextjs-firebase-auth-app/
 The application follows a consistent URL structure for all sections:
 
 1. What We Do Section:
+
    - Main page: `/what-we-do`
    - Category page: `/what-we-do/[category]` (e.g., `/what-we-do/prevention-promotion`)
    - Program page: `/what-we-do/[category]/[slug]` (e.g., `/what-we-do/prevention-promotion/early-childhood-education`)
 
 2. Where We Work Section:
+
    - Main page: `/where-we-work`
    - Region page: `/where-we-work/[region]` (e.g., `/where-we-work/addis-ababa`)
    - Office page: `/where-we-work/[region]/[slug]` (e.g., `/where-we-work/addis-ababa/head-office`)
@@ -148,6 +159,7 @@ The application follows a consistent URL structure for all sections:
    - Content page: `/who-we-are/[section]/[slug]` (e.g., `/who-we-are/partners/unicef`)
 
 This consistent structure makes the application:
+
 - Easy to navigate
 - SEO-friendly
 - Maintainable and scalable
@@ -174,11 +186,13 @@ bun run lint
 ## Common Tasks
 
 ### Adding a New Page
+
 1. Create a new directory under `app/` for your page
 2. Add your page component in a `page.tsx` file
 3. Update navigation if needed in `app/components/Navigation.tsx`
 
 ### Managing Posts
+
 - Create: Navigate to Dashboard > Posts > New Post
 - Edit: Click the edit icon on any post in the posts table
 - Delete: Use the delete action in the posts table
@@ -187,11 +201,13 @@ bun run lint
 ## UI Components (shadcn/ui)
 
 To add new shadcn components, use:
+
 ```bash
 bunx --bun shadcn@latest add [component-name]
 ```
 
 Common components:
+
 - Button: `bunx --bun shadcn@latest add button`
 - Dialog: `bunx --bun shadcn@latest add dialog`
 - Table: `bunx --bun shadcn@latest add table`
@@ -199,7 +215,9 @@ Common components:
 ## Troubleshooting
 
 ### Common Issues
+
 1. **Firebase Connection Issues**
+
    - Verify your `.env.local` configuration
    - Check Firebase Console for service status
    - Ensure correct Firebase project is selected
@@ -212,6 +230,7 @@ Common components:
 ### Need Help?
 
 If you encounter any issues:
+
 1. Check the [GitHub Issues](https://github.com/yourusername/nextjs-firebase-auth-app/issues)
 2. Review Firebase documentation
 3. Contact the development team on Slack
@@ -219,6 +238,7 @@ If you encounter any issues:
 ## Authentication & User Management
 
 ### User Creation
+
 - Users are automatically created in Firestore when they sign in
 - Basic user information is stored:
   - Email
@@ -228,6 +248,7 @@ If you encounter any issues:
   - Last update timestamp
 
 ### User Permissions
+
 - All authenticated users have equal access to posts
 - No role-based restrictions
 - Simple permission model:
@@ -254,11 +275,13 @@ All content types (news, events, programs, etc.) are managed through a single `p
 We use a simplified query approach to minimize Firestore index requirements and improve maintainability:
 
 1. Simple Queries
+
    - Basic collection queries without complex conditions
    - Client-side filtering by category and status
    - In-memory sorting by date
 
 2. Example Usage:
+
 ```typescript
 // Get all programs
 const programs = await postsService.getPrograms();
@@ -290,6 +313,7 @@ We use a simplified query approach to minimize Firestore index requirements and 
 ### Core Principles
 
 1. Simple Queries
+
    - Use basic queries without complex compound conditions
    - Avoid using multiple `where` clauses that would require composite indexes
    - Prefer client-side filtering over complex database queries
@@ -304,23 +328,24 @@ We use a simplified query approach to minimize Firestore index requirements and 
 ```typescript
 // Instead of this complex query:
 const q = query(
-  collection(db, 'posts'),
-  where('category', '==', 'events'),
-  where('published', '==', true),
-  where('date', '>=', today),
-  orderBy('date', 'asc'),
+  collection(db, "posts"),
+  where("category", "==", "events"),
+  where("published", "==", true),
+  where("date", ">=", today),
+  orderBy("date", "asc"),
   limit(5)
 );
 
 // Use this simple query and filter in memory:
-const q = query(collection(db, 'posts'));
+const q = query(collection(db, "posts"));
 const posts = await getDocs(q);
 
 return posts
-  .filter(post => 
-    post.category === 'events' &&
-    post.published &&
-    new Date(post.date) >= today
+  .filter(
+    (post) =>
+      post.category === "events" &&
+      post.published &&
+      new Date(post.date) >= today
   )
   .sort((a, b) => new Date(a.date) - new Date(b.date))
   .slice(0, 5);
@@ -355,11 +380,13 @@ This project uses [shadcn/ui](https://ui.shadcn.com/) for its UI components. The
 ### Installing Components
 
 Install shadcn/ui components using Bun:
+
 ```bash
 bunx --bun shadcn@latest add <component-name>
 ```
 
 Example installations:
+
 ```bash
 # Install button component
 bunx --bun shadcn@latest add button
@@ -380,6 +407,7 @@ bunx --bun shadcn@latest add dropdown-menu
 ### Common Components Usage
 
 #### Button Component
+
 ```tsx
 import { Button } from "@/components/ui/button"
 
@@ -400,6 +428,7 @@ import { Button } from "@/components/ui/button"
 ```
 
 #### Form Components
+
 ```tsx
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
@@ -446,6 +475,7 @@ import { Input } from "@/components/ui/input"
 ```
 
 #### Table Component
+
 ```tsx
 import {
   Table,
@@ -454,7 +484,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
 <Table>
   <TableHeader>
@@ -470,17 +500,18 @@ import {
         <TableCell>{post.title}</TableCell>
         <TableCell>{post.category}</TableCell>
         <TableCell>
-          <Badge variant={post.published ? 'default' : 'secondary'}>
-            {post.published ? 'Published' : 'Draft'}
+          <Badge variant={post.published ? "default" : "secondary"}>
+            {post.published ? "Published" : "Draft"}
           </Badge>
         </TableCell>
       </TableRow>
     ))}
   </TableBody>
-</Table>
+</Table>;
 ```
 
 #### Dialog/Modal
+
 ```tsx
 import {
   Dialog,
@@ -489,7 +520,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 
 <Dialog>
   <DialogTrigger asChild>
@@ -504,7 +535,7 @@ import {
     </DialogHeader>
     {/* Modal content */}
   </DialogContent>
-</Dialog>
+</Dialog>;
 ```
 
 ### Styling Components
@@ -526,16 +557,19 @@ All components can be customized using Tailwind CSS classes:
 ### Best Practices
 
 1. **Component Organization**
+
    - Keep reusable component configurations in separate files
    - Use composition for complex components
    - Create wrapper components for commonly used configurations
 
 2. **Form Handling**
+
    - Use with react-hook-form for form state management
    - Implement proper validation using zod
    - Handle loading and error states appropriately
 
 3. **Responsive Design**
+
    - Use Tailwind's responsive modifiers
    - Test components across different screen sizes
    - Implement mobile-first design principles
@@ -548,17 +582,20 @@ All components can be customized using Tailwind CSS classes:
 ## Contributing
 
 1. Create a new branch for your feature:
+
 ```bash
 git checkout -b feature/your-feature-name
 ```
 
 2. Make your changes and commit:
+
 ```bash
 git add .
 git commit -m "feat: your feature description"
 ```
 
 3. Push your changes:
+
 ```bash
 git push origin feature/your-feature-name
 ```
@@ -568,11 +605,13 @@ git push origin feature/your-feature-name
 ## Deployment
 
 1. Build the application:
+
 ```bash
 bun run build
 ```
 
 2. Test the production build locally:
+
 ```bash
 bun start
 ```
@@ -590,11 +629,13 @@ bun start
 ## Updates and Maintenance
 
 1. Update dependencies:
+
 ```bash
 bun update
 ```
 
 2. Check for security vulnerabilities:
+
 ```bash
 bun audit
 ```

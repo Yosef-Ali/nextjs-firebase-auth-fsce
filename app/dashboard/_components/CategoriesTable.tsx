@@ -35,11 +35,21 @@ interface CategoriesTableProps {
 function CategoriesTable({ categories, onEdit, onDelete, isLoading = false }: CategoriesTableProps) {
   const { user } = useAuth();
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleDeleteConfirm = async () => {
     if (categoryToDelete) {
-      await onDelete(categoryToDelete);
-      setCategoryToDelete(null);
+      try {
+        await onDelete(categoryToDelete);
+        toast({
+          title: 'Success',
+          description: 'Category deleted successfully',
+        });
+        setCategoryToDelete(null);
+        setDeleteError(null);
+      } catch (error) {
+        setDeleteError('Failed to delete category. Please try again later.');
+      }
     }
   };
 
@@ -118,6 +128,9 @@ function CategoriesTable({ categories, onEdit, onDelete, isLoading = false }: Ca
               This will permanently delete the category &quot;{categoryToDelete?.name}&quot;.
               This action cannot be undone.
             </AlertDialogDescription>
+            {deleteError && (
+              <div className="mt-4 text-red-600">{deleteError}</div>
+            )}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
