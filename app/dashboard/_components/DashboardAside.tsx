@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import {
   LayoutDashboard,
   BookOpenIcon,
@@ -61,11 +61,6 @@ const DashboardAside = () => {
       href: '/dashboard/categories',
       label: 'Categories',
       icon: TagIcon,
-    },
-    {
-      href: '/dashboard/pages',
-      label: 'Pages',
-      icon: FileText,
     },
     {
       href: '/dashboard/resources',
