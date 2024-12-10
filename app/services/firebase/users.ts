@@ -17,7 +17,15 @@ import {
   serverTimestamp,
   deleteDoc,
 } from 'firebase/firestore';
-import { db } from '@/app/firebase';
+import { db } from '@/lib/firebase';
+
+export interface AuthUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  emailVerified: boolean;
+}
 
 export interface User {
   id: string;
@@ -42,6 +50,12 @@ export interface UpdateUserInput {
   name?: string;
   active?: 'active' | 'inactive';
   role?: 'user' | 'author';
+}
+
+export interface CompleteUser extends Omit<User, 'email'>, Omit<AuthUser, 'uid'> {
+  id: string;
+  email: string;
+  emailVerified: boolean;
 }
 
 class UserService {
@@ -135,6 +149,44 @@ class UserService {
       id: doc.id,
       ...doc.data()
     })) as User[];
+  }
+
+  async checkInvitation(token: string): Promise<{ email: string; role: string } | null> {
+    const q = query(
+      collection(db, this.collectionName),
+      where('invitationToken', '==', token)
+    );
+
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
+      return null;
+    }
+
+    const invitationDoc = querySnapshot.docs[0];
+    return {
+      email: invitationDoc.data().email,
+      role: invitationDoc.data().role,
+    };
+  }
+
+  async acceptInvitation(token: string, email: string, password: string): Promise<boolean> {
+    try {
+      // First check if the invitation is valid
+      const invitationDetails = await this.checkInvitation(token);
+      if (!invitationDetails || invitationDetails.email !== email) {
+        return false;
+      }
+
+      // Here you would typically:
+      // 1. Create the user account if it doesn't exist
+      // 2. Update the user's role based on the invitation
+      // 3. Mark the invitation as used
+      
+      return true;
+    } catch (error) {
+      console.error('Error accepting invitation:', error);
+      return false;
+    }
   }
 }
 

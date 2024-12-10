@@ -1,6 +1,18 @@
+import {
+  LayoutDashboard,
+  Users,
+  Settings,
+  FileText,
+  Image as ImageIcon,
+  Newspaper,
+  Building2,
+} from 'lucide-react';
+
 export interface MenuItem {
   title: string;
   href?: string;
+  icon?: any;
+  admin?: boolean;
   items?: {
     title: string;
     href: string;
@@ -11,9 +23,9 @@ export interface MenuItem {
 export const menuItems: MenuItem[] = [
   {
     title: "Who We Are",
-    href: "/",
+    href: "/who-we-are",
     items: [
-      { title: "Vision, Mission, and values", href: "/", description: "Our core beliefs and guiding principles" },
+      { title: "Vision, Mission, and Values", href: "/who-we-are", description: "Our core beliefs and guiding principles" },
       { title: "Board Members", href: "/who-we-are/board-members", description: "Meet our leadership team" },
       { title: "Partners", href: "/who-we-are/partners", description: "Our collaborators and supporters" },
       { title: "Achievements", href: "/who-we-are/achievements", description: "Our achievements and recognitions" },
@@ -49,17 +61,6 @@ export const menuItems: MenuItem[] = [
   },
   {
     title: "Contact Us",
-    href: "/contact",
-  },
-];
-
-export const dashboardMenuItems: MenuItem[] = [
-  {
-    title: "Dashboard",
-    href: "/dashboard",
-  },
-  {
-    title: "Partners",
-    href: "/dashboard/partners",
-  },
+    href: "/contact"
+  }
 ];

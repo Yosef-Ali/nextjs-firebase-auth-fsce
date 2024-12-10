@@ -1,5 +1,5 @@
-import { auth } from '@/app/firebase';
-import { db } from '@/app/firebase';
+import { auth } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { collection, doc, deleteDoc, getDoc } from 'firebase/firestore';
 import { deleteUser } from 'firebase/auth';
 

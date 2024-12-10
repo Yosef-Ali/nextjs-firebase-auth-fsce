@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useAuth } from "@/app/hooks/useAuth";
+import { useAuth } from "@/lib/hooks/useAuth";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -13,7 +13,7 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { menuItems } from '@/app/lib/menuItems';
+import { menuItems } from '@/lib/menuItems';
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 

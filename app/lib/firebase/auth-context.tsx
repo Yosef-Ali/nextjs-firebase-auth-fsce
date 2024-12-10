@@ -1,161 +1,72 @@
 'use client';
 
-import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { User } from 'firebase/auth';
 import { auth } from './firebase-config';
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-  signOut,
-  updateProfile,
-  User
-} from 'firebase/auth';
-import { createUserData, getUserData, UserData } from './user-service';
-import { LoadingScreen } from '@/components/loading-screen';
+import { onAuthStateChanged } from 'firebase/auth';
 
 interface AuthContextType {
-  user: any;
-  userData: UserData | null;
+  user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<any>;
-  signUp: (email: string, password: string, displayName: string) => Promise<void>;
-  signInWithGoogle: () => Promise<any>;
+  signInWithGoogle: () => Promise<User | null>;
+  signInWithEmail: (email: string, password: string) => Promise<User | null>;
+  signUpWithEmail: (email: string, password: string) => Promise<User | null>;
   logout: () => Promise<void>;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      try {
-        if (user) {
-          // Get the ID token
-          const idToken = await user.getIdToken();
-          
-          // Set the session cookie
-          await fetch('/api/auth/session', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ idToken }),
-          });
-
-          const data = await getUserData(user);
-          setUserData(data);
-          setUser(user);
-        } else {
-          setUser(null);
-          setUserData(null);
-          // Clear the session cookie
-          await fetch('/api/auth/session', { method: 'DELETE' });
-        }
-      } catch (err) {
-        console.error('Auth state change error:', err);
-      } finally {
-        setLoading(false);
-      }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    try {
-      setLoading(true);
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      if (!userCredential?.user) {
-        throw new Error('No user data returned');
-      }
-      const userData = await getUserData(userCredential.user);
-      setUserData(userData);
-      return userCredential;
-    } catch (error: any) {
-      console.error('Sign in error:', error);
-      if (error.code === 'auth/invalid-action-code') {
-        throw new Error('Invalid action. Please try signing in again.');
-      }
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signUp = async (email: string, password: string, displayName: string) => {
-    try {
-      setLoading(true);
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(result.user, { displayName });
-      await createUserData(result.user, displayName);
-      return result;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const signInWithGoogle = async () => {
-    try {
-      setLoading(true);
-      const provider = new GoogleAuthProvider();
-      provider.addScope('profile');
-      provider.addScope('email');
-      
-      const result = await signInWithPopup(auth, provider);
-      if (!result?.user) {
-        throw new Error('No user data returned from Google sign in');
-      }
-      
-      let data = await getUserData(result.user);
-      if (!data) {
-        data = await createUserData(result.user, result.user.displayName || 'Unknown User');
-      }
-      
-      setUserData(data);
-      return { user: result.user, userData: data };
-    } catch (error: any) {
-      console.error('Google sign in error:', error);
-      if (error.code === 'auth/popup-blocked') {
-        throw new Error('Popup was blocked. Please allow popups and try again.');
-      }
-      throw error;
-    } finally {
-      setLoading(false);
-    }
+    // Implement Google sign-in logic here
+    return null;
   };
 
-  const logout = () => signOut(auth);
+  const signInWithEmail = async (email: string, password: string) => {
+    // Implement email sign-in logic here
+    return null;
+  };
 
-  // Return loading screen while initializing
-  if (loading) {
-    return <LoadingScreen />;
-  }
+  const signUpWithEmail = async (email: string, password: string) => {
+    // Implement email sign-up logic here
+    return null;
+  };
+
+  const logout = async () => {
+    // Implement logout logic here
+  };
+
+  const value = {
+    user,
+    loading,
+    signInWithGoogle,
+    signInWithEmail,
+    signUpWithEmail,
+    logout,
+  };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        userData,
-        loading,
-        signIn,
-        signUp,
-        signInWithGoogle,
-        logout
-      }}
-    >
-      {children}
+    <AuthContext.Provider value={value}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

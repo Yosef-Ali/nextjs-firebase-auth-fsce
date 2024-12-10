@@ -1,48 +1,45 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { auth } from '@/app/firebase-admin';
-
-const COOKIE_NAME = 'session';
-const MAX_AGE = 60 * 60 * 24 * 5; // 5 days
+import { auth } from '@/lib/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 export async function POST(request: Request) {
   try {
-    const { idToken } = await request.json();
+    const { email, password } = await request.json();
     
-    if (!idToken) {
+    if (!email || !password) {
       return NextResponse.json(
-        { error: 'ID token is required' },
+        { error: 'Email and password are required' },
         { status: 400 }
       );
     }
 
-    const expiresIn = MAX_AGE * 1000;
-    const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn });
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    const token = await user.getIdToken();
 
-    // Set the session cookie
+    // Set the auth token in a cookie
     const cookieStore = await cookies();
-    cookieStore.set(COOKIE_NAME, sessionCookie, {
-      maxAge: MAX_AGE,
+    cookieStore.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      path: '/',
       sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 5 // 5 days
     });
 
-    return NextResponse.json({ status: 'success' }, { status: 200 });
+    return NextResponse.json({ 
+      status: 'success',
+      user: {
+        uid: user.uid,
+        email: user.email
+      }
+    });
   } catch (error) {
-    console.error('Error setting session:', error);
-    
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 401 }
-      );
-    }
-    
+    console.error('Sign in error:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
+      { error: 'Invalid email or password' },
+      { status: 401 }
     );
   }
 }

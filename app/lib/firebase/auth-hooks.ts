@@ -1,26 +1,26 @@
-import { useEffect, useState } from 'react';
-import {
+import { useState, useEffect } from 'react';
+import { 
   User,
+  GoogleAuthProvider,
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  GoogleAuthProvider,
   signOut,
-  onAuthStateChanged,
+  updateProfile
 } from 'firebase/auth';
 import { auth } from './firebase-config';
 
-export const useAuth = () => {
+export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
       setUser(user);
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return unsubscribe;
   }, []);
 
   const signInWithGoogle = async (): Promise<User | null> => {
@@ -30,40 +30,45 @@ export const useAuth = () => {
       return result.user;
     } catch (error) {
       console.error('Error signing in with Google:', error);
-      throw error;
+      return null;
     }
   };
 
-  const signInWithEmail = async (email: string, password: string): Promise<User | null> => {
+  const signInWithEmail = async (
+    email: string,
+    password: string
+  ): Promise<User | null> => {
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       return result.user;
     } catch (error) {
       console.error('Error signing in with email:', error);
-      throw error;
+      return null;
     }
   };
 
-  const signUpWithEmail = async (email: string, password: string, displayName: string): Promise<User | null> => {
+  const signUpWithEmail = async (
+    email: string,
+    password: string,
+    displayName: string
+  ): Promise<User | null> => {
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
-      // Update the user's display name
       if (result.user) {
-        await result.user.updateProfile({ displayName });
+        await updateProfile(result.user, { displayName });
       }
       return result.user;
     } catch (error) {
       console.error('Error signing up with email:', error);
-      throw error;
+      return null;
     }
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     try {
       await signOut(auth);
     } catch (error) {
       console.error('Error signing out:', error);
-      throw error;
     }
   };
 
@@ -74,5 +79,6 @@ export const useAuth = () => {
     signInWithEmail,
     signUpWithEmail,
     logout,
+    auth
   };
-};
+}

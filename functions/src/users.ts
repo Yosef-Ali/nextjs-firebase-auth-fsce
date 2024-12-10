@@ -8,10 +8,21 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
+interface UserData {
+  uid: string;
+  email: string | null;
+  displayName: string;
+  photoURL: string;
+  role: 'user' | 'admin';
+  status: 'pending' | 'active' | 'suspended';
+  createdAt: admin.firestore.FieldValue;
+  updatedAt: admin.firestore.FieldValue;
+}
+
 // Function to handle new user creation
 export const onUserCreated = functions.auth.user().onCreate(async (user) => {
   try {
-    const userDoc = {
+    const userDoc: UserData = {
       uid: user.uid,
       email: user.email,
       displayName: user.displayName || '',
@@ -24,8 +35,6 @@ export const onUserCreated = functions.auth.user().onCreate(async (user) => {
 
     // Add user to Firestore
     await db.collection('users').doc(user.uid).set(userDoc);
-
-    // Log the action
     functions.logger.info(`New user ${user.uid} added to Firestore`);
     
     return null;
@@ -38,51 +47,60 @@ export const onUserCreated = functions.auth.user().onCreate(async (user) => {
 // Function to handle user deletion
 export const onUserDeleted = functions.auth.user().onDelete(async (user) => {
   try {
-    // Delete user document from Firestore
+    // Remove user data from Firestore
     await db.collection('users').doc(user.uid).delete();
-
-    // Delete any associated data (e.g., user's posts)
-    const userPosts = await db.collection('posts')
-      .where('authorId', '==', user.uid)
-      .get();
-
-    const batch = db.batch();
-    userPosts.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-    });
-    await batch.commit();
-
-    functions.logger.info(`User ${user.uid} and associated data deleted`);
+    functions.logger.info(`User ${user.uid} deleted from Firestore`);
     
     return null;
   } catch (error) {
-    functions.logger.error('Error deleting user data:', error);
+    functions.logger.error('Error deleting user document:', error);
     throw error;
   }
 });
 
-// Function to sync dashboard user updates to Firestore
-export const onUserUpdated = functions.firestore
-  .document('users/{userId}')
-  .onUpdate(async (change, context) => {
-    const newData = change.after.data();
-    const previousData = change.before.data();
-    const userId = context.params.userId;
+// Function to update user role
+export const updateUserRole = functions.https.onCall(async (data, context) => {
+  // Check if the caller is authenticated and has admin role
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'You must be logged in to update roles.'
+    );
+  }
 
-    try {
-      // If role or status changed, update user custom claims
-      if (newData.role !== previousData.role || newData.status !== previousData.status) {
-        await admin.auth().setCustomUserClaims(userId, {
-          role: newData.role,
-          status: newData.status
-        });
+  const callerUid = context.auth.uid;
+  const callerDoc = await db.collection('users').doc(callerUid).get();
+  const callerData = callerDoc.data();
 
-        functions.logger.info(`Updated custom claims for user ${userId}`);
-      }
+  if (!callerData || callerData.role !== 'admin') {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'Only admins can update user roles.'
+    );
+  }
 
-      return null;
-    } catch (error) {
-      functions.logger.error('Error updating user custom claims:', error);
-      throw error;
-    }
-  });
+  const { uid, role } = data;
+  if (!uid || !role) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'User ID and role are required.'
+    );
+  }
+
+  try {
+    // Update custom claims
+    await admin.auth().setCustomUserClaims(uid, { role });
+    
+    // Update user document
+    await db.collection('users').doc(uid).update({
+      role,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    functions.logger.info(`User ${uid} role updated to ${role}`);
+    return { success: true };
+  } catch (error) {
+    functions.logger.error('Error updating user role:', error);
+    throw new functions.https.HttpsError('internal', 'Error updating user role');
+  }
+});

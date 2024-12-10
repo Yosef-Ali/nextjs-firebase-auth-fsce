@@ -1,4 +1,4 @@
-import { db } from '@/app/firebase';
+import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, query, where, orderBy, Timestamp, addDoc, updateDoc, deleteDoc, limit, setDoc } from 'firebase/firestore';
 import { Post } from '@/app/types/post';
 
@@ -202,6 +202,26 @@ class WhatWeDoService {
       console.error("Error fetching related posts:", error);
       return [];
     }
+  }
+
+  async getRelatedPrograms(postId: string, category: string): Promise<Post[]> {
+    const q = query(
+      collection(db, this.collectionName),
+      where('category', '==', category),
+      where('id', '!=', postId)
+    );
+
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt instanceof Timestamp 
+        ? doc.data().createdAt.toMillis() 
+        : Date.now(),
+      updatedAt: doc.data().updatedAt instanceof Timestamp 
+        ? doc.data().updatedAt.toMillis() 
+        : Date.now(),
+    } as Post));
   }
 }
 

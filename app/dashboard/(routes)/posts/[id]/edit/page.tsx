@@ -6,7 +6,7 @@ import { useAuth } from '@/app/providers/AuthProvider';
 import { useEffect, useState, use } from 'react';
 import { Post } from '@/app/types/post';
 import { doc, getDoc, Timestamp } from 'firebase/firestore';
-import { db } from '@/app/firebase';
+import { db } from '@/lib/firebase';
 import { toast } from '@/hooks/use-toast';
 import { postsService } from '@/app/services/posts';
 import { usersService } from '@/app/services/users';

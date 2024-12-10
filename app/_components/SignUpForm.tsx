@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/app/lib/firebase/auth-context';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { createUserData } from '@/app/lib/firebase/user-service';
 
 interface SignUpFormProps {
-  callbackUrl?: string | null;
+  callbackUrl?: string | null
 }
 
 export default function SignUpForm({ callbackUrl }: SignUpFormProps) {
@@ -59,13 +59,16 @@ export default function SignUpForm({ callbackUrl }: SignUpFormProps) {
     }
 
     try {
-      await signUp(email, password, displayName);
-      toast({
-        title: "Account Created",
-        description: "Your account has been created successfully",
-        variant: "default",
-      });
-      router.push('/sign-in');
+      const newUser = await signUp(email, password, displayName);
+      if (newUser) {
+        await createUserData(newUser, displayName);
+        toast({
+          title: "Account Created",
+          description: "Your account has been created successfully",
+          variant: "default",
+        });
+        router.push('/sign-in');
+      }
     } catch (error: any) {
       let errorMessage = 'Failed to create account';
       switch (error.code) {
@@ -94,16 +97,18 @@ export default function SignUpForm({ callbackUrl }: SignUpFormProps) {
   const handleGoogleSignUp = async () => {
     try {
       setIsLoading(true);
-      const result = await signInWithGoogle();
+      await signInWithGoogle();
       
-      if (result) {
+      if (user) {
+        const userData = await createUserData(user, user.displayName || '');
+        
         toast({
           title: "Success",
           description: "Successfully signed in with Google",
           variant: "default",
         });
 
-        if (result.userData?.status === 'pending') {
+        if (userData?.status === 'pending') {
           router.push('/pending-approval');
         } else {
           router.push(callbackUrl || '/dashboard');
@@ -185,8 +190,15 @@ export default function SignUpForm({ callbackUrl }: SignUpFormProps) {
               required
             />
           </div>
-          <Button className="w-full bg-[#1e3a8a] hover:bg-[#1e3a8a]/90" disabled={isLoading}>
-            {isLoading ? 'Creating Account...' : 'Sign Up with Email'}
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                Creating account...
+              </>
+            ) : (
+              'Sign Up with Email'
+            )}
           </Button>
         </div>
       </form>
@@ -207,7 +219,14 @@ export default function SignUpForm({ callbackUrl }: SignUpFormProps) {
         disabled={isLoading}
         className="w-full"
       >
-        {isLoading ? 'Creating Account...' : 'Sign up with Google'}
+        {isLoading ? (
+          <>
+            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            Creating account...
+          </>
+        ) : (
+          'Sign up with Google'
+        )}
       </Button>
       <p className="px-8 text-center text-sm text-muted-foreground">
         Already have an account?{" "}

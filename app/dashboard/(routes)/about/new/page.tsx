@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PostEditor } from '@/app/dashboard/_components/PostEditor';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -11,7 +11,14 @@ export default function NewAboutPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const section = searchParams.get('section');
+  let section;
+
+  if (searchParams) {
+    section = searchParams.get('section');
+  } else {
+    console.error('searchParams is null');
+    // Handle the case where searchParams is null
+  }
 
   useEffect(() => {
     if (!loading && !user) {

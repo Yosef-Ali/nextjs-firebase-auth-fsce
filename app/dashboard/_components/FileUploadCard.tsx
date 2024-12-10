@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { storage } from '@/app/firebase'
+import { storage } from '@/lib/firebase'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { useCallback, useState, useEffect } from 'react'
 import { Upload, X, FileText } from 'lucide-react'

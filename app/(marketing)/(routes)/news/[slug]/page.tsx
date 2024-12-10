@@ -22,6 +22,10 @@ export default function NewsDetailPage() {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!params) {
+        // Handle the case where params is null
+        return;
+      }
       try {
         const slug = typeof params.slug === 'string' ? params.slug : '';
         const [articleData, relatedData] = await Promise.all([
@@ -38,7 +42,12 @@ export default function NewsDetailPage() {
     };
 
     fetchData();
-  }, [params.slug]);
+  }, [params?.slug]);
+
+  if (!params) {
+    // Handle the case where params is null
+    return <div>Error: Params are missing.</div>;
+  }
 
   if (loading) {
     return <FSCESkeleton />;

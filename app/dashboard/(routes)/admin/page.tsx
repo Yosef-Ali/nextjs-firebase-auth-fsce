@@ -1,7 +1,6 @@
 'use client';
 
-import { withAuthorization } from '@/app/lib/with-authorization';
-import { UserRole } from '@/app/lib/authorization';
+import { UserRole } from '@/app/types/user';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 function AdminDashboardPage() {
@@ -40,6 +39,4 @@ function AdminDashboardPage() {
   );
 }
 
-export default withAuthorization(AdminDashboardPage, {
-  requiredRole: UserRole.ADMIN
-});
+export default AdminDashboardPage;

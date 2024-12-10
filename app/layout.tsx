@@ -3,11 +3,11 @@
 import type { Metadata } from "next";
 import './globals.css'
 import { Inter } from 'next/font/google'
-import { AuthProvider } from './lib/firebase/auth-context';
+import { AuthProvider } from '@/app/providers/AuthProvider';
 import { Toaster } from "@/components/ui/toaster"
 import { useEffect } from 'react';
 import { getRedirectResult } from 'firebase/auth';
-import { auth } from './lib/firebase/firebase-config';
+import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 
 const inter = Inter({ subsets: ['latin'] })
@@ -21,31 +21,28 @@ const inter = Inter({ subsets: ['latin'] })
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check for redirect result
     getRedirectResult(auth).then((result) => {
-      if (result) {
+      if (result?.user) {
         toast({
-          title: "Success",
-          description: "Successfully signed in with Google",
-          variant: "default",
+          title: "Successfully signed in!",
+          description: `Welcome ${result.user.email}`,
         });
       }
     }).catch((error) => {
-      console.error('Redirect error:', error);
-      if (error.code !== 'auth/redirect-cancelled-by-user') {
+      if (error.code !== 'auth/popup-closed-by-user') {
         toast({
-          title: "Error",
-          description: "Failed to complete sign in",
+          title: "Error signing in",
+          description: error.message,
           variant: "destructive",
         });
       }
     });
-  }, []);
+  }, [toast]);
 
   return (
     <html lang="en">
@@ -56,5 +53,5 @@ export default function RootLayout({
         </AuthProvider>
       </body>
     </html>
-  );
+  )
 }

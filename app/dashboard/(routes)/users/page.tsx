@@ -28,7 +28,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { usersService } from '@/app/services/users';
 import { deleteUserService } from '@/app/services/deleteUser';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { User } from '@/app/types/user';
 import { Button } from '@/components/ui/button';
 import { 
@@ -58,11 +58,12 @@ import {
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Authorization } from '@/app/lib/authorization';
-import { auth } from '@/app/firebase';
+import { auth } from '@/lib/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from "@/components/ui/skeleton";
+import { withRoleProtection } from '@/app/lib/with-role-protection';
 
-export default function UsersPage() {
+function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
@@ -583,3 +584,5 @@ export default function UsersPage() {
     </div>
   );
 }
+
+export default withRoleProtection(UsersPage, 'admin');

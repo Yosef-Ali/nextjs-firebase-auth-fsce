@@ -18,6 +18,7 @@ import {
   Users2,
   FolderTree,
   Image,
+  Building2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -81,6 +82,11 @@ const DashboardAside = () => {
       href: '/dashboard/partners',
       label: 'Partners',
       icon: Users2,
+    },
+    {
+      href: '/dashboard/program-offices',
+      label: 'Program Offices',
+      icon: Building2,
     },
     {
       href: '/dashboard/analytics',

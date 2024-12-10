@@ -1,4 +1,4 @@
-import { db } from '@/app/firebase';
+import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, query, where, orderBy, Timestamp } from 'firebase/firestore';
 import { Location, LocationType } from '@/app/types/location';
 

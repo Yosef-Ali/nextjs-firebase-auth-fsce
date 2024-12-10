@@ -1,13 +1,15 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Phone, Mail, Building2, GraduationCap, Users, Heart } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { MapPin, Phone, Mail, Building2, GraduationCap, Users } from 'lucide-react';
 import CarouselSection from '@/components/carousel';
 import Partners from '@/components/partners';
+import { db } from '@/lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 interface ProgramOffice {
+  id: string;
   type: 'Program';
   region: string;
   location: string;
@@ -18,130 +20,38 @@ interface ProgramOffice {
   programs: string[];
 }
 
-const programOffices: ProgramOffice[] = [
-  {
-    type: 'Program',
-    region: "Addis Ababa",
-    location: "Addis Ababa",
-    address: "Bole Sub-City, Woreda 03, Building No. 345",
-    contact: "+251 11 551 2696",
-    email: "addisababa@fsce.org",
-    beneficiaries: "Supporting over 5,000 children annually",
-    programs: [
-      "Child Protection",
-      "Education Support",
-      "Family Strengthening",
-      "Youth Empowerment"
-    ]
-  },
-  {
-    type: 'Program',
-    region: "SNNPR",
-    location: "Hawassa",
-    address: "Piazza Area, Behind Hawassa University",
-    contact: "+251 46 220 5678",
-    email: "hawassa@fsce.org",
-    beneficiaries: "Serving 2,000+ families",
-    programs: [
-      "Youth Development",
-      "Community Outreach",
-      "Child Welfare",
-      "Education Programs"
-    ]
-  },
-  {
-    type: 'Program',
-    region: "Amhara",
-    location: "Bahir Dar",
-    address: "Kebele 14, Near Ghion Hotel",
-    contact: "+251-918-123456",
-    email: "bahirdar@fsce.org",
-    beneficiaries: "Supporting over 3,000 children",
-    programs: [
-      "Child Protection",
-      "Education Support",
-      "Family Strengthening",
-      "Youth Empowerment"
-    ]
-  },
-  {
-    type: 'Program',
-    region: "Oromia",
-    location: "Adama",
-    address: "Kebele 08, Main Street",
-    contact: "+251-918-234567",
-    email: "adama@fsce.org",
-    beneficiaries: "Serving 2,500+ families",
-    programs: [
-      "Youth Development",
-      "Community Outreach",
-      "Child Welfare",
-      "Education Programs"
-    ]
-  },
-  {
-    type: 'Program',
-    region: "SNNPR",
-    location: "Hawassa",
-    address: "Kebele 03, Lake View Area",
-    contact: "+251-918-345678",
-    email: "hawassa@fsce.org",
-    beneficiaries: "Reaching 1,800+ children",
-    programs: [
-      "Child Rights Advocacy",
-      "Skills Training",
-      "Emergency Support",
-      "Health Programs"
-    ]
-  },
-  {
-    type: 'Program',
-    region: "Tigray",
-    location: "Mekelle",
-    address: "Kebele 05, University Road",
-    contact: "+251-918-456789",
-    email: "mekelle@fsce.org",
-    beneficiaries: "Supporting 2,200+ vulnerable children",
-    programs: [
-      "Conflict Resolution",
-      "Trauma Healing",
-      "Education Support",
-      "Community Resilience"
-    ]
-  },
-  {
-    type: 'Program',
-    region: "Somali",
-    location: "Jigjiga",
-    address: "Kebele 12, Main Business District",
-    contact: "+251-918-567890",
-    email: "jigjiga@fsce.org",
-    beneficiaries: "Empowering 1,500+ youth and families",
-    programs: [
-      "Pastoralist Community Support",
-      "Girl Child Education",
-      "Livelihood Development",
-      "Health Awareness"
-    ]
-  },
-  {
-    type: 'Program',
-    region: "Afar",
-    location: "Semera",
-    address: "Kebele 03, Government Area",
-    contact: "+251-918-678901",
-    email: "semera@fsce.org",
-    beneficiaries: "Reaching 1,000+ marginalized communities",
-    programs: [
-      "Nomadic Education",
-      "Water and Sanitation",
-      "Child Protection",
-      "Women Empowerment"
-    ]
-  }
-];
-
 export default function ProgramOfficesPage() {
+  const [offices, setOffices] = useState<ProgramOffice[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOffices = async () => {
+      try {
+        const officesCollection = collection(db, 'programOffices');
+        const officesSnapshot = await getDocs(officesCollection);
+        const officesData = officesSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as ProgramOffice[];
+        setOffices(officesData);
+      } catch (error) {
+        console.error('Error fetching offices:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOffices();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <>
       <CarouselSection />
@@ -160,34 +70,11 @@ export default function ProgramOfficesPage() {
 
         <section className="py-16">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-              <div className="space-y-6">
-                <Card className="hover:shadow-lg transition-shadow border-2 border-primary/10">
-                  <CardHeader>
-                    <CardTitle>Our Comprehensive Impact</CardTitle>
-                    <CardDescription>Key statistics about our presence</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-                        <h3 className="text-3xl font-bold text-primary mb-2">8+</h3>
-                        <p className="text-muted-foreground">Program Offices</p>
-                      </div>
-                      <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-                        <h3 className="text-3xl font-bold text-primary mb-2">20,000+</h3>
-                        <p className="text-muted-foreground">Children & Families Supported</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-
             <div className="mt-12">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {programOffices.map((office) => (
+                {offices.map((office) => (
                   <motion.div
-                    key={office.location}
+                    key={office.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-card rounded-lg shadow-lg hover:shadow-xl transition-shadow p-6 border-2 border-primary/10"

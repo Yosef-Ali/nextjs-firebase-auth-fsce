@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { PostEditor } from '@/app/dashboard/_components/PostEditor';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';

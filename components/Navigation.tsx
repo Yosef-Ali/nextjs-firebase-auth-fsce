@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { Logo } from './Logo';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -16,7 +16,7 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu';
-import { menuItems } from '@/app/lib/menuItems';
+import { menuItems } from '@/lib/menuItems';
 import { Button } from './ui/button';
 
 export default function Navigation() {

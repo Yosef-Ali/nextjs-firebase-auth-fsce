@@ -23,7 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { MoreHorizontal, Plus, ArrowUpDown, Download } from 'lucide-react';
 import { Resource } from '@/app/types/resource';
 import { resourcesService } from '@/app/services/resources';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from 'date-fns';

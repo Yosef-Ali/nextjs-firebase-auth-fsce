@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { doc, setDoc, collection, Timestamp } from 'firebase/firestore';
-import { db } from '@/app/firebase';
+import { db } from '@/lib/firebase';
 import { AboutContent } from '@/app/types/about';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
-import { Authorization, UserRole } from '@/app/lib/authorization';
+import { Authorization } from '@/app/lib/authorization';
+import { UserRole } from '@/app/types/user';
 
 interface AboutSectionFormProps {
   initialData?: AboutContent;

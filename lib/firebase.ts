@@ -2,6 +2,7 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -15,26 +16,14 @@ const firebaseConfig = {
 
 // Initialize Firebase
 let app: FirebaseApp;
-let db: Firestore;
 
-try {
-  if (!firebaseConfig.apiKey) {
-    throw new Error('Firebase API Key is missing');
-  }
-
-  if (getApps().length) {
-    app = getApps()[0];
-  } else {
-    app = initializeApp(firebaseConfig);
-  }
-  
-  db = getFirestore(app);
-  console.log('Firebase initialized successfully');
-} catch (error) {
-  console.error('Error initializing Firebase:', error);
-  throw error;
+if (!getApps().length) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApps()[0];
 }
 
-const storage = getStorage(app);
-
-export { app, db, storage };
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+export { app };

@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import FileUploadCard from './FileUploadCard';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { Resource } from '@/app/types/resource';
 import { resourcesService } from '@/app/services/resources';
 import { toast } from 'sonner';

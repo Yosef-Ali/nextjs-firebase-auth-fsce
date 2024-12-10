@@ -5,17 +5,17 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usersService } from '@/app/services/users';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 
 export default function InvitePage() {
-  const searchParams = useSearchParams();
+  const params = useSearchParams()!;
   const router = useRouter();
   const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const token = searchParams.get('token');
-  const email = searchParams.get('email');
+  const token = params.get('token');
+  const email = params.get('email');
 
   useEffect(() => {
     // Validate invitation parameters

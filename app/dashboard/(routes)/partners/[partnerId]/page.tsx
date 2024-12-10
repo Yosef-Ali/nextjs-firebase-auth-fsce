@@ -17,7 +17,7 @@ type PageProps = {
   }>;
 };
 
-export default function PartnerPage({ params }: PageProps) {
+function PartnerPage({ params }: PageProps) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [partner, setPartner] = useState<Partner | null>(null);
@@ -126,3 +126,5 @@ export default function PartnerPage({ params }: PageProps) {
     </div>
   );
 }
+
+export default PartnerPage;

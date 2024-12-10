@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db, auth } from '@/app/firebase';
+import { db, auth } from '@/lib/firebase';
 import { collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 import { deleteUser, signInWithEmailAndPassword } from 'firebase/auth';
 

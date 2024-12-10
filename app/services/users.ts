@@ -1,5 +1,5 @@
-import { db } from '@/app/firebase';
-import { User, UserRole, UserStatus } from '@/app/types/user';
+import { db, auth } from '../lib/firebase/firebase-config';
+import { User, UserRole, UserStatus } from '../types/user';
 import {
   collection,
   doc,
@@ -17,8 +17,7 @@ import {
 } from 'firebase/firestore';
 import { User as FirebaseUser } from 'firebase/auth';
 import { v4 as uuidv4 } from 'uuid';
-import { Authorization } from '@/app/lib/authorization'; // Import Authorization class
-import { auth } from '@/app/firebase';
+import { Authorization } from '../lib/authorization';
 import { sendPasswordResetEmail, createUserWithEmailAndPassword } from 'firebase/auth';
 import { emailService } from './email';
 
@@ -53,12 +52,19 @@ export const usersService = {
 
   async createUserIfNotExists(firebaseUser: FirebaseUser): Promise<void> {
     const { uid, email, displayName, photoURL } = firebaseUser;
+    
+    // Check if the user should be an admin
+    const isAdmin = email && Authorization.getAdminEmails().includes(email.toLowerCase());
+    
     const userData = {
       ...(email && { email }),
       ...(displayName && { displayName }),
       ...(photoURL && { photoURL }),
+      status: UserStatus.ACTIVE
     };
-    await this.createOrUpdateUser(uid, userData);
+    
+    // Pass the role explicitly
+    await this.createOrUpdateUser(uid, userData, isAdmin ? 'admin' : 'user');
   },
 
   async createUser(uid: string, { email, displayName, photoURL }: FirebaseUser) {
@@ -87,16 +93,23 @@ export const usersService = {
         }
         await setDoc(userRef, {
           id: userId,
-          role: role || 'user', // Use the role parameter here
+          role: role || (data.email && Authorization.getAdminEmails().includes(data.email.toLowerCase()) ? 'admin' : 'user'),
           createdAt: now,
           updatedAt: now,
           ...data,
         });
       } else {
-        // Update existing user - don't require email
+        // Update existing user - preserve role if not explicitly changed
+        const existingData = userDoc.data();
+        const updatedRole = role || (
+          data.email && Authorization.getAdminEmails().includes(data.email.toLowerCase()) ? 'admin' : 
+          existingData.role || 'user'
+        );
+        
         await setDoc(userRef, {
-          ...userDoc.data(),
+          ...existingData,
           ...data,
+          role: updatedRole,
           updatedAt: now,
         }, { merge: true });
       }
@@ -317,7 +330,7 @@ export const usersService = {
       }
 
       const userDoc = querySnapshot.docs[0];
-      await updateDoc(userDoc.ref, { role: 'author' });
+      await updateDoc(userDoc.ref, { role: 'author' as UserRole });
       
       return true;
     } catch (error) {
@@ -495,7 +508,7 @@ export const usersService = {
           // If the user is not already an admin, update their role
           if (userData.role !== 'admin' && userData.status !== 'invited') {
             batch.update(doc.ref, { 
-              role: 'admin',
+              role: 'admin' as UserRole,
               updatedAt: Timestamp.now()
             });
           }
@@ -504,7 +517,7 @@ export const usersService = {
           // reset their role to 'user' only if they are not invited
           if (userData.role === 'admin' && userData.status !== 'invited') {
             batch.update(doc.ref, { 
-              role: 'user',
+              role: 'user' as UserRole,
               updatedAt: Timestamp.now()
             });
           }
@@ -658,7 +671,7 @@ export const usersService = {
         await setDoc(newUserRef, {
           id: newUserRef.id,
           email: email,
-          role: 'admin',
+          role: 'admin' as UserRole,
           status: 'active',
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
@@ -668,7 +681,7 @@ export const usersService = {
         // Update existing user to admin
         const userDoc = querySnapshot.docs[0];
         await updateDoc(userDoc.ref, {
-          role: 'admin',
+          role: 'admin' as UserRole,
           status: 'active',
           updatedAt: Timestamp.now(),
         });
@@ -704,4 +717,20 @@ export const usersService = {
       return false;
     }
   },
+
+  async getCurrentUser(): Promise<User | null> {
+    const currentUser = auth.currentUser; // Assuming `auth` is your Firebase auth instance
+    if (!currentUser) {
+      return null;
+    }
+    return await this.getUser(currentUser.uid);
+  },
+};
+
+export { UserStatus };
+
+export type UserStatus = {
+  ACTIVE: 'active',
+  SUSPENDED: 'suspended',
+  INVITED: 'invited',
 };

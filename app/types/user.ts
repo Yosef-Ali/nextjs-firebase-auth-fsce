@@ -27,4 +27,15 @@ export interface UserMetadata {
   invitationToken?: string | null;
 }
 
-export type User = UserMetadata;
+export interface User {
+  uid: string;
+  email: string;
+  role: UserRole;
+  displayName?: string;
+  photoURL?: string;
+  createdAt: number;
+  updatedAt: number;
+  status: UserStatus;
+  invitedBy?: string;
+  invitationToken?: string | null;
+}

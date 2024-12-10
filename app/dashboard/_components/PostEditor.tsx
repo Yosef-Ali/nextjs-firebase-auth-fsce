@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { Post } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
 import { categoriesService } from '@/app/services/categories';

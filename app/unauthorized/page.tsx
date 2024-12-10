@@ -1,69 +1,47 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/app/lib/firebase/auth-context';
-import { Lock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useAuth } from '@/lib/hooks/useAuth';
+import { useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 
 export default function UnauthorizedPage() {
-  const { user, logout } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      router.push('/');
-    } catch (error) {
-      console.error('Logout failed:', error);
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/sign-in');
     }
-  };
+  }, [user, loading, router]);
 
-  const handleGoHome = () => {
-    router.push('/');
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
-    <div className="container flex items-center justify-center min-h-screen py-10">
-      <Card className="max-w-md w-full">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Access Denied</CardTitle>
-          <CardDescription className="mt-2">
-            You don't have permission to access this area
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="text-center space-y-4">
-            <Lock className="mx-auto h-12 w-12 text-red-500" />
-            <p className="text-sm text-muted-foreground">
-              This area is restricted to authorized users only. Please sign in with a Firebase account that has the required permissions.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Button
-              variant="default"
-              className="w-full bg-[#1e3a8a] hover:bg-[#1e3a8a]/90"
-              onClick={handleGoHome}
-            >
-              Go to Homepage
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleLogout}
-            >
-              Sign Out
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="flex min-h-screen flex-col items-center justify-center">
+      <div className="mx-auto max-w-2xl px-4 text-center">
+        <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+          Unauthorized Access
+        </h1>
+        <p className="mt-6 text-lg leading-8 text-gray-600">
+          You do not have permission to access this resource.
+        </p>
+        <div className="mt-10 flex items-center justify-center gap-x-6">
+          <Button onClick={() => router.push('/dashboard')}>
+            Return to Dashboard
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

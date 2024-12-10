@@ -23,6 +23,7 @@ This document provides instructions for setting up, developing, and deploying th
 - [Authentication & User Management](#authentication--user-management)
 - [Posts Management](#posts-management)
 - [Query Strategy](#query-strategy)
+- [Firebase Authentication Setup](#firebase-authentication-setup)
 
 ## Prerequisites
 
@@ -372,6 +373,152 @@ return posts
 - Events Service (`app/services/events.ts`)
 - News Service (`app/services/news.ts`)
 - What We Do Service (`app/services/what-we-do.ts`)
+
+## Firebase Authentication Setup
+
+The application uses Firebase Authentication for user management. Here's how it's organized and how to use it:
+
+### File Structure
+
+```
+/app/lib/firebase/
+├── auth.ts              # Core authentication methods
+├── auth-hooks.ts        # React hooks for auth
+├── auth-context.tsx     # Authentication context provider
+├── firebase-config.ts   # Firebase initialization
+├── firebase-admin.ts    # Admin SDK setup
+├── firestore-hooks.ts   # Firestore hooks
+├── user-service.ts      # User management
+└── firebase.d.ts        # Type definitions
+```
+
+### Authentication Methods
+
+The `auth.ts` file provides these core authentication methods:
+
+```typescript
+import { auth, signInWithGoogle, signInWithEmail, signUpWithEmail, signOutUser } from '@/app/lib/firebase/auth';
+
+// Google Sign-in
+await signInWithGoogle();
+
+// Email/Password Sign-in
+await signInWithEmail(email, password);
+
+// Email/Password Sign-up
+await signUpWithEmail(email, password, displayName);
+
+// Sign-out
+await signOutUser();
+```
+
+### Using Authentication Context
+
+For components that need authentication, use the `useAuth` hook:
+
+```typescript
+import { useAuth } from '@/app/lib/firebase/auth-context';
+
+function MyComponent() {
+  const { user, userData, loading, signInWithGoogle } = useAuth();
+
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <div>Please sign in</div>;
+
+  return <div>Welcome {user.displayName}!</div>;
+}
+```
+
+### Protected Routes
+
+To protect routes, wrap them with the authentication check:
+
+```typescript
+'use client';
+
+import { useAuth } from '@/app/lib/firebase/auth-context';
+import { LoadingScreen } from '@/components/loading-screen';
+
+export default function ProtectedPage() {
+  const { user, loading } = useAuth();
+
+  if (loading) return <LoadingScreen />;
+  if (!user) {
+    // Redirect to sign-in or show unauthorized message
+    return <div>Unauthorized</div>;
+  }
+
+  return <div>Protected Content</div>;
+}
+```
+
+### User Roles and Permissions
+
+The application supports different user roles:
+- `user`: Basic access
+- `admin`: Full access to dashboard
+- `editor`: Can edit content
+
+User roles are stored in Firestore and can be accessed through `userData.role`.
+
+### Environment Variables
+
+Required Firebase environment variables in `.env.local`:
+
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+```
+
+### Security Rules
+
+Firestore security rules are defined in `firestore.rules`. Make sure to:
+1. Only allow authenticated users to read/write their own data
+2. Implement role-based access control
+3. Validate data structure and content
+
+### Best Practices
+
+1. **Error Handling**
+   - Always wrap authentication calls in try-catch blocks
+   - Provide user-friendly error messages
+   - Log errors for debugging
+
+2. **State Management**
+   - Use the auth context for global auth state
+   - Avoid storing sensitive information in local storage
+   - Clear user data on logout
+
+3. **Security**
+   - Never expose Firebase credentials in client-side code
+   - Implement proper session management
+   - Use appropriate security rules in Firestore
+
+4. **Performance**
+   - Implement lazy loading for protected routes
+   - Use appropriate Firebase SDK imports
+   - Cache user data when appropriate
+
+### Common Issues and Solutions
+
+1. **Google Sign-in Popup Blocked**
+   - Ensure sign-in is triggered by user interaction
+   - Check browser popup settings
+   - Use redirect method as fallback
+
+2. **Authentication State Persistence**
+   - Configure persistence in `firebase-config.ts`
+   - Handle page refreshes properly
+   - Manage token expiration
+
+3. **Protected Route Flashing**
+   - Show loading state while checking auth
+   - Implement proper route guards
+   - Use SSR when appropriate
 
 ## UI Components (shadcn/ui)
 

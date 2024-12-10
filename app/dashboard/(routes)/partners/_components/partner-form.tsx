@@ -35,8 +35,7 @@ const formSchema = z.object({
   phone: z.string().min(1),
   website: z.string().optional(),
   description: z.string().optional(),
-  logoUrl: z.array(z.string()).default([]),
-  partnerType: z.enum(["partner", "membership"]),
+  logo: z.string().optional(),
   order: z.coerce.number().min(1),
 });
 
@@ -51,6 +50,8 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
+  const partnerIds: string[] = partnerId ? [partnerId] : [];
+
   const form = useForm<PartnerFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
@@ -59,8 +60,7 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
       phone: "",
       website: "",
       description: "",
-      logoUrl: [],
-      partnerType: "partner",
+      logo: "",
       order: 1,
     },
   });
@@ -70,7 +70,6 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
       setIsLoading(true);
       const submissionData = {
         ...data,
-        logoUrl: data.logoUrl[0] || "", // Take the first URL or empty string
         updatedAt: new Date(),
       };
       
@@ -108,15 +107,15 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
             control={form.control}
-            name="logoUrl"
+            name="logo"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Logo</FormLabel>
                 <FormControl>
                   <ImageUpload
-                    value={field.value}
-                    onChange={(url) => field.onChange([url])}
-                    onRemove={() => field.onChange([])}
+                    value={Array.isArray(field.value) ? field.value : field.value ? [field.value] : []}
+                    onChange={(url) => field.onChange(url)}
+                    onRemove={() => field.onChange("")}
                     disabled={isLoading}
                   />
                 </FormControl>
@@ -186,33 +185,6 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="partnerType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Partner Type</FormLabel>
-                  <Select 
-                    disabled={isLoading}
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select partner type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="partner">Partner</SelectItem>
-                      <SelectItem value="membership">Membership</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <FormField
               control={form.control}
               name="order"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/app/lib/firebase/auth-context';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
@@ -10,7 +10,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/sign-in');
+      router.replace('/sign-in');
     }
   }, [user, loading, router]);
 

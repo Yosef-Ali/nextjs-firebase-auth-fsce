@@ -1,4 +1,4 @@
-import { auth } from '@/app/firebase';
+import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 
 export async function getCurrentUser(): Promise<User> {

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Award, Shield, Target, Heart, Users, Lightbulb, Scale, Clock, Sparkles, Calendar, ArrowRight } from "lucide-react";
 import { motion, Variants } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import CarouselSection from "@/components/carousel";
@@ -100,84 +100,109 @@ export default function AchievementsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
       <CarouselSection />
-      
-      {/* Main Content Container */}
-      <div className="container mx-auto px-4">
-        {/* Title Section */}
-        <div className="py-20">
-          <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-4xl font-bold mb-6">Achievements</h1>
-            <p className="text-xl text-gray-600">
-              Our commitment to excellence and impact in child welfare is recognized through prestigious awards 
-              from national and international organizations.
+      <div className="min-h-screen bg-background">
+        <section className="py-20 bg-primary/5">
+          <div className="container mx-auto px-4">
+            <h1 className="text-4xl md:text-5xl font-bold text-center mb-6">
+              Our Achievements
+            </h1>
+            <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto">
+              Celebrating our impact and milestones in transforming lives and building stronger communities.
             </p>
           </div>
-        </div>
-        
-        {/* Featured Cards Section */}
-        <div className="pb-24">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[1, 2, 3].map((_, index) => (
-              <motion.div
-                key={index}
-                variants={cardVariants}
-                custom={index}
-                className="h-full"
-              >
-                <Card className="group overflow-hidden h-full transition-all duration-300 hover:shadow-lg">
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    <Image
-                      src="/images/placeholder.svg"
-                      alt="Achievement"
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                      <div className="text-white">
-                        <Badge variant="secondary" className="mb-2 capitalize">
-                          Achievement
-                        </Badge>
+        </section>
+
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+              <div className="space-y-6">
+                <Card className="hover:shadow-lg transition-shadow border-2 border-primary/10">
+                  <CardHeader>
+                    <CardTitle>Our Comprehensive Impact</CardTitle>
+                    <CardDescription>Key statistics about our presence</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                        <h3 className="text-3xl font-bold text-primary mb-2">8+</h3>
+                        <p className="text-muted-foreground">Program Offices</p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                        <h3 className="text-3xl font-bold text-primary mb-2">20,000+</h3>
+                        <p className="text-muted-foreground">Children & Families Supported</p>
                       </div>
                     </div>
-                  </div>
-
-                  <CardContent className="p-6 space-y-4">
-                    <div className="flex items-center text-sm text-muted-foreground space-x-2">
-                      <Calendar className="h-4 w-4 text-primary" />
-                      <span>2023</span>
-                    </div>
-
-                    <h2 className="text-xl font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors duration-300 line-clamp-2">
-                      Achievement Title
-                    </h2>
-                    
-                    <p className="text-muted-foreground text-sm line-clamp-3">
-                      Description of the achievement will go here. This will be populated from the database.
-                    </p>
-
-                    <Button variant="link" className="p-0 h-auto font-semibold group/link">
-                      Learn More
-                      <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover/link:translate-x-1" />
-                    </Button>
                   </CardContent>
                 </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+              </div>
+            </div>
 
-        {/* Awards Grid Section */}
-        <div className="pb-24">
-          {loading ? (
-            <AchievementsGridSkeleton />
-          ) : (
-            <AchievementsGrid merits={meritsData}  />
-          )}
-        </div>
+            {/* Featured Awards Section */}
+            <div className="pb-24">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {[1, 2, 3].map((_, index) => (
+                  <motion.div
+                    key={index}
+                    variants={cardVariants}
+                    custom={index}
+                    className="h-full"
+                  >
+                    <Card className="group overflow-hidden h-full transition-all duration-300 hover:shadow-lg">
+                      <div className="relative aspect-[4/3] overflow-hidden">
+                        <Image
+                          src="/images/placeholder.svg"
+                          alt="Achievement"
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                          <div className="text-white">
+                            <Badge variant="secondary" className="mb-2 capitalize">
+                              Achievement
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+
+                      <CardContent className="p-6 space-y-4">
+                        <div className="flex items-center text-sm text-muted-foreground space-x-2">
+                          <Calendar className="h-4 w-4 text-primary" />
+                          <span>2023</span>
+                        </div>
+
+                        <h2 className="text-xl font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors duration-300 line-clamp-2">
+                          Achievement Title
+                        </h2>
+                        
+                        <p className="text-muted-foreground text-sm line-clamp-3">
+                          Description of the achievement will go here. This will be populated from the database.
+                        </p>
+
+                        <Button variant="link" className="p-0 h-auto font-semibold group/link">
+                          Learn More
+                          <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover/link:translate-x-1" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            {/* Awards Grid Section */}
+            <div className="pb-24">
+              {loading ? (
+                <AchievementsGridSkeleton />
+              ) : (
+                <AchievementsGrid merits={meritsData} />
+              )}
+            </div>
+          </div>
+        </section>
       </div>
-    </div>
+    </>
   );
 }

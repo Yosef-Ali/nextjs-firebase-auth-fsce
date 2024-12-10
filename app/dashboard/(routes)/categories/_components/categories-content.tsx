@@ -9,7 +9,7 @@ import CategoriesTable from '@/app/dashboard/_components/CategoriesTable';
 import CategoryEditor from '@/app/dashboard/_components/CategoryEditor';
 import { categoriesService } from '@/app/services/categories';
 import { toast } from '@/hooks/use-toast';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 interface CategoriesContentProps {
   initialCategories: Category[];
@@ -28,7 +28,8 @@ export default function CategoriesContent({ initialCategories }: CategoriesConte
       const fetchedCategories = await categoriesService.getCategories();
       const uniqueCategories = Array.from(new Set(fetchedCategories.map(category => category.id)))
         .map(id => fetchedCategories.find(category => category.id === id));
-      setCategories(uniqueCategories);
+      const filteredCategories = uniqueCategories.filter((category): category is Category => category !== undefined);
+      setCategories(filteredCategories);
     } catch (error) {
       setError('Failed to fetch categories. Please try again later.');
       toast({
@@ -72,7 +73,8 @@ export default function CategoriesContent({ initialCategories }: CategoriesConte
       setIsLoading(true);
       setError(null);
       await categoriesService.deleteCategory(category.id);
-      setCategories(categories.filter(c => c.id !== category.id));
+      const filteredCategories = categories.filter((cat): cat is Category => cat !== undefined);
+      setCategories(filteredCategories.filter(c => c.id !== category.id));
       toast({
         title: 'Success',
         description: 'Category deleted successfully',
@@ -106,6 +108,7 @@ export default function CategoriesContent({ initialCategories }: CategoriesConte
         ? await categoriesService.updateCategory(category.id, category)
         : await categoriesService.createCategory(category);
 
+      const filteredCategories = categories.filter((cat): cat is Category => cat !== undefined);
       setCategories((prevCategories: Category[]) => {
         if (category.id) {
           return prevCategories.map((c) => (c.id === category.id ? savedCategory : c));

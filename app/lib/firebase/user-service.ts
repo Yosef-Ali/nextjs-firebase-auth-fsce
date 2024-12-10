@@ -1,6 +1,6 @@
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
 import { User } from 'firebase/auth';
-import { UserRole } from '../authorization';
+import { UserRole, UserStatus } from '@/app/types/user';
 
 // Define admin emails
 const ADMIN_EMAILS = [
@@ -14,9 +14,11 @@ export interface UserData {
   email: string;
   displayName: string;
   role: UserRole;
-  status: 'pending' | 'active' | 'suspended';
+  status: UserStatus;
   createdAt: string;
 }
+
+export type UserStatus = 'active' | 'pending' | 'suspended';
 
 export async function getUserData(user: User): Promise<UserData | null> {
   try {
@@ -27,9 +29,9 @@ export async function getUserData(user: User): Promise<UserData | null> {
       const adminData: UserData = {
         uid: user.uid,
         email: user.email,
-        displayName: user.displayName || '',
+        displayName: user.displayName || user.email,
         role: UserRole.ADMIN,
-        status: 'active',
+        status: UserStatus.ACTIVE,
         createdAt: new Date().toISOString(),
       };
       // Ensure admin data is saved
@@ -44,19 +46,10 @@ export async function getUserData(user: User): Promise<UserData | null> {
       // Double-check if user should be admin
       if (user.email && ADMIN_EMAILS.includes(user.email)) {
         userData.role = UserRole.ADMIN;
-        userData.status = 'active';
+        userData.status = UserStatus.ACTIVE;
         await setDoc(doc(db, 'users', user.uid), userData, { merge: true });
       }
       return userData;
-    }
-
-    // If not in users, check dashboard_users
-    const dashboardDoc = await getDoc(doc(db, 'dashboard_users', user.uid));
-    if (dashboardDoc.exists()) {
-      const data = dashboardDoc.data() as UserData;
-      // Copy dashboard user to regular users collection
-      await setDoc(doc(db, 'users', user.uid), data, { merge: true });
-      return data;
     }
 
     return null;
@@ -77,7 +70,7 @@ export async function createUserData(user: User, displayName: string): Promise<U
         email: user.email,
         displayName: displayName,
         role: UserRole.ADMIN,
-        status: 'active',
+        status: UserStatus.ACTIVE,
         createdAt: new Date().toISOString(),
       };
       await setDoc(doc(db, 'users', user.uid), adminData);
@@ -104,7 +97,7 @@ export async function createUserData(user: User, displayName: string): Promise<U
       email: user.email || '',
       displayName: displayName,
       role: UserRole.USER,
-      status: 'pending',
+      status: UserStatus.PENDING,
       createdAt: new Date().toISOString(),
     };
 
@@ -116,13 +109,13 @@ export async function createUserData(user: User, displayName: string): Promise<U
   }
 }
 
-export async function updateUserStatus(uid: string, status: 'active' | 'pending' | 'suspended'): Promise<void> {
+export async function updateUserStatus(uid: string, status: UserStatus): Promise<void> {
   try {
     const db = getFirestore();
     await updateDoc(doc(db, 'users', uid), { status });
   } catch (error) {
     console.error('Error updating user status:', error);
-    throw new Error('Failed to update user status. Please try again.');
+    throw error;
   }
 }
 
@@ -132,16 +125,16 @@ export async function updateUserRole(uid: string, role: UserRole): Promise<void>
     await updateDoc(doc(db, 'users', uid), { role });
   } catch (error) {
     console.error('Error updating user role:', error);
-    throw new Error('Failed to update user role. Please try again.');
+    throw error;
   }
 }
 
 export async function canAccessDashboard(user: User): Promise<boolean> {
-  const userData = await getUserData(user);
-  if (!userData) return false;
-  
-  return (
-    userData.status === 'active' && 
-    (userData.role === UserRole.ADMIN || userData.role === UserRole.AUTHOR)
-  );
+  try {
+    const userData = await getUserData(user);
+    return userData?.status === UserStatus.ACTIVE && userData?.role === UserRole.ADMIN;
+  } catch (error) {
+    console.error('Error checking dashboard access:', error);
+    return false;
+  }
 }

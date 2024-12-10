@@ -1,32 +1,28 @@
-import { auth } from '@/app/firebase-admin';
+import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
 export async function GET() {
   try {
-    // Try a simpler operation first - getting the tenant
-    const tenantManager = await auth.tenantManager();
+    // Test Firebase Auth configuration
+    const config = auth.app.options;
     
     return NextResponse.json({ 
       status: 'success',
-      message: 'Firebase Admin is working',
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      hasClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
-      hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY
+      message: 'Firebase Auth is working',
+      projectId: config.projectId,
+      authDomain: config.authDomain,
+      apiKeyExists: !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY
     }, { status: 200 });
   } catch (error: any) {
-    console.error('Firebase Admin test failed:', error);
+    console.error('Firebase Auth test failed:', error);
     
-    // Return detailed error information
     return NextResponse.json({ 
       status: 'error',
-      message: 'Firebase Admin test failed',
+      message: 'Firebase Auth test failed',
       error: error.message,
-      code: error.code,
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      hasClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
-      hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
       stack: error.stack
     }, { status: 500 });
   }

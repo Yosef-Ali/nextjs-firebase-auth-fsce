@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { usersService } from '@/app/services/users';
+import { UserStatus } from '@/app/types/user';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 
@@ -10,37 +11,46 @@ export default function VerifyPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isVerifying, setIsVerifying] = useState(true);
-  const role = searchParams.get('role');
 
   useEffect(() => {
     const verifyUser = async () => {
       try {
-        // Verify the user's role and status
-        const currentUser = await usersService.getCurrentUser();
-        if (!currentUser) {
+        if (searchParams) {
+          const role = searchParams.get('role');
+          // Verify the user's role and status
+          const currentUser = await usersService.getCurrentUser();
+          if (!currentUser) {
+            toast({
+              title: 'Error',
+              description: 'User not found. Please try signing in again.',
+              variant: 'destructive',
+            });
+            router.push('/sign-in');
+            return;
+          }
+
+          // Update user's status to active if they were invited
+          if (currentUser.status === UserStatus.INVITED) {
+            await usersService.createOrUpdateUser(currentUser.id, {
+              status: UserStatus.ACTIVE,
+            });
+          }
+
+          // Redirect based on role
+          if (role === 'admin') {
+            router.push('/dashboard/admin');
+          } else if (role === 'author') {
+            router.push('/dashboard/author');
+          } else {
+            router.push('/dashboard');
+          }
+        } else {
           toast({
             title: 'Error',
-            description: 'User not found. Please try signing in again.',
+            description: 'Invalid request. Please try again.',
             variant: 'destructive',
           });
           router.push('/sign-in');
-          return;
-        }
-
-        // Update user's status to active if they were invited
-        if (currentUser.status === 'invited') {
-          await usersService.createOrUpdateUser(currentUser.id, {
-            status: 'active',
-          });
-        }
-
-        // Redirect based on role
-        if (role === 'admin') {
-          router.push('/dashboard/admin');
-        } else if (role === 'author') {
-          router.push('/dashboard/author');
-        } else {
-          router.push('/dashboard');
         }
       } catch (error) {
         console.error('Error verifying user:', error);
@@ -55,7 +65,7 @@ export default function VerifyPage() {
     };
 
     verifyUser();
-  }, [role, router]);
+  }, [searchParams, router]);
 
   if (isVerifying) {
     return (

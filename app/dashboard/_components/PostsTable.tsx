@@ -24,7 +24,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { MoreHorizontal } from 'lucide-react';
 import { Post } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { useSearch } from '@/app/context/search-context';
 import { toast } from '@/hooks/use-toast';
 

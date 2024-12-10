@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ResourcesTable } from '@/app/dashboard/_components/ResourcesTable';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { resourcesService } from '@/app/services/resources';
 import { postsService } from '@/app/services/posts'; 
 import { Resource } from '@/app/types/resource';

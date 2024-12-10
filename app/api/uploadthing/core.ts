@@ -1,5 +1,5 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
-import { auth } from "@/app/firebase";
+import { auth } from "@/lib/firebase";
 
 const f = createUploadthing();
 

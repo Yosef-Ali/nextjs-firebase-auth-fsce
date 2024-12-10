@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { usersService } from '@/app/services/users';
+import { userService } from '@/app/services/firebase/users';
 import { useToast } from '@/components/ui/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -42,6 +42,16 @@ export default function AcceptInvitationPage() {
   });
 
   useEffect(() => {
+    if (!searchParams) {
+      toast({
+        title: 'Error',
+        description: 'Search parameters are not available.',
+        variant: 'destructive',
+      });
+      router.push('/');
+      return;
+    }
+
     const token = searchParams.get('token');
     if (!token) {
       toast({
@@ -55,7 +65,7 @@ export default function AcceptInvitationPage() {
 
     const checkInvitation = async () => {
       try {
-        const invitation = await usersService.checkInvitation(token);
+        const invitation = await userService.checkInvitation(token);
         if (!invitation) {
           toast({
             title: 'Invalid Invitation',
@@ -88,12 +98,21 @@ export default function AcceptInvitationPage() {
   }, [searchParams, router, toast, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!searchParams) {
+      toast({
+        title: 'Error',
+        description: 'Search parameters are not available.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const token = searchParams.get('token');
     if (!token || !invitationDetails) return;
 
     try {
       setIsLoading(true);
-      const success = await usersService.acceptInvitation(token, values.email, values.password);
+      const success = await userService.acceptInvitation(token, values.email, values.password);
       
       if (success) {
         toast({

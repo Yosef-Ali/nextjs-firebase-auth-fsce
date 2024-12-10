@@ -1,29 +1,35 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { auth } from '@/app/firebase';
+import { auth } from '@/lib/firebase';
 import {
-  signInWithRedirect,
-  signInWithPopup,
   GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
   signOut as firebaseSignOut,
-  onAuthStateChanged,
-  User as FirebaseUser
+  User as FirebaseUser,
+  signInWithPopup
 } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { usersService } from '@/app/services/users';
 import { UserMetadata } from '@/app/types/user';
+import { app } from '@/lib/firebase';
 
 interface AuthContextType {
   user: FirebaseUser | null;
   userData: UserMetadata | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: () => Promise<{ user: FirebaseUser | null; error: Error | null }>;
+  signIn: (email: string, password: string) => Promise<FirebaseUser>;
+  signUp: (email: string, password: string, displayName: string) => Promise<FirebaseUser | null>;
   signOut: () => Promise<void>;
   auth: any;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const googleProvider = new GoogleAuthProvider();
+
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -33,64 +39,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    try {
-      console.log('Setting up auth state listener...');
-      const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        console.log('Auth state changed:', user ? 'User logged in' : 'No user');
-        if (user) {
-          try {
-            const metadata = await usersService.createUserIfNotExists(user);
-            setUserData(metadata);
-            setUser(user);
-          } catch (err) {
-            console.error('Error creating user:', err);
-            setError(err instanceof Error ? err : new Error('Failed to setup user'));
-          }
-        } else {
-          setUser(null);
-          setUserData(null);
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      setUser(user);
+      if (user) {
+        try {
+          await usersService.createUserIfNotExists(user);
+          const userDoc = await usersService.getUser(user.uid);
+          setUserData(userDoc);
+        } catch (err) {
+          console.error('Error creating user:', err);
+          setError(err instanceof Error ? err : new Error('Failed to setup user'));
         }
-        setLoading(false);
-      }, (error) => {
-        console.error('Auth state change error:', error);
-        setError(error);
-        setLoading(false);
-      });
-
-      return () => {
-        console.log('Cleaning up auth state listener...');
-        unsubscribe();
-      };
-    } catch (err) {
-      console.error('Error setting up auth state listener:', err);
-      setError(err instanceof Error ? err : new Error('Failed to setup auth'));
+      } else {
+        setUserData(null);
+      }
       setLoading(false);
-    }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const signInWithGoogle = async () => {
     try {
-      const provider = new GoogleAuthProvider();
-      provider.addScope('email');
-      provider.addScope('profile');
-      
-      const result = await signInWithPopup(auth, provider);
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      if (!credential) {
-        throw new Error('No credential returned');
-      }
-      
-      // Get user data and check role
-      const userData = await usersService.getUserData(result.user);
-      if (userData?.role === 'admin' && userData.status === 'active') {
-        router.push('/dashboard/posts');
-      } else {
-        router.push('/unauthorized');
-      }
-      
-    } catch (err) {
-      console.error('Error signing in with Google:', err);
-      throw err;
+      const result = await signInWithPopup(auth, googleProvider);
+      return { user: result.user, error: null };
+    } catch (error) {
+      console.error('Google sign in error:', error);
+      return { user: null, error: error as Error };
+    }
+  };
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userData = await usersService.getUser(userCredential.user.uid);
+      return userCredential.user;
+    } catch (error) {
+      console.error('Error signing in:', error);
+      throw error;
+    }
+  };
+
+  const signUp = async (email: string, password: string, displayName: string) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      await updateProfile(user, { displayName });
+      await usersService.createUserIfNotExists(user);
+      return user;
+    } catch (error) {
+      console.error('Error signing up:', error);
+      throw error;
     }
   };
 
@@ -98,14 +98,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await firebaseSignOut(auth);
       router.push('/');
-    } catch (err) {
-      console.error('Error signing out:', err);
-      throw err;
+    } catch (error) {
+      console.error('Error signing out:', error);
+      throw error;
     }
   };
 
   if (error) {
-    console.error('Auth provider error:', error);
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -117,7 +116,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading, signInWithGoogle, signOut, auth }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        userData,
+        loading,
+        signInWithGoogle,
+        signIn,
+        signUp,
+        signOut,
+        auth
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

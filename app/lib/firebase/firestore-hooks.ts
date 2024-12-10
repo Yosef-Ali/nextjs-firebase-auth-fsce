@@ -1,109 +1,54 @@
-import {
-  useCollection,
-  useDocument,
-} from 'react-firebase-hooks/firestore';
-import {
-  collection,
-  doc,
-  query,
-  where,
-  orderBy,
-  limit,
-  DocumentData,
-  QueryConstraint,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  WhereFilterOp,
-} from 'firebase/firestore';
-import { db } from './firebase-config';
+import { useEffect, useState } from 'react';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
-// Collection hooks
-export const useFirestoreCollection = (
-  path: string,
-  constraints: QueryConstraint[] = []
-) => {
-  const collectionRef = collection(db, path);
-  return useCollection(constraints.length > 0 ? query(collectionRef, ...constraints) : collectionRef);
-};
+interface PartnerDocument {
+    id: string;
+    exists: boolean;
+    name?: string;
+    email?: string;
+    order?: number;
+    phone?: string;
+    partnerType?: string;
+    description?: string;
+    website?: string;
+    logo?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+}
 
-// Document hooks
-export const useFirestoreDocument = (path: string, id: string) => {
-  const docRef = doc(db, path, id);
-  return useDocument(docRef);
-};
+export function useFirestoreDocument(collectionName: string, documentId: string) {
+    const [document, setDocument] = useState<PartnerDocument | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-// Firestore operations
-export const addDocument = async (
-  collectionPath: string,
-  data: DocumentData
-) => {
-  try {
-    const collectionRef = collection(db, collectionPath);
-    const docRef = await addDoc(collectionRef, {
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    return docRef;
-  } catch (error) {
-    console.error('Error adding document:', error);
-    throw error;
-  }
-};
+    useEffect(() => {
+        const fetchDocument = async () => {
+            try {
+                const docRef = doc(db, collectionName, documentId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    setDocument({ id: docSnap.id, exists: true, ...docSnap.data() });
+                } else {
+                    setDocument(null);
+                }
+            } catch (err) {
+                setError(err);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-export const updateDocument = async (
-  collectionPath: string,
-  id: string,
-  data: Partial<DocumentData>
-) => {
-  try {
-    const docRef = doc(db, collectionPath, id);
-    await updateDoc(docRef, {
-      ...data,
-      updatedAt: new Date(),
-    });
-  } catch (error) {
-    console.error('Error updating document:', error);
-    throw error;
-  }
-};
+        fetchDocument();
+    }, [collectionName, documentId]);
 
-export const deleteDocument = async (collectionPath: string, id: string) => {
-  try {
-    const docRef = doc(db, collectionPath, id);
-    await deleteDoc(docRef);
-  } catch (error) {
-    console.error('Error deleting document:', error);
-    throw error;
-  }
-};
+    return [document, loading, error];
+}
 
-// Helper functions
-export const createQueryConstraints = ({
-  whereConstraints = [],
-  orderByField,
-  orderByDirection = 'desc',
-  limitCount,
-}: {
-  whereConstraints?: [string, WhereFilterOp, any][];
-  orderByField?: string;
-  orderByDirection?: 'asc' | 'desc';
-  limitCount?: number;
-}) => {
-  const constraints: QueryConstraint[] = [];
-
-  whereConstraints.forEach(([field, operator, value]) => {
-    constraints.push(where(field, operator, value));
-  });
-
-  if (orderByField) {
-    constraints.push(orderBy(orderByField, orderByDirection));
-  }
-
-  if (limitCount) {
-    constraints.push(limit(limitCount));
-  }
-
-  return constraints;
+export const updateDocument = async (collectionName: string, documentId: string, data: any) => {
+    const docRef = doc(db, collectionName, documentId);
+    await updateDoc(docRef, data);
 };

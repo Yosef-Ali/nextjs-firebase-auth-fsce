@@ -5,7 +5,7 @@ import { whoWeAreService } from '@/app/services/who-we-are';
 import { AboutContent } from '@/app/types/about';
 import { Button } from '@/components/ui/button';
 import { Edit2, Plus } from 'lucide-react';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import AboutSectionForm from '../../_components/AboutSectionForm';
 import { Card } from '@/components/ui/card';
 import {

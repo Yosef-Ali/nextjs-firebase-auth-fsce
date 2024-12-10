@@ -1,4 +1,4 @@
-import { db } from '@/app/firebase';
+import { db } from '@/lib/firebase';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { Post } from '@/app/types/post';
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import PostsTable from '@/app/dashboard/_components/PostsTable';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { postsService } from '@/app/services/posts';
 import { Post } from '@/app/types/post';
 import { Button } from '@/components/ui/button';

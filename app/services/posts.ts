@@ -1,4 +1,4 @@
-import { db } from '@/app/firebase';
+import { db } from '@/lib/firebase';
 import { Post } from '@/app/types/post';
 import { usersService } from './users';
 import { Authorization } from '@/app/lib/authorization';

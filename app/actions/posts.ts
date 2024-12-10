@@ -1,5 +1,5 @@
 import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
-import { db } from '@/app/firebase';
+import { db } from '@/lib/firebase';
 import { Post } from '@/app/types/post';
 
 interface GetPostsOptions {

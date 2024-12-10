@@ -26,20 +26,23 @@ const formatCategoryName = (category: string) => {
 };
 
 export default function CategoryPage() {
-  const params = useParams();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const category = params.category as string;
+  const [searchResults, setSearchResults] = useState<Post[]>([]);
+  const params = useParams();
 
   useEffect(() => {
     const fetchPosts = async () => {
+      if (!params?.category) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        if (category) {
-          const data = await whatWeDoService.getProgramsByCategory(category);
-          console.log('Post data:', data[0]); // Temporary log to check data structure
-          setPosts(data);
-        }
+        const categoryPosts = await whatWeDoService.getProgramsByCategory(params.category as string);
+        setPosts(categoryPosts);
+        setSearchResults(categoryPosts);
       } catch (error) {
         console.error('Error fetching posts:', error);
       } finally {
@@ -48,48 +51,41 @@ export default function CategoryPage() {
     };
 
     fetchPosts();
-  }, [category]);
+  }, [params?.category]);
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-  };
-
-  const filterPosts = () => {
-    return posts.filter((post) => 
-      searchQuery === '' || 
-      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  };
+  if (!params?.category) {
+    return <div>Category not found</div>;
+  }
 
   if (loading) {
     return <FSCESkeleton />;
   }
 
-  const filteredPosts = filterPosts();
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 },
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    const filteredPosts = posts.filter((post) => 
+      query === '' || 
+      post.title.toLowerCase().includes(query.toLowerCase()) ||
+      post.content.toLowerCase().includes(query.toLowerCase()) ||
+      post.excerpt?.toLowerCase().includes(query.toLowerCase())
+    );
+    setSearchResults(filteredPosts);
   };
 
   return (
-    <>
-    <CarouselSection/>
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="py-12">
         <div className="container mx-auto px-4 py-8 text-center">
-          <h1 className="text-4xl  font-bold mb-6">
-            {formatCategoryName(category)}
+          <h1 className="text-4xl font-bold mb-6">
+            {formatCategoryName(params.category as string)}
           </h1>
           <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
-            Explore our {formatCategoryName(category)} programs and initiatives
+            Explore our {formatCategoryName(params.category as string)} programs and initiatives
           </p>
           <ProgramSearch 
             onSearch={handleSearch} 
-            placeholder={`Search ${formatCategoryName(category).toLowerCase()} programs...`}
+            placeholder={`Search ${formatCategoryName(params.category as string).toLowerCase()} programs...`}
             className="mt-10"
           />
         </div>
@@ -98,7 +94,7 @@ export default function CategoryPage() {
       {/* Programs Grid */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          {filteredPosts.length === 0 ? (
+          {searchResults.length === 0 ? (
             <div className="text-center py-12">
               <h2 className="text-2xl font-semibold mb-4">No Programs Found</h2>
               <p className="text-muted-foreground">
@@ -106,10 +102,16 @@ export default function CategoryPage() {
               </p>
             </div>
           ) : (
-            <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" variants={item}>
-              {filteredPosts.map((post) => (
-                <motion.div key={post.id} variants={item}>
-                  <Link href={`/what-we-do/${category}/${post.slug}`} className="block group">
+            <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" variants={{
+              hidden: { opacity: 0, y: 20 },
+              show: { opacity: 1, y: 0 },
+            }}>
+              {searchResults.map((post) => (
+                <motion.div key={post.id} variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  show: { opacity: 1, y: 0 },
+                }}>
+                  <Link href={`/what-we-do/${params.category}/${post.slug}`} className="block group">
                     <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
                       {post.coverImage ? (
                         <div className="relative w-full pt-[56.25%] overflow-hidden">
@@ -133,7 +135,7 @@ export default function CategoryPage() {
                         <div className="flex items-center gap-2 mb-3">
                           <Badge variant="secondary">Programs</Badge>
                           <Badge variant="outline" className="text-primary">
-                            {category}
+                            {params.category}
                           </Badge>
                         </div>
                         <CardTitle className="group-hover:text-primary transition-colors">
@@ -165,8 +167,7 @@ export default function CategoryPage() {
           )}
         </div>
       </section>
+      <Partners />
     </div>
-    <Partners />
-    </>
   );
 }

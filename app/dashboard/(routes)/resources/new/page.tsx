@@ -2,11 +2,11 @@
 
 import { useRouter } from 'next/navigation';
 import { ResourceEditor } from '@/app/dashboard/_components/ResourceEditor';
-import { useAuth } from '@/app/hooks/useAuth';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from '@/lib/contexts/auth-context';
 
 export default function NewResourcePage() {
   const { user, loading } = useAuth();

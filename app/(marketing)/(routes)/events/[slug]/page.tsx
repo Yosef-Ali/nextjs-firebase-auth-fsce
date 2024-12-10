@@ -16,6 +16,9 @@ import { motion } from 'framer-motion';
 
 export default function EventDetailPage() {
   const params = useParams();
+  if (!params) {
+    throw new Error('Params cannot be null');
+  }
   const [event, setEvent] = useState<Post | null>(null);
   const [relatedEvents, setRelatedEvents] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,6 +26,9 @@ export default function EventDetailPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        if (params === null) {
+          throw new Error('Params cannot be null');
+        }
         const slug = typeof params.slug === 'string' ? params.slug : '';
         const [eventData, relatedData] = await Promise.all([
           postsService.getPostBySlug(slug),
@@ -38,7 +44,7 @@ export default function EventDetailPage() {
     };
 
     fetchData();
-  }, [params.slug]);
+  }, [params?.slug]);
 
   if (loading) {
     return <FSCESkeleton />;

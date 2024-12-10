@@ -15,10 +15,10 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
 import { Button } from "@/components/ui/button"
-import { useAuth } from "@/app/hooks/useAuth"
+import { useAuth } from "@/lib/hooks/useAuth"
 import { ModeToggle } from "@/app/mode-toggle"
 import Logo from "@/components/Logo"
-import { menuItems } from "@/app/lib/menuItems"
+import { menuItems } from "@/lib/menuItems"
 
 export function Header() {
   const pathname = usePathname()

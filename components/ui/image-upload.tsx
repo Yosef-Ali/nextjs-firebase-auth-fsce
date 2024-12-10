@@ -170,6 +170,17 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
               className="object-cover"
               alt="Image"
               src={url}
+              onError={(e) => {
+                // Handle image load error
+                console.error(`Failed to load image: ${url}`);
+                toast({
+                  title: "Error",
+                  description: "Failed to load image. It may have been deleted.",
+                  variant: "destructive"
+                });
+                // Remove the invalid image URL from the form
+                onRemove(url);
+              }}
             />
           </div>
         ))}

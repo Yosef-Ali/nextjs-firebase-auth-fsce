@@ -1,4 +1,4 @@
-import { db } from '@/app/firebase';
+import { db } from '@/lib/firebase';
 import { Resource } from '@/app/types/resource';
 import {
   collection,

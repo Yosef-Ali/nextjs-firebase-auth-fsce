@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { usersService } from '../services/users';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '@/lib/firebase';
 
 export default function AdminSetup() {
   const [email, setEmail] = useState('');

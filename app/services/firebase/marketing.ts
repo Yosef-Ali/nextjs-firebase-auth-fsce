@@ -17,7 +17,7 @@ import {
   serverTimestamp,
   deleteDoc,
 } from 'firebase/firestore';
-import { db } from '@/app/firebase';
+import { db } from '@/lib/firebase';
 
 export type PostStatus = "draft" | "published" | "archived";
 

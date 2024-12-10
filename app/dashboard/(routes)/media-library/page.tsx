@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { 
   Download,
   Link as LinkIcon,
@@ -21,7 +21,7 @@ import {
   Trash2,
   AlertTriangle
 } from 'lucide-react';
-import { storage } from '@/app/firebase';
+import { storage } from '@/lib/firebase';
 import { ref, uploadBytes, listAll, getDownloadURL, deleteObject, getMetadata } from 'firebase/storage';
 import Image from 'next/image';
 import { Alert, AlertDescription } from '@/components/ui/alert';
