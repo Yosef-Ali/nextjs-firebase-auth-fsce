@@ -29,7 +29,8 @@ import { Badge } from '@/components/ui/badge';
 import { usersService } from '@/app/services/users';
 import { deleteUserService } from '@/app/services/deleteUser';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { User } from '@/app/types/user';
+import { Authorization } from '@/lib/authorization';
+import { User, UserRole } from '@/app/types/user';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -57,7 +58,6 @@ import {
   Loader2
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { Authorization } from '@/app/lib/authorization';
 import { auth } from '@/lib/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from "@/components/ui/skeleton";
@@ -67,13 +67,15 @@ function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
-  const [selectedRole, setSelectedRole] = useState<'user' | 'author' | 'admin'>('author');
+  const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.AUTHOR);
   const [isInviting, setIsInviting] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
-  const [existingUser, setExistingUser] = useState<{ email: string; role: string } | null>(null);
+  const [existingUser, setExistingUser] = useState<{ email: string; role: UserRole } | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const { user } = useAuth();
+  
+  const authorization = Authorization.getInstance();
 
   const fetchUsers = async () => {
     try {
@@ -97,13 +99,13 @@ function UsersPage() {
 
   useEffect(() => {
     // Only allow admin to view all users
-    if (Authorization.isAdmin(user)) {
+    if (authorization.isAdmin(user)) {
       fetchUsers();
     }
   }, [user]);
 
-  const handleSetRole = async (userId: string, role: 'admin' | 'author') => {
-    if (!user || !Authorization.isAdmin(user)) {
+  const handleSetRole = async (userId: string, role: UserRole) => {
+    if (!user || !authorization.isAdmin(user)) {
       toast({
         title: 'Access Denied',
         description: 'Only administrators can manage user roles',
@@ -114,7 +116,7 @@ function UsersPage() {
 
     try {
       // Get the user's email first
-      const targetUser = users.find(u => u.id === userId);
+      const targetUser = users.find(u => u.uid === userId);
       if (!targetUser) {
         toast({
           title: 'Error',
@@ -124,21 +126,16 @@ function UsersPage() {
         return;
       }
 
-      // Update the role using the correct method
-      const success = await usersService.updateUserRole(
-        user.email!, // current admin's email
-        targetUser.email, // target user's email
-        role
-      );
-
-      if (success) {
+      // Update the role using the correct method signature
+      try {
+        await usersService.updateUserRole(userId, role);
         toast({
           title: 'Success',
           description: `User role updated to ${role}`,
         });
         // Refresh the users list
         fetchUsers();
-      } else {
+      } catch (error) {
         toast({
           title: 'Error',
           description: 'Failed to update user role',
@@ -156,7 +153,7 @@ function UsersPage() {
   };
 
   const handleResetPassword = async (email: string) => {
-    if (!user || !Authorization.isAdmin(user)) {
+    if (!user || !authorization.isAdmin(user)) {
       toast({
         title: 'Access Denied',
         description: 'Only administrators can reset passwords',
@@ -239,8 +236,20 @@ function UsersPage() {
   const handleCloseDialog = () => {
     setShowInviteDialog(false);
     setEmail('');
-    setSelectedRole('author');
+    setSelectedRole(UserRole.AUTHOR);
     setIsInviting(false);
+  };
+
+  // Helper function to convert UserRole enum to string
+  const userRoleToString = (role: UserRole): 'user' | 'author' | 'admin' => {
+    switch (role) {
+      case UserRole.ADMIN:
+        return 'admin';
+      case UserRole.AUTHOR:
+        return 'author';
+      default:
+        return 'user';
+    }
   };
 
   const handleInviteUser = async () => {
@@ -260,7 +269,7 @@ function UsersPage() {
       const result = await usersService.inviteUser(
         'dev.yosefali@gmail.com',
         email.trim(),
-        selectedRole
+        userRoleToString(selectedRole)
       );
 
       if (result.success) {
@@ -274,12 +283,6 @@ function UsersPage() {
         toast({
           title: 'User Exists',
           description: `User already exists with role: ${result.existingUser.role}`,
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to invite user',
           variant: 'destructive',
         });
       }
@@ -296,7 +299,7 @@ function UsersPage() {
   };
 
   // Only show the management interface to admins
-  if (!user || !Authorization.isAdmin(user)) {
+  if (!user || !authorization.isAdmin(user)) {
     return (
       <div className="flex justify-center items-center h-full">
         <p className="text-lg">Access Denied: Only administrators can manage users</p>
@@ -361,7 +364,7 @@ function UsersPage() {
               </TableRow>
             ) : (
               users.map((userData) => (
-                <TableRow key={userData.id}>
+                <TableRow key={userData.uid}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar>
@@ -382,9 +385,9 @@ function UsersPage() {
                   <TableCell>
                     <Badge 
                       variant={
-                        userData.role === 'admin' 
+                        userData.role === UserRole.ADMIN 
                           ? 'default' 
-                          : userData.role === 'author' 
+                          : userData.role === UserRole.AUTHOR 
                             ? 'secondary'
                             : 'outline'
                       }
@@ -395,9 +398,9 @@ function UsersPage() {
                   <TableCell>
                     <Badge 
                       variant={
-                        userData.role === 'admin' 
+                        userData.role === UserRole.ADMIN 
                           ? 'default' 
-                          : userData.role === 'author' 
+                          : userData.role === UserRole.AUTHOR 
                             ? 'secondary'
                             : 'outline'
                       }
@@ -416,7 +419,7 @@ function UsersPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>User Actions</DropdownMenuLabel>
                         
-                        {Authorization.isAdmin(user) && (
+                        {authorization.isAdmin(user) && (
                           <>
                             <DropdownMenuSub>
                               <DropdownMenuSubTrigger>
@@ -424,18 +427,15 @@ function UsersPage() {
                                 Manage Role
                               </DropdownMenuSubTrigger>
                               <DropdownMenuSubContent>
-                                {userData.role !== 'author' && (
-                                  <DropdownMenuItem 
-                                    onClick={() => handleSetRole(userData.id, 'author')}
-                                  >
-                                    <ShieldCheck className="mr-2 h-4 w-4" /> 
-                                    Make Author
+                                {userData.role !== UserRole.AUTHOR && (
+                                  <DropdownMenuItem onClick={() => handleSetRole(userData.uid, UserRole.AUTHOR)}>
+                                      <ShieldCheck className="mr-2 h-4 w-4" /> 
+                                      Make Author
                                   </DropdownMenuItem>
                                 )}
-                                {userData.role !== 'admin' && (
-                                  <DropdownMenuItem 
-                                    onClick={() => handleSetRole(userData.id, 'admin')}
-                                  >
+                                {userData.role !== UserRole.ADMIN && (
+                                  <DropdownMenuItem onClick={() => handleSetRole(userData.uid, UserRole.ADMIN)}>
+                                  
                                     <ShieldCheck className="mr-2 h-4 w-4" />
                                     Make Admin
                                   </DropdownMenuItem>
@@ -536,21 +536,19 @@ function UsersPage() {
                 <Label htmlFor="role">Role</Label>
                 <Select
                   value={selectedRole}
-                  onValueChange={(value: 'user' | 'author' | 'admin') => {
+                  onValueChange={(value: UserRole) => {
                     console.log('Role selected:', value);
                     setSelectedRole(value);
                   }}
                   disabled={isInviting}
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue>
-                      {selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}
-                    </SelectValue>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="user">User</SelectItem>
-                    <SelectItem value="author">Author</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value={UserRole.USER}>User</SelectItem>
+                    <SelectItem value={UserRole.AUTHOR}>Author</SelectItem>
+                    <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

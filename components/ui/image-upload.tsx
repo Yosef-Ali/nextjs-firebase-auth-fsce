@@ -32,7 +32,12 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   }, []);
 
   const isFirebaseStorageUrl = (url: string): boolean => {
-    return url.includes('firebasestorage.googleapis.com');
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname === 'firebasestorage.googleapis.com';
+    } catch {
+      return false;
+    }
   };
 
   const handleRemove = async (url: string) => {
@@ -120,7 +125,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         await handleRemove(value[0]);
       }
 
-      const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '-')}`;
+      const sanitizedName = file.name.replace(/[^\w.-]/g, '-');
+      const fileName = `${Date.now()}-${sanitizedName}`;
       const fileRef = ref(storage, `partners/${fileName}`);
       await uploadBytes(fileRef, file);
       const downloadUrl = await getDownloadURL(fileRef);

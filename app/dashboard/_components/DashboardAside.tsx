@@ -35,6 +35,12 @@ const DashboardAside = () => {
   const { isCollapsed, toggleSidebar } = useSidebar();
 
   const isActive = (href: string) => {
+    if (pathname === null) {
+      return false;
+    }
+    if (pathname === undefined) {
+      return false;
+    }
     if (href === '/dashboard') {
       return pathname === '/dashboard';
     }
@@ -82,11 +88,6 @@ const DashboardAside = () => {
       href: '/dashboard/partners',
       label: 'Partners',
       icon: Users2,
-    },
-    {
-      href: '/dashboard/program-offices',
-      label: 'Program Offices',
-      icon: Building2,
     },
     {
       href: '/dashboard/analytics',

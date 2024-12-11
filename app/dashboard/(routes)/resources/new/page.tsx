@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from '@/lib/contexts/auth-context';
+import { useAuth } from '@/app/providers/AuthProvider';
 
 export default function NewResourcePage() {
   const { user, loading } = useAuth();

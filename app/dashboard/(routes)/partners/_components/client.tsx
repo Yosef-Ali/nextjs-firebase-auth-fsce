@@ -15,14 +15,23 @@ export const PartnersClient = () => {
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
-      query(collection(db, "partners"), orderBy("name")),
+      query(
+        collection(db, "partners"), 
+        orderBy("order", "asc"),  
+        orderBy("name", "asc")    
+      ),
       (snapshot) => {
-        const partners = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate(),
-          updatedAt: doc.data().updatedAt?.toDate()
-        })) as Partner[];
+        const partners = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            order: data.order || Number.MAX_SAFE_INTEGER, 
+            partnerType: data.partnerType || "partner",   
+            createdAt: data.createdAt?.toDate(),
+            updatedAt: data.updatedAt?.toDate()
+          } as Partner;
+        });
         setPartners(partners);
         setLoading(false);
       }

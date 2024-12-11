@@ -54,9 +54,23 @@ export default function DetailPage() {
 
   return (
     <div>
-      post={post}
-      relatedPosts={relatedPosts}
-      type="programs"
+      <div>
+        <h1>{post.title}</h1>
+        <div>{post.content}</div>
+      </div>
+      {relatedPosts.length > 0 && (
+        <div>
+          <h2>Related Programs</h2>
+          <div>
+            {relatedPosts.map((relatedPost) => (
+              <div key={relatedPost.id}>
+                <h3>{relatedPost.title}</h3>
+                <p>{relatedPost.excerpt || ''}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

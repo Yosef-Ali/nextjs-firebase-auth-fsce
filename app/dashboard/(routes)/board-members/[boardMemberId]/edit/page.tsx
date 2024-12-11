@@ -13,6 +13,8 @@ const EditBoardMemberPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!params) return;
+    
     const unsubscribe = onSnapshot(
       doc(db, "board-members", params.boardMemberId as string),
       (doc) => {
@@ -29,7 +31,7 @@ const EditBoardMemberPage = () => {
     );
 
     return () => unsubscribe();
-  }, [params.boardMemberId]);
+  }, [params?.boardMemberId]);
 
   if (loading) {
     return <div>Loading...</div>;

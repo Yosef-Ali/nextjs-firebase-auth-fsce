@@ -24,6 +24,12 @@ const roleDescriptions = {
   admin: 'You now have full administrative access to manage FSCE.org'
 };
 
+enum UserRole {
+  user,
+  author,
+  admin
+}
+
 export const emailService = {
   async sendInvitationEmail(email: string, role: 'user' | 'author' | 'admin'): Promise<boolean> {
     try {

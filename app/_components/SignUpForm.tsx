@@ -19,10 +19,26 @@ export default function SignUpForm({ callbackUrl }: SignUpFormProps) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { signUp, signInWithGoogle, user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+
+  const convertToUser = (metadata: any): any => {
+    return {
+      metadata: {
+        creationTime: metadata.creationTime,
+        lastSignInTime: metadata.lastSignInTime,
+        lastRefreshTime: metadata.lastRefreshTime,
+      },
+      providerData: [],
+      refreshToken: '',
+      tenantId: '',
+    };
+  };
 
   async function onSubmit(event: React.SyntheticEvent) {
     event.preventDefault();
@@ -59,9 +75,10 @@ export default function SignUpForm({ callbackUrl }: SignUpFormProps) {
     }
 
     try {
-      const newUser = await signUp(email, password, displayName);
-      if (newUser) {
-        await createUserData(newUser, displayName);
+      const newUserMetadata = await signUp(email, password, displayName);
+      if (newUserMetadata) {
+        const user = convertToUser(newUserMetadata);
+        await createUserData(user, displayName); 
         toast({
           title: "Account Created",
           description: "Your account has been created successfully",

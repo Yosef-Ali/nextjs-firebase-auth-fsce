@@ -9,6 +9,7 @@ import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { PartnerForm } from "../../_components/partner-form";
 import { useFirestoreDocument } from "@/app/lib/firebase/firestore-hooks";
+import { Partner } from "@/app/types/partner";
 
 // Components
 const LoadingState = () => (
@@ -52,8 +53,10 @@ export default function EditPartnerPage({
   const [partnerDoc, loading, error] = useFirestoreDocument("partners", resolvedParams.partnerId);
 
   useEffect(() => {
-    if (!loading && partnerDoc && typeof partnerDoc === 'object' && !partnerDoc.exists) {
-      router.push("/dashboard/partners");
+    if (!loading && partnerDoc && typeof partnerDoc === 'object') {
+      if ('exists' in partnerDoc && !partnerDoc.exists) {
+        router.push("/dashboard/partners");
+      }
     }
   }, [loading, partnerDoc, router]);
 
@@ -70,53 +73,42 @@ export default function EditPartnerPage({
     return <LoadingState />;
   }
 
-  if (partnerDoc && typeof partnerDoc !== 'boolean') {
-    if (partnerDoc.exists) {
-      const partner = {
-        id: partnerDoc.id,
-        name: partnerDoc.name || "",
-        email: partnerDoc.email || "",
-        order: partnerDoc.order || 1,
-        phone: partnerDoc.phone || "",
-        description: partnerDoc.description || "",
-        website: partnerDoc.website || "",
-        logo: partnerDoc.logo || ""
-      };
+  if (partnerDoc?.exists()) {
+    const partnerData = partnerDoc.data();
+    const partner: Partner = {
+      id: partnerDoc.id,
+      name: partnerData?.name || "",
+      email: partnerData?.email || "",
+      order: partnerData?.order || 1,
+      phone: partnerData?.phone || "",
+      partnerType: (partnerData?.partnerType as "partner" | "membership") || "partner",
+      description: partnerData?.description || "",
+      website: partnerData?.website || "",
+      logo: partnerData?.logo || ""
+    };
 
-      return (
-        <main className="p-6 space-y-4">
-          <nav>
-            <BackButton />
-          </nav>
-          <header className="flex items-center justify-between">
-            <Heading
-              title="Edit Partner"
-              description="Update partner information"
-            />
-          </header>
-          <Separator />
-          <section>
-            <PartnerForm 
-              initialData={{
-                id: partner.id,
-                name: partner.name,
-                email: partner.email,
-                order: partner.order,
-                phone: partner.phone,
-                description: partner.description,
-                logo: partner.logo,
-                website: partner.website
-              }} 
-              partnerId={resolvedParams.partnerId} 
-            />
-          </section>
-        </main>
-      );
-    } else {
-      console.error("Partner document does not exist");
-    }
+    return (
+      <main className="p-6 space-y-4">
+        <nav>
+          <BackButton />
+        </nav>
+        <header className="flex items-center justify-between">
+          <Heading
+            title="Edit Partner"
+            description="Update partner information"
+          />
+        </header>
+        <Separator />
+        <section>
+          <PartnerForm 
+            initialData={partner}
+            partnerId={resolvedParams.partnerId} 
+          />
+        </section>
+      </main>
+    );
   } else {
-    console.error("PartnerDoc is not a valid document");
+    console.error("Partner document does not exist or is invalid");
   }
 
   return null;

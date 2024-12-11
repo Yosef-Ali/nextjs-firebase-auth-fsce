@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { usersService } from '@/app/services/users';
 import { UserStatus } from '@/app/types/user';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 
-export default function VerifyPage() {
+function VerifyContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isVerifying, setIsVerifying] = useState(true);
@@ -31,7 +31,7 @@ export default function VerifyPage() {
 
           // Update user's status to active if they were invited
           if (currentUser.status === UserStatus.INVITED) {
-            await usersService.createOrUpdateUser(currentUser.id, {
+            await usersService.createOrUpdateUser(currentUser.uid, {
               status: UserStatus.ACTIVE,
             });
           }
@@ -84,5 +84,20 @@ export default function VerifyPage() {
         Go to Dashboard
       </Button>
     </div>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense 
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <h1 className="text-2xl font-bold mb-4">Loading...</h1>
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      }
+    >
+      <VerifyContent />
+    </Suspense>
   );
 }

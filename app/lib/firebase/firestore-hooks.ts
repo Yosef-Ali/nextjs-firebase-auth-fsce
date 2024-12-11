@@ -1,54 +1,36 @@
 import { useEffect, useState } from 'react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, DocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-interface PartnerDocument {
-    id: string;
-    exists: boolean;
-    name?: string;
-    email?: string;
-    order?: number;
-    phone?: string;
-    partnerType?: string;
-    description?: string;
-    website?: string;
-    logo?: string;
-    address?: string;
-    city?: string;
-    state?: string;
-    zip?: string;
-    country?: string;
-}
+type DocumentState = DocumentSnapshot<DocumentData> | null;
 
 export function useFirestoreDocument(collectionName: string, documentId: string) {
-    const [document, setDocument] = useState<PartnerDocument | null>(null);
+    const [document, setDocument] = useState<DocumentState>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
         const fetchDocument = async () => {
             try {
                 const docRef = doc(db, collectionName, documentId);
                 const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    setDocument({ id: docSnap.id, exists: true, ...docSnap.data() });
-                } else {
-                    setDocument(null);
-                }
+                setDocument(docSnap);
             } catch (err) {
-                setError(err);
+                setError(err instanceof Error ? err : new Error('Failed to fetch document'));
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchDocument();
+        if (documentId) {
+            fetchDocument();
+        }
     }, [collectionName, documentId]);
 
-    return [document, loading, error];
+    return [document, loading, error] as const;
 }
 
-export const updateDocument = async (collectionName: string, documentId: string, data: any) => {
+export async function updateDocument(collectionName: string, documentId: string, data: any) {
     const docRef = doc(db, collectionName, documentId);
     await updateDoc(docRef, data);
-};
+}

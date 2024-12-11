@@ -5,7 +5,8 @@ import { UserRole } from '../types/user';
 const ADMIN_EMAILS = [
   process.env.NEXT_PUBLIC_ADMIN_EMAIL, 
   'dev.yosefali@gmail.com', 
-  'yosefmdsc@gmail.com'
+  'yosefmdsc@gmail.com',
+  'yaredd.degefu@gmail.com'
 ].filter(Boolean) as string[];
 
 interface AuthorizationContext {
@@ -38,14 +39,14 @@ export class Authorization {
 
     // Check if user has required role
     switch (requiredRole) {
-      case UserRole.ADMIN:
-        return userRole === UserRole.ADMIN;
       case UserRole.AUTHOR:
         return userRole === UserRole.AUTHOR;
+      case UserRole.EDITOR:
+        return userRole === UserRole.EDITOR;
       case UserRole.USER:
         return userRole === UserRole.USER;
       default:
-        return true; // Guest access
+        return false; // More restrictive default case
     }
   }
 
@@ -61,7 +62,7 @@ export class Authorization {
   // @param user User object
   // @returns UserRole
   static getUserRole(user: User | null): UserRole {
-    if (!user) return UserRole.GUEST;
+    if (!user) return UserRole.USER; // Default to USER role instead of GUEST
     if (this.isAdmin(user)) return UserRole.ADMIN;
     return UserRole.USER; // Default role for authenticated users
   }
@@ -116,8 +117,8 @@ export class Authorization {
   static canEditPost(user: User | null, postAuthorId?: string): boolean {
     const context = this.createContext(user, postAuthorId);
     // Ensure context is valid before proceeding
-    if (!context) return false;
-    return (
+    if (!context || !context.user) return false;
+    return Boolean(
       this.canAccess(context, UserRole.EDITOR) ||
       (user && postAuthorId && user.uid === postAuthorId)
     );
@@ -130,11 +131,8 @@ export class Authorization {
   static canDeletePost(user: User | null, postAuthorId?: string): boolean {
     const context = this.createContext(user, postAuthorId);
     // Ensure context is valid before proceeding
-    if (!context) return false;
-    return (
-      this.canAccess(context, UserRole.ADMIN) ||
-      (user && postAuthorId !== undefined && user.uid === postAuthorId)
-    );
+    if (!context || !context.user) return false;
+    return this.canAccess(context, UserRole.ADMIN) || false;
   }
 
   // Check if a user can manage users

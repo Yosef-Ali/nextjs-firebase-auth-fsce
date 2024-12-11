@@ -8,7 +8,6 @@ import { SearchProvider } from '@/app/context/search-context';
 import { cn } from '@/lib/utils';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/app/providers/AuthProvider';
-import { ProgramOfficesProvider } from '@/app/context/program-offices';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -42,9 +41,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <TooltipProvider>
           <SidebarProvider>
             <SearchProvider>
-              <ProgramOfficesProvider>
-                <DashboardContent>{children}</DashboardContent>
-              </ProgramOfficesProvider>
+              <DashboardContent>{children}</DashboardContent>
             </SearchProvider>
           </SidebarProvider>
         </TooltipProvider>

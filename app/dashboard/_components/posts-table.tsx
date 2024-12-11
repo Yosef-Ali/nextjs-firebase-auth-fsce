@@ -9,9 +9,10 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { EditIcon, Trash2Icon } from "lucide-react";
-import { Post } from '@/app/services/firebase/dashboard';
+
 import { format } from 'date-fns';
 import { Card, CardContent } from "@/components/ui/card";
+import { Post } from '@/app/types/post';
 
 interface PostTableProps {
   posts: Post[];
@@ -45,7 +46,7 @@ export default function PostTable({ posts, isLoading, onEdit, onDelete }: PostTa
 
   // Sort posts by updatedAt in descending order (newest first)
   const sortedPosts = [...posts].sort((a, b) => {
-    return b.updatedAt.toMillis() - a.updatedAt.toMillis();
+    return b.updatedAt - a.updatedAt;
   });
 
   return (
@@ -101,7 +102,7 @@ export default function PostTable({ posts, isLoading, onEdit, onDelete }: PostTa
                 </span>
               </TableCell>
               <TableCell className="text-muted-foreground">
-                {format(post.updatedAt.toDate(), 'MMM d, yyyy')}
+                {format(post.updatedAt, 'MMM d, yyyy')}
               </TableCell>
               <TableCell className="text-right space-x-2">
                 <Button

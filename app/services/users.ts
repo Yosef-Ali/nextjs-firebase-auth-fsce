@@ -1,11 +1,11 @@
-import { db, auth } from '../lib/firebase/firebase-config';
-import { User, UserRole, UserStatus } from '../types/user';
+import { db } from '../lib/firebase/firebase-config';
+import { User, UserRole, UserStatus, UserUpdateData } from '../types/user';
+import { emailService } from './email';
 import {
   collection,
   doc,
   getDoc,
   setDoc,
-  Timestamp,
   getDocs,
   query,
   orderBy,
@@ -14,347 +14,274 @@ import {
   updateDoc,
   writeBatch,
   runTransaction,
+  DocumentReference,
+  DocumentData,
+  Timestamp,
 } from 'firebase/firestore';
-import { User as FirebaseUser } from 'firebase/auth';
-import { v4 as uuidv4 } from 'uuid';
-import { Authorization } from '../lib/authorization';
-import { sendPasswordResetEmail, createUserWithEmailAndPassword } from 'firebase/auth';
-import { emailService } from './email';
+import { User as FirebaseUser, getAuth, sendPasswordResetEmail } from 'firebase/auth';
 
-const COLLECTION_NAME = 'users';
+const USERS_COLLECTION = 'users';
 
-export const usersService = {
-  async getUser(userId: string): Promise<User | null> {
+class UsersService {
+  private readonly usersRef = collection(db, USERS_COLLECTION);
+
+  private async convertTimestamp(timestamp: unknown): Promise<number> {
+    return timestamp instanceof Timestamp ? timestamp.toMillis() : Date.now();
+  }
+
+  private createUserObject(uid: string, data: Partial<User>): User {
+    return {
+      uid,
+      email: data.email ?? '',
+      role: data.role ?? UserRole.USER,
+      displayName: data.displayName,
+      photoURL: data.photoURL,
+      createdAt: data.createdAt ?? Date.now(),
+      updatedAt: data.updatedAt ?? Date.now(),
+      status: data.status ?? UserStatus.ACTIVE,
+      invitedBy: data.invitedBy,
+      invitationToken: data.invitationToken
+    };
+  }
+
+  private getUserRef(uid: string): DocumentReference {
+    return doc(this.usersRef, uid);
+  }
+
+  async createUserIfNotExists(firebaseUser: FirebaseUser): Promise<User | null> {
     try {
-      const userRef = doc(db, COLLECTION_NAME, userId);
-      const userDoc = await getDoc(userRef);
+      const { uid, email, displayName, photoURL } = firebaseUser;
       
-      if (!userDoc.exists()) {
-        return null;
-      }
+      const existingUser = await this.getUser(uid);
+      if (existingUser) return existingUser;
+      
+      const userData: Partial<User> = {
+        email: email ?? '',
+        displayName: displayName ?? undefined,
+        photoURL: photoURL ?? undefined,
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+
+      await this.createOrUpdateUser(uid, userData);
+      return this.createUserObject(uid, userData);
+    } catch (error) {
+      console.error('Error in createUserIfNotExists:', error);
+      return null;
+    }
+  }
+
+  async getUser(uid: string): Promise<User | null> {
+    try {
+      const userDoc = await getDoc(this.getUserRef(uid));
+      if (!userDoc.exists()) return null;
       
       const data = userDoc.data();
-      return {
-        id: userDoc.id,
-        email: data.email || '',
-        role: data.role || 'user',
-        displayName: data.displayName,
-        photoURL: data.photoURL,
-        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
-        updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() : Date.now(),
-        status: data.status || 'active', 
-      } as User;
+      return this.createUserObject(uid, data);
     } catch (error) {
       console.error('Error getting user:', error);
       return null;
     }
-  },
+  }
 
-  async createUserIfNotExists(firebaseUser: FirebaseUser): Promise<void> {
-    const { uid, email, displayName, photoURL } = firebaseUser;
-    
-    // Check if the user should be an admin
-    const isAdmin = email && Authorization.getAdminEmails().includes(email.toLowerCase());
-    
-    const userData = {
-      ...(email && { email }),
-      ...(displayName && { displayName }),
-      ...(photoURL && { photoURL }),
-      status: UserStatus.ACTIVE
-    };
-    
-    // Pass the role explicitly
-    await this.createOrUpdateUser(uid, userData, isAdmin ? 'admin' : 'user');
-  },
-
-  async createUser(uid: string, { email, displayName, photoURL }: FirebaseUser) {
-    if (!email) {
-      throw new Error('Email is required for user creation');
-    }
-    
-    const userData = {
-      email,
-      displayName: displayName || undefined,
-      photoURL: photoURL || undefined,
-    };
-    await this.createOrUpdateUser(uid, userData);
-  },
-
-  async createOrUpdateUser(userId: string, data: Partial<User>, role?: 'user' | 'author' | 'admin'): Promise<void> {
+  async getCurrentUser(): Promise<User | null> {
     try {
-      const userRef = doc(db, COLLECTION_NAME, userId);
-      const now = Timestamp.now();
-
-      const userDoc = await getDoc(userRef);
-      if (!userDoc.exists()) {
-        // Create new user - require email only for new users
-        if (!data.email) {
-          throw new Error('Email is required for user creation');
-        }
-        await setDoc(userRef, {
-          id: userId,
-          role: role || (data.email && Authorization.getAdminEmails().includes(data.email.toLowerCase()) ? 'admin' : 'user'),
-          createdAt: now,
-          updatedAt: now,
-          ...data,
-        });
-      } else {
-        // Update existing user - preserve role if not explicitly changed
-        const existingData = userDoc.data();
-        const updatedRole = role || (
-          data.email && Authorization.getAdminEmails().includes(data.email.toLowerCase()) ? 'admin' : 
-          existingData.role || 'user'
-        );
-        
-        await setDoc(userRef, {
-          ...existingData,
-          ...data,
-          role: updatedRole,
-          updatedAt: now,
-        }, { merge: true });
+      // Get the current Firebase user
+      const auth = getAuth();
+      const firebaseUser = auth.currentUser;
+      
+      if (!firebaseUser) {
+        return null;
       }
+
+      // Get the user data from Firestore
+      const userDoc = await getDoc(this.getUserRef(firebaseUser.uid));
+      if (!userDoc.exists()) {
+        return null;
+      }
+
+      return this.createUserObject(firebaseUser.uid, userDoc.data());
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      return null;
+    }
+  }
+
+  async createOrUpdateUser(uid: string, userData: Partial<User>): Promise<void> {
+    try {
+      const userRef = this.getUserRef(uid);
+      await setDoc(userRef, {
+        ...userData,
+        updatedAt: Date.now()
+      }, { merge: true });
     } catch (error) {
       console.error('Error creating/updating user:', error);
       throw error;
     }
-  },
+  }
 
-  async setAdminRole(userId: string): Promise<void> {
-    await this.createOrUpdateUser(userId, { role: 'admin' as UserRole });
-  },
+  async updateUserRole(uid: string, role: UserRole): Promise<void> {
+    try {
+      const userRef = this.getUserRef(uid);
+      await updateDoc(userRef, {
+        role,
+        updatedAt: Date.now()
+      });
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      throw error;
+    }
+  }
+
+  async updateUserStatus(uid: string, status: UserStatus): Promise<void> {
+    try {
+      const userRef = this.getUserRef(uid);
+      await updateDoc(userRef, {
+        status,
+        updatedAt: Date.now()
+      });
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      throw error;
+    }
+  }
+
+  async deleteUser(uid: string): Promise<void> {
+    try {
+      await deleteDoc(this.getUserRef(uid));
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      throw error;
+    }
+  }
 
   async getAllUsers(): Promise<User[]> {
     try {
-      const usersRef = collection(db, COLLECTION_NAME);
-      const q = query(usersRef, orderBy('createdAt', 'desc'));
-      
-      const querySnapshot = await getDocs(q);
-      const users = querySnapshot.docs.map(userDoc => {
-        const data = userDoc.data();
-        return {
-          id: userDoc.id,
-          email: data.email || '',
-          role: data.role || 'user',
-          displayName: data.displayName || '',
-          photoURL: data.photoURL || '',
-          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
-          updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() : Date.now(),
-          status: data.status || 'active', 
-        } as User;
-      });
-
-      return users;
+      const snapshot = await getDocs(this.usersRef);
+      return snapshot.docs.map(doc => this.createUserObject(doc.id, doc.data()));
     } catch (error) {
       console.error('Error getting all users:', error);
       return [];
     }
-  },
+  }
 
-  async suspendUser(userId: string): Promise<boolean> {
+  async setupInitialAdmin(email: string): Promise<boolean> {
     try {
-      await this.createOrUpdateUser(userId, { status: 'suspended' as UserStatus });
-      return true;
-    } catch (error) {
-      console.error('Error suspending user:', error);
-      return false;
-    }
-  },
+      // Find user by email
+      const usersQuery = query(this.usersRef, where('email', '==', email));
+      const querySnapshot = await getDocs(usersQuery);
 
-  async activateUser(userId: string): Promise<boolean> {
-    try {
-      await this.createOrUpdateUser(userId, { status: 'active' as UserStatus });
-      return true;
-    } catch (error) {
-      console.error('Error activating user:', error);
-      return false;
-    }
-  },
+      if (querySnapshot.empty) {
+        // User doesn't exist yet, create a new admin user
+        const userData: Partial<User> = {
+          email,
+          role: UserRole.ADMIN,
+          status: UserStatus.ACTIVE,
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        };
 
-  async deleteUserById(userId: string): Promise<boolean> {
-    try {
-      // In a real-world scenario, you'd also want to:
-      // 1. Delete user's authentication record
-      // 2. Delete user's associated data
-      // 3. Implement proper security rules
-      await deleteDoc(doc(db, COLLECTION_NAME, userId));
-      return true;
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      return false;
-    }
-  },
-
-  async deleteUserByEmail(email: string): Promise<boolean> {
-    try {
-      console.log('Deleting user:', email);
-      
-      const response = await fetch('/api/users/delete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to delete user');
+        // Generate a new document reference with auto-generated ID
+        const newUserRef = doc(this.usersRef);
+        await setDoc(newUserRef, userData);
+        return true;
       }
 
-      const result = await response.json();
-      return result.success;
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      return false;
-    }
-  },
-
-  async resetUserPassword(email: string): Promise<boolean> {
-    try {
-      // This would typically be handled by Firebase Auth
-      // You might want to use Firebase Auth's sendPasswordResetEmail method
-      // Note: This is a placeholder and would need to be implemented with Firebase Auth
-      console.log(`Password reset requested for ${email}`);
-      return true;
-    } catch (error) {
-      console.error('Error resetting password:', error);
-      return false;
-    }
-  },
-
-  async inviteAuthor(
-    inviterEmail: string, 
-    authorEmail: string
-  ): Promise<{ success: boolean, token?: string }> {
-    try {
-      // Generate a unique invitation token
-      const invitationToken = uuidv4();
-
-      // Check if user already exists
-      const usersRef = collection(db, COLLECTION_NAME);
-      const q = query(usersRef, where('email', '==', authorEmail));
-      const existingUserSnapshot = await getDocs(q);
-
-      if (!existingUserSnapshot.empty) {
-        // User already exists
-        const existingUser = existingUserSnapshot.docs[0].data();
-        if (existingUser.role === 'author') {
-          return { success: false, token: undefined };
-        }
-
-        // Update existing user
-        await this.createOrUpdateUser(existingUserSnapshot.docs[0].id, {
-          role: 'author' as UserRole,
-          status: 'invited' as UserStatus,
-          invitedBy: inviterEmail,
-          invitationToken,
-        });
-
-        return { success: true, token: invitationToken };
-      }
-
-      // Create new invited author
-      const newAuthorRef = doc(collection(db, COLLECTION_NAME));
-      await setDoc(newAuthorRef, {
-        id: newAuthorRef.id,
-        email: authorEmail,
-        role: 'author' as UserRole,
-        status: 'invited',
-        invitedBy: inviterEmail,
-        invitationToken,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
+      // User exists, update to admin role
+      const userDoc = querySnapshot.docs[0];
+      await updateDoc(userDoc.ref, {
+        role: UserRole.ADMIN,
+        status: UserStatus.ACTIVE,
+        updatedAt: Date.now()
       });
 
-      return { success: true, token: invitationToken };
+      return true;
     } catch (error) {
-      console.error('Error inviting author:', error);
-      return { success: false, token: undefined };
+      console.error('Error setting up admin:', error);
+      return false;
     }
-  },
+  }
 
-  async acceptAuthorInvitation(
-    email: string, 
-    invitationToken: string
-  ): Promise<boolean> {
+  async acceptAuthorInvitation(email: string, token: string): Promise<boolean> {
     try {
-      const usersRef = collection(db, COLLECTION_NAME);
-      const q = query(
-        usersRef, 
+      // Find the user with matching email and invitation token
+      const usersQuery = query(
+        this.usersRef,
         where('email', '==', email),
-        where('invitationToken', '==', invitationToken)
+        where('invitationToken', '==', token),
+        where('status', '==', UserStatus.INVITED)
       );
+
+      const querySnapshot = await getDocs(usersQuery);
       
-      const userSnapshot = await getDocs(q);
-      
-      if (userSnapshot.empty) {
-        console.error('Invalid invitation');
-        return false;
+      if (querySnapshot.empty) {
+        throw new Error('Invalid invitation or already accepted');
       }
 
-      const userDoc = userSnapshot.docs[0];
-      await setDoc(userDoc.ref, {
-        ...userDoc.data(),
-        status: 'active',
+      const userDoc = querySnapshot.docs[0];
+      const userRef = this.getUserRef(userDoc.id);
+
+      // Update user role and status
+      await updateDoc(userRef, {
+        role: UserRole.AUTHOR,
+        status: UserStatus.ACTIVE,
         invitationToken: null,
-      }, { merge: true });
+        updatedAt: Date.now()
+      });
 
       return true;
     } catch (error) {
       console.error('Error accepting author invitation:', error);
       return false;
     }
-  },
+  }
 
-  async setAuthorRole(
-    adminEmail: string, 
-    userEmail: string
-  ): Promise<boolean> {
+  async updateUserRoleBasedOnAdminEmails(): Promise<void> {
     try {
-      // Use Authorization to validate admin status
-      const isAdmin = Authorization.getAdminEmails().includes(adminEmail);
-      
-      if (!isAdmin) {
-        console.error('Unauthorized role change');
-        return false;
-      }
+      const users = await this.getAllUsers(); // Fetch all users
+      const adminEmails = [
+        process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+        'dev.yosefali@gmail.com',
+        'yosefmdsc@gmail.com',
+        'yaredd.degefu@gmail.com'
+      ].filter(Boolean);
 
-      // Find user by email and update role
-      const usersRef = collection(db, COLLECTION_NAME);
-      const q = query(usersRef, where('email', '==', userEmail));
-      
-      const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) {
-        console.error('User not found');
-        return false;
+      for (const user of users) {
+        if (adminEmails.includes(user.email)) {
+          await this.updateUserRole(user.uid, UserRole.ADMIN); // Update role to ADMIN
+        }
       }
-
-      const userDoc = querySnapshot.docs[0];
-      await updateDoc(userDoc.ref, { role: 'author' as UserRole });
-      
-      return true;
     } catch (error) {
-      console.error('Error setting author role:', error);
-      return false;
+      console.error('Error updating user roles based on admin emails:', error);
+      throw error;
     }
-  },
+  }
+
+  async resetUserPassword(email: string): Promise<void> {
+    try {
+      const auth = getAuth();
+      await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      throw error;
+    }
+  }
 
   async inviteUser(
-    inviterEmail: string,
-    newUserEmail: string,
+    adminEmail: string,
+    targetEmail: string,
     role: 'user' | 'author' | 'admin'
-  ): Promise<{ success: boolean, existingUser?: { email: string, role: string } }> {
+  ): Promise<{ success: boolean; existingUser?: { email: string; role: string } }> {
     try {
-      console.log('Starting invite process:', { inviterEmail, newUserEmail, role });
+      // Check if user already exists
+      const usersQuery = query(this.usersRef, where('email', '==', targetEmail));
+      const querySnapshot = await getDocs(usersQuery);
 
-      // First check if user exists in Firestore
-      const usersRef = collection(db, COLLECTION_NAME);
-      const userQuery = query(usersRef, where('email', '==', newUserEmail));
-      const userSnapshot = await getDocs(userQuery);
-
-      if (!userSnapshot.empty) {
-        const existingUserData = userSnapshot.docs[0].data();
-        console.log('User already exists:', existingUserData);
+      if (!querySnapshot.empty) {
+        const existingUserDoc = querySnapshot.docs[0];
+        const existingUserData = existingUserDoc.data();
         return {
           success: false,
           existingUser: {
@@ -364,373 +291,38 @@ export const usersService = {
         };
       }
 
-      // Verify admin permissions
-      const adminQuery = query(usersRef, where('email', '==', inviterEmail));
-      const adminSnapshot = await getDocs(adminQuery);
-      
-      if (adminSnapshot.empty || adminSnapshot.docs[0].data().role !== 'admin') {
-        console.error('Unauthorized: Not an admin user');
-        return { success: false };
-      }
+      // Generate invitation token
+      const invitationToken = Math.random().toString(36).substring(2, 15);
 
-      // Create user document with specified role
-      const newUserRef = doc(collection(db, COLLECTION_NAME));
-      const userData = {
-        id: newUserRef.id,
-        email: newUserEmail,
-        role: role, // Ensure the correct role is set
-        status: 'invited',
-        invitedBy: inviterEmail,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
+      // Create new user document
+      const newUserData: Partial<User> = {
+        email: targetEmail,
+        role: role as UserRole, 
+        status: UserStatus.INVITED,
+        invitedBy: adminEmail,
+        invitationToken,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
       };
 
-      console.log('Creating user document with role:', role);
+      // Create user document with auto-generated ID
+      const newUserRef = doc(this.usersRef);
+      await setDoc(newUserRef, newUserData);
 
-      // Use a transaction to ensure atomicity
-      await runTransaction(db, async (transaction) => {
-        // Double check user doesn't exist (in transaction)
-        const userDoc = await transaction.get(doc(db, COLLECTION_NAME, newUserRef.id));
-        if (userDoc.exists()) {
-          throw new Error('User already exists');
-        }
-
-        // Create the user document with the role
-        transaction.set(newUserRef, { ...userData });
-      });
-
-      // Send invitation email with the correct role
-      console.log('Sending invitation email with role:', role);
-      const emailSent = await emailService.sendInvitationEmail(newUserEmail, role);
-      
+      // Send invitation email
+      const emailSent = await emailService.sendInvitationEmail(targetEmail, role);
       if (!emailSent) {
-        // If email fails, delete the created document
+        // If email fails to send, delete the user document
         await deleteDoc(newUserRef);
         throw new Error('Failed to send invitation email');
       }
 
-      console.log('Successfully invited user with role:', role);
       return { success: true };
     } catch (error) {
-      console.error('Error in invite process:', error);
-      return { success: false };
+      console.error('Error inviting user:', error);
+      throw error;
     }
-  },
+  }
+}
 
-  async updateUserRole(
-    adminEmail: string,
-    userEmail: string,
-    newRole: 'user' | 'author' | 'admin'
-  ): Promise<boolean> {
-    try {
-      // Verify admin permissions
-      const isAdmin = await this.isFSCEAdmin(adminEmail);
-      if (!isAdmin) {
-        throw new Error('Only administrators can update user roles');
-      }
-
-      // Find user by email
-      const user = await this.findUserByEmail(userEmail);
-      if (!user) {
-        throw new Error('User not found');
-      }
-
-      // Don't update if role is the same
-      if (user.role === newRole) {
-        return true;
-      }
-
-      // Update role in database
-      const userRef = doc(db, COLLECTION_NAME, user.id);
-      await updateDoc(userRef, {
-        role: newRole,
-        updatedAt: Timestamp.now()
-      });
-
-      // Send role update notification for author and admin roles
-      if (newRole === 'author' || newRole === 'admin') {
-        await emailService.sendRoleUpdateEmail(userEmail, newRole);
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error updating user role:', error);
-      return false;
-    }
-  },
-
-  async findUserByEmail(email: string): Promise<User | null> {
-    try {
-      const usersRef = collection(db, COLLECTION_NAME);
-      const q = query(usersRef, where('email', '==', email));
-      
-      const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) {
-        return null;
-      }
-
-      const userDoc = querySnapshot.docs[0];
-      const userData = userDoc.data();
-      
-      return {
-        id: userDoc.id,
-        email: userData.email || '',
-        role: userData.role || 'user',
-        displayName: userData.displayName || '',
-        photoURL: userData.photoURL || '',
-        createdAt: userData.createdAt instanceof Timestamp ? userData.createdAt.toMillis() : Date.now(),
-        updatedAt: userData.updatedAt instanceof Timestamp ? userData.updatedAt.toMillis() : Date.now(),
-        status: userData.status || 'active',
-      } as User;
-    } catch (error) {
-      console.error('Error finding user by email:', error);
-      return null;
-    }
-  },
-
-  async updateUserRoleBasedOnAdminEmails(): Promise<void> {
-    try {
-      const adminEmails = Authorization.getAdminEmails();
-      const usersRef = collection(db, COLLECTION_NAME);
-      
-      // Query for all users
-      const querySnapshot = await getDocs(usersRef);
-      
-      // Batch write to update multiple users
-      const batch = writeBatch(db);
-
-      querySnapshot.docs.forEach(doc => {
-        const userData = doc.data();
-        const userEmail = userData.email;
-
-        // Check if the user's email is in the admin emails list
-        if (adminEmails.includes(userEmail)) {
-          // If the user is not already an admin, update their role
-          if (userData.role !== 'admin' && userData.status !== 'invited') {
-            batch.update(doc.ref, { 
-              role: 'admin' as UserRole,
-              updatedAt: Timestamp.now()
-            });
-          }
-        } else {
-          // If the user was previously an admin but is not in the admin list, 
-          // reset their role to 'user' only if they are not invited
-          if (userData.role === 'admin' && userData.status !== 'invited') {
-            batch.update(doc.ref, { 
-              role: 'user' as UserRole,
-              updatedAt: Timestamp.now()
-            });
-          }
-        }
-      });
-
-      // Commit the batch
-      await batch.commit();
-      
-      console.log('User roles updated based on admin emails');
-    } catch (error) {
-      console.error('Error updating user roles:', error);
-    }
-  },
-
-  async isFSCEAdmin(email: string): Promise<boolean> {
-    try {
-      console.log('Checking admin status for email:', email);
-      
-      // Query users collection directly by email
-      const usersRef = collection(db, COLLECTION_NAME);
-      const q = query(usersRef, where('email', '==', email));
-      const querySnapshot = await getDocs(q);
-      
-      if (querySnapshot.empty) {
-        console.log('No user found with email:', email);
-        return false;
-      }
-
-      const userData = querySnapshot.docs[0].data();
-      console.log('User data found:', userData);
-      
-      const isAdmin = userData.role === 'admin' && userData.status === 'active';
-      console.log('Is admin?', isAdmin);
-      
-      return isAdmin;
-    } catch (error) {
-      console.error('Error checking FSCE admin status:', error);
-      return false;
-    }
-  },
-
-  async setFSCEAdminRole(
-    currentAdminEmail: string,
-    newAdminEmail: string
-  ): Promise<boolean> {
-    try {
-      // Verify that the current user is an FSCE admin
-      const isAdmin = await this.isFSCEAdmin(currentAdminEmail);
-      if (!isAdmin) {
-        throw new Error('Unauthorized: Only FSCE admins can assign admin roles');
-      }
-
-      // Find or create the new admin user
-      const user = await this.findUserByEmail(newAdminEmail);
-      
-      if (user) {
-        // Update existing user to admin role
-        await this.updateUserRole(currentAdminEmail, newAdminEmail, 'admin');
-      } else {
-        // Invite new user as admin
-        const result = await this.inviteUser(currentAdminEmail, newAdminEmail, 'admin');
-        if (!result.success) {
-          throw new Error('Failed to invite new admin user');
-        }
-      }
-
-      // Send admin welcome email
-      await emailService.sendInvitationEmail(newAdminEmail, 'admin');
-
-      return true;
-    } catch (error) {
-      console.error('Error setting FSCE admin role:', error);
-      return false;
-    }
-  },
-
-  async getFSCEAdmins(): Promise<User[]> {
-    try {
-      const usersRef = collection(db, COLLECTION_NAME);
-      const q = query(
-        usersRef,
-        where('role', '==', 'admin'),
-        where('status', '==', 'active'),
-        orderBy('createdAt', 'desc')
-      );
-      
-      const querySnapshot = await getDocs(q);
-      const admins: User[] = [];
-      
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        admins.push({
-          id: doc.id,
-          email: data.email,
-          role: data.role,
-          displayName: data.displayName,
-          photoURL: data.photoURL,
-          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
-          updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() : Date.now(),
-          status: data.status,
-        } as User);
-      });
-      
-      return admins;
-    } catch (error) {
-      console.error('Error getting FSCE admins:', error);
-      return [];
-    }
-  },
-
-  async removeFSCEAdminRole(
-    currentAdminEmail: string,
-    targetAdminEmail: string
-  ): Promise<boolean> {
-    try {
-      // Verify that the current user is an FSCE admin
-      const isAdmin = await this.isFSCEAdmin(currentAdminEmail);
-      if (!isAdmin) {
-        throw new Error('Unauthorized: Only FSCE admins can remove admin roles');
-      }
-
-      // Get all admins to ensure we're not removing the last admin
-      const admins = await this.getFSCEAdmins();
-      if (admins.length <= 1) {
-        throw new Error('Cannot remove the last FSCE admin');
-      }
-
-      // Update the user role to regular user
-      await this.updateUserRole(currentAdminEmail, targetAdminEmail, 'user');
-
-      return true;
-    } catch (error) {
-      console.error('Error removing FSCE admin role:', error);
-      return false;
-    }
-  },
-
-  async setupInitialAdmin(email: string): Promise<boolean> {
-    try {
-      console.log('Setting up initial admin for:', email);
-      
-      // Create or update admin user document
-      const usersRef = collection(db, COLLECTION_NAME);
-      const q = query(usersRef, where('email', '==', email));
-      const querySnapshot = await getDocs(q);
-      
-      if (querySnapshot.empty) {
-        // Create new admin document
-        const newUserRef = doc(collection(db, COLLECTION_NAME));
-        await setDoc(newUserRef, {
-          id: newUserRef.id,
-          email: email,
-          role: 'admin' as UserRole,
-          status: 'active',
-          createdAt: Timestamp.now(),
-          updatedAt: Timestamp.now(),
-        });
-        console.log('Created new admin user');
-      } else {
-        // Update existing user to admin
-        const userDoc = querySnapshot.docs[0];
-        await updateDoc(userDoc.ref, {
-          role: 'admin' as UserRole,
-          status: 'active',
-          updatedAt: Timestamp.now(),
-        });
-        console.log('Updated existing user to admin');
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error setting up initial admin:', error);
-      return false;
-    }
-  },
-
-  async deleteUser(email: string): Promise<boolean> {
-    try {
-      // Make API call to backend route that handles Firebase Auth deletion
-      const response = await fetch('/api/users/delete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to delete user');
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      return false;
-    }
-  },
-
-  async getCurrentUser(): Promise<User | null> {
-    const currentUser = auth.currentUser; // Assuming `auth` is your Firebase auth instance
-    if (!currentUser) {
-      return null;
-    }
-    return await this.getUser(currentUser.uid);
-  },
-};
-
-export { UserStatus };
-
-export type UserStatus = {
-  ACTIVE: 'active',
-  SUSPENDED: 'suspended',
-  INVITED: 'invited',
-};
+export const usersService = new UsersService();

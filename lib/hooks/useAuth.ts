@@ -1,4 +1,4 @@
-import { User } from 'firebase/auth';
+import { User } from '@/app/types/user';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useContext } from 'react';
 import { auth } from '@/lib/auth';
@@ -21,9 +21,11 @@ export function useAuth() {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         // Create or update user in Firestore whenever auth state changes
-        await usersService.createUserIfNotExists(user);
+        const customUser = await usersService.createUserIfNotExists(user);
+        setUser(customUser);
+      } else {
+        setUser(null);
       }
-      setUser(user);
       setLoading(false);
     });
 
@@ -31,7 +33,7 @@ export function useAuth() {
   }, []);
 
   return {
-    user: contextUser,
+    user: contextUser ? { ...contextUser, role: user?.role } : null,
     loading: contextLoading,
     signUp,
     signIn,

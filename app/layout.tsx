@@ -5,6 +5,7 @@ import './globals.css'
 import { Inter } from 'next/font/google'
 import { AuthProvider } from '@/app/providers/AuthProvider';
 import { Toaster } from "@/components/ui/toaster"
+import AuthRedirectHandler from '@/components/auth/AuthRedirectHandler';
 import { useEffect } from 'react';
 import { getRedirectResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -23,33 +24,13 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { toast } = useToast();
-
-  useEffect(() => {
-    getRedirectResult(auth).then((result) => {
-      if (result?.user) {
-        toast({
-          title: "Successfully signed in!",
-          description: `Welcome ${result.user.email}`,
-        });
-      }
-    }).catch((error) => {
-      if (error.code !== 'auth/popup-closed-by-user') {
-        toast({
-          title: "Error signing in",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
-    });
-  }, [toast]);
-
   return (
     <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
           {children}
           <Toaster />
+          <AuthRedirectHandler />
         </AuthProvider>
       </body>
     </html>

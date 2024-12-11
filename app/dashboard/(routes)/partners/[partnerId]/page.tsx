@@ -120,7 +120,7 @@ function PartnerPage({ params }: PageProps) {
         <h1 className="text-3xl font-bold">Partner Details</h1>
         <PartnerForm initialData={{
           ...partner,
-          logoUrl: partner?.logo
+          logo: partner?.logo
         }} />
       </div>
     </div>

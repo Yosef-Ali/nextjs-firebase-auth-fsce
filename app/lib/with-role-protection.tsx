@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/app/providers/AuthProvider';
-import { Authorization, UserRole } from '@/app/lib/authorization';
+import { Authorization } from '@/app/lib/authorization';
 import { useEffect, useState } from 'react';
 
 export function withRoleProtection(Component: React.ComponentType, requiredRole: 'admin' | 'author' | 'user') {

@@ -1,16 +1,12 @@
 {
   "name": "functions",
   "scripts": {
-    "build": "tsc",
-    "build:watch": "tsc --watch",
-    "serve": "npm run build && firebase emulators:start --only functions",
-    "shell": "npm run build && firebase functions:shell",
-    "start": "npm run shell",
-    "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "build": "bun build ./src/index.ts --outdir=lib",
+    "serve": "bun run build && firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions"
   },
   "engines": {
-    "node": "18"
+    "bun": ">=1.0.0"
   },
   "main": "lib/index.js",
   "dependencies": {
@@ -18,7 +14,8 @@
     "firebase-functions": "^4.5.0"
   },
   "devDependencies": {
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "bun-types": "latest"
   },
   "private": true
 }

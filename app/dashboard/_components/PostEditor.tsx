@@ -173,15 +173,12 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
 
       const coverImageUrl = form.getValues('coverImage');
       const isValidUrl = (url: string) => {
-        const pattern = new RegExp('^(https?:\/\/)?'+ // protocol
-          '((([a-z0-9-]+\.)+[a-z]{2,})|'+ // domain name
-          'localhost|'+ // localhost
-          '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|'+ // IP address
-          '\[?[a-f0-9:.]+\])'+ // IPv6
-          '(\:\d+)?(\/[-a-z0-9%_.~+]*)*'+ // port and path
-          '(\?[;&a-z0-9%_.~+=-]*)?'+ // query string
-          '(\#[-a-z0-9_]*)?$','i'); // fragment locator
-        return !!pattern.test(url);
+        try {
+          new URL(url);
+          return true;
+        } catch (e) {
+          return false;
+        }
       };
       
       if (coverImageUrl && !isValidUrl(coverImageUrl)) {

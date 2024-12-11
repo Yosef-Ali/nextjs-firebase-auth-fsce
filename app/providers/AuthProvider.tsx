@@ -13,18 +13,17 @@ import {
 } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { usersService } from '@/app/services/users';
-import { UserMetadata } from '@/app/types/user';
-import { app } from '@/lib/firebase';
+import { User, UserMetadata, UserStatus, UserRole } from '@/app/types/user';
 
 interface AuthContextType {
   user: FirebaseUser | null;
   userData: UserMetadata | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<{ user: FirebaseUser | null; error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<FirebaseUser>;
-  signUp: (email: string, password: string, displayName: string) => Promise<FirebaseUser | null>;
+  error: Error | null;
+  signInWithGoogle: () => Promise<{ user: UserMetadata | null; error: Error | null }>;
+  signIn: (email: string, password: string) => Promise<UserMetadata>;
+  signUp: (email: string, password: string, displayName: string) => Promise<UserMetadata>;
   signOut: () => Promise<void>;
-  auth: any;
 }
 
 const googleProvider = new GoogleAuthProvider();
@@ -38,22 +37,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<Error | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      setUser(user);
-      if (user) {
-        try {
-          await usersService.createUserIfNotExists(user);
-          const userDoc = await usersService.getUser(user.uid);
-          setUserData(userDoc);
-        } catch (err) {
-          console.error('Error creating user:', err);
-          setError(err instanceof Error ? err : new Error('Failed to setup user'));
-        }
-      } else {
-        setUserData(null);
+  const mapUserToMetadata = (firebaseUser: FirebaseUser, userDoc?: User | null): UserMetadata => {
+    return {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email ?? '',
+      displayName: userDoc?.displayName ?? firebaseUser.displayName ?? '',
+      photoURL: userDoc?.photoURL ?? firebaseUser.photoURL ?? '',
+      emailVerified: firebaseUser.emailVerified,
+      isAnonymous: firebaseUser.isAnonymous,
+      role: userDoc?.role ?? UserRole.USER,
+      status: userDoc?.status ?? UserStatus.ACTIVE,
+      createdAt: userDoc?.createdAt ?? Date.now(),
+      updatedAt: userDoc?.updatedAt ?? Date.now(),
+      invitedBy: userDoc?.invitedBy,
+      invitationToken: userDoc?.invitationToken,
+      metadata: {
+        lastLogin: Date.now(),
+        createdAt: userDoc?.createdAt ?? Date.now()
       }
-      setLoading(false);
+    };
+  };
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+      try {
+        if (firebaseUser) {
+          // Get or create user in our database
+          const userDoc = await usersService.createUserIfNotExists(firebaseUser);
+          const userMetadata = mapUserToMetadata(firebaseUser, userDoc);
+          
+          setUser(firebaseUser);
+          setUserData(userMetadata);
+        } else {
+          setUser(null);
+          setUserData(null);
+        }
+      } catch (error) {
+        console.error('Error setting up user:', error);
+        setError(error instanceof Error ? error : new Error('Failed to setup user'));
+      } finally {
+        setLoading(false);
+      }
     });
 
     return () => unsubscribe();
@@ -62,72 +86,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      return { user: result.user, error: null };
+      const userDoc = await usersService.createUserIfNotExists(result.user);
+      const userMetadata = mapUserToMetadata(result.user, userDoc);
+      return { user: userMetadata, error: null };
     } catch (error) {
-      console.error('Google sign in error:', error);
-      return { user: null, error: error as Error };
+      console.error('Error signing in with Google:', error);
+      return { user: null, error: error instanceof Error ? error : new Error('Google sign-in failed') };
     }
   };
 
-  const signIn = async (email: string, password: string) => {
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const userData = await usersService.getUser(userCredential.user.uid);
-      return userCredential.user;
-    } catch (error) {
-      console.error('Error signing in:', error);
-      throw error;
-    }
+  const signIn = async (email: string, password: string): Promise<UserMetadata> => {
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    const userDoc = await usersService.createUserIfNotExists(result.user);
+    return mapUserToMetadata(result.user, userDoc);
   };
 
-  const signUp = async (email: string, password: string, displayName: string) => {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      await updateProfile(user, { displayName });
-      await usersService.createUserIfNotExists(user);
-      return user;
-    } catch (error) {
-      console.error('Error signing up:', error);
-      throw error;
-    }
+  const signUp = async (email: string, password: string, displayName: string): Promise<UserMetadata> => {
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(result.user, { displayName });
+    const userDoc = await usersService.createUserIfNotExists(result.user);
+    return mapUserToMetadata(result.user, userDoc);
   };
 
   const signOut = async () => {
-    try {
-      await firebaseSignOut(auth);
-      router.push('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
-      throw error;
-    }
+    await firebaseSignOut(auth);
+    router.push('/');
   };
 
-  if (error) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-500">Authentication Error</h1>
-          <p className="mt-2 text-gray-600">{error.message}</p>
-        </div>
-      </div>
-    );
-  }
+  const contextValue: AuthContextType = {
+    user,
+    userData,
+    loading,
+    error,
+    signInWithGoogle,
+    signIn,
+    signUp,
+    signOut
+  };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        userData,
-        loading,
-        signInWithGoogle,
-        signIn,
-        signUp,
-        signOut,
-        auth
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

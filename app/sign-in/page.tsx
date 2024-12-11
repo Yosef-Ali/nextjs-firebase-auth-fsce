@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { SignInForm } from '@/app/_components/SignInForm';
 import { Separator } from '@/components/ui/separator';
@@ -12,7 +12,7 @@ function SignInContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl');
+  const callbackUrl = searchParams?.get('callbackUrl') ?? null;
 
   React.useEffect(() => {
     if (user && !loading) {
@@ -94,5 +94,13 @@ function SignInContent() {
 }
 
 export default function SignIn() {
-  return <SignInContent />;
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    }>
+      <SignInContent />
+    </Suspense>
+  );
 }

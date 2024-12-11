@@ -26,6 +26,7 @@ export interface Post {
   tags?: string[];
   time?: string;  
   location?: string;  
+  status?: string;  // Add status property
 }
 
 export interface Resource {
@@ -41,4 +42,5 @@ export interface Resource {
   createdAt: number;
   updatedAt: number;
   tags?: string[];
+  status?: string;  
 }

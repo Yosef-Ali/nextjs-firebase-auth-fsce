@@ -1,9 +1,7 @@
-import * as functions from 'firebase-functions';
-import { onUserCreated, onUserDeleted, onUserUpdated } from './users';
+import * as admin from 'firebase-admin';
 
-// Export the functions
-export {
-  onUserCreated,
-  onUserDeleted,
-  onUserUpdated
-};
+// Initialize Firebase Admin
+admin.initializeApp();
+
+// Export all user management functions
+export * from './users';

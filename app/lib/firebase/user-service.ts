@@ -3,10 +3,11 @@ import { User } from 'firebase/auth';
 import { UserRole, UserStatus } from '@/app/types/user';
 
 // Define admin emails
-const ADMIN_EMAILS = [
+export const ADMIN_EMAILS = [
   process.env.NEXT_PUBLIC_ADMIN_EMAIL,
   'dev.yosefali@gmail.com',
-  'yosefmdsc@gmail.com'
+  'yosefmdsc@gmail.com',
+  'yaredd.degefu@gmail.com'
 ].filter(Boolean) as string[];
 
 export interface UserData {
@@ -17,8 +18,6 @@ export interface UserData {
   status: UserStatus;
   createdAt: string;
 }
-
-export type UserStatus = 'active' | 'pending' | 'suspended';
 
 export async function getUserData(user: User): Promise<UserData | null> {
   try {
