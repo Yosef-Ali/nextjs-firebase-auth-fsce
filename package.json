@@ -8,7 +8,6 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
-    "type-check": "tsc --noEmit",
     "seed-partners": "bun run scripts/seed-partners.ts",
     "seed-programs": "bun run scripts/seed-programs.ts",
     "seed-program-offices": "bun run scripts/seed-program-offices.ts"
