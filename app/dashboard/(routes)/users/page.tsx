@@ -65,14 +65,23 @@ import { withRoleProtection } from '@/app/lib/with-role-protection';
 
 // Add this conversion function at the top level
 const convertToAppUser = (user: User): AppUser => {
+  // Safely handle metadata timestamps with fallbacks
+  const creationTime = user.metadata?.createdAt
+    ? new Date(user.metadata.createdAt).toString()
+    : new Date().toString();
+
+  const lastSignInTime = user.metadata?.lastLogin
+    ? new Date(user.metadata.lastLogin).toString()
+    : new Date().toString();
+
   return {
     ...user,
     emailVerified: false, // Default value
     isAnonymous: false, // Default value
     metadata: {
-      ...user.metadata,
-      creationTime: user.metadata.createdAt.toString(),
-      lastSignInTime: user.metadata.lastLogin.toString()
+      creationTime,
+      lastSignInTime,
+      // Add any other metadata fields needed
     },
     phoneNumber: null,
     photoURL: user.photoURL,
