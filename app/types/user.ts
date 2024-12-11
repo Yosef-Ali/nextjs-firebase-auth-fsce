@@ -1,3 +1,7 @@
+// Importing necessary types
+import { User as FirebaseUser } from 'firebase/auth';
+
+// Enum for user roles
 export enum UserRole {
   ADMIN = 'admin',
   AUTHOR = 'author',
@@ -13,28 +17,52 @@ export enum UserStatus {
   INVITED = 'invited'
 }
 
-import { User as FirebaseUser } from 'firebase/auth';
-
-// Base user interface that matches our Firestore user document
-export interface User {
-  uid: string;
-  email: string;
+// Custom User type that extends Firebase User
+export interface User extends FirebaseUser {
   role: UserRole;
-  displayName?: string;
-  photoURL?: string;
+  email: string;
+  displayName: string | null;
+  photoURL: string | null;
   createdAt: number;
   updatedAt: number;
   status: UserStatus;
-  invitedBy?: string;
-  invitationToken?: string | null;
+  invitedBy: string | null;
+  invitationToken: string | null;
+  emailVerified: boolean;
+  isAnonymous: boolean;
+  providerData: {
+    providerId: string;
+    uid: string;
+    displayName: string | null;
+    email: string | null;
+    photoURL: string | null;
+    phoneNumber: string | null;
+  }[];
 }
 
 // Extended user interface that includes Firebase auth fields
-export interface UserMetadata extends Omit<User, 'uid'> {
+export interface UserMetadata {
   uid: string;  // Keep uid as the primary identifier
+  role: UserRole;
+  email: string;
+  displayName: string | null;
+  photoURL: string | null;
+  createdAt: number;
+  updatedAt: number;
+  status: UserStatus;
+  invitedBy: string | null;
+  invitationToken: string | null;
   emailVerified: boolean;
   isAnonymous: boolean;
-  metadata?: {
+  providerData?: {
+    providerId: string;
+    uid: string;
+    displayName: string | null;
+    email: string | null;
+    photoURL: string | null;
+    phoneNumber: string | null;
+  }[];
+  metadata: {
     lastLogin: number;
     createdAt: number;
   };

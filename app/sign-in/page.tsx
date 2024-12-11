@@ -9,14 +9,14 @@ import { useAuth } from '@/lib/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 
 function SignInContent() {
-  const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams?.get('callbackUrl') ?? null;
+  const { user, loading } = useAuth();
+  const callbackUrl = searchParams?.get('callbackUrl') ?? '/dashboard';
 
   React.useEffect(() => {
     if (user && !loading) {
-      router.replace(callbackUrl || '/dashboard');
+      router.replace(callbackUrl);
     }
   }, [user, loading, router, callbackUrl]);
 
@@ -75,7 +75,7 @@ function SignInContent() {
             </p>
             <p className="text-sm text-red-500 italic">* For authorized users only</p>
           </div>
-          <SignInForm callbackUrl={callbackUrl || undefined} />
+          <SignInForm callbackUrl={callbackUrl} />
           <p className="px-8 text-center text-sm text-muted-foreground">
             By clicking continue, you agree to our{' '}
             <a href="/terms" className="underline underline-offset-4 hover:text-primary">

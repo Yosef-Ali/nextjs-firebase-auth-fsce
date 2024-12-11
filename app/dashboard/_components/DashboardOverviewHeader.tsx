@@ -31,8 +31,8 @@ interface QuickAction {
 }
 
 const DashboardOverviewHeader = () => {
-  const { user, signOut } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const { user, userData, signOut } = useAuth();
+  const isAdmin = userData?.role === 'admin';
 
   const quickActions: QuickAction[] = [
     { icon: <FileText className="h-4 w-4" />, label: 'New Post', href: '/dashboard/posts/new' },
@@ -62,7 +62,7 @@ const DashboardOverviewHeader = () => {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
-            Welcome back, {user?.displayName || 'User'}
+            Welcome back, {userData?.displayName || 'User'}
           </h1>
           <p className="text-muted-foreground">
             Here's what's happening with your {isAdmin ? 'system' : 'account'}
@@ -106,8 +106,8 @@ const DashboardOverviewHeader = () => {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>
                 <div className="flex flex-col">
-                  <span>{user?.displayName}</span>
-                  <span className="text-xs text-muted-foreground">{user?.email}</span>
+                  <span>{userData?.displayName}</span>
+                  <span className="text-xs text-muted-foreground">{userData?.email}</span>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

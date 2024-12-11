@@ -73,16 +73,17 @@ function UsersPage() {
   const [existingUser, setExistingUser] = useState<{ email: string; role: UserRole } | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user: authUser, loading: authLoading } = useAuth() as { user: User | null; loading: boolean; };
   
   const authorization = Authorization.getInstance();
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
+    if (!authUser?.role || authUser.role !== UserRole.ADMIN) {
+      return;
+    }
+
     try {
       setIsLoading(true);
-      // First, update user roles based on admin emails
-      await usersService.updateUserRoleBasedOnAdminEmails();
-      
       const fetchedUsers = await usersService.getAllUsers();
       setUsers(fetchedUsers);
     } catch (error) {
@@ -95,17 +96,33 @@ function UsersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [authUser?.role]);
 
   useEffect(() => {
-    // Only allow admin to view all users
-    if (authorization.isAdmin(user)) {
+    if (!authLoading && authUser?.role === UserRole.ADMIN) {
       fetchUsers();
     }
-  }, [user]);
+  }, [authLoading, authUser?.role, fetchUsers]);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (!authUser?.role || authUser.role !== UserRole.ADMIN) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+        <p className="text-gray-600">You do not have permission to view this page.</p>
+      </div>
+    );
+  }
 
   const handleSetRole = async (userId: string, role: UserRole) => {
-    if (!user || !authorization.isAdmin(user)) {
+    if (!authUser || !authorization.isAdmin(authUser)) {
       toast({
         title: 'Access Denied',
         description: 'Only administrators can manage user roles',
@@ -153,7 +170,7 @@ function UsersPage() {
   };
 
   const handleResetPassword = async (email: string) => {
-    if (!user || !authorization.isAdmin(user)) {
+    if (!authUser || !authorization.isAdmin(authUser)) {
       toast({
         title: 'Access Denied',
         description: 'Only administrators can reset passwords',
@@ -298,15 +315,6 @@ function UsersPage() {
     }
   };
 
-  // Only show the management interface to admins
-  if (!user || !authorization.isAdmin(user)) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        <p className="text-lg">Access Denied: Only administrators can manage users</p>
-      </div>
-    );
-  }
-
   if (isLoading) {
     return <div>Loading users...</div>;
   }
@@ -419,7 +427,7 @@ function UsersPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>User Actions</DropdownMenuLabel>
                         
-                        {authorization.isAdmin(user) && (
+                        {authorization.isAdmin(authUser) && (
                           <>
                             <DropdownMenuSub>
                               <DropdownMenuSubTrigger>
@@ -476,14 +484,14 @@ function UsersPage() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Confirm Delete User</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete {userToDelete}? This action cannot be undone.
+              <div className="text-sm text-muted-foreground">
+                <div>Are you sure you want to delete {userToDelete}? This action cannot be undone.</div>
                 {userToDelete === auth.currentUser?.email && (
-                  <p className="mt-2 text-red-500">
+                  <div className="mt-2 text-red-500">
                     Warning: You are about to delete your own account. You will be logged out.
-                  </p>
+                  </div>
                 )}
-              </DialogDescription>
+              </div>
             </DialogHeader>
             <DialogFooter>
               <Button

@@ -27,7 +27,10 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
         throw new Error('Please enter both email and password');
       }
 
-      await signIn(email, password);
+      const user = await signIn(email, password);
+      if (!user) {
+        throw new Error('Sign in failed');
+      }
     } catch (error: any) {
       console.error('Sign in error:', error);
       toast({
@@ -43,10 +46,9 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
-      const { error } = await signInWithGoogle();
-      
-      if (error) {
-        throw error;
+      const user = await signInWithGoogle();
+      if (user === null || user === undefined) {
+        throw new Error('User sign-in failed');
       }
     } catch (error: any) {
       console.error('Google sign in error:', error);

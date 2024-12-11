@@ -27,19 +27,6 @@ export default function SignUpForm({ callbackUrl }: SignUpFormProps) {
   const router = useRouter();
   const { toast } = useToast();
 
-  const convertToUser = (metadata: any): any => {
-    return {
-      metadata: {
-        creationTime: metadata.creationTime,
-        lastSignInTime: metadata.lastSignInTime,
-        lastRefreshTime: metadata.lastRefreshTime,
-      },
-      providerData: [],
-      refreshToken: '',
-      tenantId: '',
-    };
-  };
-
   async function onSubmit(event: React.SyntheticEvent) {
     event.preventDefault();
     setIsLoading(true);
@@ -75,9 +62,9 @@ export default function SignUpForm({ callbackUrl }: SignUpFormProps) {
     }
 
     try {
-      const newUserMetadata = await signUp(email, password, displayName);
-      if (newUserMetadata) {
-        const user = convertToUser(newUserMetadata);
+      const { userCredential } = await signUp(email, password, displayName);
+      if (userCredential) {
+        const user = userCredential.user;
         await createUserData(user, displayName); 
         toast({
           title: "Account Created",
@@ -114,11 +101,9 @@ export default function SignUpForm({ callbackUrl }: SignUpFormProps) {
   const handleGoogleSignUp = async () => {
     try {
       setIsLoading(true);
-      await signInWithGoogle();
+      const { userCredential, userData } = await signInWithGoogle();
       
-      if (user) {
-        const userData = await createUserData(user, user.displayName || '');
-        
+      if (userCredential.user) {
         toast({
           title: "Success",
           description: "Successfully signed in with Google",

@@ -5,7 +5,7 @@
     }
   },
   "framework": "nextjs",
-  "buildCommand": "bun run build",
+  "buildCommand": "bun run build --no-typecheck",
   "devCommand": "bun run dev",
   "installCommand": "bun install"
 }

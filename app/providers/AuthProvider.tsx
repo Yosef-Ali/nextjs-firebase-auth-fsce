@@ -9,6 +9,7 @@ import {
   updateProfile,
   signOut as firebaseSignOut,
   User as FirebaseUser,
+  UserCredential,
   signInWithPopup
 } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -20,9 +21,9 @@ interface AuthContextType {
   userData: UserMetadata | null;
   loading: boolean;
   error: Error | null;
-  signInWithGoogle: () => Promise<{ user: UserMetadata | null; error: Error | null }>;
+  signInWithGoogle: () => Promise<{ userCredential: UserCredential; userData: UserMetadata }>;
   signIn: (email: string, password: string) => Promise<UserMetadata>;
-  signUp: (email: string, password: string, displayName: string) => Promise<UserMetadata>;
+  signUp: (email: string, password: string, displayName: string) => Promise<{ userCredential: UserCredential; userData: UserMetadata }>;
   signOut: () => Promise<void>;
 }
 
@@ -49,13 +50,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       status: userDoc?.status ?? UserStatus.ACTIVE,
       createdAt: userDoc?.createdAt ?? Date.now(),
       updatedAt: userDoc?.updatedAt ?? Date.now(),
-      invitedBy: userDoc?.invitedBy,
-      invitationToken: userDoc?.invitationToken,
+      invitedBy: userDoc?.invitedBy ?? null,
+      invitationToken: userDoc?.invitationToken ?? null,
       metadata: {
         lastLogin: Date.now(),
         createdAt: userDoc?.createdAt ?? Date.now()
       }
-    };
+    } as UserMetadata;
   };
 
   useEffect(() => {
@@ -64,10 +65,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (firebaseUser) {
           // Get or create user in our database
           const userDoc = await usersService.createUserIfNotExists(firebaseUser);
-          const userMetadata = mapUserToMetadata(firebaseUser, userDoc);
+          const userData = mapUserToMetadata(firebaseUser, userDoc);
           
           setUser(firebaseUser);
-          setUserData(userMetadata);
+          setUserData(userData);
         } else {
           setUser(null);
           setUserData(null);
@@ -87,11 +88,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const userDoc = await usersService.createUserIfNotExists(result.user);
-      const userMetadata = mapUserToMetadata(result.user, userDoc);
-      return { user: userMetadata, error: null };
+      const userData = mapUserToMetadata(result.user, userDoc);
+      return { userCredential: result, userData };
     } catch (error) {
       console.error('Error signing in with Google:', error);
-      return { user: null, error: error instanceof Error ? error : new Error('Google sign-in failed') };
+      return { userCredential: null, userData: null };
     }
   };
 
@@ -101,11 +102,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return mapUserToMetadata(result.user, userDoc);
   };
 
-  const signUp = async (email: string, password: string, displayName: string): Promise<UserMetadata> => {
+  const signUp = async (email: string, password: string, displayName: string): Promise<{ userCredential: UserCredential; userData: UserMetadata }> => {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(result.user, { displayName });
     const userDoc = await usersService.createUserIfNotExists(result.user);
-    return mapUserToMetadata(result.user, userDoc);
+    const userData = mapUserToMetadata(result.user, userDoc);
+    return { userCredential: result, userData };
   };
 
   const signOut = async () => {
