@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, FC } from 'react';
 import {
   Table,
   TableBody,
@@ -89,7 +89,11 @@ const convertToAppUser = (user: User): AppUser => {
   } as AppUser;
 };
 
-function UsersPage() {
+interface PageProps {
+  // Add any specific props if needed
+}
+
+const UsersPage: FC<PageProps> = () => {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
