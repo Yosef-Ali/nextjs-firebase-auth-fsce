@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { createUserData } from '@/app/lib/firebase/user-service';
+import { AppUser } from '@/app/types/user';  // Updated import if used
 
 interface SignUpFormProps {
   callbackUrl?: string | null
@@ -65,7 +66,7 @@ export default function SignUpForm({ callbackUrl }: SignUpFormProps) {
       const { userCredential } = await signUp(email, password, displayName);
       if (userCredential) {
         const user = userCredential.user;
-        await createUserData(user, displayName); 
+        await createUserData(user, displayName);
         toast({
           title: "Account Created",
           description: "Your account has been created successfully",
@@ -102,7 +103,7 @@ export default function SignUpForm({ callbackUrl }: SignUpFormProps) {
     try {
       setIsLoading(true);
       const { userCredential, userData } = await signInWithGoogle();
-      
+
       if (userCredential.user) {
         toast({
           title: "Success",

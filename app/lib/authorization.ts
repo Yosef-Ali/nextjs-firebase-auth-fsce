@@ -1,10 +1,11 @@
 import { User as FirebaseUser } from 'firebase/auth';
 import { User, UserRole, UserStatus } from '../types/user';
+import { AppUser, UserRole } from '@/app/types/user';  // Import AppUser
 
 // Define a constant for admin emails that can be easily updated
 const ADMIN_EMAILS = [
-  process.env.NEXT_PUBLIC_ADMIN_EMAIL, 
-  'dev.yosefali@gmail.com', 
+  process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+  'dev.yosefali@gmail.com',
   'yosefmdsc@gmail.com',
   'yaredd.degefu@gmail.com'
 ].filter(Boolean) as string[];
@@ -29,8 +30,12 @@ export class Authorization {
     return Authorization.instance;
   }
 
-  public isAdmin(user: any): boolean {
-    return user?.role === 'admin';
+  public isAdmin(user: AppUser | null): boolean {
+    return user?.role === UserRole.ADMIN;
+  }
+
+  public isAuthor(user: AppUser | null): boolean {
+    return user?.role === UserRole.AUTHOR;
   }
 
   // Get user role
@@ -38,12 +43,12 @@ export class Authorization {
   // @returns UserRole
   static getUserRole(user: FirebaseUser | null): UserRole {
     if (!user) return UserRole.USER;
-    
+
     // Check if user's email is in admin list
     if (user.email && ADMIN_EMAILS.includes(user.email)) {
       return UserRole.ADMIN;
     }
-    
+
     // Default to USER role
     return UserRole.USER;
   }
@@ -104,17 +109,17 @@ export class Authorization {
   // @returns Boolean indicating admin status
   static isAdmin(user: User | any | null): boolean {
     if (!user) return false;
-    
+
     // Check if user's email is in the admin list first
     if (user.email && ADMIN_EMAILS.includes(user.email)) {
       return true;
     }
-    
+
     // Then check if user has admin role in their data (if it's our custom User type)
     if ('role' in user && user.role === UserRole.ADMIN) {
       return true;
     }
-    
+
     return false;
   }
 

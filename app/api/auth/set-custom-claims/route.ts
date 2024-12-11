@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/firebase/firebase-admin';
+
 import { UserRole } from '@/app/types/user';
+import { adminAuth } from '@/app/lib/services/admin';
 
 export async function POST(request: Request) {
   try {
@@ -15,8 +16,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     }
 
-    // Set custom claims
-    await auth.setCustomUserClaims(uid, claims);
+    // Set custom claims using adminAuth instead of auth
+    await adminAuth.setCustomUserClaims(uid, claims);
 
     return NextResponse.json({ success: true });
   } catch (error) {

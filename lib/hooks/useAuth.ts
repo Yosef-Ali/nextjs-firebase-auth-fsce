@@ -3,8 +3,8 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { auth } from '@/lib/auth';
 import { usersService } from '@/app/services/users';
-import { 
-  signInWithEmailAndPassword, 
+import {
+  signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User as FirebaseUser,
@@ -33,6 +33,7 @@ export function useAuth() {
       uid: firebaseUser.uid,
       email: firebaseUser.email,
       role: userDataResult.role,
+      status: userDataResult.status, // Add this line
       displayName: firebaseUser.displayName,
       photoURL: firebaseUser.photoURL,
       metadata: {
@@ -52,9 +53,9 @@ export function useAuth() {
               ...firebaseUser,
               role: userDataResult.role
             } as AuthUser;
-            
+
             const userMetadata = createUserMetadata(firebaseUser, userDataResult);
-            
+
             setUser(authUser);
             setUserData(userMetadata);
           } else {

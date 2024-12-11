@@ -21,6 +21,7 @@ export interface UserMetadata {
   uid: string;
   email: string | null;  // Changed to match FirebaseUser type
   role: UserRole;
+  status: UserStatus;  // Add this line
   displayName: string | null;
   photoURL: string | null;
   metadata: {
@@ -29,14 +30,11 @@ export interface UserMetadata {
   };
 }
 
-// Custom User type
-export interface User {
-  uid: string;
-  email: string | null;
+// Custom AppUser type
+export interface AppUser extends FirebaseUser {
+  // Add your custom properties here
   role: UserRole;
   status: UserStatus;
-  displayName: string | null;
-  photoURL: string | null;
   createdAt: number;
   updatedAt: number;
   invitedBy: string | null;
@@ -47,12 +45,12 @@ export interface User {
 }
 
 // Extended user interface that includes an id field
-export interface ExtendedUser extends User {
+export interface ExtendedAppUser extends AppUser {  // Updated to 'ExtendedAppUser'
   id: string;
 }
 
 // Interface for updating user data
-export interface UserUpdateData {
+export interface AppUserUpdateData {  // Updated to 'AppUserUpdateData'
   role?: UserRole;
   status?: UserStatus;
   email?: string;
@@ -63,8 +61,22 @@ export interface UserUpdateData {
 export interface UserDataResult {
   uid: string;
   role: UserRole;
+  status: UserStatus; // Add this line
   metadata?: {
     createdAt?: number;
     lastLogin?: number;
   };
 }
+
+const userMetadata: UserMetadata = {
+  uid: 'some-uid',
+  email: 'user@example.com',
+  role: UserRole.USER,
+  status: UserStatus.ACTIVE, // Add the status property
+  displayName: 'User Name',
+  photoURL: null,
+  metadata: {
+    lastLogin: Date.now(),
+    createdAt: Date.now(),
+  },
+};

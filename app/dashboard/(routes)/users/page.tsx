@@ -30,7 +30,7 @@ import { usersService } from '@/app/services/users';
 import { deleteUserService } from '@/app/services/deleteUser';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Authorization } from '@/lib/authorization';
-import { User, UserRole } from '@/app/types/user';
+import { AppUser, UserRole } from '@/app/types/user';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -64,7 +64,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { withRoleProtection } from '@/app/lib/with-role-protection';
 
 function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<AppUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.AUTHOR);
@@ -73,7 +73,7 @@ function UsersPage() {
   const [existingUser, setExistingUser] = useState<{ email: string; role: UserRole } | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
-  const { user: authUser, loading: authLoading, userData } = useAuth() as { user: User | null; loading: boolean; userData: any };
+  const { user: authUser, loading: authLoading, userData } = useAuth() as { user: AppUser | null; loading: boolean; userData: any };
 
   const authorization = Authorization.getInstance();
 
@@ -381,13 +381,13 @@ function UsersPage() {
                         <AvatarFallback>
                           {userData.displayName
                             ? userData.displayName.charAt(0).toUpperCase()
-                            : userData.email.charAt(0).toUpperCase()}
+                            : userData.email?.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <span>{userData.displayName || 'N/A'}</span>
                     </div>
                   </TableCell>
-                  <TableCell>{userData.email}</TableCell>
+                  <TableCell>{userData.email ?? 'Email not available'}</TableCell>
                   <TableCell>
                     <Badge
                       variant={
@@ -452,7 +452,7 @@ function UsersPage() {
                             <DropdownMenuSeparator />
 
                             <DropdownMenuItem
-                              onClick={() => operations.handleResetPassword(userData.email)}
+                              onClick={() => operations.handleResetPassword(userData.email ?? '')}
                             >
                               <Key className="mr-2 h-4 w-4" />
                               Reset Password
@@ -462,7 +462,7 @@ function UsersPage() {
 
                             <DropdownMenuItem
                               className="text-red-600"
-                              onClick={() => operations.handleDeleteUser(userData.email)}
+                              onClick={() => operations.handleDeleteUser(userData.email ?? '')}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete User
