@@ -1,6 +1,5 @@
 import { User as FirebaseUser } from 'firebase/auth';
-import { User, UserRole, UserStatus } from '../types/user';
-import { AppUser, UserRole } from '@/app/types/user';  // Import AppUser
+import { AppUser as AppUserType, UserRole as AppUserRole, UserStatus } from '@/app/types/user';  // Import AppUser
 
 // Define a constant for admin emails that can be easily updated
 const ADMIN_EMAILS = [
@@ -11,7 +10,7 @@ const ADMIN_EMAILS = [
 ].filter(Boolean) as string[];
 
 interface AuthorizationContext {
-  user: User | null;
+  user: AppUserType | null;
   resourceOwnerId?: string;
 }
 
@@ -30,27 +29,27 @@ export class Authorization {
     return Authorization.instance;
   }
 
-  public isAdmin(user: AppUser | null): boolean {
-    return user?.role === UserRole.ADMIN;
+  public isAdmin(user: AppUserType | null): boolean {
+    return user?.role === AppUserRole.ADMIN;
   }
 
-  public isAuthor(user: AppUser | null): boolean {
-    return user?.role === UserRole.AUTHOR;
+  public isAuthor(user: AppUserType | null): boolean {
+    return user?.role === AppUserRole.AUTHOR;
   }
 
   // Get user role
   // @param user User object
   // @returns UserRole
-  static getUserRole(user: FirebaseUser | null): UserRole {
-    if (!user) return UserRole.USER;
+  static getUserRole(user: FirebaseUser | null): AppUserRole {
+    if (!user) return AppUserRole.USER;
 
     // Check if user's email is in admin list
     if (user.email && ADMIN_EMAILS.includes(user.email)) {
-      return UserRole.ADMIN;
+      return AppUserRole.ADMIN;
     }
 
     // Default to USER role
-    return UserRole.USER;
+    return AppUserRole.USER;
   }
 
   // Create authorization context
@@ -67,7 +66,7 @@ export class Authorization {
       updatedAt: Date.now(),
       invitedBy: null,
       invitationToken: null,
-    } as User : null;
+    } as AppUserType : null;
 
     return {
       user: customUser,
@@ -79,7 +78,7 @@ export class Authorization {
   // @param context Authorization context
   // @param requiredRole Minimum role required
   // @returns Boolean indicating access permission
-  static canAccess(userOrContext: AuthorizationContext | any, requiredRole: string | UserRole = UserRole.USER): boolean {
+  static canAccess(userOrContext: AuthorizationContext | AppUserType, requiredRole: AppUserRole = AppUserRole.USER): boolean {
     if (!userOrContext) return false;
 
     // Handle AuthorizationContext
@@ -91,13 +90,13 @@ export class Authorization {
 
     // Handle direct user object
     const roles: Record<string, number> = {
-      [UserRole.ADMIN]: 3,
-      [UserRole.AUTHOR]: 2,
-      [UserRole.USER]: 1,
+      [AppUserRole.ADMIN]: 3,
+      [AppUserRole.AUTHOR]: 2,
+      [AppUserRole.USER]: 1,
       guest: 0
     };
 
-    const userRole = userOrContext.role as UserRole;
+    const userRole = userOrContext.role as AppUserRole;
     const userRoleLevel = roles[userRole] || 0;
     const requiredRoleLevel = roles[requiredRole] || 0;
 
@@ -107,7 +106,7 @@ export class Authorization {
   // Check if the user is an admin
   // @param user User object
   // @returns Boolean indicating admin status
-  static isAdmin(user: User | any | null): boolean {
+  static isAdmin(user: AppUserType | null): boolean {
     if (!user) return false;
 
     // Check if user's email is in the admin list first
@@ -116,7 +115,7 @@ export class Authorization {
     }
 
     // Then check if user has admin role in their data (if it's our custom User type)
-    if ('role' in user && user.role === UserRole.ADMIN) {
+    if ('role' in user && user.role === AppUserRole.ADMIN) {
       return true;
     }
 
@@ -150,7 +149,7 @@ export class Authorization {
   // @param user User object
   // @returns Boolean indicating permission
   static canCreatePost(user: FirebaseUser | null): boolean {
-    const someValue = this.canAccess(this.createContext(user), UserRole.AUTHOR);
+    const someValue = this.canAccess(this.createContext(user), AppUserRole.AUTHOR);
     return someValue !== null && someValue !== undefined ? someValue : false;
   }
 
@@ -162,21 +161,21 @@ export class Authorization {
     const context = this.createContext(user, postAuthorId);
     // Ensure context is valid before proceeding
     if (!context || !context.user) return false;
-    return this.canAccess(context, UserRole.ADMIN) || false;
+    return this.canAccess(context, AppUserRole.ADMIN) || false;
   }
 
   // Check if a user can manage users
   // @param user User object
   // @returns Boolean indicating permission
   static canManageUsers(user: FirebaseUser | null): boolean {
-    return this.canAccess(this.createContext(user), UserRole.ADMIN);
+    return this.canAccess(this.createContext(user), AppUserRole.ADMIN);
   }
 
   // Check if a user can invite authors
   // @param user User object
   // @returns Boolean indicating permission
   static canInviteAuthors(user: FirebaseUser | null): boolean {
-    return this.canAccess(this.createContext(user), UserRole.ADMIN);
+    return this.canAccess(this.createContext(user), AppUserRole.ADMIN);
   }
 }
 
@@ -186,7 +185,7 @@ export class Authorization {
 // @throws Error if access is not permitted
 export function assertAuthorized(
   context: AuthorizationContext,
-  requiredRole: UserRole = UserRole.USER
+  requiredRole: AppUserRole = AppUserRole.USER
 ): void {
   if (!Authorization.canAccess(context, requiredRole)) {
     throw new Error('Unauthorized access');

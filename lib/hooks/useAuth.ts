@@ -1,4 +1,4 @@
-import { UserRole, UserMetadata, UserDataResult } from '@/app/types/user';
+import { UserRole as AppUserRole, UserMetadata, UserDataResult } from '@/app/types/user';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { auth } from '@/lib/auth';
@@ -15,7 +15,7 @@ import {
 } from 'firebase/auth';
 
 export interface AuthUser extends FirebaseUser {
-  role?: UserRole;
+  role?: AppUserRole;
 }
 
 export function useAuth() {
@@ -32,7 +32,7 @@ export function useAuth() {
     return {
       uid: firebaseUser.uid,
       email: firebaseUser.email,
-      role: userDataResult.role,
+      role: userDataResult.role as AppUserRole,
       status: userDataResult.status, // Add this line
       displayName: firebaseUser.displayName,
       photoURL: firebaseUser.photoURL,

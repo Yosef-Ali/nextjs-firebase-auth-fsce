@@ -30,7 +30,7 @@ import { usersService } from '@/app/services/users';
 import { deleteUserService } from '@/app/services/deleteUser';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Authorization } from '@/lib/authorization';
-import { AppUser, UserRole } from '@/app/types/user';
+import { AppUser, UserRole, User } from '@/app/types/user';  // Add User to the import
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -63,6 +63,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from "@/components/ui/skeleton";
 import { withRoleProtection } from '@/app/lib/with-role-protection';
 
+// Add this conversion function at the top level
+const convertToAppUser = (user: User): AppUser => {
+  return {
+    ...user,
+    emailVerified: false, // Default value
+    isAnonymous: false, // Default value
+    metadata: {
+      ...user.metadata,
+      creationTime: user.metadata.createdAt.toString(),
+      lastSignInTime: user.metadata.lastLogin.toString()
+    },
+    phoneNumber: null,
+    photoURL: user.photoURL,
+    providerData: [],
+    providerId: 'custom',
+    refreshToken: '',
+    tenantId: null,
+    uid: user.uid,
+    delete: async () => { throw new Error('Not implemented') },
+    getIdToken: async () => '',
+    getIdTokenResult: async () => ({ token: '', claims: {}, expirationTime: '', authTime: '', issuedAtTime: '', signInProvider: null, signInSecondFactor: null }),
+    reload: async () => { },
+    toJSON: () => ({ ...user }),
+  } as AppUser;
+};
+
 function UsersPage() {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -85,7 +111,9 @@ function UsersPage() {
     try {
       setIsLoading(true);
       const fetchedUsers = await usersService.getAllUsers();
-      setUsers(fetchedUsers);
+      // Convert User[] to AppUser[]
+      const appUsers = fetchedUsers.map(convertToAppUser);
+      setUsers(appUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({

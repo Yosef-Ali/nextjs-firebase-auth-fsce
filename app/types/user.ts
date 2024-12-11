@@ -68,6 +68,23 @@ export interface UserDataResult {
   };
 }
 
+export interface User {
+  uid: string;
+  email: string;
+  displayName: string | null;
+  photoURL: string | null;
+  role: UserRole;
+  status: UserStatus;
+  createdAt: number;
+  updatedAt: number;
+  invitedBy: string | null;
+  invitationToken: string | null;
+  metadata: {
+    lastLogin: number;
+    createdAt: number;
+  };
+}
+
 const userMetadata: UserMetadata = {
   uid: 'some-uid',
   email: 'user@example.com',
