@@ -196,7 +196,27 @@ class UsersService {
 
   async deleteUser(uid: string): Promise<void> {
     try {
-      await deleteDoc(this.getUserRef(uid));
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      
+      if (!currentUser) {
+        throw new Error('No authenticated user found');
+      }
+
+      try {
+        // Attempt to delete the user
+        await currentUser.delete();
+      } catch (error: any) {
+        if (error.code === 'auth/requires-recent-login') {
+          // Throw a specific error that can be handled by the UI
+          throw new Error('Please sign in again to delete your account for security purposes');
+        }
+        throw error;
+      }
+
+      // If successful, delete the user document from Firestore
+      const userRef = doc(this.usersRef, uid);
+      await deleteDoc(userRef);
     } catch (error) {
       console.error('Error deleting user:', error);
       throw error;

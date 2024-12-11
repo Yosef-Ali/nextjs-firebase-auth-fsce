@@ -27,6 +27,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<UserMetadata>;
   signUp: (email: string, password: string, displayName: string) => Promise<{ userCredential: UserCredential; userData: UserMetadata }>;
   signOut: () => Promise<void>;
+  reauthenticateWithPassword: (password: string) => Promise<UserCredential>;
 }
 
 const googleProvider = new GoogleAuthProvider();
@@ -147,6 +148,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const reauthenticateWithPassword = async (password: string) => {
+    if (!user?.email) {
+      throw new Error('No user email found');
+    }
+    
+    try {
+      const credential = await signInWithEmailAndPassword(auth, user.email, password);
+      return credential;
+    } catch (error) {
+      console.error('Reauthentication error:', error);
+      throw error;
+    }
+  };
+
   const contextValue: AuthContextType = {
     user,
     userData,
@@ -155,7 +170,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signInWithGoogle,
     signIn,
     signUp,
-    signOut
+    signOut,
+    reauthenticateWithPassword,
   };
 
   return (
