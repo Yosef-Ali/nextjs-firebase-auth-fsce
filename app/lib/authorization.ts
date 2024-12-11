@@ -1,5 +1,5 @@
-import { User } from 'firebase/auth';
-import { UserRole } from '../types/user';
+import { User as FirebaseUser } from 'firebase/auth';
+import { User, UserRole, UserStatus } from '../types/user';
 
 // Define a constant for admin emails that can be easily updated
 const ADMIN_EMAILS = [
@@ -16,55 +16,106 @@ interface AuthorizationContext {
 
 export class Authorization {
   private adminEmails: Set<string>;
+  private static instance: Authorization;
 
   constructor() {
     this.adminEmails = new Set(ADMIN_EMAILS);
+  }
+
+  public static getInstance(): Authorization {
+    if (!Authorization.instance) {
+      Authorization.instance = new Authorization();
+    }
+    return Authorization.instance;
+  }
+
+  public isAdmin(user: any): boolean {
+    return user?.role === 'admin';
+  }
+
+  // Get user role
+  // @param user User object
+  // @returns UserRole
+  static getUserRole(user: FirebaseUser | null): UserRole {
+    if (!user) return UserRole.USER;
+    
+    // Check if user's email is in admin list
+    if (user.email && ADMIN_EMAILS.includes(user.email)) {
+      return UserRole.ADMIN;
+    }
+    
+    // Default to USER role
+    return UserRole.USER;
+  }
+
+  // Create authorization context
+  // @param user User object
+  // @param resourceOwnerId Optional resource owner ID
+  // @returns AuthorizationContext
+  static createContext(user: FirebaseUser | null, resourceOwnerId?: string): AuthorizationContext {
+    // Convert FirebaseUser to our custom User type
+    const customUser = user ? {
+      ...user,
+      role: this.getUserRole(user),
+      status: UserStatus.ACTIVE,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      invitedBy: null,
+      invitationToken: null,
+    } as User : null;
+
+    return {
+      user: customUser,
+      resourceOwnerId
+    };
   }
 
   // Determine if a user has permission to access a resource
   // @param context Authorization context
   // @param requiredRole Minimum role required
   // @returns Boolean indicating access permission
-  static canAccess(context: AuthorizationContext, requiredRole: UserRole = UserRole.USER): boolean {
-    const { user } = context;
+  static canAccess(userOrContext: AuthorizationContext | any, requiredRole: string | UserRole = UserRole.USER): boolean {
+    if (!userOrContext) return false;
 
-    // No user means no access
-    if (!user) return false;
-
-    // Get the user's role
-    const userRole = this.getUserRole(user);
-
-    // Admin always has access
-    if (userRole === UserRole.ADMIN) return true;
-
-    // Check if user has required role
-    switch (requiredRole) {
-      case UserRole.AUTHOR:
-        return userRole === UserRole.AUTHOR;
-      case UserRole.EDITOR:
-        return userRole === UserRole.EDITOR;
-      case UserRole.USER:
-        return userRole === UserRole.USER;
-      default:
-        return false; // More restrictive default case
+    // Handle AuthorizationContext
+    if ('user' in userOrContext) {
+      const { user } = userOrContext;
+      if (!user) return false;
+      return this.canAccess(user, requiredRole);
     }
+
+    // Handle direct user object
+    const roles: Record<string, number> = {
+      [UserRole.ADMIN]: 3,
+      [UserRole.AUTHOR]: 2,
+      [UserRole.USER]: 1,
+      guest: 0
+    };
+
+    const userRole = userOrContext.role as UserRole;
+    const userRoleLevel = roles[userRole] || 0;
+    const requiredRoleLevel = roles[requiredRole] || 0;
+
+    return userRoleLevel >= requiredRoleLevel;
   }
 
   // Check if the user is an admin
   // @param user User object
   // @returns Boolean indicating admin status
-  static isAdmin(user: User | null): boolean {
-    if (!user || !user.email) return false;
-    return ADMIN_EMAILS.includes(user.email);
-  }
-
-  // Get user role
-  // @param user User object
-  // @returns UserRole
-  static getUserRole(user: User | null): UserRole {
-    if (!user) return UserRole.USER; // Default to USER role instead of GUEST
-    if (this.isAdmin(user)) return UserRole.ADMIN;
-    return UserRole.USER; // Default role for authenticated users
+  static isAdmin(user: User | any | null): boolean {
+    if (!user) return false;
+    
+    // Check if user's email is in the admin list first
+    if (user.email && ADMIN_EMAILS.includes(user.email)) {
+      return true;
+    }
+    
+    // Then check if user has admin role in their data (if it's our custom User type)
+    if ('role' in user && user.role === UserRole.ADMIN) {
+      return true;
+    }
+    
+    return false;
   }
 
   // Add an admin email to the list of admin emails
@@ -90,45 +141,19 @@ export class Authorization {
     return [...ADMIN_EMAILS];
   }
 
-  // Create an authorization context
-  // @param user User object
-  // @param resourceOwnerId Optional resource owner ID
-  // @returns AuthorizationContext
-  static createContext(user: User | null, resourceOwnerId?: string): AuthorizationContext {
-    // Ensure user is defined and return a valid context
-    if (!user) {
-      return { user: null, resourceOwnerId: undefined };
-    }
-    return { user, resourceOwnerId };
-  }
-
   // Check if a user can create a post
   // @param user User object
   // @returns Boolean indicating permission
-  static canCreatePost(user: User | null): boolean {
+  static canCreatePost(user: FirebaseUser | null): boolean {
     const someValue = this.canAccess(this.createContext(user), UserRole.AUTHOR);
     return someValue !== null && someValue !== undefined ? someValue : false;
-  }
-
-  // Check if a user can edit a post
-  // @param user User object
-  // @param postAuthorId Post author ID
-  // @returns Boolean indicating permission
-  static canEditPost(user: User | null, postAuthorId?: string): boolean {
-    const context = this.createContext(user, postAuthorId);
-    // Ensure context is valid before proceeding
-    if (!context || !context.user) return false;
-    return Boolean(
-      this.canAccess(context, UserRole.EDITOR) ||
-      (user && postAuthorId && user.uid === postAuthorId)
-    );
   }
 
   // Check if a user can delete a post
   // @param user User object
   // @param postAuthorId Post author ID
   // @returns Boolean indicating permission
-  static canDeletePost(user: User | null, postAuthorId?: string): boolean {
+  static canDeletePost(user: FirebaseUser | null, postAuthorId?: string): boolean {
     const context = this.createContext(user, postAuthorId);
     // Ensure context is valid before proceeding
     if (!context || !context.user) return false;
@@ -138,14 +163,14 @@ export class Authorization {
   // Check if a user can manage users
   // @param user User object
   // @returns Boolean indicating permission
-  static canManageUsers(user: User | null): boolean {
+  static canManageUsers(user: FirebaseUser | null): boolean {
     return this.canAccess(this.createContext(user), UserRole.ADMIN);
   }
 
   // Check if a user can invite authors
   // @param user User object
   // @returns Boolean indicating permission
-  static canInviteAuthors(user: User | null): boolean {
+  static canInviteAuthors(user: FirebaseUser | null): boolean {
     return this.canAccess(this.createContext(user), UserRole.ADMIN);
   }
 }

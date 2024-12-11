@@ -3,10 +3,9 @@ import { User as FirebaseUser } from 'firebase/auth';
 
 // Enum for user roles
 export enum UserRole {
-  ADMIN = 'admin',
-  AUTHOR = 'author',
-  EDITOR = 'editor',
   USER = 'user',
+  AUTHOR = 'author',
+  ADMIN = 'admin'
 }
 
 export enum UserStatus {
@@ -17,55 +16,34 @@ export enum UserStatus {
   INVITED = 'invited'
 }
 
-// Custom User type that extends Firebase User
-export interface User extends FirebaseUser {
-  role: UserRole;
-  email: string;
-  displayName: string | null;
-  photoURL: string | null;
-  createdAt: number;
-  updatedAt: number;
-  status: UserStatus;
-  invitedBy: string | null;
-  invitationToken: string | null;
-  emailVerified: boolean;
-  isAnonymous: boolean;
-  providerData: {
-    providerId: string;
-    uid: string;
-    displayName: string | null;
-    email: string | null;
-    photoURL: string | null;
-    phoneNumber: string | null;
-  }[];
-}
-
-// Extended user interface that includes Firebase auth fields
+// Base interface for user metadata
 export interface UserMetadata {
-  uid: string;  // Keep uid as the primary identifier
+  uid: string;
+  email: string | null;  // Changed to match FirebaseUser type
   role: UserRole;
-  email: string;
   displayName: string | null;
   photoURL: string | null;
-  createdAt: number;
-  updatedAt: number;
-  status: UserStatus;
-  invitedBy: string | null;
-  invitationToken: string | null;
-  emailVerified: boolean;
-  isAnonymous: boolean;
-  providerData?: {
-    providerId: string;
-    uid: string;
-    displayName: string | null;
-    email: string | null;
-    photoURL: string | null;
-    phoneNumber: string | null;
-  }[];
   metadata: {
     lastLogin: number;
     createdAt: number;
   };
+}
+
+// Custom User type
+export interface User {
+  uid: string;
+  email: string | null;
+  role: UserRole;
+  status: UserStatus;
+  displayName: string | null;
+  photoURL: string | null;
+  createdAt: number;
+  updatedAt: number;
+  invitedBy: string | null;
+  invitationToken: string | null;
+  emailVerified: boolean;
+  isAnonymous: boolean;
+  providerData: any[];
 }
 
 // Extended user interface that includes an id field
@@ -80,4 +58,13 @@ export interface UserUpdateData {
   email?: string;
   displayName?: string;
   photoURL?: string;
+}
+
+export interface UserDataResult {
+  uid: string;
+  role: UserRole;
+  metadata?: {
+    createdAt?: number;
+    lastLogin?: number;
+  };
 }

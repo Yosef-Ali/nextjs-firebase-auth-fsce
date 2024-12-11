@@ -1,4 +1,4 @@
-import { UserRole, UserMetadata } from '@/app/types/user';
+import { UserRole, UserMetadata, UserDataResult } from '@/app/types/user';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { auth } from '@/lib/auth';
@@ -14,20 +14,53 @@ import {
   UserCredential
 } from 'firebase/auth';
 
+export interface AuthUser extends FirebaseUser {
+  role?: UserRole;
+}
+
 export function useAuth() {
-  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [userData, setUserData] = useState<UserMetadata | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  const createUserMetadata = (
+    firebaseUser: FirebaseUser,
+    userDataResult: UserDataResult
+  ): UserMetadata => {
+    const now = Date.now();
+    return {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email,
+      role: userDataResult.role,
+      displayName: firebaseUser.displayName,
+      photoURL: firebaseUser.photoURL,
+      metadata: {
+        lastLogin: userDataResult.metadata?.lastLogin ?? now,
+        createdAt: userDataResult.metadata?.createdAt ?? now
+      }
+    };
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (firebaseUser) {
-          // Get or create user in our database
           const userDataResult = await usersService.createUserIfNotExists(firebaseUser);
-          setUser(firebaseUser);
-          setUserData(userDataResult);
+          if (userDataResult) {
+            const authUser = {
+              ...firebaseUser,
+              role: userDataResult.role
+            } as AuthUser;
+            
+            const userMetadata = createUserMetadata(firebaseUser, userDataResult);
+            
+            setUser(authUser);
+            setUserData(userMetadata);
+          } else {
+            setUser(null);
+            setUserData(null);
+          }
         } else {
           setUser(null);
           setUserData(null);
@@ -44,11 +77,14 @@ export function useAuth() {
     return () => unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<UserMetadata> => {
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       const userDataResult = await usersService.createUserIfNotExists(result.user);
-      return userDataResult;
+      if (!userDataResult) {
+        throw new Error('Failed to create or fetch user data');
+      }
+      return createUserMetadata(result.user, userDataResult);
     } catch (error) {
       console.error('Error signing in:', error);
       throw error;
@@ -59,18 +95,25 @@ export function useAuth() {
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       const userDataResult = await usersService.createUserIfNotExists(result.user);
-      return { userCredential: result, userData: userDataResult };
+      if (!userDataResult) {
+        throw new Error('Failed to create user data');
+      }
+      const metadata = createUserMetadata(result.user, userDataResult);
+      return { userCredential: result, userData: metadata };
     } catch (error) {
       console.error('Error signing up:', error);
       throw error;
     }
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (): Promise<{ userCredential: UserCredential, userData: UserMetadata }> => {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
       const userDataResult = await usersService.createUserIfNotExists(result.user);
+      if (!userDataResult) {
+        throw new Error('Failed to create or fetch user data');
+      }
       return { userCredential: result, userData: userDataResult };
     } catch (error) {
       console.error('Error signing in with Google:', error);

@@ -30,22 +30,55 @@ class UsersService {
   }
 
   private createUserObject(uid: string, data: Partial<User>): User {
-    return {
-      uid,
-      email: data.email ?? '',
-      role: data.role ?? UserRole.USER,
-      displayName: data.displayName,
-      photoURL: data.photoURL,
-      createdAt: data.createdAt ?? Date.now(),
-      updatedAt: data.updatedAt ?? Date.now(),
-      status: data.status ?? UserStatus.ACTIVE,
-      invitedBy: data.invitedBy,
-      invitationToken: data.invitationToken
-    };
+    return { 
+      uid, 
+      email: data.email ?? null, 
+      role: data.role ?? UserRole.USER, 
+      displayName: data.displayName ?? null, 
+      photoURL: data.photoURL ?? null, 
+      createdAt: data.createdAt ?? Date.now(), 
+      updatedAt: data.updatedAt ?? Date.now(), 
+      status: data.status ?? UserStatus.ACTIVE, 
+      invitedBy: data.invitedBy ?? null, 
+      invitationToken: data.invitationToken ?? null, 
+      emailVerified: false, 
+      isAnonymous: false, 
+      providerData: [], 
+      getIdToken: async () => 'mocked_token', 
+      getIdTokenResult: async () => ({ token: 'mocked_token' }), 
+      reload: async () => {}, 
+      toJSON: () => ({ uid, email: data.email ?? null }),
+      metadata: {}, 
+      refreshToken: '', 
+      tenantId: '', 
+      delete: async () => {}, 
+    } as User;
   }
 
   private getUserRef(uid: string): DocumentReference {
     return doc(this.usersRef, uid);
+  }
+
+  private async setCustomClaims(uid: string, claims: { role: UserRole }): Promise<void> {
+    try {
+      const auth = getAuth();
+      // We need to use the Admin SDK to set custom claims
+      // This should be done through an API endpoint that uses Firebase Admin SDK
+      const response = await fetch('/api/auth/set-custom-claims', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ uid, claims }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to set custom claims');
+      }
+    } catch (error) {
+      console.error('Error setting custom claims:', error);
+      throw error;
+    }
   }
 
   async createUserIfNotExists(firebaseUser: FirebaseUser): Promise<User | null> {
@@ -55,17 +88,22 @@ class UsersService {
       const existingUser = await this.getUser(uid);
       if (existingUser) return existingUser;
       
+      const role = UserRole.USER;
       const userData: Partial<User> = {
         email: email ?? '',
         displayName: displayName ?? undefined,
         photoURL: photoURL ?? undefined,
-        role: UserRole.USER,
+        role,
         status: UserStatus.ACTIVE,
         createdAt: Date.now(),
         updatedAt: Date.now()
       };
 
-      await this.createOrUpdateUser(uid, userData);
+      await Promise.all([
+        this.createOrUpdateUser(uid, userData),
+        this.setCustomClaims(uid, { role })
+      ]);
+
       return this.createUserObject(uid, userData);
     } catch (error) {
       console.error('Error in createUserIfNotExists:', error);
@@ -124,11 +162,15 @@ class UsersService {
 
   async updateUserRole(uid: string, role: UserRole): Promise<void> {
     try {
-      const userRef = this.getUserRef(uid);
-      await updateDoc(userRef, {
-        role,
-        updatedAt: Date.now()
-      });
+      const userRef = doc(this.usersRef, uid);
+      
+      await Promise.all([
+        updateDoc(userRef, { 
+          role,
+          updatedAt: Date.now()
+        }),
+        this.setCustomClaims(uid, { role })
+      ]);
     } catch (error) {
       console.error('Error updating user role:', error);
       throw error;
@@ -249,7 +291,7 @@ class UsersService {
       ].filter(Boolean);
 
       for (const user of users) {
-        if (adminEmails.includes(user.email)) {
+        if (user.email && adminEmails.includes(user.email)) {
           await this.updateUserRole(user.uid, UserRole.ADMIN); // Update role to ADMIN
         }
       }

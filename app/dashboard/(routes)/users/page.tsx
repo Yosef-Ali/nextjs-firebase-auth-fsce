@@ -1,29 +1,29 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
   DialogDescription,
-  DialogFooter 
+  DialogFooter
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Avatar, 
-  AvatarFallback, 
-  AvatarImage 
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage
 } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { usersService } from '@/app/services/users';
@@ -32,10 +32,10 @@ import { useAuth } from '@/lib/hooks/useAuth';
 import { Authorization } from '@/lib/authorization';
 import { User, UserRole } from '@/app/types/user';
 import { Button } from '@/components/ui/button';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
@@ -43,14 +43,14 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger
 } from '@/components/ui/dropdown-menu';
-import { 
-  MoreHorizontal, 
-  Edit, 
-  Trash2, 
-  Lock, 
-  Unlock, 
-  ShieldCheck, 
-  ShieldOff, 
+import {
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Lock,
+  Unlock,
+  ShieldCheck,
+  ShieldOff,
   Key,
   UserPlus,
   ChevronDown,
@@ -73,8 +73,8 @@ function UsersPage() {
   const [existingUser, setExistingUser] = useState<{ email: string; role: UserRole } | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
-  const { user: authUser, loading: authLoading } = useAuth() as { user: User | null; loading: boolean; };
-  
+  const { user: authUser, loading: authLoading, userData } = useAuth() as { user: User | null; loading: boolean; userData: any };
+
   const authorization = Authorization.getInstance();
 
   const fetchUsers = useCallback(async () => {
@@ -99,10 +99,18 @@ function UsersPage() {
   }, [authUser?.role]);
 
   useEffect(() => {
-    if (!authLoading && authUser?.role === UserRole.ADMIN) {
-      fetchUsers();
+    if (!authLoading && authUser) {
+      if (authUser.role === UserRole.ADMIN) {
+        fetchUsers();
+      }
     }
-  }, [authLoading, authUser?.role, fetchUsers]);
+  }, [authLoading, authUser, fetchUsers]);
+
+  useEffect(() => {
+    console.log('Auth User:', authUser);
+    console.log('User Data:', userData);
+    console.log('Loading:', authLoading);
+  }, [authUser, userData, authLoading]);
 
   if (authLoading) {
     return (
@@ -112,92 +120,128 @@ function UsersPage() {
     );
   }
 
-  if (!authUser?.role || authUser.role !== UserRole.ADMIN) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-        <p className="text-gray-600">You do not have permission to view this page.</p>
-      </div>
-    );
-  }
-
-  const handleSetRole = async (userId: string, role: UserRole) => {
-    if (!authUser || !authorization.isAdmin(authUser)) {
-      toast({
-        title: 'Access Denied',
-        description: 'Only administrators can manage user roles',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      // Get the user's email first
-      const targetUser = users.find(u => u.uid === userId);
-      if (!targetUser) {
+  const operations = {
+    handleInviteUser: async () => {
+      if (!email || !selectedRole) {
         toast({
           title: 'Error',
-          description: 'User not found',
+          description: 'Please provide both email and role',
           variant: 'destructive',
         });
         return;
       }
 
-      // Update the role using the correct method signature
       try {
-        await usersService.updateUserRole(userId, role);
-        toast({
-          title: 'Success',
-          description: `User role updated to ${role}`,
-        });
-        // Refresh the users list
-        fetchUsers();
+        setIsInviting(true);
+        console.log('Inviting user with email:', email, 'and role:', selectedRole);
+
+        const result = await usersService.inviteUser(
+          'dev.yosefali@gmail.com',
+          email.trim(),
+          userRoleToString(selectedRole)
+        );
+
+        if (result.success) {
+          toast({
+            title: 'Success',
+            description: `User invited successfully as ${selectedRole}`,
+          });
+          handleCloseDialog();
+          fetchUsers();
+        } else if (result.existingUser) {
+          toast({
+            title: 'User Exists',
+            description: `User already exists with role: ${result.existingUser.role}`,
+            variant: 'destructive',
+          });
+        }
       } catch (error) {
+        console.error('Error inviting user:', error);
+        toast({
+          title: 'Error',
+          description: 'An error occurred while inviting the user',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsInviting(false);
+      }
+    },
+    handleSetRole: async (userId: string, role: UserRole) => {
+      if (!authUser || !authorization.isAdmin(authUser)) {
+        toast({
+          title: 'Access Denied',
+          description: 'Only administrators can manage user roles',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      try {
+        // Get the user's email first
+        const targetUser = users.find(u => u.uid === userId);
+        if (!targetUser) {
+          toast({
+            title: 'Error',
+            description: 'User not found',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        // Update the role using the correct method signature
+        try {
+          await usersService.updateUserRole(userId, role);
+          toast({
+            title: 'Success',
+            description: `User role updated to ${role}`,
+          });
+          // Refresh the users list
+          fetchUsers();
+        } catch (error) {
+          toast({
+            title: 'Error',
+            description: 'Failed to update user role',
+            variant: 'destructive',
+          });
+        }
+      } catch (error) {
+        console.error('Error updating role:', error);
         toast({
           title: 'Error',
           description: 'Failed to update user role',
           variant: 'destructive',
         });
       }
-    } catch (error) {
-      console.error('Error updating role:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update user role',
-        variant: 'destructive',
-      });
-    }
-  };
+    },
+    handleDeleteUser: async (email: string) => {
+      setUserToDelete(email);
+      setDeleteDialogOpen(true);
+    },
+    handleResetPassword: async (email: string) => {
+      if (!authUser || !authorization.isAdmin(authUser)) {
+        toast({
+          title: 'Access Denied',
+          description: 'Only administrators can reset passwords',
+          variant: 'destructive',
+        });
+        return;
+      }
 
-  const handleResetPassword = async (email: string) => {
-    if (!authUser || !authorization.isAdmin(authUser)) {
-      toast({
-        title: 'Access Denied',
-        description: 'Only administrators can reset passwords',
-        variant: 'destructive',
-      });
-      return;
+      try {
+        await usersService.resetUserPassword(email);
+        toast({
+          title: 'Success',
+          description: 'Password reset link sent',
+        });
+      } catch (error) {
+        console.error('Error resetting password:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to reset password',
+          variant: 'destructive',
+        });
+      }
     }
-
-    try {
-      await usersService.resetUserPassword(email);
-      toast({
-        title: 'Success',
-        description: 'Password reset link sent',
-      });
-    } catch (error) {
-      console.error('Error resetting password:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to reset password',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleDeleteUser = async (email: string) => {
-    setUserToDelete(email);
-    setDeleteDialogOpen(true);
   };
 
   const confirmDelete = async () => {
@@ -209,7 +253,7 @@ function UsersPage() {
       const isCurrentUser = currentUser?.email === userToDelete;
 
       const success = await deleteUserService.deleteUserCompletely(userToDelete);
-      
+
       if (success) {
         if (isCurrentUser) {
           toast({
@@ -269,52 +313,6 @@ function UsersPage() {
     }
   };
 
-  const handleInviteUser = async () => {
-    if (!email || !selectedRole) {
-      toast({
-        title: 'Error',
-        description: 'Please provide both email and role',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      setIsInviting(true);
-      console.log('Inviting user with email:', email, 'and role:', selectedRole);
-      
-      const result = await usersService.inviteUser(
-        'dev.yosefali@gmail.com',
-        email.trim(),
-        userRoleToString(selectedRole)
-      );
-
-      if (result.success) {
-        toast({
-          title: 'Success',
-          description: `User invited successfully as ${selectedRole}`,
-        });
-        handleCloseDialog();
-        fetchUsers();
-      } else if (result.existingUser) {
-        toast({
-          title: 'User Exists',
-          description: `User already exists with role: ${result.existingUser.role}`,
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      console.error('Error inviting user:', error);
-      toast({
-        title: 'Error',
-        description: 'An error occurred while inviting the user',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsInviting(false);
-    }
-  };
-
   if (isLoading) {
     return <div>Loading users...</div>;
   }
@@ -328,7 +326,7 @@ function UsersPage() {
             <UserPlus className="mr-2 h-4 w-4" /> Invite User
           </Button>
         </div>
-        
+
         <Table>
           <TableHeader>
             <TableRow>
@@ -376,13 +374,13 @@ function UsersPage() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar>
-                        <AvatarImage 
-                          src={userData.photoURL || '/default-avatar.png'} 
-                          alt={userData.displayName || 'User Avatar'} 
+                        <AvatarImage
+                          src={userData.photoURL || '/default-avatar.png'}
+                          alt={userData.displayName || 'User Avatar'}
                         />
                         <AvatarFallback>
-                          {userData.displayName 
-                            ? userData.displayName.charAt(0).toUpperCase() 
+                          {userData.displayName
+                            ? userData.displayName.charAt(0).toUpperCase()
                             : userData.email.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
@@ -391,11 +389,11 @@ function UsersPage() {
                   </TableCell>
                   <TableCell>{userData.email}</TableCell>
                   <TableCell>
-                    <Badge 
+                    <Badge
                       variant={
-                        userData.role === UserRole.ADMIN 
-                          ? 'default' 
-                          : userData.role === UserRole.AUTHOR 
+                        userData.role === UserRole.ADMIN
+                          ? 'default'
+                          : userData.role === UserRole.AUTHOR
                             ? 'secondary'
                             : 'outline'
                       }
@@ -404,11 +402,11 @@ function UsersPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge 
+                    <Badge
                       variant={
-                        userData.role === UserRole.ADMIN 
-                          ? 'default' 
-                          : userData.role === UserRole.AUTHOR 
+                        userData.role === UserRole.ADMIN
+                          ? 'default'
+                          : userData.role === UserRole.AUTHOR
                             ? 'secondary'
                             : 'outline'
                       }
@@ -426,7 +424,7 @@ function UsersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>User Actions</DropdownMenuLabel>
-                        
+
                         {authorization.isAdmin(authUser) && (
                           <>
                             <DropdownMenuSub>
@@ -436,14 +434,14 @@ function UsersPage() {
                               </DropdownMenuSubTrigger>
                               <DropdownMenuSubContent>
                                 {userData.role !== UserRole.AUTHOR && (
-                                  <DropdownMenuItem onClick={() => handleSetRole(userData.uid, UserRole.AUTHOR)}>
-                                      <ShieldCheck className="mr-2 h-4 w-4" /> 
-                                      Make Author
+                                  <DropdownMenuItem onClick={() => operations.handleSetRole(userData.uid, UserRole.AUTHOR)}>
+                                    <ShieldCheck className="mr-2 h-4 w-4" />
+                                    Make Author
                                   </DropdownMenuItem>
                                 )}
                                 {userData.role !== UserRole.ADMIN && (
-                                  <DropdownMenuItem onClick={() => handleSetRole(userData.uid, UserRole.ADMIN)}>
-                                  
+                                  <DropdownMenuItem onClick={() => operations.handleSetRole(userData.uid, UserRole.ADMIN)}>
+
                                     <ShieldCheck className="mr-2 h-4 w-4" />
                                     Make Admin
                                   </DropdownMenuItem>
@@ -453,8 +451,8 @@ function UsersPage() {
 
                             <DropdownMenuSeparator />
 
-                            <DropdownMenuItem 
-                              onClick={() => handleResetPassword(userData.email)}
+                            <DropdownMenuItem
+                              onClick={() => operations.handleResetPassword(userData.email)}
                             >
                               <Key className="mr-2 h-4 w-4" />
                               Reset Password
@@ -462,9 +460,9 @@ function UsersPage() {
 
                             <DropdownMenuSeparator />
 
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               className="text-red-600"
-                              onClick={() => handleDeleteUser(userData.email)}
+                              onClick={() => operations.handleDeleteUser(userData.email)}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete User
@@ -571,7 +569,7 @@ function UsersPage() {
                 Cancel
               </Button>
               <Button
-                onClick={handleInviteUser}
+                onClick={operations.handleInviteUser}
                 disabled={!email || isInviting}
               >
                 {isInviting ? (
@@ -591,4 +589,5 @@ function UsersPage() {
   );
 }
 
-export default withRoleProtection(UsersPage, 'admin');
+// Make sure to specify UserRole.ADMIN as a string
+export default withRoleProtection(UsersPage, UserRole.ADMIN);
