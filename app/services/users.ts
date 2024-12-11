@@ -1,5 +1,5 @@
 import { db } from '../lib/firebase/firebase-config';
-import { User, UserRole, UserStatus, UserUpdateData } from '../types/user';
+import { User, UserRole, UserStatus, AppUserUpdateData } from '../types/user';
 import { emailService } from './email';
 import {
   collection,
@@ -30,28 +30,32 @@ class UsersService {
   }
 
   private createUserObject(uid: string, data: Partial<User>): User {
-    return { 
-      uid, 
-      email: data.email ?? null, 
-      role: data.role ?? UserRole.USER, 
-      displayName: data.displayName ?? null, 
-      photoURL: data.photoURL ?? null, 
-      createdAt: data.createdAt ?? Date.now(), 
-      updatedAt: data.updatedAt ?? Date.now(), 
-      status: data.status ?? UserStatus.ACTIVE, 
-      invitedBy: data.invitedBy ?? null, 
-      invitationToken: data.invitationToken ?? null, 
-      emailVerified: false, 
-      isAnonymous: false, 
-      providerData: [], 
-      getIdToken: async () => 'mocked_token', 
-      getIdTokenResult: async () => ({ token: 'mocked_token' }), 
-      reload: async () => {}, 
+    const now = Date.now();
+    return {
+      uid,
+      email: data.email ?? null,
+      role: data.role ?? UserRole.USER,
+      displayName: data.displayName ?? null,
+      photoURL: data.photoURL ?? null,
+      createdAt: data.createdAt ?? now,
+      updatedAt: data.updatedAt ?? now,
+      status: data.status ?? UserStatus.ACTIVE,
+      invitedBy: data.invitedBy ?? null,
+      invitationToken: data.invitationToken ?? null,
+      emailVerified: false,
+      isAnonymous: false,
+      providerData: [],
+      metadata: {
+        createdAt: data.createdAt ?? now,
+        lastLogin: data.metadata?.lastLogin ?? now
+      },
+      getIdToken: async () => 'mocked_token',
+      getIdTokenResult: async () => ({ token: 'mocked_token' }),
+      reload: async () => { },
       toJSON: () => ({ uid, email: data.email ?? null }),
-      metadata: {}, 
-      refreshToken: '', 
-      tenantId: '', 
-      delete: async () => {}, 
+      refreshToken: '',
+      tenantId: '',
+      delete: async () => { },
     } as User;
   }
 
@@ -84,10 +88,10 @@ class UsersService {
   async createUserIfNotExists(firebaseUser: FirebaseUser): Promise<User | null> {
     try {
       const { uid, email, displayName, photoURL } = firebaseUser;
-      
+
       const existingUser = await this.getUser(uid);
       if (existingUser) return existingUser;
-      
+
       const role = UserRole.USER;
       const userData: Partial<User> = {
         email: email ?? '',
@@ -115,7 +119,7 @@ class UsersService {
     try {
       const userDoc = await getDoc(this.getUserRef(uid));
       if (!userDoc.exists()) return null;
-      
+
       const data = userDoc.data();
       return this.createUserObject(uid, data);
     } catch (error) {
@@ -129,7 +133,7 @@ class UsersService {
       // Get the current Firebase user
       const auth = getAuth();
       const firebaseUser = auth.currentUser;
-      
+
       if (!firebaseUser) {
         return null;
       }
@@ -163,9 +167,9 @@ class UsersService {
   async updateUserRole(uid: string, role: UserRole): Promise<void> {
     try {
       const userRef = doc(this.usersRef, uid);
-      
+
       await Promise.all([
-        updateDoc(userRef, { 
+        updateDoc(userRef, {
           role,
           updatedAt: Date.now()
         }),
@@ -257,7 +261,7 @@ class UsersService {
       );
 
       const querySnapshot = await getDocs(usersQuery);
-      
+
       if (querySnapshot.empty) {
         throw new Error('Invalid invitation or already accepted');
       }
@@ -339,7 +343,7 @@ class UsersService {
       // Create new user document
       const newUserData: Partial<User> = {
         email: targetEmail,
-        role: role as UserRole, 
+        role: role as UserRole,
         status: UserStatus.INVITED,
         invitedBy: adminEmail,
         invitationToken,
