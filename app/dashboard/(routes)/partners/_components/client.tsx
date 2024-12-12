@@ -17,8 +17,7 @@ export const PartnersClient = () => {
     const unsubscribe = onSnapshot(
       query(
         collection(db, "partners"), 
-        orderBy("order", "asc"),  
-        orderBy("name", "asc")    
+        orderBy("order", "asc")
       ),
       (snapshot) => {
         const partners = snapshot.docs.map((doc) => {

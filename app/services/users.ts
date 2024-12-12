@@ -1,4 +1,4 @@
-import { db } from '../lib/firebase/firebase-config';
+import { db } from '@/lib/firebase';
 import { User, UserRole, UserStatus, AppUserUpdateData } from '../types/user';
 import { emailService } from './email';
 import {
@@ -49,6 +49,7 @@ class UsersService {
         createdAt: data.createdAt ?? now,
         lastLogin: data.metadata?.lastLogin ?? now
       },
+      lastLogin: data.metadata?.lastLogin ?? now,
       getIdToken: async () => 'mocked_token',
       getIdTokenResult: async () => ({ token: 'mocked_token' }),
       reload: async () => { },

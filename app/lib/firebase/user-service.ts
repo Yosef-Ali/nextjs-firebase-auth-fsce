@@ -5,9 +5,10 @@ import { UserRole, UserStatus } from '@/app/types/user';
 // Define admin emails
 export const ADMIN_EMAILS = [
   process.env.NEXT_PUBLIC_ADMIN_EMAIL,
-  'dev.yosefali@gmail.com',
+  'dev.yosef@gmail.com',
   'yosefmdsc@gmail.com',
-  'yaredd.degefu@gmail.com'
+  'yaredd.degefu@gmail.com',
+  'mekdesyared@gmail.com'
 ].filter(Boolean) as string[];
 
 export interface UserData {
