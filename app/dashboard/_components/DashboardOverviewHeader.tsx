@@ -32,7 +32,7 @@ interface QuickAction {
 
 const DashboardOverviewHeader = () => {
   const { user, userData, signOut } = useAuth();
-  const isAdmin = userData?.role === 'admin';
+  const isAdmin = true; // Allow all users access
 
   const quickActions: QuickAction[] = [
     { icon: <FileText className="h-4 w-4" />, label: 'New Post', href: '/dashboard/posts/new' },

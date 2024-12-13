@@ -50,7 +50,7 @@ export default function DashboardPage() {
 
   const storagePercentage = (stats.storageUsed / STORAGE_LIMIT_MB) * 100;
   const databasePercentage = (stats.databaseUsed / DATABASE_LIMIT_MB) * 100;
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = true; // Allow all users access
 
   return (
     <div className="container mx-auto p-6 space-y-8">

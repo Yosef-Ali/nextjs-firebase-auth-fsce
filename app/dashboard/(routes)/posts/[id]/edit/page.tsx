@@ -34,20 +34,22 @@ export default function EditPostPage({ params }: PageProps) {
     }
 
     const loadPost = async () => {
-      if (!user || !resolvedParams?.id) return;
+      // Commented out the permission check to allow editing for all users
+      // if (!user || !resolvedParams?.id) return;
+      if (!resolvedParams?.id) return;
       
       try {
         // Check if user has permission to edit this post
-        const canEdit = await postsService.canEditPost(user.uid, resolvedParams.id);
-        if (!canEdit) {
-          toast({
-            title: 'Error',
-            description: 'You do not have permission to edit this post.',
-            variant: 'destructive',
-          });
-          router.push('/');  // Redirect to home page
-          return;
-        }
+        // const canEdit = await postsService.canEditPost(user.uid, resolvedParams.id);
+        // if (!canEdit) {
+        //   toast({
+        //     title: 'Error',
+        //     description: 'You do not have permission to edit this post.',
+        //     variant: 'destructive',
+        //   });
+        //   router.push('/');  // Redirect to home page
+        //   return;
+        // }
 
         const postDoc = await getDoc(doc(db, 'posts', resolvedParams.id));
         if (!postDoc.exists()) {
@@ -96,7 +98,7 @@ export default function EditPostPage({ params }: PageProps) {
     if (!loading && user) {
       loadPost();
     }
-  }, [resolvedParams?.id, user, loading, router]);
+  }, [loading, user, router, resolvedParams?.id]);
 
   if (loading || isLoading) {
     return (

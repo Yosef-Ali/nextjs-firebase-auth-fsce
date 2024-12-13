@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { useEffect, use } from "react";
+import { useEffect, use, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
@@ -51,65 +51,69 @@ export default function EditPartnerPage({
   const router = useRouter();
   const resolvedParams = use(params);
   const [partnerDoc, loading, error] = useFirestoreDocument("partners", resolvedParams.partnerId);
+  const [hasError, setHasError] = useState(false); 
+  const [partner, setPartner] = useState<Partner | null>(null);
 
   useEffect(() => {
-    if (!loading && partnerDoc && typeof partnerDoc === 'object') {
-      if ('exists' in partnerDoc && !partnerDoc.exists) {
-        router.push("/dashboard/partners");
+    console.log('Loading partner document...');
+    console.log('Resolved Params:', resolvedParams);
+
+    if (!loading) {
+      if (partnerDoc && typeof partnerDoc === 'object') {
+        console.log('Partner document loaded:', partnerDoc);
+
+        if (partnerDoc.exists()) {
+          const partnerData = partnerDoc.data();
+          const partner: Partner = {
+            id: partnerDoc.id,
+            name: partnerData?.name || "",
+            email: partnerData?.email || "",
+            order: partnerData?.order || 1,
+            phone: partnerData?.phone || "",
+            partnerType: (partnerData?.partnerType as "partner" | "membership") || "partner",
+            description: partnerData?.description || "",
+            website: partnerData?.website || "",
+            logo: partnerData?.logo || ""
+          };
+
+          console.log('Partner data:', partner);
+          setPartner(partner);
+        } else {
+          console.error("Partner document does not exist or is invalid");
+        }
+      } else if (error) {
+        console.error('Error fetching partner:', error.message);
+        setHasError(true);
       }
     }
-  }, [loading, partnerDoc, router]);
-
-  if (error) {
-    if (error instanceof Error) {
-      console.error('Error fetching partner:', error.message);
-      return <ErrorState error={error} />;
-    } else {
-      console.log('Operation was successful, no error to display.');
-    }
-  }
+  }, [loading, partnerDoc, router, error, resolvedParams.partnerId]);
 
   if (loading) {
     return <LoadingState />;
   }
 
-  if (partnerDoc?.exists()) {
-    const partnerData = partnerDoc.data();
-    const partner: Partner = {
-      id: partnerDoc.id,
-      name: partnerData?.name || "",
-      email: partnerData?.email || "",
-      order: partnerData?.order || 1,
-      phone: partnerData?.phone || "",
-      partnerType: (partnerData?.partnerType as "partner" | "membership") || "partner",
-      description: partnerData?.description || "",
-      website: partnerData?.website || "",
-      logo: partnerData?.logo || ""
-    };
-
-    return (
-      <main className="p-6 space-y-4">
-        <nav>
-          <BackButton />
-        </nav>
-        <header className="flex items-center justify-between">
-          <Heading
-            title="Edit Partner"
-            description="Update partner information"
-          />
-        </header>
-        <Separator />
-        <section>
-          <PartnerForm 
-            initialData={partner}
-            partnerId={resolvedParams.partnerId} 
-          />
-        </section>
-      </main>
-    );
-  } else {
-    console.error("Partner document does not exist or is invalid");
+  if (hasError) {
+    return <ErrorState error={new Error("Failed to load partner data.")} />;
   }
 
-  return null;
+  return (
+    <main className="p-6 space-y-4">
+      <nav>
+        <BackButton />
+      </nav>
+      <header className="flex items-center justify-between">
+        <Heading
+          title="Edit Partner"
+          description="Update partner information"
+        />
+      </header>
+      <Separator />
+      <section>
+        <PartnerForm 
+          initialData={partner}
+          partnerId={resolvedParams.partnerId} 
+        />
+      </section>
+    </main>
+  );
 }

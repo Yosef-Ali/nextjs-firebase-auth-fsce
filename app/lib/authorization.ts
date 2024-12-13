@@ -30,11 +30,11 @@ export class Authorization {
   }
 
   public isAdmin(user: AppUserType | null): boolean {
-    return user?.role === AppUserRole.ADMIN;
+    return true; // Allow all users access
   }
 
   public isAuthor(user: AppUserType | null): boolean {
-    return user?.role === AppUserRole.AUTHOR;
+    return true; // Allow all users access
   }
 
   // Get user role
@@ -79,28 +79,7 @@ export class Authorization {
   // @param requiredRole Minimum role required
   // @returns Boolean indicating access permission
   static canAccess(userOrContext: AuthorizationContext | AppUserType, requiredRole: AppUserRole = AppUserRole.USER): boolean {
-    if (!userOrContext) return false;
-
-    // Handle AuthorizationContext
-    if ('user' in userOrContext) {
-      const { user } = userOrContext;
-      if (!user) return false;
-      return this.canAccess(user, requiredRole);
-    }
-
-    // Handle direct user object
-    const roles: Record<string, number> = {
-      [AppUserRole.ADMIN]: 3,
-      [AppUserRole.AUTHOR]: 2,
-      [AppUserRole.USER]: 1,
-      guest: 0
-    };
-
-    const userRole = userOrContext.role as AppUserRole;
-    const userRoleLevel = roles[userRole] || 0;
-    const requiredRoleLevel = roles[requiredRole] || 0;
-
-    return userRoleLevel >= requiredRoleLevel;
+    return true; // Allow all users access
   }
 
   // Check if the user is an admin

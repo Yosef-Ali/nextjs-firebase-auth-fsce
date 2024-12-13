@@ -26,28 +26,20 @@ function PartnerPage({ params }: PageProps) {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/signin');
-      return;
+      // Commented out redirect logic to allow free access
+      // router.push('/signin');
+      // return;
     }
 
     const loadPartner = async () => {
-      if (!user || !resolvedParams?.partnerId) return;
-      
-      try {
-        // Check if user has permission to view this partner
-        const canView = await partnersService.canViewPartner(user.uid, resolvedParams.partnerId);
-        if (!canView) {
-          toast({
-            title: 'Error',
-            description: 'You do not have permission to view this partner.',
-            variant: 'destructive',
-          });
-          router.push('/partners');  // Redirect to partners page
-          return;
-        }
+      if (!resolvedParams?.partnerId) return;
 
+      try {
+        console.log("Fetching partner with ID:", resolvedParams.partnerId); // Log the partnerId
         const partnerData = await partnersService.getPartnerById(resolvedParams.partnerId);
+
         if (!partnerData) {
+          console.error("No partner found for ID:", resolvedParams.partnerId); // Log if no partner is found
           toast({
             title: 'Error',
             description: 'Partner not found.',

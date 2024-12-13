@@ -31,21 +31,21 @@ enum UserRole {
 }
 
 export const emailService = {
-  async sendInvitationEmail(email: string, role: 'user' | 'author' | 'admin'): Promise<boolean> {
+  async sendInvitationEmail(email: string): Promise<boolean> {
     try {
-      console.log('Starting invitation process for:', { email, role });
-      const actionCodeSettings = getActionCodeSettings(role);
+      console.log('Starting invitation process for:', { email });
+      const actionCodeSettings = getActionCodeSettings('user');
       console.log('Action code settings:', actionCodeSettings);
 
       // First try to send password reset email
       try {
         await sendPasswordResetEmail(auth, email, actionCodeSettings);
-        console.log('Sent password reset email with role:', role);
+        console.log('Sent password reset email');
         return true;
       } catch (error: any) {
         // If user doesn't exist, create them
         if (error.code === 'auth/user-not-found') {
-          console.log('Creating new user with role:', role);
+          console.log('Creating new user');
           const tempPassword = Math.random().toString(36).slice(-12) + 
                              Math.random().toString(36).slice(-12);
           
@@ -56,20 +56,20 @@ export const emailService = {
               tempPassword
             );
             
-            // Send verification email with role
+            // Send verification email
             await sendEmailVerification(userCredential.user, actionCodeSettings);
-            console.log('Sent verification email with role:', role);
+            console.log('Sent verification email');
             
-            // Send password reset email with role
+            // Send password reset email
             await sendPasswordResetEmail(auth, email, actionCodeSettings);
-            console.log('Sent password reset email with role:', role);
+            console.log('Sent password reset email');
             
             return true;
           } catch (createError: any) {
             if (createError.code === 'auth/email-already-in-use') {
               // Race condition: user was created between our check and create
               await sendPasswordResetEmail(auth, email, actionCodeSettings);
-              console.log('Handled race condition, sent password reset email with role:', role);
+              console.log('Handled race condition, sent password reset email');
               return true;
             }
             throw createError;

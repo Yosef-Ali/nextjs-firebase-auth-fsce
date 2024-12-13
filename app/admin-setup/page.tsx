@@ -20,7 +20,7 @@ export default function AdminSetup() {
       }
 
       const userData = querySnapshot.docs[0].data();
-      return `User found - Role: ${userData.role}, Status: ${userData.status}`;
+      return `User found - Status: ${userData.status}`;
     } catch (error) {
       console.error('Error checking user status:', error);
       return 'Error checking user status';

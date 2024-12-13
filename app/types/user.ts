@@ -3,9 +3,9 @@ import { User as FirebaseUser } from 'firebase/auth';
 
 // Enum for user roles
 export enum UserRole {
-  USER = 'user',
-  AUTHOR = 'author',
-  ADMIN = 'admin'
+  ADMIN = 'admin',
+  MODERATOR = 'moderator',
+  MEMBER = 'member'
 }
 
 export enum UserStatus {
@@ -88,8 +88,8 @@ export interface User {
 const userMetadata: UserMetadata = {
   uid: 'some-uid',
   email: 'user@example.com',
-  role: UserRole.USER,
-  status: UserStatus.ACTIVE, // Add the status property
+  role: UserRole.MEMBER, // Add the status property
+  status: UserStatus.ACTIVE, 
   displayName: 'User Name',
   photoURL: null,
   metadata: {
