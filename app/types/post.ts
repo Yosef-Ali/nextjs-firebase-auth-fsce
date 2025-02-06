@@ -10,7 +10,10 @@ export interface Post {
   title: string;
   content: string;
   excerpt?: string;
-  category: string;
+  category: {
+    id: string;
+    name: string;
+  };
   section?: string;  
   slug: string;
   coverImage?: string;

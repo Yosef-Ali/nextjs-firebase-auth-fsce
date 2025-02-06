@@ -19,8 +19,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import ImageUploadCard  from './ImageUploadCard';
-import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -35,7 +33,6 @@ import { postsService } from '@/app/services/posts';
 import { categoriesService } from '@/app/services/categories';
 import { Category } from '@/app/types/category';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-
 import { Editor } from '@/components/editor';
 import { useToast } from "@/hooks/use-toast"
 
@@ -46,7 +43,7 @@ const formSchema = z.object({
   coverImage: z.string().optional(),
   images: z.array(z.string()).optional(),
   published: z.boolean().default(false),
-  category: z.string().min(1, 'Category is required'),
+  categoryId: z.string().min(1, 'Category is required'),
   section: z.string().optional(),
   slug: z.string().min(1, 'Slug is required'),
 });
@@ -72,7 +69,6 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [images, setImages] = useState<string[]>(post?.images || []);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [uploadedCoverImageUrl, setUploadedCoverImageUrl] = useState('');
   const storage = getStorage();
 
   const form = useForm<PostFormData>({
@@ -84,7 +80,7 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
       coverImage: post?.coverImage || '',
       images: post?.images || [],
       published: post?.published || initialData?.published || false,
-      category: post?.category || initialData?.category || '',
+      categoryId: post?.category?.id || initialData?.category || '',
       section: post?.section || initialData?.section || '',
       slug: post?.slug || '',
     },
@@ -92,19 +88,22 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
 
   useEffect(() => {
     const fetchCategories = async () => {
-      console.log('Fetching categories...');
       try {
         const fetchedCategories = await categoriesService.getCategories();
-        console.log('Fetched categories:', fetchedCategories);
         setCategories(fetchedCategories);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load categories. Please try again.",
+          variant: "destructive",
+        });
       }
     };
     fetchCategories();
-  }, []);
+  }, [toast]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const title = form.getValues('title');
     const content = form.getValues('content');
     
@@ -112,10 +111,8 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
       const generatedSlug = postsService.createSlug(title);
       form.setValue('slug', generatedSlug, { shouldValidate: true });
       
-      // Improved excerpt generation
       const currentExcerpt = form.getValues('excerpt');
       
-      // Generate excerpt from content, stripping HTML if present
       const stripHtml = (html: string) => {
         return html.replace(/<[^>]*>?/gm, '').trim();
       };
@@ -130,9 +127,7 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
           ? title.substring(0, 160) + '...' 
           : title);
       
-      // Only set excerpt if it's currently empty
       if (!currentExcerpt) {
-        console.log('Generating excerpt:', generatedExcerpt);
         form.setValue('excerpt', generatedExcerpt, { shouldValidate: true });
       }
     }
@@ -159,10 +154,9 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
     try {
       setIsSaving(true);
       const currentUser = user;
-      const postAuthorId = post?.authorId; // Assuming post has an authorId
+      const postAuthorId = post?.authorId;
 
-      // Check if the user can edit the post
-      if (postAuthorId !== currentUser.uid) {
+      if (postAuthorId && postAuthorId !== currentUser.uid) {
         toast({
           title: "Error",
           description: "You are not authorized to edit this post.",
@@ -171,142 +165,57 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
         return;
       }
 
-      const coverImageUrl = form.getValues('coverImage');
-      const isValidUrl = (url: string) => {
-        try {
-          new URL(url);
-          return true;
-        } catch (e) {
-          return false;
-        }
-      };
+      const coverImageUrl = data.coverImage;
+      const selectedCategory = categories.find(cat => cat.id === data.categoryId);
       
-      if (coverImageUrl && !isValidUrl(coverImageUrl)) {
+      if (!selectedCategory) {
         toast({
           title: "Error",
-          description: "Cover image must be a valid URL or empty.",
+          description: "Please select a valid category.",
           variant: "destructive",
         });
         return;
       }
-      
-      // Proceed with uploading the image to Firebase if needed
-      if (coverImageUrl) {
-        const file = new File([coverImageUrl], 'cover-image', { type: 'image/jpeg' });
-        try {
-          const uploadTask = await uploadImageToFirebase(file);
-          const postData = {
-            title: form.getValues('title'),
-            content: form.getValues('content'),
-            excerpt: form.getValues('excerpt'),
-            category: categories.find(cat => cat.id === form.getValues('category'))?.name || '',
-            coverImage: uploadTask,
-            published: form.getValues('published'),
-            section: form.getValues('section'),
-            images: form.getValues('images'),
-            authorId: currentUser.uid,
-            authorEmail: currentUser.email || '',
-            slug: postsService.createSlug(form.getValues('title')),
-            date: new Date().toISOString(),
-            tags: [],
-            featured: false,
-          };
 
-          if (post) {
-            if (!user) {
-              toast({
-                title: "Error",
-                description: "You must be logged in to update posts.",
-                variant: "destructive",
-              });
-              return;
-            }
+      const postData = {
+        title: data.title,
+        content: data.content,
+        excerpt: data.excerpt,
+        category: {
+          id: selectedCategory.id,
+          name: selectedCategory.name
+        },
+        coverImage: coverImageUrl || '',
+        published: data.published,
+        section: data.section,
+        images: data.images || [],
+        authorId: currentUser.uid,
+        authorEmail: currentUser.email || '',
+        slug: data.slug,
+        date: new Date().toISOString(),
+        tags: [],
+        featured: false,
+      };
 
-            const updateResult = await postsService.updatePost(post.id, postData, user.uid);
-            if (updateResult) {
-              toast({
-                title: initialData?.title,
-                description: "Your post has been updated successfully.",
-                variant: "success",
-              });
-            } else {
-              toast({
-                title: initialData?.title,
-                description: "You are not authorized to edit this post.",
-                variant: "destructive",
-              });
-              return;
-            }
-          } else {
-            const newPost = await postsService.createPost(postData);
-            toast({
-              title: initialData?.title,
-              description: "Your post has been created successfully.",
-              variant: "success",
-            });
-            // Navigate to the edit page of the new post
-            router.push(`/dashboard/posts/${newPost.id}/edit`);
-          }
-        } catch (error) {
-          console.error('Error uploading image:', error);
-        }
-      } else {
-        const postData = {
-          title: form.getValues('title'),
-          content: form.getValues('content'),
-          excerpt: form.getValues('excerpt'),
-          category: categories.find(cat => cat.id === form.getValues('category'))?.name || '',
-          coverImage: '',
-          published: form.getValues('published'),
-          section: form.getValues('section'),
-          images: form.getValues('images'),
-          authorId: currentUser.uid,
-          authorEmail: currentUser.email || '',
-          slug: postsService.createSlug(form.getValues('title')),
-          date: new Date().toISOString(),
-          tags: [],
-          featured: false,
-        };
-
-        if (post) {
-          if (!user) {
-            toast({
-              title: "Error",
-              description: "You must be logged in to update posts.",
-              variant: "destructive",
-            });
-            return;
-          }
-
-          const updateResult = await postsService.updatePost(post.id, postData, user.uid);
-          if (updateResult) {
-            toast({
-              title: initialData?.title,
-              description: "Your post has been updated successfully.",
-              variant: "success",
-            });
-          } else {
-            toast({
-              title: initialData?.title,
-              description: "You are not authorized to edit this post.",
-              variant: "destructive",
-            });
-            return;
-          }
-        } else {
-          const newPost = await postsService.createPost(postData);
+      if (post?.id) {
+        const updateResult = await postsService.updatePost(post.id, postData, user.uid);
+        if (updateResult) {
           toast({
-            title: initialData?.title,
-            description: "Your post has been created successfully.",
+            title: "Success",
+            description: "Your post has been updated successfully.",
             variant: "success",
           });
-          // Navigate to the edit page of the new post
-          router.push(`/dashboard/posts/${newPost.id}/edit`);
         }
+      } else {
+        const newPost = await postsService.createPost(postData);
+        toast({
+          title: "Success",
+          description: "Your post has been created successfully.",
+          variant: "success",
+        });
+        router.push(`/dashboard/posts/${newPost.id}/edit`);
       }
       
-      // router.push('/dashboard/posts');
-      // router.refresh();
       onSuccess?.();
     } catch (error) {
       console.error('Error saving post:', error);
@@ -318,11 +227,6 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleImageUpload = (url: string) => {
-    setImages(prev => [...prev, url]);
-    form.setValue('images', [...images, url]);
   };
 
   return (
@@ -348,23 +252,36 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
 
               <FormField
                 control={form.control}
-                name="category"
+                name="categoryId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
-                      <Input 
-                        {...field}
-                        value={form.getValues('category')}
-                        onChange={(e) => form.setValue('category', e.target.value)}
-                      />
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </FormControl>
+                    <FormDescription>
+                      Choose a category for your post
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {form.watch('category') === 'about' && (
+              {form.watch('categoryId') === 'about' && (
                 <FormField
                   control={form.control}
                   name="section"
@@ -372,7 +289,7 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
                     <FormItem>
                       <FormLabel>Section</FormLabel>
                       <FormControl>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a section" />
                           </SelectTrigger>
