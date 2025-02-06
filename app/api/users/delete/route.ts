@@ -1,37 +1,19 @@
 import { NextResponse } from 'next/server';
-import { db, auth } from '@/lib/firebase';
-import { collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
-import { deleteUser, signInWithEmailAndPassword } from 'firebase/auth';
+import { adminAuth } from '@/app/lib/services/admin';
 
 export async function POST(request: Request) {
   try {
-    const { email } = await request.json();
+    const { uid } = await request.json();
 
-    if (!email) {
+    if (!uid) {
       return NextResponse.json(
-        { error: 'Email is required' },
+        { error: 'User ID is required' },
         { status: 400 }
       );
     }
 
-    // Delete from Firestore first
-    try {
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('email', '==', email));
-      const querySnapshot = await getDocs(q);
-
-      if (!querySnapshot.empty) {
-        const userDoc = querySnapshot.docs[0];
-        await deleteDoc(userDoc.ref);
-        console.log('Deleted user from Firestore:', email);
-      }
-    } catch (error: any) {
-      console.error('Error deleting from Firestore:', error);
-      return NextResponse.json(
-        { error: `Firestore deletion failed: ${error.message}` },
-        { status: 500 }
-      );
-    }
+    // Delete user from Firebase Authentication
+    await adminAuth.deleteUser(uid);
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -5,7 +5,9 @@ import { User as FirebaseUser } from 'firebase/auth';
 export enum UserRole {
   ADMIN = 'admin',
   MODERATOR = 'moderator',
-  MEMBER = 'member'
+  MEMBER = 'member',
+  AUTHOR = 'author',
+  USER = 'user'
 }
 
 export enum UserStatus {
@@ -30,18 +32,24 @@ export interface UserMetadata {
   };
 }
 
-// Custom AppUser type
-export interface AppUser extends FirebaseUser {
-  // Add your custom properties here
+// Custom AppUser type that includes all necessary properties
+export type AppUser = Partial<FirebaseUser> & {
+  uid: string;
+  email: string;
+  displayName: string | null;
+  photoURL: string | null;
   role: UserRole;
   status: UserStatus;
-  createdAt: number;
-  updatedAt: number;
-  invitedBy: string | null;
-  invitationToken: string | null;
+  createdAt?: number;
+  updatedAt?: number;
+  invitedBy?: string | null;
+  invitationToken?: string | null;
   emailVerified: boolean;
-  isAnonymous: boolean;
-  providerData: any[];
+  metadata?: {
+    lastLogin?: number;
+    createdAt?: number;
+  };
+  providerData?: any[];
 }
 
 // Extended user interface that includes an id field
@@ -68,9 +76,10 @@ export interface UserDataResult {
   };
 }
 
+// Base serializable user interface
 export interface User {
   uid: string;
-  email: string;
+  email: string | null;
   displayName: string | null;
   photoURL: string | null;
   role: UserRole;
@@ -79,6 +88,7 @@ export interface User {
   updatedAt: number;
   invitedBy: string | null;
   invitationToken: string | null;
+  emailVerified: boolean;
   metadata: {
     lastLogin: number;
     createdAt: number;
