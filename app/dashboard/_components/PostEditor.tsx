@@ -154,16 +154,6 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
     try {
       setIsSaving(true);
       const currentUser = user;
-      const postAuthorId = post?.authorId;
-
-      if (postAuthorId && postAuthorId !== currentUser.uid) {
-        toast({
-          title: "Error",
-          description: "You are not authorized to edit this post.",
-          variant: "destructive",
-        });
-        return;
-      }
 
       const coverImageUrl = data.coverImage;
       const selectedCategory = categories.find(cat => cat.id === data.categoryId);
@@ -198,30 +188,43 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
       };
 
       if (post?.id) {
-        const updateResult = await postsService.updatePost(post.id, postData, user.uid);
-        if (updateResult) {
+        const success = await postsService.updatePost(post.id, postData, currentUser.uid);
+        if (success) {
           toast({
             title: "Success",
-            description: "Your post has been updated successfully.",
-            variant: "success",
+            description: "Post updated successfully",
+          });
+          router.push('/dashboard/posts');
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to update post",
+            variant: "destructive",
           });
         }
       } else {
         const newPost = await postsService.createPost(postData);
-        toast({
-          title: "Success",
-          description: "Your post has been created successfully.",
-          variant: "success",
-        });
-        router.push(`/dashboard/posts/${newPost.id}/edit`);
+        if (newPost) {
+          toast({
+            title: "Success",
+            description: "Post created successfully",
+          });
+          router.push('/dashboard/posts');
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to create post",
+            variant: "destructive",
+          });
+        }
       }
-      
+
       onSuccess?.();
     } catch (error) {
       console.error('Error saving post:', error);
       toast({
         title: "Error",
-        description: "Failed to save post. Please try again.",
+        description: "An error occurred while saving the post",
         variant: "destructive",
       });
     } finally {
@@ -230,215 +233,197 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-[1.5fr,1fr] gap-6">
-            {/* Left Column */}
-            <div className="space-y-6">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Post title" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Title</FormLabel>
+              <FormControl>
+                <Input placeholder="Post title" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-              <FormField
-                control={form.control}
-                name="categoryId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        value={field.value}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormDescription>
-                      Choose a category for your post
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {form.watch('categoryId') === 'about' && (
-                <FormField
-                  control={form.control}
-                  name="section"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Section</FormLabel>
-                      <FormControl>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a section" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="vision">Vision</SelectItem>
-                            <SelectItem value="mission">Mission</SelectItem>
-                            <SelectItem value="goals">Goals</SelectItem>
-                            <SelectItem value="governance">Governance</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormDescription>
-                        Select which section this content belongs to
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+        <FormField
+          control={form.control}
+          name="content"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Content</FormLabel>
+              <FormControl>
+                <Editor
+                  value={field.value}
+                  onChange={field.onChange}
                 />
-              )}
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-              <FormField
-                control={form.control}
-                name="content"
-                render={({ field }) => (
-                  <FormItem className="space-y-0">
-                    <FormControl>
-                      <div className="min-h-[400px] overflow-y-auto">
-                        <Editor {...field} />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="excerpt"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Excerpt</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Write a brief excerpt..."
-                        className="resize-none"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="slug"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Slug</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Post slug" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Right Column */}
-            <div className="space-y-6">
-              <div>
-                <FormLabel className="block mb-2">Cover Image</FormLabel>
-                <FormField
-                  control={form.control}
-                  name="coverImage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <ImageUploadCard 
-                          type="cover"
-                          aspectRatio="aspect-[16/9]"
-                          onImageUpload={field.onChange}
-                          initialImage={post?.coverImage}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+        <FormField
+          control={form.control}
+          name="excerpt"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Excerpt</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Brief description of the post"
+                  {...field}
                 />
-              </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-              <div>
-                <FormLabel className="block mb-2">Additional Images</FormLabel>
-                <div className="grid grid-cols-2 gap-4">
-                  {[...Array(4)].map((_, index) => (
-                    <ImageUploadCard
-                      key={index}
-                      type="additional"
-                      aspectRatio="aspect-square"
-                      onImageUpload={(url) => {
-                        const currentImages = form.getValues('images') || [];
-                        const newImages = [...currentImages];
-                        newImages[index] = url;
-                        form.setValue('images', newImages.filter(Boolean));
-                      }}
-                      initialImage={post?.images?.[index]}
-                      index={index}
-                    />
+        <FormField
+          control={form.control}
+          name="categoryId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
                   ))}
-                </div>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="published"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">
+                  Published
+                </FormLabel>
+                <FormDescription>
+                  Make this post visible to the public
+                </FormDescription>
               </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
 
-              <FormField
-                control={form.control}
-                name="published"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Published</FormLabel>
-                      <FormDescription>
-                        Make this post visible to the public
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
+        <FormField
+          control={form.control}
+          name="images"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Images</FormLabel>
+              <FormControl>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                    {field.value?.map((imageUrl, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={imageUrl}
+                          alt={`Uploaded image ${index + 1}`}
+                          className="w-full h-40 object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newImages = [...field.value];
+                            newImages.splice(index, 1);
+                            field.onChange(newImages);
+                          }}
+                          className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center hover:border-primary cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={async (e) => {
+                          try {
+                            const files = Array.from(e.target.files || []);
+                            const uploadPromises = files.map(uploadImageToFirebase);
+                            const urls = await Promise.all(uploadPromises);
+                            field.onChange([...field.value || [], ...urls]);
+                          } catch (error) {
+                            console.error('Error uploading images:', error);
+                            toast({
+                              title: "Error",
+                              description: error instanceof Error ? error.message : "Failed to upload images",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        className="hidden"
+                        id="image-upload"
                       />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
+                      <label htmlFor="image-upload" className="cursor-pointer flex flex-col items-center">
+                        <svg
+                          className="w-8 h-8 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                        <span className="mt-2 text-sm text-gray-500">Add Images</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </FormControl>
+              <FormDescription>
+                Upload multiple images for your post. Each image should be less than 5MB.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-          <div className="flex justify-end gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push('/dashboard/posts')}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSaving}>
-              {isSaving ? 'Saving...' : (post ? 'Update Post' : 'Create Post')}
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </div>
+        <div className="flex justify-end space-x-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSaving}>
+            {isSaving ? 'Saving...' : (post ? 'Update' : 'Create')}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }

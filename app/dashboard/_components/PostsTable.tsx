@@ -136,7 +136,7 @@ function PostsTable({ initialPosts }: PostsTableProps) {
                 </div>
               </TableCell>
               <TableCell>
-                <Badge variant="secondary">{post.category}</Badge>
+                <Badge variant="secondary">{post.category?.name}</Badge>
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
