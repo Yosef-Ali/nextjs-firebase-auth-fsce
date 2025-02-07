@@ -55,7 +55,7 @@ const UserTable: FC<UserTableProps> = ({
   onResetPassword
 }) => {
   return (
-    <div className="rounded-md border">
+    <div className="border rounded-md">
       <Table>
         <TableHeader>
           <TableRow>
@@ -72,7 +72,7 @@ const UserTable: FC<UserTableProps> = ({
               <TableRow key={index}>
                 <TableCell>
                   <div className="flex items-center space-x-4">
-                    <Skeleton className="h-12 w-12 rounded-full" />
+                    <Skeleton className="w-12 h-12 rounded-full" />
                     <div className="space-y-2">
                       <Skeleton className="h-4 w-[200px]" />
                       <Skeleton className="h-4 w-[150px]" />
@@ -114,9 +114,9 @@ const UserTable: FC<UserTableProps> = ({
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
+                      <Button variant="ghost" className="w-8 h-8 p-0">
                         <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
+                        <MoreHorizontal className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -124,33 +124,33 @@ const UserTable: FC<UserTableProps> = ({
                       <DropdownMenuSeparator />
                       <DropdownMenuSub>
                         <DropdownMenuSubTrigger>
-                          <Shield className="mr-2 h-4 w-4" />
+                          <Shield className="w-4 h-4 mr-2" />
                           <span>Change Role</span>
                         </DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
                           <DropdownMenuItem onClick={() => onSetRole(user.uid, UserRole.USER)}>
-                            <UserIcon className="mr-2 h-4 w-4" />
+                            <UserIcon className="w-4 h-4 mr-2" />
                             <span>User</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => onSetRole(user.uid, UserRole.AUTHOR)}>
-                            <Edit className="mr-2 h-4 w-4" />
+                            <Edit className="w-4 h-4 mr-2" />
                             <span>Author</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => onSetRole(user.uid, UserRole.ADMIN)}>
-                            <Lock className="mr-2 h-4 w-4" />
+                            <Lock className="w-4 h-4 mr-2" />
                             <span>Admin</span>
                           </DropdownMenuItem>
                         </DropdownMenuSubContent>
                       </DropdownMenuSub>
                       <DropdownMenuItem onClick={() => user.email && onResetPassword(user.email)}>
-                        <Unlock className="mr-2 h-4 w-4" />
+                        <Unlock className="w-4 h-4 mr-2" />
                         <span>Reset Password</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem 
                         onClick={() => onDeleteUser(user.uid)}
                         className="text-red-600"
                       >
-                        <Trash2 className="mr-2 h-4 w-4" />
+                        <Trash2 className="w-4 h-4 mr-2" />
                         <span>Delete User</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>

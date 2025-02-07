@@ -23,7 +23,7 @@ export function useUsersListener() {
           const userData = doc.data();
           return convertToAppUser({ ...userData, uid: doc.id });
         });
-        setUsers(updatedUsers);
+        setUsers(updatedUsers.filter(user => user !== null) as AppUser[]);
         setIsLoading(false);
         setError(null);
       },

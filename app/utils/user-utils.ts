@@ -1,50 +1,24 @@
-import { Timestamp } from "firebase/firestore";
-import { User, UserRole, UserStatus } from "../types/user";
+"use strict"
 
-export async function convertTimestamp(timestamp: any): Promise<number> {
-  return timestamp?.toDate ? timestamp.toMillis() : Date.now();
-}
+import { AppUser, UserRole, UserStatus } from "@/app/types/user";
 
-export function createUserObject(
-  uid: string,
-  data: Partial<User> & { metadata?: any }
-): User {
-  const now = Date.now();
+export function convertToAppUser(rawUser: any): AppUser | null {
+  if (!rawUser) return null;
 
-  // Convert Timestamp objects to milliseconds
-  const createdAt =
-    data.createdAt && typeof data.createdAt === 'object' && 'toDate' in data.createdAt
-      ? (data.createdAt as Timestamp).toMillis()
-      : data.createdAt ?? now;
-  const updatedAt =
-    data.updatedAt && typeof data.updatedAt === 'object' && 'toDate' in data.updatedAt
-      ? (data.updatedAt as Timestamp).toMillis()
-      : data.updatedAt ?? now;
-  const lastLogin =
-    data.metadata?.lastLogin && typeof data.metadata.lastLogin === 'object' && 'toDate' in data.metadata.lastLogin
-      ? (data.metadata.lastLogin as Timestamp).toMillis()
-      : data.metadata?.lastLogin ?? now;
-  const metadataCreatedAt =
-    data.metadata?.createdAt && typeof data.metadata.createdAt === 'object' && 'toDate' in data.metadata.createdAt
-      ? (data.metadata.createdAt as Timestamp).toMillis()
-      : data.metadata?.createdAt ?? createdAt;
-
-  // Return only serializable properties
   return {
-    uid,
-    email: data.email ?? null,
-    role: data.role ?? UserRole.USER,
-    displayName: data.displayName ?? null,
-    photoURL: data.photoURL ?? null,
-    createdAt,
-    updatedAt,
-    status: data.status ?? UserStatus.ACTIVE,
-    invitedBy: data.invitedBy ?? null,
-    invitationToken: data.invitationToken ?? null,
-    emailVerified: false,
-    metadata: {
-      createdAt: metadataCreatedAt,
-      lastLogin,
-    },
-  } as User;
+    uid: rawUser.uid,
+    email: rawUser.email,
+    displayName: rawUser.displayName || null,
+    photoURL: rawUser.photoURL || null,
+    emailVerified: rawUser.emailVerified || false,
+    role: rawUser.role || UserRole.USER,
+    status: rawUser.status || UserStatus.ACTIVE,
+    createdAt: rawUser.createdAt && typeof rawUser.createdAt.toDate === "function"
+      ? rawUser.createdAt.toDate()
+      : rawUser.createdAt || new Date(),
+    updatedAt: rawUser.updatedAt && typeof rawUser.updatedAt.toDate === "function"
+      ? rawUser.updatedAt.toDate()
+      : rawUser.updatedAt || new Date(),
+    providerData: rawUser.providerData || [],
+  };
 }
