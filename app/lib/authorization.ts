@@ -1,26 +1,15 @@
 import { User as FirebaseUser } from 'firebase/auth';
 import { AppUser as AppUserType, UserRole as AppUserRole, UserStatus } from '@/app/types/user';  // Import AppUser
 
-// Define a constant for admin emails that can be easily updated
-const ADMIN_EMAILS = [
-  process.env.NEXT_PUBLIC_ADMIN_EMAIL,
-  'dev.yosefali@gmail.com',
-  'yosefmdsc@gmail.com',
-  'yaredd.degefu@gmail.com'
-].filter(Boolean) as string[];
-
 interface AuthorizationContext {
   user: AppUserType | null;
   resourceOwnerId?: string;
 }
 
 export class Authorization {
-  private adminEmails: Set<string>;
   private static instance: Authorization;
 
-  constructor() {
-    this.adminEmails = new Set(ADMIN_EMAILS);
-  }
+  constructor() {}
 
   public static getInstance(): Authorization {
     if (!Authorization.instance) {
@@ -30,26 +19,21 @@ export class Authorization {
   }
 
   public isAdmin(user: AppUserType | null): boolean {
-    return true; // Allow all users access
+    if (!user) return false;
+    return user.role === AppUserRole.ADMIN;
   }
 
   public isAuthor(user: AppUserType | null): boolean {
-    return true; // Allow all users access
+    if (!user) return false;
+    return user.role === AppUserRole.AUTHOR || user.role === AppUserRole.ADMIN;
   }
 
-  // Get user role
+  // Get user role from user document
   // @param user User object
   // @returns UserRole
   static getUserRole(user: FirebaseUser | null): AppUserRole {
     if (!user) return AppUserRole.USER;
-
-    // Check if user's email is in admin list
-    if (user.email && ADMIN_EMAILS.includes(user.email)) {
-      return AppUserRole.ADMIN;
-    }
-
-    // Default to USER role
-    return AppUserRole.USER;
+    return user.role || AppUserRole.USER;
   }
 
   // Create authorization context
@@ -57,19 +41,16 @@ export class Authorization {
   // @param resourceOwnerId Optional resource owner ID
   // @returns AuthorizationContext
   static createContext(user: FirebaseUser | null, resourceOwnerId?: string): AuthorizationContext {
-    // Convert FirebaseUser to our custom User type
-    const customUser = user ? {
-      ...user,
-      role: this.getUserRole(user),
-      status: UserStatus.ACTIVE,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      invitedBy: null,
-      invitationToken: null,
-    } as AppUserType : null;
-
     return {
-      user: customUser,
+      user: user ? {
+        ...user,
+        role: this.getUserRole(user),
+        status: UserStatus.ACTIVE,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        invitedBy: null,
+        invitationToken: null,
+      } as AppUserType : null,
       resourceOwnerId
     };
   }
@@ -79,7 +60,34 @@ export class Authorization {
   // @param requiredRole Minimum role required
   // @returns Boolean indicating access permission
   static canAccess(userOrContext: AuthorizationContext | AppUserType, requiredRole: AppUserRole = AppUserRole.USER): boolean {
-    return true; // Allow all users access
+    let user: AppUserType | null = null;
+    let resourceOwnerId: string | undefined = undefined;
+
+    if ((userOrContext as AuthorizationContext).user) {
+      const context = userOrContext as AuthorizationContext;
+      user = context.user;
+      resourceOwnerId = context.resourceOwnerId;
+    } else {
+      user = userOrContext as AppUserType;
+    }
+
+    if (!user) return false;
+
+    // Admin has full access
+    if (user.role === AppUserRole.ADMIN) {
+      return true;
+    }
+
+    // Author can access their own resources and create new ones
+    if (user.role === AppUserRole.AUTHOR) {
+      if (requiredRole === AppUserRole.USER || requiredRole === AppUserRole.AUTHOR) {
+        return resourceOwnerId ? user.uid === resourceOwnerId : true;
+      }
+      return false;
+    }
+
+    // Regular user has minimal access
+    return requiredRole === AppUserRole.USER;
   }
 
   // Check if the user is an admin
@@ -87,42 +95,14 @@ export class Authorization {
   // @returns Boolean indicating admin status
   static isAdmin(user: AppUserType | null): boolean {
     if (!user) return false;
-
-    // Check if user's email is in the admin list first
-    if (user.email && ADMIN_EMAILS.includes(user.email)) {
-      return true;
-    }
-
-    // Then check if user has admin role in their data (if it's our custom User type)
-    if ('role' in user && user.role === AppUserRole.ADMIN) {
-      return true;
-    }
-
-    return false;
+    return user.role === AppUserRole.ADMIN;
   }
 
   // Add an admin email to the list of admin emails
-  // @param email Email to add as an admin
-  static addAdminEmail(email: string): void {
-    if (!ADMIN_EMAILS.includes(email)) {
-      ADMIN_EMAILS.push(email);
-    }
-  }
 
   // Remove an admin email from the list of admin emails
-  // @param email Email to remove from admin list
-  static removeAdminEmail(email: string): void {
-    const index = ADMIN_EMAILS.indexOf(email);
-    if (index > -1) {
-      ADMIN_EMAILS.splice(index, 1);
-    }
-  }
 
   // Get the current list of admin emails
-  // @returns Array of admin emails
-  static getAdminEmails(): string[] {
-    return [...ADMIN_EMAILS];
-  }
 
   // Check if a user can create a post
   // @param user User object

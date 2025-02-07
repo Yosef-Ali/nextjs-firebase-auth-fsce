@@ -67,7 +67,7 @@ export default function AboutContentForm({ initialData, section, onSuccess }: Ab
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
         <div>
-          <h3 className="text-lg font-medium mb-2">
+          <h3 className="mb-2 text-lg font-medium">
             Our {section.charAt(0).toUpperCase()}{section.slice(1)}
           </h3>
           <Textarea

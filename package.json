@@ -10,7 +10,8 @@
     "format": "prettier --write .",
     "seed-partners": "bun run scripts/seed-partners.ts",
     "seed-programs": "bun run scripts/seed-programs.ts",
-    "seed-program-offices": "bun run scripts/seed-program-offices.ts"
+    "seed-program-offices": "bun run scripts/seed-program-offices.ts",
+    "update-roles": "bun run scripts/update-user-roles.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

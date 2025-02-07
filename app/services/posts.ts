@@ -119,9 +119,22 @@ export const postsService = {
 
       const userData = userDoc.data();
       const postData = postDoc.data();
+
+      const auth = Authorization.getInstance();
+      const user = {
+        uid: userId,
+        email: userData.email || '',
+        displayName: userData.displayName || null,
+        photoURL: userData.photoURL || null,
+        role: userData.role || 'user',
+        status: userData.status || 'active',
+        emailVerified: userData.emailVerified || false,
+        createdAt: userData.createdAt || Date.now(),
+        updatedAt: userData.updatedAt || Date.now()
+      };
       
       // Allow deletion if user is admin or the post author
-      if (userData.role !== 'admin' && postData.authorId !== userId) {
+      if (!auth.isAdmin(user) && postData.authorId !== userId) {
         console.error('User not authorized to delete this post');
         return false;
       }
@@ -137,14 +150,7 @@ export const postsService = {
 
   async canEditPost(userId: string, postId: string): Promise<boolean> {
     try {
-      // Get the post
-      const postDoc = await getDoc(doc(db, COLLECTION_NAME, postId));
-      if (!postDoc.exists()) {
-        console.error('Post not found');
-        return false;
-      }
-
-      // Get the user's data to check if they're an admin
+      // Get the user's data
       const userDoc = await getDoc(doc(db, 'users', userId));
       if (!userDoc.exists()) {
         console.error('User not found');
@@ -152,10 +158,35 @@ export const postsService = {
       }
 
       const userData = userDoc.data();
-      const postData = postDoc.data();
       
-      // Allow editing if user is admin or the post author
-      return userData.role === 'admin' || postData.authorId === userId;
+      // Use Authorization class to check permissions
+      const auth = Authorization.getInstance();
+      const user = {
+        uid: userId,
+        email: userData.email || '',
+        displayName: userData.displayName || null,
+        photoURL: userData.photoURL || null,
+        role: userData.role || 'user',
+        status: userData.status || 'active',
+        emailVerified: userData.emailVerified || false,
+        createdAt: userData.createdAt || Date.now(),
+        updatedAt: userData.updatedAt || Date.now()
+      };
+
+      // Check if user is admin
+      if (auth.isAdmin(user)) {
+        return true;
+      }
+
+      // If not admin, check if user is the post author
+      const postDoc = await getDoc(doc(db, COLLECTION_NAME, postId));
+      if (!postDoc.exists()) {
+        console.error('Post not found');
+        return false;
+      }
+
+      const postData = postDoc.data();
+      return postData.authorId === userId;
     } catch (error) {
       console.error('Error checking edit permission:', error);
       return false;

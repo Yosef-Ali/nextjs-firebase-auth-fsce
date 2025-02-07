@@ -107,7 +107,7 @@ const UserTable: FC<UserTableProps> = ({
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={user.status === 'active' ? 'success' : 'secondary'}>
+                  <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
                     {user.status}
                   </Badge>
                 </TableCell>
@@ -142,7 +142,7 @@ const UserTable: FC<UserTableProps> = ({
                           </DropdownMenuItem>
                         </DropdownMenuSubContent>
                       </DropdownMenuSub>
-                      <DropdownMenuItem onClick={() => onResetPassword(user.email)}>
+                      <DropdownMenuItem onClick={() => user.email && onResetPassword(user.email)}>
                         <Unlock className="mr-2 h-4 w-4" />
                         <span>Reset Password</span>
                       </DropdownMenuItem>

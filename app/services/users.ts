@@ -29,7 +29,7 @@ const USERS_COLLECTION = "users";
 class UsersService {
   private readonly usersRef = collection(db, USERS_COLLECTION);
 
-  private async convertTimestamp(timestamp: unknown): Promise<number> {
+  private async convertTimestamp(timestamp: any): Promise<number> {
     return timestamp instanceof Timestamp ? timestamp.toMillis() : Date.now();
   }
 
@@ -45,8 +45,8 @@ class UsersService {
         ? data.createdAt.toMillis()
         : data.createdAt ?? now;
     const updatedAt =
-      data.updatedAt instanceof Timestamp
-        ? data.updatedAt.toMillis()
+      data.updatedAt && typeof data.updatedAt === 'object' && data.updatedAt instanceof Timestamp
+        ? (data.updatedAt as Timestamp).toMillis()
         : data.updatedAt ?? now;
     const lastLogin =
       data.metadata?.lastLogin instanceof Timestamp
@@ -59,7 +59,7 @@ class UsersService {
 
     // Return only serializable properties
     return {
-      uid,
+      uid: uid,
       email: data.email ?? null,
       role: data.role ?? UserRole.USER,
       displayName: data.displayName ?? null,

@@ -1,5 +1,22 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Ensure the necessary objects exist
+      config.optimization = config.optimization || {};
+      config.optimization.splitChunks = config.optimization.splitChunks || {};
+      config.optimization.splitChunks.cacheGroups = config.optimization.splitChunks.cacheGroups || {};
+      
+      // Set the styles configuration
+      config.optimization.splitChunks.cacheGroups.styles = {
+        name: 'styles',
+        test: /\.css$/,
+        chunks: 'all',
+        enforce: true
+      };
+    }
+    return config;
+  },
   reactStrictMode: true,
   typescript: {
     ignoreBuildErrors: true,
