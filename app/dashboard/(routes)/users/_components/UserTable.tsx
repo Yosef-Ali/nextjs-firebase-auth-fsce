@@ -1,6 +1,6 @@
 'use client';
 
-import { FC } from 'react';
+import { FC, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -54,6 +54,21 @@ const UserTable: FC<UserTableProps> = ({
   onSetRole,
   onResetPassword
 }) => {
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [actionInProgress, setActionInProgress] = useState(false);
+
+  const handleAction = async (action: () => Promise<void>) => {
+    if (actionInProgress) return;
+
+    try {
+      setActionInProgress(true);
+      await action();
+    } finally {
+      setActionInProgress(false);
+      setOpenDropdown(null);
+    }
+  };
+
   return (
     <div className="border rounded-md">
       <Table>
@@ -67,7 +82,6 @@ const UserTable: FC<UserTableProps> = ({
         </TableHeader>
         <TableBody>
           {isLoading ? (
-            // Loading skeleton
             Array.from({ length: 5 }).map((_, index) => (
               <TableRow key={index}>
                 <TableCell>
@@ -112,9 +126,15 @@ const UserTable: FC<UserTableProps> = ({
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <DropdownMenu>
+                  <DropdownMenu open={openDropdown === user.uid} onOpenChange={(open) => {
+                    setOpenDropdown(open ? user.uid : null);
+                  }}>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="w-8 h-8 p-0">
+                      <Button
+                        variant="ghost"
+                        className="w-8 h-8 p-0"
+                        disabled={actionInProgress}
+                      >
                         <span className="sr-only">Open menu</span>
                         <MoreHorizontal className="w-4 h-4" />
                       </Button>
@@ -128,26 +148,44 @@ const UserTable: FC<UserTableProps> = ({
                           <span>Change Role</span>
                         </DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
-                          <DropdownMenuItem onClick={() => onSetRole(user.uid, UserRole.USER)}>
+                          <DropdownMenuItem
+                            onClick={() => handleAction(async () => {
+                              await onSetRole(user.uid, UserRole.USER);
+                            })}
+                          >
                             <UserIcon className="w-4 h-4 mr-2" />
                             <span>User</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onSetRole(user.uid, UserRole.AUTHOR)}>
+                          <DropdownMenuItem
+                            onClick={() => handleAction(async () => {
+                              await onSetRole(user.uid, UserRole.AUTHOR);
+                            })}
+                          >
                             <Edit className="w-4 h-4 mr-2" />
                             <span>Author</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onSetRole(user.uid, UserRole.ADMIN)}>
+                          <DropdownMenuItem
+                            onClick={() => handleAction(async () => {
+                              await onSetRole(user.uid, UserRole.ADMIN);
+                            })}
+                          >
                             <Lock className="w-4 h-4 mr-2" />
                             <span>Admin</span>
                           </DropdownMenuItem>
                         </DropdownMenuSubContent>
                       </DropdownMenuSub>
-                      <DropdownMenuItem onClick={() => user.email && onResetPassword(user.email)}>
+                      <DropdownMenuItem
+                        onClick={() => user.email && handleAction(async () => {
+                          await onResetPassword(user.email!);
+                        })}
+                      >
                         <Unlock className="w-4 h-4 mr-2" />
                         <span>Reset Password</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => onDeleteUser(user.uid)}
+                      <DropdownMenuItem
+                        onClick={() => handleAction(async () => {
+                          await onDeleteUser(user.uid);
+                        })}
                         className="text-red-600"
                       >
                         <Trash2 className="w-4 h-4 mr-2" />

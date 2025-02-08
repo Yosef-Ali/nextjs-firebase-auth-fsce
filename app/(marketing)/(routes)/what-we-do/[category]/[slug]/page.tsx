@@ -11,18 +11,18 @@ export default function DetailPage() {
   const [relatedPosts, setRelatedPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const params = useParams();
-  
+
   useEffect(() => {
     const fetchData = async () => {
       if (!params || !params.category || !params.slug) {
         setLoading(false);
         return;
       }
-      
+
       try {
         const postData = await whatWeDoService.getProgramBySlug(params.slug as string);
         setPost(postData);
-        
+
         if (postData) {
           const related = await whatWeDoService.getRelatedPrograms(
             postData.id,

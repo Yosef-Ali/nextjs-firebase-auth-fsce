@@ -14,7 +14,8 @@ import {
   getDoc,
   orderBy,
   serverTimestamp,
-  limit,
+  limit as firestoreLimit,
+  QueryConstraint,
 } from 'firebase/firestore';
 
 const COLLECTION_NAME = 'posts';
@@ -24,37 +25,47 @@ export const postsService = {
     try {
       const postsRef = collection(db, COLLECTION_NAME);
       const q = query(
-        postsRef, 
-        orderBy('createdAt', 'desc')  
+        postsRef,
+        orderBy('createdAt', 'desc')
       );
-      
+
       const querySnapshot = await getDocs(q);
-      const posts = querySnapshot.docs.map(doc => {
+      return querySnapshot.docs.map(doc => {
         const data = doc.data();
+        const createdAt = data.createdAt;
+        const updatedAt = data.updatedAt;
+        const category = data.category || {};
+
         return {
           id: doc.id,
-          title: data.title || '',
-          content: data.content || '',
-          category: data.category || '',
-          slug: data.slug || '',
-          published: data.published || false,
-          authorId: data.authorId || '',
-          authorEmail: data.authorEmail || '',
-          date: data.date || new Date().toISOString(),
-          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
-          updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() : Date.now(),
-          excerpt: data.excerpt || '',
-          coverImage: data.coverImage || '',
-          images: data.images || [],
-          section: data.section || '',
-          featured: data.featured || false,
-          tags: data.tags || [],
-          time: data.time || '',
-          location: data.location || '',
+          title: data?.title ?? '',
+          content: data?.content ?? '',
+          excerpt: data?.excerpt ?? '',
+          slug: data?.slug ?? doc.id,
+          category: {
+            id: category.id ?? category ?? '',
+            name: category.name ?? category ?? ''
+          },
+          published: Boolean(data?.published),
+          authorId: data?.authorId ?? '',
+          authorEmail: data?.authorEmail ?? '',
+          date: data?.date ?? new Date().toISOString(),
+          createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() : 
+                    typeof createdAt === 'number' ? createdAt : 
+                    Date.now(),
+          updatedAt: updatedAt instanceof Timestamp ? updatedAt.toMillis() : 
+                    typeof updatedAt === 'number' ? updatedAt : 
+                    Date.now(),
+          coverImage: data?.coverImage ?? '',
+          images: Array.isArray(data?.images) ? data.images : [],
+          featured: Boolean(data?.featured),
+          section: data?.section ?? '',
+          tags: Array.isArray(data?.tags) ? data.tags : [],
+          time: data?.time ?? '',
+          location: data?.location ?? '',
+          status: data?.status
         } as Post;
       });
-
-      return posts;
     } catch (error) {
       console.error('Error getting user posts:', error);
       return [];
@@ -70,7 +81,7 @@ export const postsService = {
     };
 
     const docRef = await addDoc(collection(db, COLLECTION_NAME), postData);
-    
+
     return {
       id: docRef.id,
       ...post,
@@ -122,12 +133,38 @@ export const postsService = {
 
       const doc = querySnapshot.docs[0];
       const data = doc.data();
+      const createdAt = data.createdAt;
+      const updatedAt = data.updatedAt;
+      const category = data.category || {};
 
       return {
         id: doc.id,
-        ...data,
-        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
-        updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() : Date.now(),
+        title: data?.title ?? '',
+        content: data?.content ?? '',
+        excerpt: data?.excerpt ?? '',
+        slug: data?.slug ?? doc.id,
+        category: {
+          id: category.id ?? category ?? '',
+          name: category.name ?? category ?? ''
+        },
+        published: Boolean(data?.published),
+        authorId: data?.authorId ?? '',
+        authorEmail: data?.authorEmail ?? '',
+        date: data?.date ?? new Date().toISOString(),
+        createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() : 
+                  typeof createdAt === 'number' ? createdAt : 
+                  Date.now(),
+        updatedAt: updatedAt instanceof Timestamp ? updatedAt.toMillis() : 
+                  typeof updatedAt === 'number' ? updatedAt : 
+                  Date.now(),
+        coverImage: data?.coverImage ?? '',
+        images: Array.isArray(data?.images) ? data.images : [],
+        featured: Boolean(data?.featured),
+        section: data?.section ?? '',
+        tags: Array.isArray(data?.tags) ? data.tags : [],
+        time: data?.time ?? '',
+        location: data?.location ?? '',
+        status: data?.status
       } as Post;
     } catch (error) {
       console.error('Error getting post by slug:', error);
@@ -144,18 +181,110 @@ export const postsService = {
         where('slug', '!=', currentSlug),
         orderBy('slug'),
         orderBy('createdAt', 'desc'),
-        limit(limit)
+        firestoreLimit(limit)
       );
 
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt instanceof Timestamp ? doc.data().createdAt.toMillis() : Date.now(),
-        updatedAt: doc.data().updatedAt instanceof Timestamp ? doc.data().updatedAt.toMillis() : Date.now(),
-      })) as Post[];
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        const createdAt = data.createdAt;
+        const updatedAt = data.updatedAt;
+        const category = data.category || {};
+
+        return {
+          id: doc.id,
+          title: data?.title ?? '',
+          content: data?.content ?? '',
+          excerpt: data?.excerpt ?? '',
+          slug: data?.slug ?? doc.id,
+          category: {
+            id: category.id ?? category ?? '',
+            name: category.name ?? category ?? ''
+          },
+          published: Boolean(data?.published),
+          authorId: data?.authorId ?? '',
+          authorEmail: data?.authorEmail ?? '',
+          date: data?.date ?? new Date().toISOString(),
+          createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() : 
+                    typeof createdAt === 'number' ? createdAt : 
+                    Date.now(),
+          updatedAt: updatedAt instanceof Timestamp ? updatedAt.toMillis() : 
+                    typeof updatedAt === 'number' ? updatedAt : 
+                    Date.now(),
+          coverImage: data?.coverImage ?? '',
+          images: Array.isArray(data?.images) ? data.images : [],
+          featured: Boolean(data?.featured),
+          section: data?.section ?? '',
+          tags: Array.isArray(data?.tags) ? data.tags : [],
+          time: data?.time ?? '',
+          location: data?.location ?? '',
+          status: data?.status
+        } as Post;
+      });
     } catch (error) {
       console.error('Error getting related posts:', error);
+      return [];
+    }
+  },
+
+  async getPublishedPosts(category?: string, limitCount?: number): Promise<Post[]> {
+    try {
+      const postsRef = collection(db, COLLECTION_NAME);
+      const constraints: QueryConstraint[] = [
+        where('published', '==', true),
+      ];
+
+      if (category) {
+        constraints.push(where('category', '==', category));
+      }
+
+      constraints.push(orderBy('createdAt', 'desc'));
+
+      if (limitCount) {
+        constraints.push(firestoreLimit(limitCount));
+      }
+
+      const q = query(postsRef, ...constraints);
+      const querySnapshot = await getDocs(q);
+
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        const createdAt = data.createdAt;
+        const updatedAt = data.updatedAt;
+        const category = data.category || {};
+
+        return {
+          id: doc.id,
+          title: data?.title ?? '',
+          content: data?.content ?? '',
+          excerpt: data?.excerpt ?? '',
+          slug: data?.slug ?? doc.id,
+          category: {
+            id: category.id ?? category ?? '',
+            name: category.name ?? category ?? ''
+          },
+          published: Boolean(data?.published),
+          authorId: data?.authorId ?? '',
+          authorEmail: data?.authorEmail ?? '',
+          date: data?.date ?? new Date().toISOString(),
+          createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() : 
+                    typeof createdAt === 'number' ? createdAt : 
+                    Date.now(),
+          updatedAt: updatedAt instanceof Timestamp ? updatedAt.toMillis() : 
+                    typeof updatedAt === 'number' ? updatedAt : 
+                    Date.now(),
+          coverImage: data?.coverImage ?? '',
+          images: Array.isArray(data?.images) ? data.images : [],
+          featured: Boolean(data?.featured),
+          section: data?.section ?? '',
+          tags: Array.isArray(data?.tags) ? data.tags : [],
+          time: data?.time ?? '',
+          location: data?.location ?? '',
+          status: data?.status
+        } as Post;
+      });
+    } catch (error) {
+      console.error('Error getting published posts:', error);
       return [];
     }
   }

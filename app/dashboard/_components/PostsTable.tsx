@@ -27,6 +27,7 @@ import { postsService } from '@/app/services/posts';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useSearch } from '@/app/context/search-context';
 import { toast } from '@/hooks/use-toast';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface PostsTableProps {
   initialPosts: Post[];
@@ -52,7 +53,7 @@ function PostsTable({ initialPosts }: PostsTableProps) {
     try {
       setIsDeleting(true);
       const deleteResult = await postsService.deletePost(user.uid, postId);
-      
+
       if (deleteResult) {
         setPosts(posts.filter(post => post.id !== postId));
         toast({
@@ -88,7 +89,7 @@ function PostsTable({ initialPosts }: PostsTableProps) {
         post.title?.toLowerCase().includes(query) ||
         post.excerpt?.toLowerCase().includes(query) ||
         post.content?.toLowerCase().includes(query) ||
-        post.category?.toLowerCase().includes(query)
+        post.category?.name?.toLowerCase().includes(query)
       );
     });
   }, [posts, searchQuery]);
@@ -112,78 +113,111 @@ function PostsTable({ initialPosts }: PostsTableProps) {
     );
   }
 
+  // Calculate stats
+  const totalPosts = posts.length;
+  const publishedPosts = posts.filter(post => post.status === 'published').length;
+  const draftPosts = totalPosts - publishedPosts;
+  const uniqueCategories = [...new Set(posts.map(post => post.category?.name))];
+
   return (
-    <div className="container mx-auto py-10">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[300px]">Title & Excerpt</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Author</TableHead>
-            <TableHead>Updated</TableHead>
-            <TableHead className="text-right">Action</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredPosts.map((post) => (
-            <TableRow key={`${post.category}-${post.id}-${post.createdAt}`}>
-              <TableCell>
-                <div>
-                  <h3 className="text-lg font-semibold">{post.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {post.excerpt || post.content?.slice(0, 100)}...
-                  </p>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge variant="secondary">{post.category?.name}</Badge>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>
-                      {post.author?.name?.slice(0, 2).toUpperCase() || user?.email?.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm">{post.author?.name || user?.email}</span>
-                </div>
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {new Date(post.updatedAt).toLocaleDateString()}
-              </TableCell>
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      aria-label={`Actions for ${post.title}`}
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem
-                      onClick={() => router.push(`/dashboard/posts/${post.id}/edit`)}
-                    >
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => handleDelete(post.id)}
-                      disabled={isDeleting}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-2xl font-bold">{totalPosts}</div>
+            <p className="text-xs text-muted-foreground">Total Posts</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-2xl font-bold">{publishedPosts}</div>
+            <p className="text-xs text-muted-foreground">Published Posts</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-2xl font-bold">{draftPosts}</div>
+            <p className="text-xs text-muted-foreground">Draft Posts</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-2xl font-bold">{uniqueCategories.length}</div>
+            <p className="text-xs text-muted-foreground">Categories</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Posts Table */}
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[300px]">Title & Excerpt</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Author</TableHead>
+              <TableHead>Updated</TableHead>
+              <TableHead className="text-right">Action</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {filteredPosts.map((post) => (
+              <TableRow key={`${post.id}-${post.createdAt}`}>
+                <TableCell>
+                  <div>
+                    <h3 className="font-semibold">{post.title}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {post.excerpt || post.content?.slice(0, 100)}...
+                    </p>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary">{post.category?.name}</Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback>
+                        {post.authorEmail?.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm">{post.authorEmail}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {new Date(post.updatedAt).toLocaleDateString()}
+                </TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem
+                        onClick={() => router.push(`/dashboard/posts/${post.id}/edit`)}
+                      >
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => handleDelete(post.id)}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

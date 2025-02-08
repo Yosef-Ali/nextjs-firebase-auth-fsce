@@ -63,8 +63,8 @@ export default function CategoryPage() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    const filteredPosts = posts.filter((post) => 
-      query === '' || 
+    const filteredPosts = posts.filter((post) =>
+      query === '' ||
       post.title.toLowerCase().includes(query.toLowerCase()) ||
       post.content.toLowerCase().includes(query.toLowerCase()) ||
       post.excerpt?.toLowerCase().includes(query.toLowerCase())
@@ -83,8 +83,8 @@ export default function CategoryPage() {
           <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
             Explore our {formatCategoryName(params.category as string)} programs and initiatives
           </p>
-          <ProgramSearch 
-            onSearch={handleSearch} 
+          <ProgramSearch
+            onSearch={handleSearch}
             placeholder={`Search ${formatCategoryName(params.category as string).toLowerCase()} programs...`}
             className="mt-10"
           />
@@ -143,10 +143,10 @@ export default function CategoryPage() {
                         </CardTitle>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
                           <CalendarDays className="h-4 w-4" />
-                          <span>{post.createdAt ? new Date(post.createdAt).toLocaleDateString('en-US', { 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
+                          <span>{post.createdAt ? new Date(post.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
                           }) : 'Ongoing'}</span>
                         </div>
                       </CardHeader>

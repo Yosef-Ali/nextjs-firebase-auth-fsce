@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { motion, useAnimation, Variants } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-
 import { postsService } from '@/app/services/posts';
 import { Post } from '@/app/types/post';
 import Link from 'next/link';
@@ -24,8 +23,8 @@ interface ContentCardProps {
 }
 
 const cardVariants: Variants = {
-  hidden: { 
-    opacity: 0, 
+  hidden: {
+    opacity: 0,
     y: 50,
     transition: {
       duration: 0.3
@@ -42,14 +41,14 @@ const cardVariants: Variants = {
   })
 };
 
-const ContentCard: React.FC<ContentCardProps> = ({ 
-  title, 
-  excerpt, 
-  image, 
-  slug, 
+const ContentCard: React.FC<ContentCardProps> = ({
+  title,
+  excerpt,
+  image,
+  slug,
   category,
   createdAt,
-  index 
+  index
 }) => {
   const formatDate = (timestamp?: number) => {
     if (!timestamp) return '';
@@ -87,25 +86,22 @@ const ContentCard: React.FC<ContentCardProps> = ({
             </div>
           </div>
         </div>
-
         <CardContent className="p-6 space-y-3">
           <div className="flex items-center text-sm text-muted-foreground space-x-2">
             <Calendar className="h-4 w-4 text-primary" />
             <span>{formatDate(createdAt)}</span>
           </div>
-
           <h2 className="text-xl font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors duration-300 line-clamp-2">
             {title}
           </h2>
-          
+
           <p className="text-muted-foreground text-sm line-clamp-3">
             {excerpt}
           </p>
-
           <div className="pt-4 border-t mt-4">
             <Link href={`/${category}/${slug}`} className="group/link">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="w-full justify-between px-0 hover:bg-transparent text-muted-foreground hover:text-primary"
               >
                 <span className="group-hover/link:underline">Read More</span>
@@ -135,19 +131,58 @@ const TabContent: React.FC<TabContentProps> = ({ posts, category, emptyMessage }
 
   useEffect(() => {
     if (inView) {
-      // Incomplete function, but matches the previous version
+      controls.start('visible');
     }
   }, [inView, controls]);
 
-  return null; // Placeholder return to match previous version
+  return (
+    <motion.div
+      ref={ref}
+      animate={controls}
+      initial="hidden"
+      variants={{
+        visible: {
+          opacity: 1,
+          transition: {
+            when: "beforeChildren",
+            staggerChildren: 0.3
+          }
+        },
+        hidden: {
+          opacity: 0
+        }
+      }}
+    >
+      {posts.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {posts.map((post, index) => (
+            <ContentCard
+              key={post.id}
+              title={post.title}
+              excerpt={post.excerpt || post.content.slice(0, 100)}
+              image={post.images?.[0]}
+              slug={post.slug}
+              category={category}
+              createdAt={post.createdAt}
+              index={index}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-8 text-gray-500">
+          {emptyMessage || `No ${category} available at the moment.`}
+        </div>
+      )}
+    </motion.div>
+  );
 };
 
 export default function FeaturedSection() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const filterPostsByCategory = (category: string) => 
-    posts.filter(post => post.category === category);
+  const filterPostsByCategory = (categoryId: string) =>
+    posts.filter(post => post.category?.id === categoryId);
 
   const categories = {
     news: filterPostsByCategory('news'),
@@ -177,7 +212,7 @@ export default function FeaturedSection() {
 
   return (
     <section className="py-16 px-4">
-      <motion.h2 
+      <motion.h2
         className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-12"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -185,7 +220,7 @@ export default function FeaturedSection() {
       >
         Featured Content
       </motion.h2>
-      
+
       {loading ? (
         <div className="container mx-auto px-4 py-8 flex justify-center">
           <div className="max-w-6xl w-full">
@@ -205,43 +240,13 @@ export default function FeaturedSection() {
               </TabsTrigger>
             ))}
           </TabsList>
-          
+
           {Object.entries(categories).map(([category, categoryPosts]) => (
             <TabsContent key={category} value={category}>
-              <motion.div 
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                initial="hidden"
-                animate="visible"
-                variants={{
-                  hidden: { opacity: 0 },
-                  visible: {
-                    opacity: 1,
-                    transition: {
-                      delayChildren: 0.3,
-                      staggerChildren: 0.2
-                    }
-                  }
-                }}
-              >
-                {categoryPosts.length > 0 ? (
-                  categoryPosts.map((post, index) => (
-                    <ContentCard 
-                      key={post.id}
-                      title={post.title}
-                      excerpt={post.excerpt || post.content.slice(0, 100)}
-                      image={post.images?.[0]}
-                      slug={post.slug || post.id}
-                      category={category}
-                      createdAt={post.createdAt}
-                      index={index}
-                    />
-                  ))
-                ) : (
-                  <div className="col-span-full text-center py-8 text-gray-500">
-                    No {category} available at the moment.
-                  </div>
-                )}
-              </motion.div>
+              <TabContent
+                posts={categoryPosts}
+                category={category}
+              />
             </TabsContent>
           ))}
         </Tabs>

@@ -29,7 +29,7 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events, showTitle = tru
     <section className="py-16">
       <div className="container mx-auto px-4">
         {showTitle && (
-          <motion.h2 
+          <motion.h2
             className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-12"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -40,7 +40,7 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events, showTitle = tru
         )}
 
         <div className="max-w-5xl mx-auto">
-          <div className="relative"> 
+          <div className="relative">
             <ClientCarousel>
               {events.map((event) => (
                 <div key={event.id} className="relative w-full aspect-[21/9] md:aspect-[21/9] mt-12">
@@ -57,7 +57,7 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events, showTitle = tru
                     {/* Gradient overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30" />
                   </div>
-                  
+
                   <div className="absolute inset-0 flex flex-col justify-end p-6 text-white">
                     <div className="flex gap-2 mb-3">
                       <Badge variant="secondary" className="bg-primary/20 text-white hover:bg-primary/30">

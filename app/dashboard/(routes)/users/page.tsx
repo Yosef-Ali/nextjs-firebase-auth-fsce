@@ -1,66 +1,63 @@
 'use client';
 
-import { useState, useEffect, FC } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { UserRole } from '@/app/types/user';
 import { Button } from '@/components/ui/button';
 import { UserPlus } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
-import { usersService } from '@/app/services/client/users-service';
-import { inviteUser, updateUserRole, deleteUser } from '@/app/actions/users-actions';
+import { inviteUser, updateUserRole, deleteUser, resetUserPassword } from '@/app/actions/users-actions';
 import { useUsersListener } from '@/app/hooks/use-users-listener';
 
 import UserTable from './_components/UserTable';
 import InviteUserDialog from './_components/InviteUserDialog';
 import DeleteConfirmDialog from './_components/DeleteConfirmDialog';
 
-const UsersPage: FC = () => {
+interface InviteUserDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (email: string, role: UserRole) => Promise<void>;
+}
+
+const UsersPage = () => {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const { user: authUser, loading: authLoading } = useAuth();
-  const { users, isLoading, error } = useUsersListener();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { user: currentUser, loading: authLoading } = useAuth();
+  const { users, isLoading: usersLoading } = useUsersListener();
 
-  // Show error toast if listener encounters an error
   useEffect(() => {
-    if (error) {
-      toast({
-        title: 'Error',
-        description: error,
-        variant: 'destructive',
-      });
-    }
-  }, [error]);
+    setIsLoading(authLoading || usersLoading);
+  }, [authLoading, usersLoading]);
 
   const handleInviteUser = async (email: string, role: UserRole) => {
+    if (!currentUser?.email) return;
+
     try {
-      const result = await inviteUser(authUser?.email || '', email.trim(), role);
+      const result = await inviteUser(currentUser.email, email, role);
+
       if (result.success) {
         toast({
           title: 'Success',
-          description: `User invited successfully as ${role}`,
+          description: 'User invited successfully',
         });
         setShowInviteDialog(false);
-        // No need to fetch - real-time listener will update automatically
-      } else if ('error' in result) {
-        toast({
-          title: 'Error',
-          description: result.error,
-          variant: 'destructive',
-        });
       } else if (result.existingUser) {
         toast({
-          title: 'User Exists',
+          title: 'Notice',
           description: `User already exists with role: ${result.existingUser.role}`,
-          variant: 'destructive',
+          variant: 'default',
         });
+      } else {
+        throw new Error(result.error);
       }
     } catch (error) {
       console.error('Error inviting user:', error);
       toast({
         title: 'Error',
-        description: 'An error occurred while inviting the user',
+        description: 'Failed to invite user',
         variant: 'destructive',
       });
     }
@@ -69,68 +66,26 @@ const UsersPage: FC = () => {
   const handleSetRole = async (userId: string, role: UserRole) => {
     try {
       const result = await updateUserRole(userId, role);
+
       if (result.success) {
         toast({
           title: 'Success',
-          description: `User role updated to ${role}`,
+          description: 'User role updated successfully',
         });
-        // No need to fetch - real-time listener will update automatically
-        return; // Exit early on success to avoid any error toast
-      }
-
-      // Only handle errors if the update itself failed
-      const details = result.details || {};
-      const errorParts = [];
-
-      // Add main error message
-      errorParts.push(result.error || 'Failed to update user role');
-
-      // Add context information
-      if (details.currentRole) {
-        errorParts.push(`Current role: ${details.currentRole}`);
-      }
-      if (details.targetRole) {
-        errorParts.push(`Requested role: ${details.targetRole}`);
-      }
-      if (details.error) {
-        errorParts.push(`Error: ${details.error}`);
-      }
-      if (details.errorMessage) {
-        errorParts.push(`Details: ${details.errorMessage}`);
-      }
-      if (details.status) {
-        errorParts.push(`Status: ${details.status}`);
-      }
-
-      const errorMessage = errorParts.join('\n');
-
-      // Log the full error details for debugging
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('Role update failed:\n' + [
-          `Error: ${result.error || 'Unknown error'}`,
-          `Details: ${JSON.stringify(details, null, 2)}`,
-          `Full Message: ${errorMessage}`
-        ].join('\n'));
       } else {
-        console.error('Role update failed:', result.error);
+        throw new Error(result.error);
       }
-
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
     } catch (error) {
       console.error('Error updating role:', error);
       toast({
         title: 'Error',
-        description: 'An unexpected error occurred while updating user role',
+        description: 'Failed to update user role',
         variant: 'destructive',
       });
     }
   };
 
-  const handleDeleteUser = async (uid: string) => {
+  const handleDeleteUser = (uid: string) => {
     setUserToDelete(uid);
     setDeleteDialogOpen(true);
   };
@@ -139,7 +94,7 @@ const UsersPage: FC = () => {
     if (!userToDelete) return;
 
     try {
-      setDeleteLoading(true);
+      setIsDeleting(true);
       const result = await deleteUser(userToDelete);
 
       if (result.success) {
@@ -148,22 +103,17 @@ const UsersPage: FC = () => {
           description: 'User deleted successfully',
         });
       } else {
-        console.error('Failed to delete user:', result.error);
-        toast({
-          title: 'Error',
-          description: result.error || 'Failed to delete user',
-          variant: 'destructive',
-        });
+        throw new Error(result.error);
       }
     } catch (error) {
       console.error('Error deleting user:', error);
       toast({
         title: 'Error',
-        description: 'An unexpected error occurred while deleting the user',
+        description: 'Failed to delete user',
         variant: 'destructive',
       });
     } finally {
-      setDeleteLoading(false);
+      setIsDeleting(false);
       setDeleteDialogOpen(false);
       setUserToDelete(null);
     }
@@ -171,7 +121,7 @@ const UsersPage: FC = () => {
 
   const handleResetPassword = async (email: string) => {
     try {
-      await usersService.resetUserPassword(email);
+      await resetUserPassword(email);
       toast({
         title: 'Success',
         description: 'Password reset link sent',
@@ -197,7 +147,7 @@ const UsersPage: FC = () => {
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
+        <h1 className="text-3xl font-bold">Users Management</h1>
         <Button onClick={() => setShowInviteDialog(true)}>
           <UserPlus className="mr-2 h-4 w-4" />
           Invite User
@@ -222,7 +172,7 @@ const UsersPage: FC = () => {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleConfirmDelete}
-        isLoading={deleteLoading}
+        isLoading={isDeleting}
       />
     </div>
   );

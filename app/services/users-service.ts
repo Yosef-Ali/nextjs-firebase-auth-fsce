@@ -55,13 +55,53 @@ export class UsersService {
     }
   }
 
-  async deleteUser(uid: string): Promise<void> {
+  async deleteUser(uid: string): Promise<{ success: boolean; error?: string; details?: any }> {
     try {
-      await adminAuth.deleteUser(uid)
-      await this.usersCollection.doc(uid).delete()
+      // First verify the user exists in Firestore
+      const userDoc = await this.usersCollection.doc(uid).get();
+      if (!userDoc.exists) {
+        return {
+          success: false,
+          error: `User document not found for ID: ${uid}`,
+          details: { uid }
+        };
+      }
+
+      // Try to delete from Authentication first
+      try {
+        await adminAuth.deleteUser(uid);
+      } catch (authError) {
+        console.error("Error deleting user from Authentication:", authError);
+        // If user doesn't exist in Auth, we can still proceed with Firestore cleanup
+        if (!(authError instanceof Error && authError.message.includes("auth/user-not-found"))) {
+          return {
+            success: false,
+            error: authError instanceof Error ? authError.message : "Failed to delete user from Authentication",
+            details: { uid }
+          };
+        }
+      }
+
+      // Delete from Firestore
+      await this.usersCollection.doc(uid).delete();
+      return { success: true };
     } catch (error) {
-      console.error("Error in deleteUser:", error)
-      throw error
+      console.error("Error in deleteUser:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to delete user",
+        details: { uid }
+      };
+    }
+  }
+
+  async resetUserPassword(email: string): Promise<void> {
+    try {
+      // Generate password reset link
+      await adminAuth.generatePasswordResetLink(email);
+    } catch (error) {
+      console.error("Error generating password reset link:", error);
+      throw new Error(error instanceof Error ? error.message : "Failed to reset password");
     }
   }
 
@@ -109,7 +149,8 @@ export class UsersService {
 
       const newUserRef = await this.usersCollection.add(newUserData)
 
-      const emailSent = await emailService.sendInvitationEmail(targetEmail, role)
+      // Fix: remove the role parameter as it's not expected by sendInvitationEmail
+      const emailSent = await emailService.sendInvitationEmail(targetEmail)
       if (!emailSent) {
         await newUserRef.delete()
         throw new Error("Failed to send invitation email")

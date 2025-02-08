@@ -1,6 +1,6 @@
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, limit, orderBy, addDoc, doc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 import { Post } from '@/app/types/post';
+import { collection, getDocs, query, where, orderBy, Timestamp, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 
 // Helper function to generate slug from title
 function generateSlug(title: string): string {
@@ -20,21 +20,53 @@ class EventsService {
       );
 
       const querySnapshot = await getDocs(q);
-      const posts = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Post));
+      const posts = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        const createdAt = data.createdAt;
+        const updatedAt = data.updatedAt;
+        const category = data.category || {};
+
+        return {
+          id: doc.id,
+          title: data?.title ?? '',
+          content: data?.content ?? '',
+          excerpt: data?.excerpt ?? '',
+          slug: data?.slug ?? doc.id,
+          category: {
+            id: category.id ?? category ?? '',
+            name: category.name ?? category ?? ''
+          },
+          published: Boolean(data?.published),
+          authorId: data?.authorId ?? '',
+          authorEmail: data?.authorEmail ?? '',
+          date: data?.date ?? new Date().toISOString(),
+          createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() :
+            typeof createdAt === 'number' ? createdAt :
+              Date.now(),
+          updatedAt: updatedAt instanceof Timestamp ? updatedAt.toMillis() :
+            typeof updatedAt === 'number' ? updatedAt :
+              Date.now(),
+          coverImage: data?.coverImage ?? '',
+          images: Array.isArray(data?.images) ? data.images : [],
+          featured: Boolean(data?.featured),
+          section: data?.section ?? '',
+          tags: Array.isArray(data?.tags) ? data.tags : [],
+          time: data?.time ?? '',
+          location: data?.location ?? '',
+          status: data?.status
+        } as Post;
+      });
 
       // Filter and sort in memory
       return posts
         .filter(post => {
           const eventDate = new Date(post.date);
-          return post.category === 'events' &&
+          return post.category?.id === 'events' &&
             (includeUnpublished || post.published) &&
             (includePastEvents || eventDate >= new Date());
         })
         .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-        .slice(0, 5); // Apply limit in memory
+        .slice(0, 5);
     } catch (error) {
       console.error('Error getting events:', error);
       return [];
@@ -48,20 +80,52 @@ class EventsService {
       );
 
       const querySnapshot = await getDocs(q);
-      const posts = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Post));
+      const posts = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        const createdAt = data.createdAt;
+        const updatedAt = data.updatedAt;
+        const category = data.category || {};
+
+        return {
+          id: doc.id,
+          title: data?.title ?? '',
+          content: data?.content ?? '',
+          excerpt: data?.excerpt ?? '',
+          slug: data?.slug ?? doc.id,
+          category: {
+            id: category.id ?? category ?? '',
+            name: category.name ?? category ?? ''
+          },
+          published: Boolean(data?.published),
+          authorId: data?.authorId ?? '',
+          authorEmail: data?.authorEmail ?? '',
+          date: data?.date ?? new Date().toISOString(),
+          createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() :
+            typeof createdAt === 'number' ? createdAt :
+              Date.now(),
+          updatedAt: updatedAt instanceof Timestamp ? updatedAt.toMillis() :
+            typeof updatedAt === 'number' ? updatedAt :
+              Date.now(),
+          coverImage: data?.coverImage ?? '',
+          images: Array.isArray(data?.images) ? data.images : [],
+          featured: Boolean(data?.featured),
+          section: data?.section ?? '',
+          tags: Array.isArray(data?.tags) ? data.tags : [],
+          time: data?.time ?? '',
+          location: data?.location ?? '',
+          status: data?.status
+        } as Post;
+      });
 
       // Filter and sort in memory
       return posts
         .filter(post => {
           const eventDate = new Date(post.date);
-          return post.category === 'events' &&
+          return post.category?.id === 'events' &&
             (includeUnpublished || post.published) &&
             eventDate >= new Date();
         })
-        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .slice(0, count);
     } catch (error) {
       console.error('Error getting upcoming events:', error);
@@ -74,7 +138,7 @@ class EventsService {
       const q = query(
         collection(db, this.collectionName),
         where('slug', '==', slug),
-        where('category', '==', 'events')
+        where('category.id', '==', 'events')
       );
 
       const querySnapshot = await getDocs(q);
@@ -83,9 +147,39 @@ class EventsService {
       }
 
       const doc = querySnapshot.docs[0];
+      const data = doc.data();
+      const createdAt = data.createdAt;
+      const updatedAt = data.updatedAt;
+      const category = data.category || {};
+
       return {
         id: doc.id,
-        ...doc.data()
+        title: data?.title ?? '',
+        content: data?.content ?? '',
+        excerpt: data?.excerpt ?? '',
+        slug: data?.slug ?? doc.id,
+        category: {
+          id: category.id ?? category ?? '',
+          name: category.name ?? category ?? ''
+        },
+        published: Boolean(data?.published),
+        authorId: data?.authorId ?? '',
+        authorEmail: data?.authorEmail ?? '',
+        date: data?.date ?? new Date().toISOString(),
+        createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() :
+          typeof createdAt === 'number' ? createdAt :
+            Date.now(),
+        updatedAt: updatedAt instanceof Timestamp ? updatedAt.toMillis() :
+          typeof updatedAt === 'number' ? updatedAt :
+            Date.now(),
+        coverImage: data?.coverImage ?? '',
+        images: Array.isArray(data?.images) ? data.images : [],
+        featured: Boolean(data?.featured),
+        section: data?.section ?? '',
+        tags: Array.isArray(data?.tags) ? data.tags : [],
+        time: data?.time ?? '',
+        location: data?.location ?? '',
+        status: data?.status
       } as Post;
     } catch (error) {
       console.error('Error getting event by slug:', error);
@@ -97,8 +191,10 @@ class EventsService {
     try {
       const eventData = {
         ...data,
-        category: 'events',
-        slug: generateSlug(data.title || ''),
+        category: {
+          id: 'events',
+          name: 'Events'
+        },
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
       };
@@ -114,11 +210,10 @@ class EventsService {
   async updateEvent(id: string, data: Partial<Post>): Promise<void> {
     try {
       const eventRef = doc(db, this.collectionName, id);
-      const updateData = {
+      await updateDoc(eventRef, {
         ...data,
         updatedAt: Timestamp.now()
-      };
-      await updateDoc(eventRef, updateData);
+      });
     } catch (error) {
       console.error('Error updating event:', error);
       throw error;
@@ -127,8 +222,7 @@ class EventsService {
 
   async deleteEvent(id: string): Promise<void> {
     try {
-      const eventRef = doc(db, this.collectionName, id);
-      await deleteDoc(eventRef);
+      await deleteDoc(doc(db, this.collectionName, id));
     } catch (error) {
       console.error('Error deleting event:', error);
       throw error;

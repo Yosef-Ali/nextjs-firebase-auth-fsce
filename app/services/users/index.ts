@@ -67,6 +67,7 @@ export class UsersService {
   createOrUpdateUser = userCoreService.createOrUpdateUser.bind(userCoreService);
   updateUserStatus = userCoreService.updateUserStatus.bind(userCoreService);
   getAllUsers = userCoreService.getAllUsers.bind(userCoreService);
+  deleteUser = userCoreService.deleteUser.bind(userCoreService);
 
   updateUserRole = userAuthService.updateUserRole.bind(userAuthService);
   resetUserPassword = userAuthService.resetUserPassword.bind(userAuthService);

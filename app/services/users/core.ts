@@ -10,9 +10,12 @@ import {
   query,
   where,
   updateDoc,
+  deleteDoc,
   DocumentReference,
 } from "firebase/firestore";
 import { User as FirebaseUser } from "firebase/auth";
+import { deleteUser as deleteAuthUser } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 const USERS_COLLECTION = "users";
 
@@ -161,6 +164,41 @@ class UserCoreService {
     } catch (error) {
       console.error("Error updating user role:", error);
       throw error;
+    }
+  }
+
+  async deleteUser(uid: string): Promise<{ success: boolean; error?: string; details?: any }> {
+    if (!uid?.trim()) {
+      return {
+        success: false,
+        error: "Valid User ID is required",
+        details: { uid }
+      };
+    }
+
+    try {
+      const userRef = this.getUserRef(uid);
+      const userDoc = await getDoc(userRef);
+
+      if (!userDoc.exists()) {
+        return {
+          success: false,
+          error: `User document not found for ID: ${uid}`,
+          details: { uid }
+        };
+      }
+
+      // Delete from Firestore first
+      await deleteDoc(userRef);
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error in deleteUser:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to delete user",
+        details: { uid }
+      };
     }
   }
 }

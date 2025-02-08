@@ -35,8 +35,8 @@ export async function getUsers(): Promise<ServiceResponse<User[]>> {
 
 // Server action to invite a user
 export async function inviteUser(
-  adminEmail: string, 
-  targetEmail: string, 
+  adminEmail: string,
+  targetEmail: string,
   role: UserRole
 ): Promise<UserInviteResponse> {
   try {
@@ -51,15 +51,15 @@ export async function inviteUser(
 
 // Server action to update user role
 export async function updateUserRole(
-  userId: string, 
+  userId: string,
   role: UserRole
 ): Promise<ServiceResponse> {
   try {
     const currentUser = await usersService.getUser(userId);
     const currentRole = currentUser?.role || 'unknown';
-    
+
     const result = await usersService.updateUserRole(userId, role);
-    
+
     const details = {
       uid: userId,
       targetRole: role,
@@ -128,11 +128,57 @@ export async function deleteUser(
   userId: string
 ): Promise<ServiceResponse> {
   try {
-    await usersService.deleteUser(userId);
-    revalidatePath("/admin/users");
-    return { success: true };
+    if (!userId?.trim()) {
+      return {
+        success: false,
+        error: "Invalid user ID provided",
+        details: { userId }
+      };
+    }
+
+    const result = await usersService.deleteUser(userId);
+    
+    if (result.success) {
+      // Ensure all relevant paths are revalidated
+      revalidatePath("/admin/users");
+      revalidatePath("/dashboard/users");
+      revalidatePath("/");
+      
+      return {
+        success: true,
+        details: {
+          userId,
+          timestamp: new Date().toISOString(),
+          status: 'completed'
+        }
+      };
+    }
+
+    return {
+      success: false,
+      error: result.error || "Failed to delete user",
+      details: {
+        ...result.details,
+        status: 'failed'
+      }
+    };
   } catch (error) {
-    console.error("Error deleting user:", error);
-    return { success: false, error: "Failed to delete user" };
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("Error deleting user:", {
+      userId,
+      error: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined
+    });
+
+    return {
+      success: false,
+      error: "Failed to delete user",
+      details: {
+        userId,
+        errorMessage,
+        status: 'error',
+        timestamp: new Date().toISOString()
+      }
+    };
   }
-}   
+}

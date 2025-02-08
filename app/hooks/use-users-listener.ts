@@ -11,10 +11,10 @@ export function useUsersListener() {
 
   useEffect(() => {
     setIsLoading(true);
-    
+
     // Create a query for the users collection
     const usersQuery = query(collection(db, 'users'));
-    
+
     // Set up real-time listener
     const unsubscribe = onSnapshot(
       usersQuery,

@@ -27,11 +27,11 @@ class WhatWeDoService {
         return {
           id: doc.id,
           ...data,
-          createdAt: data.createdAt instanceof Timestamp 
-            ? data.createdAt.toMillis() 
+          createdAt: data.createdAt instanceof Timestamp
+            ? data.createdAt.toMillis()
             : Date.now(),
-          updatedAt: data.updatedAt instanceof Timestamp 
-            ? data.updatedAt.toMillis() 
+          updatedAt: data.updatedAt instanceof Timestamp
+            ? data.updatedAt.toMillis()
             : Date.now(),
         } as Post;
       });
@@ -60,19 +60,19 @@ class WhatWeDoService {
         return {
           id: doc.id,
           ...data,
-          createdAt: data.createdAt instanceof Timestamp 
-            ? data.createdAt.toMillis() 
+          createdAt: data.createdAt instanceof Timestamp
+            ? data.createdAt.toMillis()
             : Date.now(),
-          updatedAt: data.updatedAt instanceof Timestamp 
-            ? data.updatedAt.toMillis() 
+          updatedAt: data.updatedAt instanceof Timestamp
+            ? data.updatedAt.toMillis()
             : Date.now(),
         } as Post;
       });
 
       // Filter and sort in memory
       return posts
-        .filter(post => 
-          (includeUnpublished || post.published) && 
+        .filter(post =>
+          (includeUnpublished || post.published) &&
           post.tags?.includes('programs')
         )
         .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -92,7 +92,7 @@ class WhatWeDoService {
       );
 
       const querySnapshot = await getDocs(q);
-      
+
       if (querySnapshot.empty) {
         return null;
       }
@@ -101,11 +101,11 @@ class WhatWeDoService {
       return {
         id: doc.id,
         ...doc.data(),
-        createdAt: doc.data().createdAt instanceof Timestamp 
-          ? doc.data().createdAt.toMillis() 
+        createdAt: doc.data().createdAt instanceof Timestamp
+          ? doc.data().createdAt.toMillis()
           : Date.now(),
-        updatedAt: doc.data().updatedAt instanceof Timestamp 
-          ? doc.data().updatedAt.toMillis() 
+        updatedAt: doc.data().updatedAt instanceof Timestamp
+          ? doc.data().updatedAt.toMillis()
           : Date.now(),
       } as Post;
     } catch (error) {
@@ -120,10 +120,10 @@ class WhatWeDoService {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
-    
+
     const categoryPrefix = category.split('-')[0];
     const timestamp = Date.now().toString(36);
-    
+
     return `${categoryPrefix}-${baseId}-${timestamp}`;
   }
 
@@ -151,12 +151,12 @@ class WhatWeDoService {
   async updateProgram(id: string, program: Partial<Post>): Promise<void> {
     try {
       const docRef = doc(db, this.collectionName, id);
-      
+
       // If title is being updated, update slug as well
       if (program.title) {
         program.slug = generateSlug(program.title);
       }
-      
+
       await updateDoc(docRef, {
         ...program,
         updatedAt: Date.now(),
@@ -215,11 +215,11 @@ class WhatWeDoService {
     return querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
-      createdAt: doc.data().createdAt instanceof Timestamp 
-        ? doc.data().createdAt.toMillis() 
+      createdAt: doc.data().createdAt instanceof Timestamp
+        ? doc.data().createdAt.toMillis()
         : Date.now(),
-      updatedAt: doc.data().updatedAt instanceof Timestamp 
-        ? doc.data().updatedAt.toMillis() 
+      updatedAt: doc.data().updatedAt instanceof Timestamp
+        ? doc.data().updatedAt.toMillis()
         : Date.now(),
     } as Post));
   }
