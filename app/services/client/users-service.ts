@@ -2,8 +2,15 @@
 
 import { UserRole, UserStatus, type User } from "@/app/types/user";
 import { getUsers, inviteUser, updateUserRole, deleteUser } from "@/app/actions/users-actions";
+import { usersService as mainUsersService } from "@/app/services/users";
+import { User as FirebaseUser } from "firebase/auth";
 
-class UsersService {
+class ClientUsersService {
+  // Delegate auth-related operations to the main service
+  async createUserIfNotExists(firebaseUser: FirebaseUser): Promise<User | null> {
+    return mainUsersService.createUserIfNotExists(firebaseUser);
+  }
+
   async getAllUsers(): Promise<User[]> {
     try {
       const result = await getUsers();
@@ -21,12 +28,20 @@ class UsersService {
     adminEmail: string,
     targetEmail: string,
     role: UserRole,
-  ): Promise<{ success: boolean; existingUser?: { email: string; role: string } }> {
+  ): Promise<{ success: boolean; existingUser?: { email: string; role: string }; error?: string }> {
     try {
-      return await inviteUser(adminEmail, targetEmail, role);
+      const result = await inviteUser(adminEmail, targetEmail, role);
+      return {
+        success: result.success,
+        existingUser: result.existingUser,
+        error: 'error' in result ? result.error : undefined
+      };
     } catch (error) {
       console.error("Error inviting user:", error);
-      throw error;
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to invite user"
+      };
     }
   }
 
@@ -56,24 +71,16 @@ class UsersService {
 
   async resetUserPassword(email: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const response = await fetch('/api/users/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-      return data;
+      await mainUsersService.resetUserPassword(email);
+      return { success: true };
     } catch (error) {
-      console.error('Error resetting password:', error);
+      console.error("Error resetting password:", error);
       return {
         success: false,
-        error: 'Failed to reset password. Please try again.'
+        error: error instanceof Error ? error.message : "Failed to reset password"
       };
     }
   }
 }
 
-export const usersService = new UsersService();
+export const usersService = new ClientUsersService();

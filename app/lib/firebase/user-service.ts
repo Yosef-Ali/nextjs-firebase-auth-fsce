@@ -6,7 +6,6 @@ import { UserRole, UserStatus } from '@/app/types/user';
 export const ADMIN_EMAILS = [
   process.env.NEXT_PUBLIC_ADMIN_EMAIL,
   'dev.yosef@gmail.com',
-  'yosefmdsc@gmail.com',
   'yaredd.degefu@gmail.com',
   'mekdesyared@gmail.com'
 ].filter(Boolean) as string[];

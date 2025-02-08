@@ -6,7 +6,7 @@ import { UserRole } from '@/app/types/user';
 import { Button } from '@/components/ui/button';
 import { UserPlus } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
-import { usersService } from '@/app/services/server-users-service';
+import { usersService } from '@/app/services/client/users-service';
 import { inviteUser, updateUserRole, deleteUser } from '@/app/actions/users-actions';
 import { useUsersListener } from '@/app/hooks/use-users-listener';
 
@@ -18,6 +18,7 @@ const UsersPage: FC = () => {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const { user: authUser, loading: authLoading } = useAuth();
   const { users, isLoading, error } = useUsersListener();
 
@@ -80,10 +81,10 @@ const UsersPage: FC = () => {
       // Only handle errors if the update itself failed
       const details = result.details || {};
       const errorParts = [];
-      
+
       // Add main error message
       errorParts.push(result.error || 'Failed to update user role');
-      
+
       // Add context information
       if (details.currentRole) {
         errorParts.push(`Current role: ${details.currentRole}`);
@@ -138,66 +139,31 @@ const UsersPage: FC = () => {
     if (!userToDelete) return;
 
     try {
+      setDeleteLoading(true);
       const result = await deleteUser(userToDelete);
+
       if (result.success) {
         toast({
           title: 'Success',
           description: 'User deleted successfully',
         });
-        // No need to fetch - real-time listener will update automatically
-        return; // Exit early on success
-      }
-
-      // Only handle errors if the delete itself failed
-      const details = result.details || {};
-      const errorParts = [];
-      
-      // Add main error message
-      errorParts.push(result.error || 'Failed to delete user');
-      
-      // Add context information
-      if (details.error) {
-        errorParts.push(`Error: ${details.error}`);
-      }
-      if (details.status) {
-        errorParts.push(`Status: ${details.status}`);
-      }
-      if (details.errorMessage) {
-        errorParts.push(`Details: ${details.errorMessage}`);
-      }
-      if (details.errorCode) {
-        errorParts.push(`Code: ${details.errorCode}`);
-      }
-      if (details.uid) {
-        errorParts.push(`User ID: ${details.uid}`);
-      }
-
-      const errorMessage = errorParts.join('\n');
-
-      // Log the full error details for debugging
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('Delete failed:\n' + [
-          `Error: ${result.error || 'Unknown error'}`,
-          `Details: ${JSON.stringify(details, null, 2)}`,
-          `Full Message: ${errorMessage}`
-        ].join('\n'));
       } else {
-        console.error('Delete failed:', result.error);
+        console.error('Failed to delete user:', result.error);
+        toast({
+          title: 'Error',
+          description: result.error || 'Failed to delete user',
+          variant: 'destructive',
+        });
       }
-
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
     } catch (error) {
       console.error('Error deleting user:', error);
       toast({
         title: 'Error',
-        description: 'An unexpected error occurred while deleting user',
+        description: 'An unexpected error occurred while deleting the user',
         variant: 'destructive',
       });
     } finally {
+      setDeleteLoading(false);
       setDeleteDialogOpen(false);
       setUserToDelete(null);
     }
@@ -256,6 +222,7 @@ const UsersPage: FC = () => {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleConfirmDelete}
+        isLoading={deleteLoading}
       />
     </div>
   );

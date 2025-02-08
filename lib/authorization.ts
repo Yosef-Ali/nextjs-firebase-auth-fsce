@@ -3,8 +3,7 @@ import { User } from 'firebase/auth';
 // Define a constant for admin emails that can be easily updated
 const ADMIN_EMAILS = [
   process.env.NEXT_PUBLIC_ADMIN_EMAIL, 
-  'dev.yosefali@gmail.com', 
-  'yosefmdsc@gmail.com'
+  'dev.yosefali@gmail.com'
 ].filter(Boolean) as string[];
 
 export enum UserRole {

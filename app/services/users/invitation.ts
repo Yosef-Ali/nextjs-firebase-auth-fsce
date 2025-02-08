@@ -1,4 +1,4 @@
-import { collection, doc, setDoc, deleteDoc, getDocs, query, where } from "firebase/firestore";
+import { collection, doc, setDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { User, UserRole, UserStatus } from "../../types/user";
 import { emailService } from "../email";
@@ -11,7 +11,7 @@ class UserInvitationService {
 
   async setupInitialAdmin(email: string): Promise<boolean> {
     try {
-      // Find user by email
+      // First check if user already exists
       const usersQuery = query(
         this.usersRef,
         where("email", "==", email)
@@ -36,7 +36,7 @@ class UserInvitationService {
 
       // User exists, update to admin role
       const userDoc = querySnapshot.docs[0];
-      await setDoc(userDoc.ref, {
+      await setDoc(doc(this.usersRef, userDoc.id), {
         role: UserRole.ADMIN,
         status: UserStatus.ACTIVE,
         updatedAt: Date.now(),
@@ -68,7 +68,7 @@ class UserInvitationService {
       const userDoc = querySnapshot.docs[0];
 
       // Update user role and status
-      await setDoc(userDoc.ref, {
+      await setDoc(doc(this.usersRef, userDoc.id), {
         role: UserRole.AUTHOR,
         status: UserStatus.ACTIVE,
         invitationToken: null,
@@ -88,8 +88,8 @@ class UserInvitationService {
       const adminEmails = [
         process.env.NEXT_PUBLIC_ADMIN_EMAIL,
         "dev.yosefali@gmail.com",
-        "yosefmdsc@gmail.com",
         "yaredd.degefu@gmail.com",
+        "mekdesyared@gmail.com"
       ].filter(Boolean);
 
       for (const user of users) {
@@ -103,31 +103,63 @@ class UserInvitationService {
     }
   }
 
-  async inviteUser(email: string, role: UserRole): Promise<boolean> {
+  async inviteUser(
+    adminEmail: string,
+    targetEmail: string,
+    role: UserRole
+  ): Promise<{ success: boolean; existingUser?: { email: string; role: string } }> {
     try {
-      // Generate invitation token
-      const token = Math.random().toString(36).substring(2, 15);
+      // Check if user already exists
+      const usersQuery = query(
+        this.usersRef,
+        where("email", "==", targetEmail)
+      );
+      const querySnapshot = await getDocs(usersQuery);
 
-      // Create user document with invitation status
-      const userData: Partial<User> = {
-        email,
+      if (!querySnapshot.empty) {
+        const existingUserDoc = querySnapshot.docs[0];
+        const existingUserData = existingUserDoc.data();
+        return {
+          success: false,
+          existingUser: {
+            email: existingUserData.email,
+            role: existingUserData.role,
+          },
+        };
+      }
+
+      // Generate invitation token
+      const invitationToken = Math.random().toString(36).substring(2, 15);
+
+      // Create new user document
+      const newUserData: Partial<User> = {
+        email: targetEmail,
         role,
         status: UserStatus.INVITED,
-        invitationToken: token,
+        invitedBy: adminEmail,
+        invitationToken,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };
 
+      // Generate a new document reference with auto-generated ID
       const newUserRef = doc(this.usersRef);
-      await setDoc(newUserRef, userData);
+      await setDoc(newUserRef, newUserData);
 
       // Send invitation email
-      await emailService.sendInvitationEmail(email);
+      const emailSent = await emailService.sendInvitationEmail(targetEmail);
+      if (!emailSent) {
+        // If email fails to send, delete the user document
+        await userCoreService.createOrUpdateUser(newUserRef.id, {
+          status: UserStatus.PENDING,
+        });
+        return { success: false };
+      }
 
-      return true;
+      return { success: true };
     } catch (error) {
       console.error("Error inviting user:", error);
-      return false;
+      throw error;
     }
   }
 }

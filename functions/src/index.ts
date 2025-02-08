@@ -5,3 +5,6 @@ admin.initializeApp();
 
 // Export all user management functions
 export * from './users';
+
+// Export Firebase Function triggers
+export * from './triggers';

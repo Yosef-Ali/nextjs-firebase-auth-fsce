@@ -4,33 +4,60 @@ import { userCoreService } from "./core";
 import { userAuthService } from "./auth";
 import { userInvitationService } from "./invitation";
 
-class UsersService {
+export class UsersService {
   // Core user operations
   async createUserIfNotExists(firebaseUser: FirebaseUser): Promise<User | null> {
+    if (!firebaseUser?.uid) {
+      console.warn("No user ID provided to createUserIfNotExists");
+      return null;
+    }
+
     try {
-      const { uid, email, displayName, photoURL } = firebaseUser;
+      // First check if user already exists
+      const existingUser = await userCoreService.getUser(firebaseUser.uid);
+      if (existingUser) {
+        return existingUser;
+      }
 
-      const existingUser = await userCoreService.getUser(uid);
-      if (existingUser) return existingUser;
-
-      const role = UserRole.USER;
+      // Prepare user data with all required fields
       const userData: Partial<User> = {
-        email: email ?? "",
-        displayName: displayName ?? undefined,
-        photoURL: photoURL ?? undefined,
-        role,
+        uid: firebaseUser.uid,
+        email: firebaseUser.email || "",
+        displayName: firebaseUser.displayName || firebaseUser.email || "Unnamed User",
+        photoURL: firebaseUser.photoURL || null,
+        emailVerified: firebaseUser.emailVerified,
+        role: UserRole.USER,
         status: UserStatus.ACTIVE,
         createdAt: Date.now(),
         updatedAt: Date.now(),
+        metadata: {
+          lastLogin: Date.now(),
+          createdAt: Date.now()
+        }
       };
 
-      await userCoreService.createOrUpdateUser(uid, userData);
-      await userAuthService.updateUserRole(uid, role);
+      // Create user document first
+      await userCoreService.createOrUpdateUser(firebaseUser.uid, userData);
 
-      return userCoreService.getUser(uid);
+      // Get the newly created user
+      const newUser = await userCoreService.getUser(firebaseUser.uid);
+      if (!newUser) {
+        console.error("Failed to retrieve newly created user document");
+        throw new Error("Failed to create user document");
+      }
+
+      // Try to set role in background, but don't fail if it doesn't work
+      try {
+        await userAuthService.updateUserRole(firebaseUser.uid, UserRole.USER);
+      } catch (error) {
+        console.warn("Non-critical error setting initial user role:", error);
+      }
+
+      return newUser;
     } catch (error) {
       console.error("Error in createUserIfNotExists:", error);
-      return null;
+      // Re-throw the error to be handled by the caller
+      throw error;
     }
   }
 

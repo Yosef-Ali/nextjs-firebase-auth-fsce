@@ -1,129 +1,76 @@
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { User, UserRole } from "../../types/user";
 import { userCoreService } from "./core";
+import { setDoc } from "firebase/firestore";
 
 class UserAuthService {
-  private async setCustomClaims(
-    uid: string,
-    claims: { role: UserRole }
-  ): Promise<void> {
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (
-        process.env.NODE_ENV === 'development'
-          ? 'http://localhost:3000'
-          : typeof window !== 'undefined'
-            ? window.location.origin
-            : ''
-      );
-      
-      if (!baseUrl) {
-        throw new Error('Application URL is not configured');
-      }
-
-      const apiUrl = `${baseUrl}/api/auth/set-custom-claims`;
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ uid, claims }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Failed to set custom claims: ${errorData?.error || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error("Error setting custom claims:", error);
-      throw error;
-    }
-  }
-
   async updateUserRole(uid: string, role: UserRole): Promise<{ success: boolean; error?: string; details?: any }> {
-    try {
-      const user = await userCoreService.getUser(uid);
-      if (!user) {
-        const error = `User with ID ${uid} not found in Firestore`;
-        console.error(error);
-        return {
-          success: false,
-          error: "User not found in the database",
-          details: { 
-            uid,
-            error,
-            currentRole: null
-          }
-        };
-      }
-
-      const currentRole = user.role;
-
-      // Update Firestore document
-      try {
-        await updateDoc(doc(db, 'users', uid), {
-          role,
-          updatedAt: Date.now(),
-        });
-      } catch (firestoreError: any) {
-        const error = `Failed to update user role in Firestore: ${firestoreError.message}`;
-        console.error(error);
-        return {
-          success: false,
-          error: "Failed to update user role in database",
-          details: {
-            uid,
-            currentRole,
-            targetRole: role,
-            errorMessage: firestoreError.message,
-            errorCode: firestoreError.code,
-            error
-          }
-        };
-      }
-
-      // Update Firebase Auth custom claims
-      try {
-        await this.setCustomClaims(uid, { role });
-      } catch (claimsError: any) {
-        const error = `Failed to update user role claims: ${claimsError.message}`;
-        console.error(error);
-        return {
-          success: false,
-          error: "Failed to update authentication claims",
-          details: {
-            uid,
-            currentRole,
-            targetRole: role,
-            errorMessage: claimsError.message,
-            error
-          }
-        };
-      }
-
-      console.log("Custom claims updated successfully for user:", uid, "with role:", role);
-      return { success: true };
-    } catch (error: any) {
-      console.error("Unexpected error in updateUserRole:", {
-        uid,
-        role,
-        error: error.message,
-        stack: error.stack,
-        success: false
-      });
+    if (!uid) {
       return {
         success: false,
-        error: "An unexpected error occurred while updating user role",
+        error: "No user ID provided for role update",
+      };
+    }
+
+    try {
+      // First check if user exists
+      const currentUser = await userCoreService.getUser(uid);
+      if (!currentUser) {
+        return {
+          success: false,
+          error: "User not found",
+          details: { uid }
+        };
+      }
+
+      const currentRole = currentUser.role;
+
+      try {
+        // Update user role in Firestore
+        await userCoreService.createOrUpdateUser(uid, {
+          role,
+          updatedAt: Date.now()
+        });
+
+        return {
+          success: true,
+          details: {
+            uid,
+            previousRole: currentRole,
+            newRole: role
+          }
+        };
+      } catch (updateError) {
+        console.error("Error updating user role in Firestore:", updateError);
+        return {
+          success: false,
+          error: "Failed to update role in database",
+          details: {
+            uid,
+            error: updateError instanceof Error ? updateError.message : "Unknown error",
+            currentRole,
+            targetRole: role
+          }
+        };
+      }
+    } catch (error) {
+      console.error("Error in updateUserRole:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
         details: {
-          message: error.message,
-          stack: error.stack
+          uid,
+          error: error instanceof Error ? error.stack : undefined
         }
       };
     }
   }
 
   async resetUserPassword(email: string): Promise<void> {
+    if (!email) {
+      throw new Error("No email provided for password reset");
+    }
+
     try {
       const auth = getAuth();
       await sendPasswordResetEmail(auth, email);
