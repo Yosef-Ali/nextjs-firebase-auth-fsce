@@ -1,97 +1,82 @@
-export enum AuthErrorCode {
-    // Firebase Auth Error Codes
-    EMAIL_EXISTS = 'auth/email-already-in-use',
-    INVALID_EMAIL = 'auth/invalid-email',
-    WEAK_PASSWORD = 'auth/weak-password',
-    USER_NOT_FOUND = 'auth/user-not-found',
-    WRONG_PASSWORD = 'auth/wrong-password',
-    POPUP_CLOSED = 'auth/popup-closed-by-user',
-    ACCOUNT_EXISTS = 'auth/account-exists-with-different-credential',
-    INVALID_CREDENTIAL = 'auth/invalid-credential',
-    OPERATION_NOT_ALLOWED = 'auth/operation-not-allowed',
-    USER_DISABLED = 'auth/user-disabled',
-    TOO_MANY_REQUESTS = 'auth/too-many-requests',
-    REQUIRES_RECENT_LOGIN = 'auth/requires-recent-login',
+import { FirebaseError } from 'firebase/app';
 
-    // Custom Error Codes
-    USER_DATA_NOT_FOUND = 'custom/user-data-not-found',
-    ROLE_UPDATE_FAILED = 'custom/role-update-failed',
-    STATUS_UPDATE_FAILED = 'custom/status-update-failed',
-    UNAUTHORIZED = 'custom/unauthorized',
-    INVALID_ROLE = 'custom/invalid-role',
-    SERVER_ERROR = 'custom/server-error'
+export type AuthErrorCode =
+    | 'auth/user-not-found'
+    | 'auth/wrong-password'
+    | 'auth/invalid-email'
+    | 'auth/email-already-in-use'
+    | 'auth/weak-password'
+    | 'auth/network-request-failed'
+    | 'auth/too-many-requests'
+    | 'auth/popup-closed-by-user'
+    | 'auth/requires-recent-login'
+    | 'auth/user-disabled'
+    | 'auth/operation-not-allowed'
+    | 'auth/invalid-credential'
+    | 'auth/invalid-verification-code'
+    | 'auth/invalid-verification-id'
+    | 'auth/missing-verification-code'
+    | 'auth/missing-verification-id'
+    | 'auth/credential-already-in-use';
+
+export interface AuthError extends Error {
+    code?: string;
 }
 
-export class AuthError extends Error {
-    constructor(
-        public code: AuthErrorCode,
-        message?: string,
-        public originalError?: any
-    ) {
-        super(message || getDefaultErrorMessage(code));
-        this.name = 'AuthError';
+export function handleAuthError(error: unknown): AuthError {
+    if (error instanceof FirebaseError) {
+        const errorMessage = getFirebaseErrorMessage(error.code);
+        return {
+            message: errorMessage,
+            name: 'AuthError',
+            code: error.code
+        };
     }
+
+    // Handle non-Firebase errors
+    return {
+        message: error instanceof Error ? error.message : 'An unexpected error occurred',
+        name: 'AuthError'
+    };
 }
 
-function getDefaultErrorMessage(code: AuthErrorCode): string {
+function getFirebaseErrorMessage(code: string): string {
     switch (code) {
-        case AuthErrorCode.EMAIL_EXISTS:
-            return 'An account with this email already exists';
-        case AuthErrorCode.INVALID_EMAIL:
-            return 'Please enter a valid email address';
-        case AuthErrorCode.WEAK_PASSWORD:
-            return 'Password should be at least 6 characters';
-        case AuthErrorCode.USER_NOT_FOUND:
+        case 'auth/user-not-found':
             return 'No account found with this email';
-        case AuthErrorCode.WRONG_PASSWORD:
+        case 'auth/wrong-password':
             return 'Incorrect password';
-        case AuthErrorCode.POPUP_CLOSED:
+        case 'auth/invalid-email':
+            return 'Invalid email address';
+        case 'auth/email-already-in-use':
+            return 'An account already exists with this email';
+        case 'auth/weak-password':
+            return 'Password should be at least 6 characters';
+        case 'auth/network-request-failed':
+            return 'Network error. Please check your connection';
+        case 'auth/too-many-requests':
+            return 'Too many failed attempts. Please try again later';
+        case 'auth/popup-closed-by-user':
             return 'Sign in was cancelled';
-        case AuthErrorCode.ACCOUNT_EXISTS:
-            return 'An account already exists with a different sign in method';
-        case AuthErrorCode.INVALID_CREDENTIAL:
-            return 'Invalid login credentials';
-        case AuthErrorCode.OPERATION_NOT_ALLOWED:
-            return 'This operation is not allowed';
-        case AuthErrorCode.USER_DISABLED:
-            return 'This account has been disabled';
-        case AuthErrorCode.TOO_MANY_REQUESTS:
-            return 'Too many attempts. Please try again later';
-        case AuthErrorCode.REQUIRES_RECENT_LOGIN:
+        case 'auth/requires-recent-login':
             return 'Please sign in again to complete this action';
-        case AuthErrorCode.USER_DATA_NOT_FOUND:
-            return 'User data not found';
-        case AuthErrorCode.ROLE_UPDATE_FAILED:
-            return 'Failed to update user role';
-        case AuthErrorCode.STATUS_UPDATE_FAILED:
-            return 'Failed to update user status';
-        case AuthErrorCode.UNAUTHORIZED:
-            return 'You are not authorized to perform this action';
-        case AuthErrorCode.INVALID_ROLE:
-            return 'Invalid user role';
-        case AuthErrorCode.SERVER_ERROR:
-            return 'Server error occurred';
+        case 'auth/user-disabled':
+            return 'This account has been disabled';
+        case 'auth/operation-not-allowed':
+            return 'This operation is not allowed';
+        case 'auth/invalid-credential':
+            return 'Invalid login credentials';
+        case 'auth/invalid-verification-code':
+            return 'Invalid verification code';
+        case 'auth/invalid-verification-id':
+            return 'Invalid verification ID';
+        case 'auth/missing-verification-code':
+            return 'Please enter the verification code';
+        case 'auth/missing-verification-id':
+            return 'Missing verification ID';
+        case 'auth/credential-already-in-use':
+            return 'This account is already connected to another user';
         default:
             return 'An error occurred during authentication';
     }
-}
-
-export function handleAuthError(error: any): AuthError {
-    if (error instanceof AuthError) {
-        return error;
-    }
-
-    // Handle Firebase Auth errors
-    if (error.code) {
-        const code = error.code as AuthErrorCode;
-        return new AuthError(code, undefined, error);
-    }
-
-    // Handle unknown errors
-    console.error('Unknown authentication error:', error);
-    return new AuthError(AuthErrorCode.SERVER_ERROR, undefined, error);
-}
-
-export function isAuthError(error: any): error is AuthError {
-    return error instanceof AuthError;
 }
