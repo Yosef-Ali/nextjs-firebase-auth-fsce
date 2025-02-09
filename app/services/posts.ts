@@ -1,6 +1,5 @@
 import { db } from '@/lib/firebase';
 import { Post } from '@/app/types/post';
-import { usersService } from './users';
 import {
   collection,
   query,

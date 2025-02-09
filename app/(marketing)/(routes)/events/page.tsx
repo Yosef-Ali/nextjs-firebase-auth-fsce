@@ -22,9 +22,9 @@ const dummyEvents: Post[] = [
     id: '1',
     title: 'Annual Charity Gala: Building Dreams Together',
     slug: 'annual-charity-gala-2024',
-    excerpt: 'Join us for an evening of inspiration and impact as we celebrate our mission to transform children\'s lives. Featuring special guest speakers, live entertainment, and a silent auction.',
+    excerpt: 'Join us for an elegant evening of giving back to the community. Live entertainment, auctions, and inspiring stories of impact.',
     content: '',
-    category: 'Fundraising',
+    category: { id: 'events', name: 'Events' },
     authorId: 'admin',
     authorEmail: 'admin@fsce.org',
     author: {
@@ -33,7 +33,7 @@ const dummyEvents: Post[] = [
       email: 'admin@fsce.org',
       avatar: ''
     },
-    coverImage: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1469&auto=format&fit=crop',
+    coverImage: 'https://images.unsplash.com/photo-1511795409834-432f7b1728f2?q=80&w=1469&auto=format&fit=crop',
     published: true,
     date: '2024-03-15',
     createdAt: new Date('2024-03-15T00:00:00Z').getTime(),
@@ -45,7 +45,7 @@ const dummyEvents: Post[] = [
     slug: 'youth-education-workshop-2024',
     excerpt: 'A comprehensive series of workshops focusing on digital literacy, career development, and life skills for young adults. Open to all FSCE program participants.',
     content: '',
-    category: 'Education',
+    category: { id: 'education', name: 'Education' },
     authorId: 'admin',
     authorEmail: 'admin@fsce.org',
     author: {
@@ -66,7 +66,7 @@ const dummyEvents: Post[] = [
     slug: 'community-health-fair-2024',
     excerpt: 'Free health screenings, wellness workshops, and family activities. Join us for a day dedicated to promoting health and well-being in our community.',
     content: '',
-    category: 'Health',
+    category: { id: 'health', name: 'Health' },
     authorId: 'admin',
     authorEmail: 'admin@fsce.org',
     author: {
@@ -93,15 +93,13 @@ export default function EventsPage() {
     const fetchData = async () => {
       try {
         const [eventsData, newsData] = await Promise.all([
-          postsService.getAllEvents(),
-          postsService.getLatestNews(3)
+          postsService.getPublishedPosts('events'),
+          postsService.getPublishedPosts('news', 3)
         ]);
-        // Use dummy events for now
-        setEvents(dummyEvents);
+        setEvents(eventsData.length > 0 ? eventsData : dummyEvents);
         setNews(newsData);
       } catch (error) {
         console.error('Error fetching data:', error);
-        // Fallback to dummy events on error
         setEvents(dummyEvents);
       } finally {
         setLoading(false);
@@ -116,12 +114,12 @@ export default function EventsPage() {
   };
 
   const filterEvents = () => {
-    return events.filter((event) => 
-      (searchQuery === '' || 
-        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    return events.filter((event) =>
+    (searchQuery === '' ||
+      event?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event?.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event?.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
     );
   };
 
@@ -160,10 +158,10 @@ export default function EventsPage() {
           <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
             Join us in our mission. Explore our upcoming and past events that drive change and create impact.
           </p>
-          
+
           {/* Search Box */}
-          <ProgramSearch 
-            onSearch={handleSearch} 
+          <ProgramSearch
+            onSearch={handleSearch}
             placeholder="Search events..."
             className="mt-10"
           />
@@ -173,7 +171,7 @@ export default function EventsPage() {
       {/* Events Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <motion.div 
+          <motion.div
             variants={container}
             initial="hidden"
             animate="show"

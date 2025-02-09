@@ -8,10 +8,15 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
-    "seed-partners": "bun run scripts/seed-partners.ts",
-    "seed-programs": "bun run scripts/seed-programs.ts",
-    "seed-program-offices": "bun run scripts/seed-program-offices.ts",
-    "update-roles": "bun run scripts/update-user-roles.ts"
+    "seed-partners": "pnpm tsx scripts/seed-partners.ts",
+    "seed-programs": "pnpm tsx scripts/seed-programs.ts",
+    "seed-program-offices": "pnpm tsx scripts/seed-program-offices.ts",
+    "update-roles": "pnpm tsx scripts/update-user-roles.ts",
+    "migrate-categories": "pnpm tsx scripts/migrate-categories.ts",
+    "add-achievements": "pnpm tsx scripts/add-achievements-category.ts",
+    "fix-categories": "pnpm tsx scripts/fix-categories.ts",
+    "check-categories": "pnpm tsx scripts/check-categories.ts",
+    "cleanup-categories": "pnpm tsx scripts/cleanup-duplicate-categories.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -81,6 +86,7 @@
     "sonner": "1.7.0",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
+    "tsx": "^4.19.2",
     "uploadthing": "7.3.0",
     "uuid": "11.0.3",
     "zod": "^3.23.8"

@@ -40,12 +40,12 @@ class NewsService {
           authorId: data?.authorId ?? '',
           authorEmail: data?.authorEmail ?? '',
           date: data?.date ?? new Date().toISOString(),
-          createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() : 
-                    typeof createdAt === 'number' ? createdAt : 
-                    Date.now(),
-          updatedAt: updatedAt instanceof Timestamp ? updatedAt.toMillis() : 
-                    typeof updatedAt === 'number' ? updatedAt : 
-                    Date.now(),
+          createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() :
+            typeof createdAt === 'number' ? createdAt :
+              Date.now(),
+          updatedAt: updatedAt instanceof Timestamp ? updatedAt.toMillis() :
+            typeof updatedAt === 'number' ? updatedAt :
+              Date.now(),
           coverImage: data?.coverImage ?? '',
           images: Array.isArray(data?.images) ? data.images : [],
           featured: Boolean(data?.featured),
@@ -95,12 +95,12 @@ class NewsService {
           authorId: data?.authorId ?? '',
           authorEmail: data?.authorEmail ?? '',
           date: data?.date ?? new Date().toISOString(),
-          createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() : 
-                    typeof createdAt === 'number' ? createdAt : 
-                    Date.now(),
-          updatedAt: updatedAt instanceof Timestamp ? updatedAt.toMillis() : 
-                    typeof updatedAt === 'number' ? updatedAt : 
-                    Date.now(),
+          createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() :
+            typeof createdAt === 'number' ? createdAt :
+              Date.now(),
+          updatedAt: updatedAt instanceof Timestamp ? updatedAt.toMillis() :
+            typeof updatedAt === 'number' ? updatedAt :
+              Date.now(),
           coverImage: data?.coverImage ?? '',
           images: Array.isArray(data?.images) ? data.images : [],
           featured: Boolean(data?.featured),

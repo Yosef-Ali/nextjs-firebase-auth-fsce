@@ -181,18 +181,6 @@ export default function FeaturedSection() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const filterPostsByCategory = (categoryId: string) =>
-    posts.filter(post => post.category?.id === categoryId);
-
-  const categories = {
-    news: filterPostsByCategory('news'),
-    events: filterPostsByCategory('events'),
-    prevention: filterPostsByCategory('prevention-promotion'),
-    protection: filterPostsByCategory('protection'),
-    rehabilitation: filterPostsByCategory('rehabilitation'),
-    resource: filterPostsByCategory('resource-center')
-  };
-
   useEffect(() => {
     const fetchPosts = async () => {
       try {
@@ -210,9 +198,27 @@ export default function FeaturedSection() {
     fetchPosts();
   }, []);
 
+  const filterPostsByCategory = (categoryId: string) => {
+    return posts.filter(post => post.category?.id === categoryId);
+  };
+
+  const categories = {
+    news: filterPostsByCategory('news'),
+    events: filterPostsByCategory('events'),
+    achievements: filterPostsByCategory('achievements'),
+    protection: filterPostsByCategory('RMglo9PIj6wNdQNSFcuA'), // Child Protection
+    prevention: filterPostsByCategory('prevention-promotion'),
+    rehabilitation: filterPostsByCategory('rehabilitation'),
+    resource: filterPostsByCategory('resource-center')
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <section className="py-16 px-4">
-      <motion.h2
+      <motion.h2 
         className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-12"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -220,37 +226,36 @@ export default function FeaturedSection() {
       >
         Featured Content
       </motion.h2>
-
-      {loading ? (
-        <div className="container mx-auto px-4 py-8 flex justify-center">
-          <div className="max-w-6xl w-full">
-            <div className="animate-pulse space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-24 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <Tabs defaultValue="news" className="container mx-auto">
-          <TabsList className="grid w-full grid-cols-6 mb-8">
-            {Object.keys(categories).map((category) => (
-              <TabsTrigger key={category} value={category} className="capitalize">
-                {category}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          {Object.entries(categories).map(([category, categoryPosts]) => (
-            <TabsContent key={category} value={category}>
-              <TabContent
-                posts={categoryPosts}
-                category={category}
-              />
-            </TabsContent>
+      
+      <Tabs defaultValue="news" className="container mx-auto">
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 mb-8">
+          {Object.entries(categories).map(([key, posts]) => (
+            <TabsTrigger 
+              key={key} 
+              value={key} 
+              className="capitalize text-sm whitespace-normal text-center h-auto py-2"
+              disabled={posts.length === 0}
+            >
+              {key === 'protection' ? 'Child Protection' :
+               key === 'prevention' ? 'Prevention & Promotion' :
+               key === 'resource' ? 'Resources' :
+               key.replace('-', ' ')}
+            </TabsTrigger>
           ))}
-        </Tabs>
-      )}
+        </TabsList>
+
+        {Object.entries(categories).map(([category, categoryPosts]) => (
+          <TabsContent key={category} value={category}>
+            <TabContent 
+              posts={categoryPosts} 
+              category={category}
+              emptyMessage={`No ${category === 'protection' ? 'Child Protection' :
+                              category === 'prevention' ? 'Prevention & Promotion' :
+                              category.replace('-', ' ')} content available at the moment.`}
+            />
+          </TabsContent>
+        ))}
+      </Tabs>
     </section>
   );
 }
