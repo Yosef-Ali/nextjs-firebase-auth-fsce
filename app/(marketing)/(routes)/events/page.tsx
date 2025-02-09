@@ -13,7 +13,7 @@ import { formatDate } from '@/lib/utils';
 import { postsService } from '@/app/services/posts';
 import UpcomingEvents from '@/components/upcoming-events';
 import CarouselSection from '@/components/carousel';
-import { motion } from 'framer-motion';
+import { motion, type Variants, type Target } from 'framer-motion';
 import { ProgramSearch } from '@/components/program-search';
 
 // Dummy events data for testing
@@ -27,12 +27,6 @@ const dummyEvents: Post[] = [
     category: { id: 'events', name: 'Events' },
     authorId: 'admin',
     authorEmail: 'admin@fsce.org',
-    author: {
-      id: 'admin',
-      name: 'FSCE Admin',
-      email: 'admin@fsce.org',
-      avatar: ''
-    },
     coverImage: 'https://images.unsplash.com/photo-1511795409834-432f7b1728f2?q=80&w=1469&auto=format&fit=crop',
     published: true,
     date: '2024-03-15',
@@ -48,12 +42,6 @@ const dummyEvents: Post[] = [
     category: { id: 'education', name: 'Education' },
     authorId: 'admin',
     authorEmail: 'admin@fsce.org',
-    author: {
-      id: 'admin',
-      name: 'FSCE Admin',
-      email: 'admin@fsce.org',
-      avatar: ''
-    },
     coverImage: 'https://images.unsplash.com/photo-1544531586-fde5298cdd40?q=80&w=1470&auto=format&fit=crop',
     published: true,
     date: '2024-03-20',
@@ -69,12 +57,6 @@ const dummyEvents: Post[] = [
     category: { id: 'health', name: 'Health' },
     authorId: 'admin',
     authorEmail: 'admin@fsce.org',
-    author: {
-      id: 'admin',
-      name: 'FSCE Admin',
-      email: 'admin@fsce.org',
-      avatar: ''
-    },
     coverImage: 'https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?q=80&w=1469&auto=format&fit=crop',
     published: true,
     date: '2024-04-05',
@@ -129,7 +111,7 @@ export default function EventsPage() {
 
   const filteredEvents = filterEvents();
 
-  const container = {
+  const container: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -139,7 +121,7 @@ export default function EventsPage() {
     }
   };
 
-  const item = {
+  const item: Variants = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0 }
   };
@@ -168,110 +150,151 @@ export default function EventsPage() {
         </div>
       </section>
 
-      {/* Events Section */}
+      {/* Events Grid Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="grid grid-cols-1 md:grid-cols-3 gap-8"
-          >
-            {filteredEvents.map((event) => (
-              <motion.div key={event.id} variants={item}>
-                <Link href={`/events/${event.slug}`} className="block group">
-                  <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
-                    {event.coverImage && (
-                      <div className="relative w-full pt-[56.25%] overflow-hidden">
-                        <Image
-                          src={event.coverImage}
-                          alt={event.title}
-                          fill
-                          className="object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
-                      </div>
-                    )}
-                    <CardHeader>
-                      <CardTitle className="group-hover:text-primary transition-colors">
-                        {event.title}
-                      </CardTitle>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
-                        <CalendarDays className="h-4 w-4" />
-                        <span>{formatDate(event.date)}</span>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-muted-foreground line-clamp-2 mb-4">
-                        {event.excerpt}
-                      </p>
-                      <div className="flex items-center text-primary font-medium group-hover:text-primary/80 transition-colors">
-                        Read More
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
-          </motion.div>
+          {filteredEvents.length > 0 ? (
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            >
+              {filteredEvents.map((event) => (
+                <motion.div key={event.id} variants={item} custom={event}>
+                  <Link href={`/events/${event.slug}`} className="block group">
+                    <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
+                      {event.coverImage && (
+                        <div className="relative w-full pt-[56.25%] overflow-hidden">
+                          <Image
+                            src={event.coverImage}
+                            alt={event.title}
+                            fill
+                            className="object-cover group-hover:scale-110 transition-transform duration-300"
+                          />
+                        </div>
+                      )}
+                      <CardHeader>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Badge variant="secondary">
+                            {typeof event.category === 'string'
+                              ? event.category
+                              : 'object' === typeof event.category && event.category
+                                ? event.category.name
+                                : 'Event'}
+                          </Badge>
+                        </div>
+                        <CardTitle className="group-hover:text-primary transition-colors">
+                          {event.title}
+                        </CardTitle>
+                        <div className="space-y-2 mt-3 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <CalendarDays className="h-4 w-4" />
+                            <span>{formatDate(event.date)}</span>
+                          </div>
+                          {event.time && (
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4" />
+                              <span>{event.time}</span>
+                            </div>
+                          )}
+                          {event.location && (
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4" />
+                              <span>{event.location}</span>
+                            </div>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground line-clamp-2 mb-4">
+                          {event.excerpt}
+                        </p>
+                        <div className="flex items-center text-primary font-medium group-hover:text-primary/80 transition-colors">
+                          Learn More
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No events found matching your search.</p>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Latest News Section */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl text-center mb-12">Latest News</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {news.map((item) => (
-              <Link
-                key={item.id}
-                href={`/news/${item.slug}`}
-                className="block group"
-              >
-                <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
-                  {item.coverImage && (
-                    <div className="relative w-full pt-[56.25%] overflow-hidden">
-                      <Image
-                        src={item.coverImage}
-                        alt={item.title}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                  )}
-                  <CardHeader>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="secondary">News</Badge>
-                      {item.featured && (
-                        <Badge variant="default" className="bg-yellow-500 hover:bg-yellow-600">
-                          Featured
-                        </Badge>
-                      )}
-                      {item.category && (
-                        <Badge variant="outline" className="capitalize">
-                          {item.category}
-                        </Badge>
-                      )}
-                    </div>
-                    <CardTitle className="group-hover:text-primary transition-colors line-clamp-2">
-                      {item.title}
-                    </CardTitle>
-                    <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
-                      <CalendarDays className="h-4 w-4" />
-                      <span>{formatDate(item.date || item.createdAt)}</span>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground line-clamp-2">
-                      {item.excerpt}
-                    </p>
-                  </CardContent>
-                </Card>
+      {/* Related News Section */}
+      {news.length > 0 && (
+        <section className="py-16 bg-muted/50">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-3xl font-bold">Latest News</h2>
+              <Link href="/news">
+                <Button variant="ghost" className="group">
+                  View All News
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
               </Link>
-            ))}
+            </div>
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            >
+              {news.map((newsItem) => (
+                <motion.div key={newsItem.id} variants={item} custom={newsItem}>
+                  <Link href={`/news/${newsItem.slug}`} className="block group">
+                    <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
+                      {newsItem.coverImage && (
+                        <div className="relative w-full pt-[56.25%] overflow-hidden">
+                          <Image
+                            src={newsItem.coverImage}
+                            alt={newsItem.title}
+                            fill
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        </div>
+                      )}
+                      <CardHeader>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Badge variant="secondary">
+                            {typeof newsItem.category === 'string'
+                              ? newsItem.category
+                              : 'object' === typeof newsItem.category && newsItem.category
+                                ? newsItem.category.name
+                                : 'News'}
+                          </Badge>
+                          {newsItem.featured && (
+                            <Badge variant="secondary" className="bg-yellow-100">Featured</Badge>
+                          )}
+                        </div>
+                        <CardTitle className="group-hover:text-primary transition-colors line-clamp-2">
+                          {newsItem.title}
+                        </CardTitle>
+                        <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
+                          <CalendarDays className="h-4 w-4" />
+                          <span>{formatDate(newsItem.date || newsItem.createdAt)}</span>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground line-clamp-2">
+                          {newsItem.excerpt}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }

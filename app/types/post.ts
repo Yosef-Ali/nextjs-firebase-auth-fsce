@@ -5,32 +5,38 @@ export interface Author {
   avatar?: string;
 }
 
+export type PostStatus = 'draft' | 'published' | 'archived';
+
+export interface Category {
+  id: string;
+  name: string;
+}
+
 export interface Post {
   id: string;
   title: string;
-  content: string;
-  excerpt?: string;
-  category: {
-    id: string;
-    name: string;
-  };
-  section?: string;  
   slug: string;
-  coverImage?: string;
-  images?: string[];
+  excerpt: string;
+  content: string;
+  category: string | Category;
   published: boolean;
-  featured?: boolean;
   authorId: string;
-  authorEmail: string | null;
-  author?: Author;
+  authorEmail: string;
   date: string;
   createdAt: number;  // timestamp in milliseconds
   updatedAt: number;  // timestamp in milliseconds
+  coverImage?: string;
+  images?: string[];
+  featured?: boolean;
+  section?: string;
   tags?: string[];
-  time?: string;  
-  location?: string;  
-  status?: string;  // Add status property
+  time?: string;
+  location?: string;
+  status?: PostStatus;
 }
+
+export type CreatePostInput = Omit<Post, 'id' | 'createdAt' | 'updatedAt'>;
+export type UpdatePostInput = Partial<CreatePostInput>;
 
 export interface Resource {
   id: string;
@@ -45,5 +51,5 @@ export interface Resource {
   createdAt: number;
   updatedAt: number;
   tags?: string[];
-  status?: string;  
+  status?: string;
 }

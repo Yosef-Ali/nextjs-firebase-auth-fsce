@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import ImageUploadCard  from './ImageUploadCard';
+import ImageUploadCard from './ImageUploadCard';
 import {
   Select,
   SelectContent,
@@ -106,27 +106,27 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
   useEffect(() => {
     const title = form.getValues('title');
     const content = form.getValues('content');
-    
+
     if (title) {
       const generatedSlug = postsService.createSlug(title);
       form.setValue('slug', generatedSlug, { shouldValidate: true });
-      
+
       const currentExcerpt = form.getValues('excerpt');
-      
+
       const stripHtml = (html: string) => {
         return html.replace(/<[^>]*>?/gm, '').trim();
       };
 
       const cleanContent = content ? stripHtml(content) : '';
-      
-      const generatedExcerpt = cleanContent 
-        ? (cleanContent.length > 160 
-          ? cleanContent.substring(0, 160) + '...' 
+
+      const generatedExcerpt = cleanContent
+        ? (cleanContent.length > 160
+          ? cleanContent.substring(0, 160) + '...'
           : cleanContent)
-        : (title.length > 160 
-          ? title.substring(0, 160) + '...' 
+        : (title.length > 160
+          ? title.substring(0, 160) + '...'
           : title);
-      
+
       if (!currentExcerpt) {
         form.setValue('excerpt', generatedExcerpt, { shouldValidate: true });
       }
@@ -157,7 +157,7 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
 
       const coverImageUrl = data.coverImage;
       const selectedCategory = categories.find(cat => cat.id === data.categoryId);
-      
+
       if (!selectedCategory) {
         toast({
           title: "Error",
@@ -171,10 +171,7 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
         title: data.title,
         content: data.content,
         excerpt: data.excerpt,
-        category: {
-          id: selectedCategory.id,
-          name: selectedCategory.name
-        },
+        category: selectedCategory.id,
         coverImage: coverImageUrl || '',
         published: data.published,
         section: data.section,

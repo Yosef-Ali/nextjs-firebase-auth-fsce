@@ -92,12 +92,16 @@ export default function PostTable({ posts, isLoading, onEdit, onDelete }: PostTa
           {sortedPosts.map((post) => (
             <TableRow key={post.id}>
               <TableCell className="font-medium">{post.title}</TableCell>
-              <TableCell>{post.category}</TableCell>
+              <TableCell>
+                <Badge variant="secondary">
+                  {post.category}
+                </Badge>
+              </TableCell>
               <TableCell>
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                  ${post.status === 'published' ? 'bg-green-100 text-green-800' : 
-                    post.status === 'draft' ? 'bg-yellow-100 text-yellow-800' : 
-                    'bg-gray-100 text-gray-800'}`}>
+                  ${post.status === 'published' ? 'bg-green-100 text-green-800' :
+                    post.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'}`}>
                   {post.status}
                 </span>
               </TableCell>

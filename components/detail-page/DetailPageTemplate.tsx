@@ -54,7 +54,7 @@ const RelatedPostCard = ({ post }: { post: NonNullable<DetailPageProps["relatedP
         </div>
         <div className="p-4 flex-1 flex flex-col">
           <Badge variant="outline" className="mb-2 w-fit">
-            {formatCategoryName(post.category)}
+            {post.category}
           </Badge>
           <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
             {post.title}
@@ -84,7 +84,7 @@ export default function DetailPageTemplate({
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section 
+      <section
         className="relative py-20 bg-cover bg-center"
         style={{
           backgroundImage: coverImage
@@ -130,7 +130,7 @@ export default function DetailPageTemplate({
                       ))}
                     </div>
                   )}
-                  
+
                   {/* Content */}
                   {content && content.split('\n').map((paragraph, index) => (
                     paragraph.trim() && (

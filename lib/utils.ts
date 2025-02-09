@@ -1,34 +1,41 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { Timestamp } from "firebase/firestore"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatDate(date: number | string | Date): string {
-  if (!date) return '';
+export function formatDate(input: number | string | Date | Timestamp | null | undefined): string {
+  if (!input) return '';
   
-  let d: Date;
+  let date: Date;
   
-  if (typeof date === 'string') {
-    // Handle ISO string or any other string format
-    d = new Date(date);
-  } else if (typeof date === 'number') {
-    // Handle timestamp in milliseconds
-    d = new Date(date);
-  } else {
-    // Handle Date object
-    d = date;
-  }
+  try {
+    if (input instanceof Timestamp) {
+      date = input.toDate();
+    } else if (input instanceof Date) {
+      date = input;
+    } else if (typeof input === 'number') {
+      date = new Date(input);
+    } else if (typeof input === 'string') {
+      date = new Date(input);
+    } else {
+      return '';
+    }
 
-  // Check if date is valid
-  if (isNaN(d.getTime())) {
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return '';
+    }
+
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  } catch (error) {
+    console.error('Error formatting date:', error);
     return '';
   }
-
-  return d.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
-  });
 }
