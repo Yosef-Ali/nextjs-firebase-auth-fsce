@@ -67,30 +67,34 @@ export class UsersService {
         };
       }
 
-      // Try to delete from Authentication first
+      // Delete from Authentication first
       try {
         await adminAuth.deleteUser(uid);
       } catch (authError) {
         console.error("Error deleting user from Authentication:", authError);
-        // If user doesn't exist in Auth, we can still proceed with Firestore cleanup
-        if (!(authError instanceof Error && authError.message.includes("auth/user-not-found"))) {
-          return {
-            success: false,
-            error: authError instanceof Error ? authError.message : "Failed to delete user from Authentication",
-            details: { uid }
-          };
-        }
+        return {
+          success: false,
+          error: authError instanceof Error ? authError.message : "Failed to delete user from Authentication",
+          details: { uid, authError }
+        };
       }
 
-      // Delete from Firestore
+      // If Authentication deletion was successful, delete from Firestore
       await this.usersCollection.doc(uid).delete();
-      return { success: true };
+      return {
+        success: true,
+        details: {
+          uid,
+          timestamp: new Date().toISOString(),
+          status: 'completed'
+        }
+      };
     } catch (error) {
       console.error("Error in deleteUser:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Failed to delete user",
-        details: { uid }
+        details: { uid, error }
       };
     }
   }
