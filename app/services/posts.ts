@@ -9,6 +9,7 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  getDoc,
   Timestamp,
   serverTimestamp,
   QueryConstraint,
@@ -78,28 +79,49 @@ export const postsService = {
     }
   },
 
-  async createPost(post: Omit<Post, 'id' | 'createdAt' | 'updatedAt' | 'category'> & { category: string | Category }): Promise<Post> {
-    const now = serverTimestamp();
+  async getCategoryById(categoryId: string): Promise<Category | null> {
+    try {
+      const categoryDoc = await getDoc(doc(db, 'categories', categoryId));
+      if (categoryDoc.exists()) {
+        const data = categoryDoc.data();
+        return {
+          id: categoryId,
+          name: data.name || categoryId
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching category:', error);
+      return null;
+    }
+  },
 
-    // Normalize category to proper Category object
-    const normalizedCategory: Category = {
-      id: typeof post.category === 'string'
-        ? post.category
-        : typeof post.category === 'object' && post.category?.id
-          ? post.category.id
-          : '',
-      name: typeof post.category === 'string'
-        ? post.category.charAt(0).toUpperCase() + post.category.slice(1)
-        : typeof post.category === 'object' && post.category?.name
-          ? post.category.name
-          : ''
+  async getNormalizedCategory(category: string | Category): Promise<Category> {
+    if (typeof category === 'string') {
+      const categoryDetails = await this.getCategoryById(category);
+      if (categoryDetails) {
+        return categoryDetails;
+      }
+      return {
+        id: category,
+        name: category
+      };
+    }
+    return {
+      id: category.id,
+      name: category.name || category.id
     };
+  },
+
+  async createPost(post: Omit<Post, 'id' | 'createdAt' | 'updatedAt' | 'category'> & { category: string | Category }): Promise<Post> {
+    const normalizedCategory = await this.getNormalizedCategory(post.category);
+    const now = Date.now();
 
     const postData = {
       ...post,
       category: normalizedCategory,
       createdAt: now,
-      updatedAt: now,
+      updatedAt: now
     };
 
     const docRef = await addDoc(collection(db, COLLECTION_NAME), postData);
@@ -123,8 +145,8 @@ export const postsService = {
       time: post.time,
       location: post.location,
       status: post.status as PostStatus,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
+      createdAt: now,
+      updatedAt: now
     };
 
     return newPost;
@@ -133,28 +155,26 @@ export const postsService = {
   async updatePost(id: string, post: Partial<Omit<Post, 'category'>> & { category?: string | Category }, userId: string): Promise<boolean> {
     try {
       const postRef = doc(db, COLLECTION_NAME, id);
-      const updateData: Partial<Post> & { updatedAt: FieldValue } = {
-        ...post,
-        updatedAt: serverTimestamp()
+      const now = Date.now();
+
+      // Create initial update data without category
+      const { category, ...restData } = post;
+      const baseUpdateData: Partial<Omit<Post, 'category'>> = {
+        ...restData,
+        updatedAt: now
       };
 
-      if (post.category) {
-        const category = post.category;
-        updateData.category = {
-          id: typeof category === 'string'
-            ? category
-            : typeof category === 'object' && category?.id
-              ? category.id
-              : '',
-          name: typeof category === 'string'
-            ? category.charAt(0).toUpperCase() + category.slice(1)
-            : typeof category === 'object' && category?.name
-              ? category.name
-              : ''
-        } as Category;
+      // Only add category if it exists
+      if (category) {
+        const normalizedCategory = await this.getNormalizedCategory(category);
+        await updateDoc(postRef, {
+          ...baseUpdateData,
+          category: normalizedCategory
+        });
+      } else {
+        await updateDoc(postRef, baseUpdateData);
       }
 
-      await updateDoc(postRef, updateData);
       return true;
     } catch (error) {
       console.error('Error updating post:', error);
@@ -206,7 +226,7 @@ export const postsService = {
         { id: category.charAt(0).toUpperCase() + category.slice(1) },
         { id: category.charAt(0).toUpperCase() + category.slice(1), name: category.charAt(0).toUpperCase() + category.slice(1) }
       ];
-      
+
       constraints.push(where('category', 'in', possibleCategories));
 
       const q = query(postsRef, ...constraints);

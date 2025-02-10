@@ -12,10 +12,31 @@ if (!admin.apps.length) {
 
 const db = getFirestore();
 
+interface CategoryMapping {
+    name: string;
+    description: string;
+    type: string;
+    menuPath: string;
+}
+
+interface Category {
+    id: string;
+    name: string;
+}
+
+interface Post {
+    title?: string;
+    content?: string;
+    category?: {
+        id: string;
+        name: string;
+    };
+}
+
 async function fixCategories() {
     try {
         // Fix categories based on content types only
-        const categoryMappings = {
+        const categoryMappings: Record<string, CategoryMapping> = {
             // What We Do section
             'child-protection': {
                 name: 'Child Protection',
@@ -27,7 +48,7 @@ async function fixCategories() {
                 name: 'Youth Empowerment',
                 description: 'Empowering youth for a better future',
                 type: 'post',
-                menuPath: '/what-we-do/youth-empowerment'
+                menuPath: '/what-we-work/youth-empowerment'
             },
             'advocacy': {
                 name: 'Advocacy',
@@ -41,7 +62,6 @@ async function fixCategories() {
                 type: 'post',
                 menuPath: '/what-we-do/humanitarian-response'
             },
-
             // News and Events section
             'news': {
                 name: 'News',
@@ -55,7 +75,6 @@ async function fixCategories() {
                 type: 'post',
                 menuPath: '/events'
             },
-
             // Achievements section
             'achievements': {
                 name: 'Achievements',
@@ -78,41 +97,49 @@ async function fixCategories() {
             console.log(`Updated category: ${data.name} with ID: ${id}`);
         }
 
-        // Get posts with invalid categories
+        // Get all posts
         const postsSnapshot = await db.collection('posts').get();
         let updateCount = 0;
 
         for (const postDoc of postsSnapshot.docs) {
-            const post = postDoc.data();
-            const category = post.category;
-            let needsUpdate = false;
-            let newCategory = null;
+            const post = postDoc.data() as Post;
+            const title = post.title?.toLowerCase() || '';
+            const content = post.content?.toLowerCase() || '';
+            let newCategory: Category | null = null;
 
-            // Check for invalid category ID
-            if (!category || !category.id || category.id === 'uncategorized' || category.id === 'MmYNURrxYmLcbn9caSJ6') {
-                const title = post.title?.toLowerCase() || '';
-                const content = post.content?.toLowerCase() || '';
-
-                // Map content to appropriate category based on content type
-                if (title.includes('child') || title.includes('protection') || content.includes('child protection')) {
-                    newCategory = { id: 'child-protection', name: 'Child Protection' };
-                } else if (title.includes('youth') || title.includes('empowerment') || content.includes('youth empowerment')) {
-                    newCategory = { id: 'youth-empowerment', name: 'Youth Empowerment' };
-                } else if (title.includes('advocacy') || content.includes('rights') || content.includes('advocate')) {
-                    newCategory = { id: 'advocacy', name: 'Advocacy' };
-                } else if (title.includes('humanitarian') || title.includes('emergency') || title.includes('response')) {
-                    newCategory = { id: 'humanitarian-response', name: 'Humanitarian Response' };
-                } else if (title.includes('achievement') || content.includes('award') || content.includes('milestone')) {
-                    newCategory = { id: 'achievements', name: 'Achievements' };
-                } else if (title.includes('event') || content.includes('workshop') || content.includes('conference')) {
-                    newCategory = { id: 'events', name: 'Events' };
+            // Determine category based on content and existing category
+            if (title.includes('child') || title.includes('protection') || content.includes('child protection')) {
+                newCategory = { id: 'child-protection', name: 'Child Protection' };
+            } else if (title.includes('youth') || title.includes('empowerment') || content.includes('youth empowerment')) {
+                newCategory = { id: 'youth-empowerment', name: 'Youth Empowerment' };
+            } else if (title.includes('advocacy') || content.includes('rights') || content.includes('advocate')) {
+                newCategory = { id: 'advocacy', name: 'Advocacy' };
+            } else if (title.includes('humanitarian') || title.includes('emergency') || title.includes('response')) {
+                newCategory = { id: 'humanitarian-response', name: 'Humanitarian Response' };
+            } else if (title.includes('achievement') || title.includes('success') || title.includes('milestone') ||
+                content.includes('achievement') || content.includes('award') || content.includes('milestone') ||
+                content.includes('accomplishment') || content.includes('success story')) {
+                newCategory = { id: 'achievements', name: 'Achievements' };
+            } else if (title.includes('event') || title.includes('workshop') || title.includes('conference') ||
+                title.includes('meeting') || title.includes('seminar') ||
+                content.includes('workshop') || content.includes('conference') ||
+                content.includes('event date') || content.includes('upcoming')) {
+                newCategory = { id: 'events', name: 'Events' };
+            } else {
+                // Keep existing category if it's valid, otherwise default to news
+                const currentCategory = post.category?.id;
+                if (currentCategory && categoryMappings[currentCategory]) {
+                    newCategory = {
+                        id: currentCategory,
+                        name: categoryMappings[currentCategory].name
+                    };
                 } else {
-                    newCategory = { id: 'news', name: 'News' }; // Default to news
+                    newCategory = { id: 'news', name: 'News' };
                 }
-                needsUpdate = true;
             }
 
-            if (needsUpdate && newCategory) {
+            // Always update to ensure consistent format
+            if (newCategory) {
                 await postDoc.ref.update({
                     category: newCategory,
                     menuPath: categoryMappings[newCategory.id].menuPath

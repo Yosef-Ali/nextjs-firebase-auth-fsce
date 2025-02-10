@@ -43,11 +43,11 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
     let posts = querySnapshot.docs.map(doc => {
       const data = doc.data();
       const category = data.category || {};
-      
+
       // Normalize category to correct format
       const normalizedCategory: Category = {
         id: typeof category === 'string' ? category : category.id || '',
-        name: typeof category === 'string' 
+        name: typeof category === 'string'
           ? category.charAt(0).toUpperCase() + category.slice(1)
           : category.name || ''
       };
