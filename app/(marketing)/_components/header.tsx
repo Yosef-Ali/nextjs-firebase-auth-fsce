@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname } from 'next/navigation'
 import { cn } from "@/lib/utils"
 import { Icons } from "@/components/icons"
+import { UserRole } from "@/app/types/user"
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -22,8 +23,10 @@ import { menuItems } from "@/lib/menuItems"
 
 export function Header() {
   const pathname = usePathname()
-  const { user, signOut } = useAuth()
+  const { user, userData, signOut } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
+
+  const canAccessDashboard = userData?.role === UserRole.ADMIN || userData?.role === UserRole.AUTHOR;
 
   return (
     <header className="w-full bg-background shadow-sm sticky top-0 z-50">
@@ -83,9 +86,11 @@ export function Header() {
             <ModeToggle />
             {user ? (
               <div className="flex items-center gap-4">
-                <Link href="/dashboard">
-                  <Button variant="outline">Dashboard</Button>
-                </Link>
+                {canAccessDashboard && (
+                  <Link href="/dashboard">
+                    <Button variant="outline">Dashboard</Button>
+                  </Link>
+                )}
                 <Button variant="outline" onClick={() => signOut()}>
                   Sign Out
                 </Button>

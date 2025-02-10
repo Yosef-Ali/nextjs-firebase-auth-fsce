@@ -67,9 +67,15 @@ export function useAuth() {
 
                         setUser(authUser);
                         setUserData(userMetadata);
+
+                        // If not admin or author, redirect to home
+                        if (userData.role !== UserRole.ADMIN && userData.role !== UserRole.AUTHOR) {
+                            router.replace('/');
+                        }
                     } else {
                         setUser(null);
                         setUserData(null);
+                        router.replace('/sign-in');
                     }
                 } else {
                     setUser(null);
@@ -86,7 +92,7 @@ export function useAuth() {
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [router]);
 
     const handleAuthError = (error: any) => {
         console.error('Authentication error:', error);
@@ -154,12 +160,25 @@ export function useAuth() {
             if (!userData) {
                 throw new Error('Failed to create or fetch user data');
             }
+
+            // Immediately update the state
+            const authUser = {
+                ...result.user,
+                role: userData.role,
+                status: userData.status
+            } as AuthUser;
+            setUser(authUser);
+            const metadata = createUserMetadata(result.user, userData);
+            setUserData(metadata);
+
             return {
                 userCredential: result,
-                userData: createUserMetadata(result.user, userData)
+                userData: metadata
             };
         } catch (error) {
-            return handleAuthError(error);
+            const authError = handleAuthError(error);
+            setError(authError);
+            throw authError;
         }
     };
 

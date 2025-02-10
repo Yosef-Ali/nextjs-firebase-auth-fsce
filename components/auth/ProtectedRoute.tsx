@@ -1,31 +1,21 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { auth } from '@/lib/auth';
-import { onAuthStateChanged } from 'firebase/auth';
+import { useEffect } from 'react';
+import { useAuth } from '@/lib/hooks/useAuth';
+import { UserRole } from '@/app/types/user';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const { userData, loading } = useAuth();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setIsAuthenticated(true);
-      } else {
-        setIsAuthenticated(false);
-        router.replace('/sign-in');
-      }
-      setIsLoading(false);
-    });
+    if (!loading && userData && userData.role !== UserRole.ADMIN && userData.role !== UserRole.AUTHOR) {
+      router.replace('/unauthorized');
+    }
+  }, [userData, loading, router]);
 
-    return () => unsubscribe();
-  }, [router]);
-
-  // Show loading only for initial auth check
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -33,11 +23,9 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     );
   }
 
-  // If authenticated, render children
-  if (isAuthenticated) {
-    return <>{children}</>;
+  if (!userData || (userData.role !== UserRole.ADMIN && userData.role !== UserRole.AUTHOR)) {
+    return null;
   }
 
-  // Not authenticated and not loading, render nothing (redirect will happen)
-  return null;
+  return <>{children}</>;
 }

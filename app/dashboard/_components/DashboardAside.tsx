@@ -23,22 +23,20 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/app/context/sidebar-context';
-import { 
-  Tooltip, 
-  TooltipContent, 
+import {
+  Tooltip,
+  TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { UserRole } from '@/app/types/user';
 
 const DashboardAside = () => {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const { isCollapsed, toggleSidebar } = useSidebar();
 
   const isActive = (href: string) => {
-    if (pathname === null) {
-      return false;
-    }
-    if (pathname === undefined) {
+    if (pathname === null || pathname === undefined) {
       return false;
     }
     if (href === '/dashboard') {
@@ -53,58 +51,63 @@ const DashboardAside = () => {
       label: 'Overview',
       icon: LayoutDashboard,
       exact: true,
+      roles: [UserRole.AUTHOR, UserRole.ADMIN],
     },
     {
       href: '/dashboard/posts',
       label: 'Posts',
       icon: BookOpenIcon,
+      roles: [UserRole.AUTHOR, UserRole.ADMIN],
     },
     {
       href: '/dashboard/about',
       label: 'About',
       icon: FileText,
+      roles: [UserRole.AUTHOR, UserRole.ADMIN],
     },
     {
       href: '/dashboard/categories',
       label: 'Categories',
       icon: TagIcon,
+      roles: [UserRole.AUTHOR, UserRole.ADMIN],
     },
     {
       href: '/dashboard/resources',
       label: 'Resources',
       icon: Archive,
+      roles: [UserRole.AUTHOR, UserRole.ADMIN],
     },
     {
       href: '/dashboard/media-library',
       label: 'Media Library',
       icon: Image,
+      roles: [UserRole.AUTHOR, UserRole.ADMIN],
     },
     {
       href: '/dashboard/board-members',
       label: 'Board Members',
       icon: Users2,
+      roles: [UserRole.ADMIN],
     },
     {
       href: '/dashboard/partners',
       label: 'Partners',
       icon: Users2,
-    },
-    {
-      href: '/dashboard/analytics',
-      label: 'Analytics',
-      icon: BarChart,
+      roles: [UserRole.ADMIN],
     },
     {
       href: '/dashboard/users',
       label: 'Users',
       icon: Users,
-    },
-    {
-      href: '/dashboard/settings',
-      label: 'Settings',
-      icon: Settings,
+      roles: [UserRole.ADMIN],
     },
   ];
+
+  // Filter menu items based on user role
+  const filteredMenuItems = menuItems.filter(item => {
+    if (!userData?.role) return false;
+    return item.roles.includes(userData.role as UserRole);
+  });
 
   const renderMenuItem = (item: typeof menuItems[0]) => {
     const Icon = item.icon;
@@ -115,8 +118,8 @@ const DashboardAside = () => {
         href={item.href}
         className={cn(
           'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-          active 
-            ? 'bg-primary/10 text-primary' 
+          active
+            ? 'bg-primary/10 text-primary'
             : 'text-gray-600 hover:bg-gray-100',
           isCollapsed && 'justify-center px-2'
         )}
@@ -154,10 +157,10 @@ const DashboardAside = () => {
         <div className="flex h-16 items-center px-4 border-b">
           <img src="/Logo.svg" alt="Logo" className="h-8 mb-4" />
         </div>
-        
+
         <div className="flex-1 flex flex-col gap-1 p-4 overflow-y-auto">
           <nav className="space-y-1">
-            {menuItems.map(renderMenuItem)}
+            {filteredMenuItems.map(renderMenuItem)}
           </nav>
 
           <div className="mt-auto pt-4">
@@ -174,7 +177,7 @@ const DashboardAside = () => {
                       {user?.email}
                     </p>
                     <p className="text-xs text-gray-500 truncate">
-                      Administrator
+                      {userData?.role || 'User'}
                     </p>
                   </div>
                 </div>
@@ -185,7 +188,7 @@ const DashboardAside = () => {
       </div>
 
       {/* Floating collapse button */}
-      <div className="fixed bottom-[170px] z-30" style={{ 
+      <div className="fixed bottom-[170px] z-30" style={{
         left: isCollapsed ? 'calc(60px + 2px)' : 'calc(256px + 14px)'
       }}>
         <Tooltip delayDuration={0}>

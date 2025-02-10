@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { handleAuthError } from '@/app/lib/auth-errors';
 import { useRouter } from 'next/navigation';
+import { UserRole } from '@/app/types/user';
 
 interface SignInFormProps {
   callbackUrl?: string;
@@ -26,33 +27,26 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
     setIsLoading(true);
 
     try {
-      // Input validation
-      if (!email) {
-        throw new Error('Please enter your email');
-      }
-      if (!password) {
-        throw new Error('Please enter your password');
-      }
+      if (!email) throw new Error('Please enter your email');
+      if (!password) throw new Error('Please enter your password');
 
-      await signIn(email, password);
-      router.push(callbackUrl || '/dashboard');
+      const userData = await signIn(email, password);
+      if (userData.role === UserRole.ADMIN || userData.role === UserRole.AUTHOR) {
+        router.push(callbackUrl || '/dashboard');
+      } else {
+        router.push('/');
+      }
     } catch (error: unknown) {
       const authError = handleAuthError(error);
-
-      // Show error toast
       toast({
         title: "Sign in failed",
         description: authError.message,
         variant: "destructive",
-        duration: 5000
       });
 
-      // Clear password field on wrong password
       if (authError.code === 'auth/wrong-password') {
         setPassword('');
       }
-
-      // Clear both fields on user not found
       if (authError.code === 'auth/user-not-found') {
         setEmail('');
         setPassword('');
@@ -65,8 +59,19 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
-      const result = await signInWithGoogle();
-      router.push(callbackUrl || '/dashboard');
+      const { userData } = await signInWithGoogle();
+
+      // Check if user has appropriate role for dashboard access
+      if (userData.role === UserRole.ADMIN || userData.role === UserRole.AUTHOR) {
+        router.push(callbackUrl || '/dashboard');
+      } else {
+        toast({
+          title: "Access Restricted",
+          description: "You don't have permission to access the dashboard.",
+          variant: "destructive",
+        });
+        router.push('/');
+      }
     } catch (error: unknown) {
       const authError = handleAuthError(error);
       toast({

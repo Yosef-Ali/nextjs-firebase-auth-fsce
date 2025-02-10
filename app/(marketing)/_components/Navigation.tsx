@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { UserRole } from "@/app/types/user";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -41,8 +42,10 @@ const ListItem = React.forwardRef<
 ListItem.displayName = "ListItem";
 
 export default function Navigation() {
-  const { user, signOut  } = useAuth();
+  const { user, userData, signOut } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
+
+  const canAccessDashboard = userData?.role === UserRole.ADMIN || userData?.role === UserRole.AUTHOR;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -56,8 +59,8 @@ export default function Navigation() {
   return (
     <div className={cn(
       "fixed top-0 w-full z-50 transition-all duration-300 bg-white/75 border-b",
-      isScrolled 
-        ? "backdrop-blur-md shadow-sm" 
+      isScrolled
+        ? "backdrop-blur-md shadow-sm"
         : ""
     )}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -65,10 +68,10 @@ export default function Navigation() {
           {/* Logo - Fixed width on the left */}
           <div className="w-48">
             <Link href="/" className="flex items-center space-x-2">
-              <Image 
-                src="/Logo.svg" 
-                alt="FSCE Logo" 
-                width={80} 
+              <Image
+                src="/Logo.svg"
+                alt="FSCE Logo"
+                width={80}
                 height={32}
                 priority
                 className="object-contain w-auto h-8"
@@ -116,12 +119,14 @@ export default function Navigation() {
           <div className="w-48 flex justify-end gap-2 items-center">
             {user ? (
               <>
-                <Link 
-                  href="/dashboard/posts" 
-                  className={navigationMenuTriggerStyle()}
-                >
-                  Dashboard
-                </Link>
+                {canAccessDashboard && (
+                  <Link
+                    href="/dashboard"
+                    className={navigationMenuTriggerStyle()}
+                  >
+                    Dashboard
+                  </Link>
+                )}
                 <button
                   onClick={signOut}
                   className={navigationMenuTriggerStyle()}

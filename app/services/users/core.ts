@@ -17,6 +17,14 @@ import { User as FirebaseUser } from "firebase/auth";
 import { deleteUser as deleteAuthUser } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
+// Admin emails array
+const ADMIN_EMAILS = [
+  process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+  'dev.yosef@gmail.com',
+  'yaredd.degefu@gmail.com',
+  'mekdesyared@gmail.com'
+].filter(Boolean) as string[];
+
 const USERS_COLLECTION = "users";
 
 class UserCoreService {
@@ -199,6 +207,51 @@ class UserCoreService {
         error: error instanceof Error ? error.message : "Failed to delete user",
         details: { uid }
       };
+    }
+  }
+
+  async createUserIfNotExists(firebaseUser: FirebaseUser): Promise<User | null> {
+    try {
+      const db = getFirestore();
+      const userRef = doc(db, 'users', firebaseUser.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (!userDoc.exists()) {
+        // Check if user's email is in admin list
+        const isAdmin = firebaseUser.email && ADMIN_EMAILS.includes(firebaseUser.email);
+
+        const userData: User = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          displayName: firebaseUser.displayName || '',
+          photoURL: firebaseUser.photoURL || null,
+          role: isAdmin ? UserRole.ADMIN : UserRole.USER,
+          status: UserStatus.ACTIVE,
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        };
+
+        await setDoc(userRef, userData);
+        return userData;
+      }
+
+      const existingUserData = userDoc.data() as User;
+
+      // If user exists but is in admin list and not an admin, update their role
+      if (firebaseUser.email && ADMIN_EMAILS.includes(firebaseUser.email) && existingUserData.role !== UserRole.ADMIN) {
+        const updatedData = {
+          ...existingUserData,
+          role: UserRole.ADMIN,
+          updatedAt: Date.now()
+        };
+        await updateDoc(userRef, updatedData);
+        return updatedData;
+      }
+
+      return existingUserData;
+    } catch (error) {
+      console.error('Error in createUserIfNotExists:', error);
+      return null;
     }
   }
 }

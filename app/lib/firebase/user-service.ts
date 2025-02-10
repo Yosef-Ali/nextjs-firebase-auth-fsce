@@ -5,7 +5,7 @@ import { UserRole, UserStatus } from '@/app/types/user';
 // Define admin emails
 export const ADMIN_EMAILS = [
   process.env.NEXT_PUBLIC_ADMIN_EMAIL,
-  'dev.yosef@gmail.com',
+  'dev.yosefali@gmail.com',
   'yaredd.degefu@gmail.com',
   'mekdesyared@gmail.com'
 ].filter(Boolean) as string[];
@@ -22,7 +22,7 @@ export interface UserData {
 export async function getUserData(user: User): Promise<UserData | null> {
   try {
     const db = getFirestore();
-    
+
     // Check if user email is in admin list
     if (user.email && ADMIN_EMAILS.includes(user.email)) {
       const adminData: UserData = {
@@ -61,7 +61,7 @@ export async function getUserData(user: User): Promise<UserData | null> {
 export async function createUserData(user: User, displayName: string): Promise<UserData> {
   try {
     const db = getFirestore();
-    
+
     // Check if user email is in admin list
     if (user.email && ADMIN_EMAILS.includes(user.email)) {
       const adminData: UserData = {

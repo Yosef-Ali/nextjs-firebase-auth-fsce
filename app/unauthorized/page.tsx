@@ -3,92 +3,41 @@
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { forceUpdateAdminRole } from '@/lib/firebase/admin-utils';
-import { toast } from '@/components/ui/use-toast';
+import { ArrowLeft, ShieldAlert } from 'lucide-react';
 
 export default function UnauthorizedPage() {
-  const { user, loading } = useAuth();
+  const { user, userData } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace('/sign-in');
-    }
-  }, [user, loading, router]);
-
-  const handleForceAdmin = async () => {
-    if (!user || !user.email) {
-      console.error('No user or email found:', user);
-      toast({
-        title: 'Error',
-        description: 'User information not found. Please sign in again.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    console.log('Attempting to update admin role for:', user.email);
-    try {
-      const success = await forceUpdateAdminRole(user.uid, user.email);
-      console.log('Update result:', success);
-      
-      if (success) {
-        toast({
-          title: 'Success',
-          description: 'Admin role updated. Please sign out and sign back in.',
-        });
-      } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to update admin role.',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      console.error('Error updating admin role:', error);
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  useEffect(() => {
-    console.log('Current user:', user);
-  }, [user]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
-
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center">
-      <div className="mx-auto max-w-2xl px-4 text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-          Unauthorized Access
-        </h1>
-        <p className="mt-6 text-lg leading-8 text-gray-600">
-          You do not have permission to access this resource.
-        </p>
-        <div className="mt-10 flex items-center justify-center gap-x-6">
-          <Button onClick={() => router.push('/dashboard')}>
-            Return to Dashboard
-          </Button>
-          {user.email && ['dev.yosef@gmail.com'].includes(user.email) && (
-            <Button onClick={handleForceAdmin} variant="outline">
-              Update Admin Role
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full px-6 py-8 bg-white shadow-md rounded-lg">
+        <div className="flex flex-col items-center text-center space-y-4">
+          <div className="p-3 bg-red-100 rounded-full">
+            <ShieldAlert className="h-6 w-6 text-red-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Access Denied</h1>
+          <p className="text-gray-600">
+            Sorry, you don't have permission to access the dashboard. Only administrators and authors can access this area.
+          </p>
+          <p className="text-sm text-gray-500">
+            Current role: {userData?.role || 'No role assigned'}
+          </p>
+          <div className="flex flex-col w-full gap-2">
+            <Button
+              variant="outline"
+              onClick={() => router.push('/')}
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Return to Home
             </Button>
-          )}
+            {user && (
+              <p className="text-sm text-gray-500 mt-2">
+                If you believe this is a mistake, please contact an administrator.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -79,6 +79,12 @@ export function useAuth(): AuthContextType {
 
                         setUser(authUser);
                         setUserData(userMetadata);
+
+                        // Only redirect if we're on a protected route
+                        const isProtectedRoute = window.location.pathname.startsWith('/dashboard');
+                        if (isProtectedRoute && userData.role !== UserRole.ADMIN && userData.role !== UserRole.AUTHOR) {
+                            router.replace('/unauthorized');
+                        }
                     } else {
                         setUser(null);
                         setUserData(null);
@@ -98,7 +104,7 @@ export function useAuth(): AuthContextType {
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [router]);
 
     const handleAuthError = (error: any) => {
         console.error('Authentication error:', error);
