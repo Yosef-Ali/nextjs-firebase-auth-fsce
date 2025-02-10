@@ -7,9 +7,10 @@ export interface Category {
   createdAt: Date;
   updatedAt: Date;
   count?: number; // Number of posts in this category
-  type: 'post'; // Category type
-  featured?: boolean; // New featured property
+  itemCount?: number; // Number of items in this category
+  type: 'post' | 'resource'; // Category type
+  featured?: boolean; // Featured property
   icon?: string; // Optional icon property
 }
 
-export type CreateCategoryInput = Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'count'>;
+export type CreateCategoryInput = Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'count' | 'itemCount'>;

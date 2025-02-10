@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -85,7 +85,7 @@ function CategoriesTable({ categories, onEdit, onDelete, isLoading = false }: Ca
                 <TableCell>{category.description || '-'}</TableCell>
                 <TableCell>
                   <Badge variant="secondary">
-                    {category.count} {category.count === 1 ? 'item' : 'items'}
+                    {category.itemCount || 0} {(category.itemCount || 0) === 1 ? 'item' : 'items'}
                   </Badge>
                 </TableCell>
                 <TableCell>{new Date(category.createdAt).toLocaleDateString()}</TableCell>
@@ -125,7 +125,7 @@ function CategoriesTable({ categories, onEdit, onDelete, isLoading = false }: Ca
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the category &quot;{categoryToDelete?.name}&quot;.
+              This will permanently delete the category "{categoryToDelete?.name}".
               This action cannot be undone.
             </AlertDialogDescription>
             {deleteError && (

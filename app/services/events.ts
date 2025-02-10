@@ -10,95 +10,139 @@ import {
   deleteDoc,
   doc,
   Timestamp,
-  getDoc,
   serverTimestamp,
   QueryConstraint,
 } from 'firebase/firestore';
 
-const COLLECTION_NAME = 'events';
+const COLLECTION_NAME = 'posts';
 
 export const eventsService = {
   async getUpcomingEvents(limit: number = 3): Promise<Post[]> {
     try {
-      const now = Timestamp.now();
-      const eventsRef = collection(db, COLLECTION_NAME);
+      console.log('Events Service: Getting upcoming events');
+      const postsRef = collection(db, COLLECTION_NAME);
+      // Match all possible category formats for events
       const q = query(
-        eventsRef,
+        postsRef,
+        where('category', 'in', [
+          'events',
+          { id: 'events' },
+          { id: 'events', name: 'Events' }
+        ]),
         where('published', '==', true)
       );
 
       const querySnapshot = await getDocs(q);
-      const events = querySnapshot.docs
-        .map(doc => {
-          const data = doc.data();
-          const postDate = data.date instanceof Timestamp ? data.date : 
-                         typeof data.date === 'string' ? Timestamp.fromDate(new Date(data.date)) :
-                         typeof data.date === 'number' ? Timestamp.fromMillis(data.date) :
-                         now;
-          
-          return {
-            id: doc.id,
-            ...data,
-            date: postDate instanceof Timestamp ? postDate.toDate().toISOString() : new Date().toISOString(),
-            createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : 
-                      typeof data.createdAt === 'number' ? data.createdAt : Date.now(),
-            updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() : 
-                      typeof data.updatedAt === 'number' ? data.updatedAt : Date.now(),
-          } as Post;
-        })
+      console.log('Events Service: Found', querySnapshot.size, 'events');
+
+      let events = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        console.log('Events Service: Processing event:', data.title);
+        return {
+          id: doc.id,
+          ...data,
+          category: typeof data.category === 'string'
+            ? { id: 'events', name: 'Events' }
+            : data.category || { id: 'events', name: 'Events' },
+          date: data.date || new Date().toISOString(),
+          createdAt: data.createdAt instanceof Timestamp
+            ? data.createdAt.toMillis()
+            : typeof data.createdAt === 'number'
+              ? data.createdAt
+              : Date.now(),
+          updatedAt: data.updatedAt instanceof Timestamp
+            ? data.updatedAt.toMillis()
+            : typeof data.updatedAt === 'number'
+              ? data.updatedAt
+              : Date.now(),
+        } as Post;
+      });
+
+      // Filter future events and sort by date
+      const now = new Date();
+      console.log('Events Service: Filtering events from', now);
+      events = events
         .filter(event => {
           try {
-            return new Date(event.date) >= new Date();
+            const eventDate = new Date(event.date);
+            const isValid = !isNaN(eventDate.getTime()) && eventDate >= now;
+            console.log('Events Service: Event date check:', event.title, eventDate, isValid);
+            return isValid;
           } catch (e) {
-            console.error('Invalid date format:', event.date);
+            console.error('Events Service: Invalid date for event:', event.title, event.date);
             return false;
           }
         })
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-        .slice(0, limit);
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-      return events;
+      console.log('Events Service: Returning', events.length, 'upcoming events');
+      return limit ? events.slice(0, limit) : events;
     } catch (error) {
-      console.error('Error getting upcoming events:', error);
+      console.error('Events Service: Error getting upcoming events:', error);
       return [];
     }
   },
 
   async getAllEvents(includePastEvents = false): Promise<Post[]> {
     try {
-      const eventsRef = collection(db, COLLECTION_NAME);
+      console.log('Events Service: Getting all events');
+      const postsRef = collection(db, COLLECTION_NAME);
+      // Match all possible category formats for events
       const q = query(
-        eventsRef,
+        postsRef,
+        where('category', 'in', [
+          'events',
+          { id: 'events' },
+          { id: 'events', name: 'Events' }
+        ]),
         where('published', '==', true)
       );
 
       const querySnapshot = await getDocs(q);
-      const events = querySnapshot.docs
-        .map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            ...data,
-            createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : 
-                      typeof data.createdAt === 'number' ? data.createdAt : Date.now(),
-            updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() : 
-                      typeof data.updatedAt === 'number' ? data.updatedAt : Date.now(),
-          } as Post;
-        })
-        .filter(event => {
-          if (includePastEvents) return true;
-          try {
-            return new Date(event.date) >= new Date();
-          } catch (e) {
-            console.error('Invalid date format:', event.date);
-            return false;
-          }
-        })
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      console.log('Events Service: Found', querySnapshot.size, 'events');
 
+      let events = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          category: typeof data.category === 'string'
+            ? { id: 'events', name: 'Events' }
+            : data.category || { id: 'events', name: 'Events' },
+          date: data.date || new Date().toISOString(),
+          createdAt: data.createdAt instanceof Timestamp
+            ? data.createdAt.toMillis()
+            : typeof data.createdAt === 'number'
+              ? data.createdAt
+              : Date.now(),
+          updatedAt: data.updatedAt instanceof Timestamp
+            ? data.updatedAt.toMillis()
+            : typeof data.updatedAt === 'number'
+              ? data.updatedAt
+              : Date.now(),
+        } as Post;
+      });
+
+      if (!includePastEvents) {
+        const now = new Date();
+        console.log('Events Service: Filtering out past events');
+        events = events
+          .filter(event => {
+            try {
+              const eventDate = new Date(event.date);
+              return !isNaN(eventDate.getTime()) && eventDate >= now;
+            } catch (e) {
+              console.error('Events Service: Invalid date for event:', event.title, event.date);
+              return false;
+            }
+          });
+      }
+
+      events = events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      console.log('Events Service: Returning', events.length, 'events');
       return events;
     } catch (error) {
-      console.error('Error getting all events:', error);
+      console.error('Events Service: Error getting all events:', error);
       return [];
     }
   },
@@ -121,10 +165,10 @@ export const eventsService = {
       return {
         id: doc.id,
         ...data,
-        createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() : 
-                  typeof createdAt === 'number' ? createdAt : Date.now(),
-        updatedAt: updatedAt instanceof Timestamp ? updatedAt.toMillis() : 
-                  typeof updatedAt === 'number' ? updatedAt : Date.now(),
+        createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() :
+          typeof createdAt === 'number' ? createdAt : Date.now(),
+        updatedAt: updatedAt instanceof Timestamp ? updatedAt.toMillis() :
+          typeof updatedAt === 'number' ? updatedAt : Date.now(),
       } as Post;
     } catch (error) {
       console.error('Error getting event by slug:', error);

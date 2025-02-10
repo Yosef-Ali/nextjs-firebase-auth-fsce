@@ -18,7 +18,7 @@ export interface Post {
   slug: string;
   excerpt: string;
   content: string;
-  category: string | Category;
+  category: Category;  // Changed from string | Category to just Category
   published: boolean;
   authorId: string;
   authorEmail: string;

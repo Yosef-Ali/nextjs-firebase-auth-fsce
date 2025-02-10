@@ -25,7 +25,8 @@ export default function CategoriesContent({ initialCategories }: CategoriesConte
 
   const fetchCategories = async () => {
     try {
-      const fetchedCategories = await categoriesService.getCategories();
+      setIsLoading(true);
+      const fetchedCategories = await categoriesService.getCategoriesWithItemCount();
       const uniqueCategories = Array.from(new Set(fetchedCategories.map(category => category.id)))
         .map(id => fetchedCategories.find(category => category.id === id));
       const filteredCategories = uniqueCategories.filter((category): category is Category => category !== undefined);
@@ -73,8 +74,7 @@ export default function CategoriesContent({ initialCategories }: CategoriesConte
       setIsLoading(true);
       setError(null);
       await categoriesService.deleteCategory(category.id);
-      const filteredCategories = categories.filter((cat): cat is Category => cat !== undefined);
-      setCategories(filteredCategories.filter(c => c.id !== category.id));
+      await fetchCategories(); // Refresh categories to get updated item counts
       toast({
         title: 'Success',
         description: 'Category deleted successfully',
@@ -101,6 +101,22 @@ export default function CategoriesContent({ initialCategories }: CategoriesConte
       return;
     }
 
+    // Check for duplicate category name
+    const isDuplicate = categories.some(
+      existingCategory => 
+        existingCategory.name.toLowerCase() === category.name.toLowerCase() &&
+        existingCategory.id !== category.id
+    );
+
+    if (isDuplicate) {
+      toast({
+        title: 'Error',
+        description: 'A category with this name already exists',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -108,14 +124,7 @@ export default function CategoriesContent({ initialCategories }: CategoriesConte
         ? await categoriesService.updateCategory(category.id, category)
         : await categoriesService.createCategory(category);
 
-      const filteredCategories = categories.filter((cat): cat is Category => cat !== undefined);
-      setCategories((prevCategories: Category[]) => {
-        if (category.id) {
-          return prevCategories.map((c) => (c.id === category.id ? savedCategory : c));
-        }
-        return [...prevCategories, savedCategory];
-      });
-
+      await fetchCategories(); // Refresh categories to get updated item counts
       setIsEditorOpen(false);
       toast({
         title: 'Success',
