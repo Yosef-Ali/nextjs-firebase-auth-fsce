@@ -1,8 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { Download, Calendar, Eye } from 'lucide-react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Download, Calendar, ArrowRight } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Resource } from '@/app/types/resource';
@@ -15,10 +15,7 @@ interface ResourceCardProps {
 
 export function ResourceCard({ resource }: ResourceCardProps) {
   const handleDownload = async () => {
-    // Increment download count
     await resourcesService.incrementDownloadCount(resource.id);
-    
-    // Open the file in a new tab
     window.open(resource.fileUrl, '_blank');
   };
 
@@ -28,61 +25,68 @@ export function ResourceCard({ resource }: ResourceCardProps) {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="h-full flex flex-col">
-        <CardContent className="p-4 flex-grow">
-          <div className="aspect-[3/2] relative mb-4">
-            <Image
-              src={resource.coverImage || "/images/placeholder.svg"}
-              alt={resource.title}
-              fill
-              className="object-cover rounded-lg"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = "/images/placeholder.svg";
-              }}
-            />
+      <Card className="group overflow-hidden h-full transition-all duration-300 hover:shadow-lg flex flex-col">
+        <div className="relative aspect-[4/3] overflow-hidden">
+          <Image
+            src={resource.coverImage || "/images/placeholder.svg"}
+            alt={resource.title}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = "/images/placeholder.svg";
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+            <div className="text-white">
+              <Badge variant="secondary" className="mb-2 capitalize">
+                {resource.type}
+              </Badge>
+            </div>
           </div>
-          
-          <div className="space-y-2">
-            <Badge variant="secondary" className="capitalize">
-              {resource.type}
-            </Badge>
-            
-            <Link href={`/resources/${resource.type}/${resource.slug}`}>
-              <h3 className="font-semibold text-lg hover:text-primary transition-colors line-clamp-2">
-                {resource.title}
-              </h3>
-            </Link>
-            
-            <p className="text-sm text-muted-foreground line-clamp-3">
-              {resource.description}
-            </p>
-          </div>
-        </CardContent>
-        
-        <CardFooter className="p-4 pt-0 flex flex-col gap-4">
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
+        </div>
+
+        <CardContent className="p-6 flex flex-col flex-grow">
+          <div className="space-y-3 flex-grow">
+            <div className="flex items-center text-sm text-muted-foreground space-x-2">
+              <Calendar className="h-4 w-4 text-primary" />
               <span>
-                {resource.publishedDate && format(new Date(resource.publishedDate), 'MMM d, yyyy')}
+                {resource.publishedDate ? format(new Date(resource.publishedDate), 'MMM d, yyyy') : 'No date'}
               </span>
             </div>
-            <div className="flex items-center gap-1">
+            <h2 className="text-xl font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors duration-300 line-clamp-2">
+              {resource.title}
+            </h2>
+            <p className="text-muted-foreground text-sm line-clamp-3">
+              {resource.description}
+            </p>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Download className="h-4 w-4" />
-              <span>{resource.downloadCount}</span>
+              <span>{resource.downloadCount} downloads</span>
             </div>
           </div>
-          
-          <Button
-            variant="default"
-            className="w-full"
-            onClick={handleDownload}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Download
-          </Button>
-        </CardFooter>
+
+          <div className="pt-4 border-t mt-auto flex gap-4">
+            <Button
+              variant="ghost"
+              className="flex-1 justify-between px-0 hover:bg-transparent text-muted-foreground hover:text-primary"
+              onClick={handleDownload}
+            >
+              <span className="group-hover:underline">Download</span>
+              <Download className="h-4 w-4 transition-transform group-hover:scale-110" />
+            </Button>
+
+            <Link href={`/resources/${resource.type}/${resource.slug}`} className="group/link flex-1">
+              <Button
+                variant="ghost"
+                className="w-full justify-between px-0 hover:bg-transparent text-muted-foreground hover:text-primary"
+              >
+                <span className="group-hover/link:underline">Details</span>
+                <ArrowRight className="h-4 w-4 group-hover/link:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
       </Card>
     </motion.div>
   );

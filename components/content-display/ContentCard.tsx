@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Calendar } from "lucide-react";
 import { motion, Variants } from "framer-motion";
 import { formatDate } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export interface ContentCardProps {
     title: string;
@@ -22,34 +23,28 @@ export interface ContentCardProps {
 }
 
 const cardVariants: Variants = {
-    hidden: { 
-        opacity: 0, 
-        scale: 0.95,
-        y: 20 
+    hidden: {
+        opacity: 0,
+        y: 50,
+        transition: {
+            duration: 0.3
+        }
     },
     visible: (i: number) => ({
         opacity: 1,
-        scale: 1,
         y: 0,
         transition: {
             delay: i * 0.1,
-            duration: 0.6,
-            ease: [0.215, 0.61, 0.355, 1] // Cubic bezier for smooth animation
-        }
-    }),
-    hover: {
-        y: -8,
-        transition: {
-            duration: 0.3,
+            duration: 0.5,
             ease: "easeOut"
         }
-    }
+    })
 };
 
 export function ContentCard({
     title,
     excerpt,
-    image = "/images/placeholder.svg", // Set default placeholder
+    image = "/images/placeholder.svg",
     slug,
     category,
     createdAt,
@@ -67,75 +62,52 @@ export function ContentCard({
     };
 
     const cardContent = (
-        <Card className="relative h-full overflow-hidden group">
-            <div className={`
-                h-full transition-all duration-300 ease-out
-                bg-card hover:bg-card/95 
-                border border-border/50 hover:border-primary/20
-                shadow-sm hover:shadow-xl
-                ${layout === "horizontal" ? "grid md:grid-cols-2 gap-4" : ""}
-            `}>
-                <div className={`relative w-full overflow-hidden ${imageStyles[aspectRatio]}`}>
-                    <Image
-                        src={image || "/images/placeholder.svg"}
-                        alt={title}
-                        fill
-                        className="object-cover transition-all duration-500 ease-out group-hover:scale-110"
-                        sizes={imageSize === "large" ? "100vw" : "(max-width: 768px) 100vw, 50vw"}
-                        onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = "/images/placeholder.svg";
-                        }}
-                    />
-                    {/* Gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    {isFeatured && (
-                        <div className="absolute top-4 right-4 z-10">
-                            <Badge variant="secondary" className="bg-yellow-100/90 backdrop-blur-sm">
-                                Featured
-                            </Badge>
-                        </div>
-                    )}
-                </div>
-
-                <div className="flex flex-col h-full p-6">
-                    <div className="flex items-center gap-2 mb-3">
-                        <Badge 
-                            variant="outline" 
-                            className="transition-colors group-hover:bg-primary/10 group-hover:text-primary"
-                        >
+        <Card className="group overflow-hidden h-full transition-all duration-300 hover:shadow-lg flex flex-col">
+            <div className="relative aspect-[4/3] overflow-hidden">
+                <Image
+                    src={image}
+                    alt={title}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes={imageSize === "large" ? "100vw" : "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"}
+                    onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "/images/placeholder.svg";
+                    }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                    <div className="text-white">
+                        <Badge variant="secondary" className="mb-2 capitalize">
                             {category}
                         </Badge>
                     </div>
-                    
-                    <CardTitle className={`
-                        transition-colors duration-300
-                        group-hover:text-primary
-                        line-clamp-2 
-                        ${isFeatured ? "text-2xl mb-4" : "text-xl mb-2"}
-                    `}>
-                        {title}
-                    </CardTitle>
-
-                    {excerpt && (
-                        <p className="text-muted-foreground/90 line-clamp-3 mb-4 group-hover:text-muted-foreground">
-                            {excerpt}
-                        </p>
-                    )}
-
-                    <div className="mt-auto space-y-4">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Calendar className="h-4 w-4" />
-                            <span>{formatDate(createdAt || Date.now())}</span>
-                        </div>
-
-                        <div className="flex items-center text-primary font-medium opacity-0 transform translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-                            Read More
-                            <ArrowRight className="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
-                        </div>
-                    </div>
                 </div>
             </div>
+            <CardContent className="p-6 flex flex-col flex-grow">
+                <div className="space-y-3 flex-grow">
+                    <div className="flex items-center text-sm text-muted-foreground space-x-2">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <span>{formatDate(createdAt || Date.now())}</span>
+                    </div>
+                    <h2 className="text-xl font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors duration-300 line-clamp-2">
+                        {title}
+                    </h2>
+                    <p className="text-muted-foreground text-sm line-clamp-3">
+                        {excerpt}
+                    </p>
+                </div>
+                <div className="pt-4 border-t mt-auto">
+                    <Link href={href} className="group/link">
+                        <Button
+                            variant="ghost"
+                            className="w-full justify-between px-0 hover:bg-transparent text-muted-foreground hover:text-primary"
+                        >
+                            <span className="group-hover/link:underline">Read More</span>
+                            <ArrowRight className="h-4 w-4 group-hover/link:translate-x-1 transition-transform" />
+                        </Button>
+                    </Link>
+                </div>
+            </CardContent>
         </Card>
     );
 
@@ -144,11 +116,10 @@ export function ContentCard({
             variants={cardVariants}
             initial="hidden"
             animate="visible"
-            whileHover="hover"
             custom={index}
             className="h-full"
         >
-            <Link href={href} className="block h-full outline-none focus:ring-2 focus:ring-primary/20 rounded-xl">
+            <Link href={href} className="block h-full">
                 {cardContent}
             </Link>
         </motion.div>

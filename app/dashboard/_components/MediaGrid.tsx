@@ -50,7 +50,7 @@ function MediaGrid({
 
   const handleDelete = async (media: Media) => {
     if (isDeleting) return;
-    
+
     try {
       setIsDeleting(true);
       await mediaService.deleteMedia(media.id);
@@ -84,10 +84,10 @@ function MediaGrid({
     <>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {items.map((media) => (
-          <Card key={media.id} className="overflow-hidden">
+          <Card key={media.id} className="group overflow-hidden">
             <CardContent className="p-0 relative aspect-square">
               {selectable && (
-                <div className="absolute top-2 left-2 z-10">
+                <div className="absolute top-2 left-2 z-20">
                   <Checkbox
                     checked={selectedItems.includes(media.id)}
                     onCheckedChange={(checked) => onSelect?.(media.id, checked as boolean)}
@@ -95,13 +95,26 @@ function MediaGrid({
                 </div>
               )}
               {media.type === 'image' ? (
-                <Image
-                  src={media.thumbnailUrl || media.url}
-                  alt={media.alt || media.name}
-                  fill
-                  className="object-cover"
-                  onClick={() => onView?.(media)}
-                />
+                <>
+                  <Image
+                    src={media.url || "/images/placeholder.svg"}
+                    alt={media.alt || media.name}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/images/placeholder.svg";
+                    }}
+                    onClick={() => onView?.(media)}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                    <div className="text-white">
+                      <Badge variant="secondary" className="mb-2">
+                        {media.type}
+                      </Badge>
+                    </div>
+                  </div>
+                </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-muted">
                   <Badge variant="secondary" className="text-lg">
@@ -110,9 +123,9 @@ function MediaGrid({
                 </div>
               )}
             </CardContent>
-            <CardFooter className="p-2 flex justify-between items-center">
+            <CardFooter className="p-2 flex justify-between items-center border-t">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate" title={media.name}>
+                <p className="text-sm font-medium truncate group-hover:text-primary transition-colors" title={media.name}>
                   {media.name}
                 </p>
                 <p className="text-xs text-muted-foreground">

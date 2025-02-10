@@ -82,17 +82,24 @@ export default function DetailPageTemplate({
   relatedPosts,
 }: DetailPageProps) {
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section
-        className="relative py-20 bg-cover bg-center"
-        style={{
-          backgroundImage: coverImage
-            ? `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${coverImage})`
-            : undefined,
-        }}
-      >
+    <>
+      <section className="relative bg-primary/5 py-16 md:py-24">
         <div className="container mx-auto px-4">
+          {coverImage && (
+            <div className="absolute inset-0 opacity-10">
+              <Image
+                src={coverImage || "/images/placeholder.svg"}
+                alt={title}
+                fill
+                className="object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "/images/placeholder.svg";
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-background/20" />
+            </div>
+          )}
           <div className="max-w-3xl">
             <Badge variant="outline" className="mb-4 text-white border-white">
               {formatCategoryName(category)}
@@ -107,31 +114,30 @@ export default function DetailPageTemplate({
         </div>
       </section>
 
-      {/* Main Content */}
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Content */}
           <div className="lg:col-span-3">
             <div className="prose prose-lg max-w-none">
               <article className="max-w-none">
                 <div className="space-y-4">
-                  {/* Images */}
                   {images && images.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                       {images.map((image, index) => (
                         <div key={index} className="relative aspect-video">
                           <Image
-                            src={image}
+                            src={image || "/images/placeholder.svg"}
                             alt={`${title} - Image ${index + 1}`}
                             fill
                             className="object-cover rounded-lg"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = "/images/placeholder.svg";
+                            }}
                           />
                         </div>
                       ))}
                     </div>
                   )}
-
-                  {/* Content */}
                   {content && content.split('\n').map((paragraph, index) => (
                     paragraph.trim() && (
                       <p key={index} className="text-muted-foreground">
@@ -144,9 +150,7 @@ export default function DetailPageTemplate({
             </div>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-6">
-            {/* Category */}
             <Card className="p-6">
               <h3 className="text-lg font-semibold mb-4">Category</h3>
               <Badge variant="outline">
@@ -154,7 +158,6 @@ export default function DetailPageTemplate({
               </Badge>
             </Card>
 
-            {/* Tags */}
             {tags && tags.length > 0 && (
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Tags</h3>
@@ -168,7 +171,6 @@ export default function DetailPageTemplate({
               </Card>
             )}
 
-            {/* Author */}
             {author && (
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Author</h3>
@@ -196,7 +198,6 @@ export default function DetailPageTemplate({
         </div>
       </div>
 
-      {/* Related Posts Section */}
       {relatedPosts && relatedPosts.length > 0 && (
         <div className="w-full bg-white py-16">
           <div className="container mx-auto px-4">
@@ -209,6 +210,6 @@ export default function DetailPageTemplate({
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
