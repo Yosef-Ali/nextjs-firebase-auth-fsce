@@ -41,16 +41,16 @@ const RelatedPostCard = ({ post }: { post: NonNullable<DetailPageProps["relatedP
     <Card className="group h-full overflow-hidden hover:shadow-lg transition-all duration-300">
       <div className="flex flex-col sm:flex-row h-full">
         <div className="relative w-full sm:w-1/3 aspect-[16/9] sm:aspect-square shrink-0">
-          {post.coverImage ? (
-            <Image
-              src={post.coverImage}
-              alt={post.title}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-          ) : (
-            <div className="w-full h-full bg-primary/5" />
-          )}
+          <Image
+            src={post.coverImage || "/images/placeholder.svg"}
+            alt={post.title}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = "/images/placeholder.svg";
+            }}
+          />
         </div>
         <div className="p-4 flex-1 flex flex-col">
           <Badge variant="outline" className="mb-2 w-fit">

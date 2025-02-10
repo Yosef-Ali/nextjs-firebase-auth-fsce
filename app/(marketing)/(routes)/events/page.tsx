@@ -14,6 +14,7 @@ import { motion } from 'framer-motion';
 import { ProgramSearch } from '@/components/program-search';
 import CarouselSection from '@/components/carousel';
 import { getPosts } from '@/app/actions/posts';
+import { ContentCard } from '@/components/content-display/ContentCard';
 
 export default function EventsPage() {
   const searchResultsRef = useRef<HTMLDivElement>(null);
@@ -149,39 +150,21 @@ export default function EventsPage() {
                 animate="show"
                 className="grid grid-cols-1 md:grid-cols-2 gap-8"
               >
-                {featuredEvents.map((post: Post) => (
-                  <motion.div key={post.id} variants={item}>
-                    <Link href={`/events/${post.slug}`} className="block group">
-                      <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
-                        {post.coverImage && (
-                          <div className="relative w-full pt-[56.25%] overflow-hidden">
-                            <Image
-                              src={post.coverImage}
-                              alt={post.title}
-                              fill
-                              className="object-cover transition-transform duration-300 group-hover:scale-105"
-                            />
-                          </div>
-                        )}
-                        <CardHeader>
-                          <div className="flex items-center gap-2 mb-3">
-                            <Badge variant="secondary">Event</Badge>
-                            <Badge variant="secondary" className="bg-yellow-100">Featured</Badge>
-                          </div>
-                          <CardTitle className="text-2xl group-hover:text-primary transition-colors mb-4">
-                            {post.title}
-                          </CardTitle>
-                          <p className="text-muted-foreground line-clamp-3 mb-4">
-                            {post.excerpt}
-                          </p>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <CalendarDays className="h-4 w-4" />
-                            <span>{formatDate(post.createdAt)}</span>
-                          </div>
-                        </CardHeader>
-                      </Card>
-                    </Link>
-                  </motion.div>
+                {featuredEvents.map((post: Post, index) => (
+                  <ContentCard
+                    key={post.id}
+                    title={post.title}
+                    excerpt={post.excerpt}
+                    image={post.coverImage || "/images/placeholder.svg"}
+                    slug={post.slug}
+                    category="Event"
+                    createdAt={post.createdAt}
+                    index={index}
+                    isFeatured={true}
+                    layout="horizontal"
+                    imageSize="large"
+                    href={`/events/${post.slug}`}
+                  />
                 ))}
               </motion.div>
             </div>
@@ -195,38 +178,18 @@ export default function EventsPage() {
                 animate="show"
                 className="grid grid-cols-1 md:grid-cols-3 gap-8"
               >
-                {paginatedEvents.map((post: Post) => (
-                  <motion.div key={post.id} variants={item}>
-                    <Link href={`/events/${post.slug}`} className="block group">
-                      <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
-                        {post.coverImage && (
-                          <div className="relative w-full pt-[56.25%] overflow-hidden">
-                            <Image
-                              src={post.coverImage}
-                              alt={post.title}
-                              fill
-                              className="object-cover transition-transform duration-300 group-hover:scale-105"
-                            />
-                          </div>
-                        )}
-                        <CardHeader>
-                          <div className="flex items-center gap-2 mb-3">
-                            <Badge variant="secondary">Event</Badge>
-                          </div>
-                          <CardTitle className="group-hover:text-primary transition-colors line-clamp-2 mb-4">
-                            {post.title}
-                          </CardTitle>
-                          <p className="text-muted-foreground line-clamp-3 mb-4">
-                            {post.excerpt}
-                          </p>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <CalendarDays className="h-4 w-4" />
-                            <span>{formatDate(post.createdAt)}</span>
-                          </div>
-                        </CardHeader>
-                      </Card>
-                    </Link>
-                  </motion.div>
+                {paginatedEvents.map((post: Post, index) => (
+                  <ContentCard
+                    key={post.id}
+                    title={post.title}
+                    excerpt={post.excerpt}
+                    image={post.coverImage || "/images/placeholder.svg"}
+                    slug={post.slug}
+                    category="Event"
+                    createdAt={post.createdAt}
+                    index={index}
+                    href={`/events/${post.slug}`}
+                  />
                 ))}
               </motion.div>
 
@@ -273,38 +236,18 @@ export default function EventsPage() {
               animate="show"
               className="grid grid-cols-1 md:grid-cols-3 gap-8"
             >
-              {recentNews.map((post: Post) => (
-                <motion.div key={post.id} variants={item}>
-                  <Link href={`/news/${post.slug}`} className="block group">
-                    <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
-                      {post.coverImage && (
-                        <div className="relative w-full pt-[56.25%] overflow-hidden">
-                          <Image
-                            src={post.coverImage}
-                            alt={post.title}
-                            fill
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                        </div>
-                      )}
-                      <CardHeader>
-                        <div className="flex items-center gap-2 mb-3">
-                          <Badge variant="secondary">News</Badge>
-                        </div>
-                        <CardTitle className="group-hover:text-primary transition-colors line-clamp-2 mb-4">
-                          {post.title}
-                        </CardTitle>
-                        <p className="text-muted-foreground line-clamp-3 mb-4">
-                          {post.excerpt}
-                        </p>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <CalendarDays className="h-4 w-4" />
-                          <span>{formatDate(post.createdAt)}</span>
-                        </div>
-                      </CardHeader>
-                    </Card>
-                  </Link>
-                </motion.div>
+              {recentNews.map((post: Post, index) => (
+                <ContentCard
+                  key={post.id}
+                  title={post.title}
+                  excerpt={post.excerpt}
+                  image={post.coverImage || "/images/placeholder.svg"}
+                  slug={post.slug}
+                  category="News"
+                  createdAt={post.createdAt}
+                  index={index}
+                  href={`/news/${post.slug}`}
+                />
               ))}
             </motion.div>
           </div>

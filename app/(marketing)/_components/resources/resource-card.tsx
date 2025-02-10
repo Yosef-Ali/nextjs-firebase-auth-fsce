@@ -32,10 +32,14 @@ export function ResourceCard({ resource }: ResourceCardProps) {
         <CardContent className="p-4 flex-grow">
           <div className="aspect-[3/2] relative mb-4">
             <Image
-              src={resource.coverImage || '/images/default-resource-cover.jpg'}
+              src={resource.coverImage || "/images/placeholder.svg"}
               alt={resource.title}
               fill
               className="object-cover rounded-lg"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "/images/placeholder.svg";
+              }}
             />
           </div>
           
