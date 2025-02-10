@@ -1,8 +1,8 @@
-import { UserRole, UserStatus, UserMetadata, User } from '@/app/types/user';
+import { UserRole, UserStatus, UserMetadata, User } from '../types/user';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { auth } from '@/lib/auth';
-import { usersService } from '@/app/services/users';
+import { auth } from '../../lib/firebase';
+import { usersService } from '../services/users';
 import {
     signInWithEmailAndPassword,
     signOut as firebaseSignOut,

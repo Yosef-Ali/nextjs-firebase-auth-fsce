@@ -1,24 +1,123 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background Elements -->
-  <circle cx="200" cy="200" r="180" fill="#E8F0FE" fill-opacity="0.5"/>
-  <circle cx="200" cy="200" r="150" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="4 4"/>
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Definitions -->
+  <defs>
+    <!-- Enhanced Gradients -->
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f1f5f9;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#f8fafc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f1f5f9;stop-opacity:1" />
+    </linearGradient>
+    
+    <radialGradient id="center-glow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:#0ea5e9;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#0ea5e9;stop-opacity:0" />
+    </radialGradient>
+    
+    <!-- Enhanced Patterns -->
+    <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1" fill="#0ea5e9" fill-opacity="0.15"/>
+    </pattern>
+    
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#0ea5e9" stroke-width="0.5" stroke-opacity="0.1"/>
+    </pattern>
+    
+    <!-- Animations -->
+    <style>
+      @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0px); }
+      }
+      @keyframes pulse {
+        0% { opacity: 0.4; }
+        50% { opacity: 0.8; }
+        100% { opacity: 0.4; }
+      }
+      @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      @keyframes wave {
+        0% { transform: translateX(0); }
+        50% { transform: translateX(20px); }
+        100% { transform: translateX(0); }
+      }
+      .floating { animation: float 6s ease-in-out infinite; }
+      .pulsing { animation: pulse 4s ease-in-out infinite; }
+      .rotating { animation: rotate 20s linear infinite; }
+      .waving { animation: wave 8s ease-in-out infinite; }
+    </style>
+  </defs>
   
-  <!-- Envelope Base -->
-  <path d="M100 140H300V280H100V140Z" fill="white" stroke="#4F46E5" stroke-width="4"/>
+  <!-- Base Layer -->
+  <rect width="800" height="600" fill="url(#grad1)"/>
+  <rect width="800" height="600" fill="url(#dots)"/>
+  <rect width="800" height="600" fill="url(#grid)"/>
+  <circle cx="400" cy="300" r="250" fill="url(#center-glow)"/>
   
-  <!-- Envelope Flap -->
-  <path d="M100 140L200 200L300 140" stroke="#4F46E5" stroke-width="4" fill="none"/>
+  <!-- Dynamic Grid -->
+  <g class="rotating" style="transform-origin: 400px 300px;">
+    <circle cx="400" cy="300" r="200" stroke="#0ea5e9" stroke-width="0.5" stroke-dasharray="4 4" fill="none"/>
+    <circle cx="400" cy="300" r="150" stroke="#0ea5e9" stroke-width="0.5" stroke-dasharray="4 4" fill="none"/>
+    <circle cx="400" cy="300" r="100" stroke="#0ea5e9" stroke-width="0.5" stroke-dasharray="4 4" fill="none"/>
+  </g>
   
-  <!-- Decorative Elements -->
-  <circle cx="200" cy="200" r="20" fill="#4F46E5"/>
-  <path d="M190 200L198 208L210 196" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Wave Patterns -->
+  <g class="waving">
+    <path d="M0 150 Q 200 100, 400 150 T 800 150" stroke="#0ea5e9" stroke-width="1" fill="none" stroke-opacity="0.3"/>
+    <path d="M0 450 Q 200 400, 400 450 T 800 450" stroke="#0ea5e9" stroke-width="1" fill="none" stroke-opacity="0.3"/>
+  </g>
   
-  <!-- Abstract Lines -->
-  <path d="M120 160L180 200" stroke="#818CF8" stroke-width="2" stroke-dasharray="2 4"/>
-  <path d="M220 200L280 160" stroke="#818CF8" stroke-width="2" stroke-dasharray="2 4"/>
+  <!-- Animated Shapes -->
+  <g class="floating">
+    <!-- Hexagon Clusters -->
+    <path d="M150 200l20-12 20 12v24l-20 12-20-12z" stroke="#0ea5e9" fill="#0ea5e9" fill-opacity="0.1"/>
+    <path d="M610 400l20-12 20 12v24l-20 12-20-12z" stroke="#0ea5e9" fill="#0ea5e9" fill-opacity="0.1"/>
+    
+    <!-- Triangle Clusters -->
+    <path d="M250 150l25-40 25 40z" stroke="#0ea5e9" fill="#0ea5e9" fill-opacity="0.1"/>
+    <path d="M500 450l25-40 25 40z" stroke="#0ea5e9" fill="#0ea5e9" fill-opacity="0.1"/>
+  </g>
   
-  <!-- Dots -->
-  <circle cx="140" cy="240" r="4" fill="#818CF8"/>
-  <circle cx="260" cy="240" r="4" fill="#818CF8"/>
+  <!-- Connection Network -->
+  <g class="pulsing">
+    <line x1="200" y1="200" x2="300" y2="300" stroke="#0ea5e9" stroke-width="0.5" stroke-dasharray="4 4"/>
+    <line x1="500" y1="300" x2="600" y2="400" stroke="#0ea5e9" stroke-width="0.5" stroke-dasharray="4 4"/>
+    <line x1="300" y1="400" x2="400" y2="300" stroke="#0ea5e9" stroke-width="0.5" stroke-dasharray="4 4"/>
+    <line x1="400" y1="300" x2="500" y2="200" stroke="#0ea5e9" stroke-width="0.5" stroke-dasharray="4 4"/>
+  </g>
+  
+  <!-- Center Focus -->
+  <g class="pulsing">
+    <circle cx="400" cy="300" r="35" stroke="#0ea5e9" stroke-width="2" fill="none"/>
+    <circle cx="400" cy="300" r="25" stroke="#0ea5e9" stroke-width="1.5" fill="none"/>
+    <path d="M380 300h40M400 280v40" stroke="#0ea5e9" stroke-width="2"/>
+  </g>
+  
+  <!-- Corner Decorations -->
+  <g class="floating" style="animation-delay: -2s">
+    <!-- Top Left -->
+    <rect x="40" y="40" width="60" height="60" stroke="#0ea5e9" stroke-width="1.5" fill="none"/>
+    <circle cx="70" cy="70" r="20" stroke="#0ea5e9" stroke-width="1" fill="none"/>
+    <path d="M50 80L90 40" stroke="#0ea5e9" stroke-width="1"/>
+  </g>
+  
+  <g class="floating" style="animation-delay: -3s">
+    <!-- Bottom Right -->
+    <rect x="700" y="500" width="60" height="60" stroke="#0ea5e9" stroke-width="1.5" fill="none"/>
+    <circle cx="730" cy="530" r="20" stroke="#0ea5e9" stroke-width="1" fill="none"/>
+    <path d="M710 540L750 500" stroke="#0ea5e9" stroke-width="1"/>
+  </g>
+  
+  <!-- Particle System -->
+  <g class="pulsing">
+    <circle cx="150" cy="150" r="2" fill="#0ea5e9"/>
+    <circle cx="650" cy="450" r="2" fill="#0ea5e9"/>
+    <circle cx="250" cy="350" r="2" fill="#0ea5e9"/>
+    <circle cx="550" cy="250" r="2" fill="#0ea5e9"/>
+    <circle cx="350" cy="450" r="2" fill="#0ea5e9"/>
+    <circle cx="450" cy="150" r="2" fill="#0ea5e9"/>
+  </g>
 </svg>
