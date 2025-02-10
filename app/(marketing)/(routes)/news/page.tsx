@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -15,6 +16,14 @@ import { ProgramSearch } from '@/components/program-search';
 import CarouselSection from '@/components/carousel';
 import { getPosts, getPostsByCategory } from '@/app/actions/posts';
 import { ContentCard } from '@/components/content-display/ContentCard';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
+} from "@/components/ui/pagination";
 
 export default function NewsPage() {
   const searchResultsRef = useRef<HTMLDivElement>(null);
@@ -23,6 +32,8 @@ export default function NewsPage() {
   const [events, setEvents] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const postsPerPage = 12;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -71,6 +82,12 @@ export default function NewsPage() {
     newsItem.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     newsItem.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
     newsItem.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredNews.length / postsPerPage);
+  const paginatedNews = filteredNews.slice(
+    (page - 1) * postsPerPage,
+    page * postsPerPage
   );
 
   if (loading) {
@@ -161,27 +178,74 @@ export default function NewsPage() {
             </div>
           )}
 
-          {news.length > 0 ? (
-            <motion.div
-              variants={container}
-              initial="hidden"
-              animate="show"
-              className="grid grid-cols-1 md:grid-cols-3 gap-8"
-            >
-              {filteredNews.map((post: Post, index) => (
-                <ContentCard
-                  key={post.id}
-                  title={post.title}
-                  excerpt={post.excerpt}
-                  image={post.coverImage || "/images/placeholder.svg"}
-                  slug={post.slug}
-                  category="News"
-                  createdAt={post.createdAt}
-                  index={index}
-                  href={`/news/${post.slug}`}
-                />
-              ))}
-            </motion.div>
+          {filteredNews.length > 0 ? (
+            <>
+              <motion.div
+                variants={container}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-1 md:grid-cols-3 gap-8"
+              >
+                {paginatedNews.map((post: Post, index) => (
+                  <ContentCard
+                    key={post.id}
+                    title={post.title}
+                    excerpt={post.excerpt}
+                    image={post.coverImage || "/images/placeholder.svg"}
+                    slug={post.slug}
+                    category="News"
+                    createdAt={post.createdAt}
+                    index={index}
+                    href={`/news/${post.slug}`}
+                  />
+                ))}
+              </motion.div>
+
+              {totalPages > 1 && (
+                <div className="mt-8">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                            e.preventDefault();
+                            if (page > 1) setPage(page - 1);
+                          }}
+                          className={page <= 1 ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+
+                      {[...Array(totalPages)].map((_, i) => (
+                        <PaginationItem key={i + 1}>
+                          <PaginationLink
+                            href="#"
+                            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                              e.preventDefault();
+                              setPage(i + 1);
+                            }}
+                            isActive={page === i + 1}
+                          >
+                            {i + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                            e.preventDefault();
+                            if (page < totalPages) setPage(page + 1);
+                          }}
+                          className={page >= totalPages ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-8">
               <p className="text-muted-foreground">

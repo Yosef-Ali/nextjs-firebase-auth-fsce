@@ -203,72 +203,128 @@ export const postsService = {
     try {
       console.log('Service: Getting posts by category:', category);
       const postsRef = collection(db, COLLECTION_NAME);
-      const constraints: QueryConstraint[] = [
-        where('published', '==', true)
-      ];
+      let posts: Post[] = [];
 
-      // Normalize the category name to handle various cases
-      const categoryLower = category.toLowerCase();
-      const possibleCategories = [
-        // Original format
-        category,
-        // Capitalized format
-        category.charAt(0).toUpperCase() + category.slice(1),
-        // All lowercase
-        categoryLower,
-        // All uppercase first letter
-        categoryLower.charAt(0).toUpperCase() + categoryLower.slice(1),
-        // Object formats
-        { id: category },
-        { id: category, name: category },
-        { id: categoryLower },
-        { id: categoryLower, name: categoryLower },
-        { id: category.charAt(0).toUpperCase() + category.slice(1) },
-        { id: category.charAt(0).toUpperCase() + category.slice(1), name: category.charAt(0).toUpperCase() + category.slice(1) }
-      ];
+      // Special cases for specific categories
+      if (category.toLowerCase() === 'child-protection') {
+        const specialQuery = query(
+          postsRef,
+          where('published', '==', true),
+          where('category.id', '==', 'RMglo9PIj6wNdQNSFcuA')
+        );
+        const specialSnapshot = await getDocs(specialQuery);
+        posts = posts.concat(specialSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return normalizePost(doc.id, data, {
+            id: 'child-protection',
+            name: 'Child Protection'
+          });
+        }));
+      } else if (category.toLowerCase() === 'advocacy') {
+        // Special handling for advocacy posts with both object and string formats
+        const advocacyQueries = [
+          // Query for object format with lowercase id
+          query(
+            postsRef,
+            where('published', '==', true),
+            where('category.id', '==', 'advocacy')
+          ),
+          // Query for object format with capitalized name
+          query(
+            postsRef,
+            where('published', '==', true),
+            where('category.name', '==', 'Advocacy')
+          ),
+          // Query for string format
+          query(
+            postsRef,
+            where('published', '==', true),
+            where('category', '==', 'advocacy')
+          ),
+          // Query for string format capitalized
+          query(
+            postsRef,
+            where('published', '==', true),
+            where('category', '==', 'Advocacy')
+          ),
+          // Query for programs tagged with advocacy
+          query(
+            postsRef,
+            where('published', '==', true),
+            where('tags', 'array-contains', 'advocacy')
+          )
+        ];
 
-      constraints.push(where('category', 'in', possibleCategories));
+        for (const q of advocacyQueries) {
+          const snapshot = await getDocs(q);
+          posts = posts.concat(snapshot.docs.map(doc => {
+            const data = doc.data();
+            return normalizePost(doc.id, data, {
+              id: 'advocacy',
+              name: 'Advocacy'
+            });
+          }));
+        }
+      }
 
-      const q = query(postsRef, ...constraints);
-      console.log('Service: Executing query for category:', category);
-      const querySnapshot = await getDocs(q);
-      console.log('Service: Found', querySnapshot.size, 'documents');
-
-      const posts = querySnapshot.docs.map(doc => {
+      // Query for normalized category format
+      const normalizedQuery = query(
+        postsRef,
+        where('published', '==', true),
+        where('category.id', 'in', [category.toLowerCase(), category])
+      );
+      const normalizedSnapshot = await getDocs(normalizedQuery);
+      posts = posts.concat(normalizedSnapshot.docs.map(doc => {
         const data = doc.data();
-        console.log('Service: Processing document:', doc.id, data);
-        return {
-          id: doc.id,
-          title: data?.title ?? '',
-          content: data?.content ?? '',
-          excerpt: data?.excerpt ?? '',
-          slug: data?.slug ?? doc.id,
-          category: typeof data.category === 'string'
-            ? { id: data.category, name: data.category }
-            : data.category || { id: '', name: '' },
-          date: data?.date ?? new Date().toISOString(),
-          createdAt: data.createdAt instanceof Timestamp
-            ? data.createdAt.toMillis()
-            : typeof data.createdAt === 'number'
-              ? data.createdAt
-              : Date.now(),
-          updatedAt: data.updatedAt instanceof Timestamp
-            ? data.updatedAt.toMillis()
-            : typeof data.updatedAt === 'number'
-              ? data.updatedAt
-              : Date.now(),
-          coverImage: data?.coverImage ?? '',
-          images: Array.isArray(data?.images) ? data.images : [],
-          featured: Boolean(data?.featured),
-          section: data?.section ?? '',
-          tags: Array.isArray(data?.tags) ? data.tags : [],
-          time: data?.time ?? '',
-          location: data?.location ?? '',
-          status: data?.status
-        } as Post;
-      });
+        return normalizePost(doc.id, data, {
+          id: category.toLowerCase(),
+          name: category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+        });
+      }));
 
-      const sortedPosts = posts.sort((a, b) => b.createdAt - a.createdAt);
+      // Query for legacy string format
+      const stringQuery = query(
+        postsRef,
+        where('published', '==', true),
+        where('category', 'in', [
+          category.toLowerCase(),
+          category,
+          category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+        ])
+      );
+      const stringSnapshot = await getDocs(stringQuery);
+      posts = posts.concat(stringSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return normalizePost(doc.id, data, {
+          id: category.toLowerCase(),
+          name: category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+        });
+      }));
+
+      // Query for name-based format
+      const categoryName = category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+      const nameQuery = query(
+        postsRef,
+        where('published', '==', true),
+        where('category.name', '==', categoryName)
+      );
+      const nameSnapshot = await getDocs(nameQuery);
+      posts = posts.concat(nameSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return normalizePost(doc.id, data, {
+          id: category.toLowerCase(),
+          name: categoryName
+        });
+      }));
+
+      // Remove duplicates by ID
+      const uniquePosts = Array.from(
+        new Map(posts.map(post => [post.id, post])).values()
+      );
+
+      // Sort by creation date (newest first) and apply limit if specified
+      const sortedPosts = uniquePosts.sort((a, b) => b.createdAt - a.createdAt);
+
       const result = limit ? sortedPosts.slice(0, limit) : sortedPosts;
       console.log('Service: Returning', result.length, 'posts for category:', category);
       return result;
@@ -523,3 +579,36 @@ export const postsService = {
 
   // Remove getUpcomingEvents and getAllNews methods as they're no longer needed
 };
+
+function normalizePost(id: string, data: any, category: Category): Post {
+  return {
+    id,
+    title: data?.title ?? '',
+    content: data?.content ?? '',
+    excerpt: data?.excerpt ?? '',
+    slug: data?.slug ?? id,
+    category,
+    published: Boolean(data?.published),
+    authorId: data?.authorId ?? '',
+    authorEmail: data?.authorEmail ?? '',
+    date: data?.date ?? new Date().toISOString(),
+    createdAt: data.createdAt instanceof Timestamp ?
+      data.createdAt.toMillis() :
+      typeof data.createdAt === 'number' ?
+        data.createdAt :
+        Date.now(),
+    updatedAt: data.updatedAt instanceof Timestamp ?
+      data.updatedAt.toMillis() :
+      typeof data.updatedAt === 'number' ?
+        data.updatedAt :
+        Date.now(),
+    coverImage: data?.coverImage ?? '',
+    images: Array.isArray(data?.images) ? data.images : [],
+    featured: Boolean(data?.featured),
+    section: data?.section ?? '',
+    tags: Array.isArray(data?.tags) ? data.tags : [],
+    time: data?.time ?? '',
+    location: data?.location ?? '',
+    status: data?.status
+  } as Post;
+}

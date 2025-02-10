@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -15,6 +16,14 @@ import { ProgramSearch } from '@/components/program-search';
 import CarouselSection from '@/components/carousel';
 import { getPosts } from '@/app/actions/posts';
 import { ContentCard } from '@/components/content-display/ContentCard';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
+} from "@/components/ui/pagination";
 
 export default function EventsPage() {
   const searchResultsRef = useRef<HTMLDivElement>(null);
@@ -24,7 +33,7 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
-  const eventsPerPage = 9;
+  const eventsPerPage = 12;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,11 +76,6 @@ export default function EventsPage() {
     }, 100);
   };
 
-  const loadMore = () => {
-    setPage(prevPage => prevPage + 1);
-  };
-
-  // Filter events based on search query
   const filteredEvents = [...featuredEvents, ...events].filter((event: Post) =>
     searchQuery === '' ||
     event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -79,15 +83,15 @@ export default function EventsPage() {
     event.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Get paginated events for current page
-  const paginatedEvents = filteredEvents.slice(0, page * eventsPerPage);
-  const hasMoreEvents = filteredEvents.length > page * eventsPerPage;
+  const totalPages = Math.ceil(filteredEvents.length / eventsPerPage);
+  const paginatedEvents = filteredEvents.slice(
+    (page - 1) * eventsPerPage,
+    page * eventsPerPage
+  );
 
   if (loading) {
     return <FSCESkeleton />;
   }
-
-  console.log('Filtered events:', filteredEvents);
 
   const container = {
     hidden: { opacity: 0 },
@@ -170,7 +174,7 @@ export default function EventsPage() {
             </div>
           )}
 
-          {events.length > 0 ? (
+          {filteredEvents.length > 0 ? (
             <>
               <motion.div
                 variants={container}
@@ -193,18 +197,48 @@ export default function EventsPage() {
                 ))}
               </motion.div>
 
-              {/* Load More Button */}
-              {hasMoreEvents && (
-                <div className="flex justify-center mt-8">
-                  <Button
-                    onClick={loadMore}
-                    variant="outline"
-                    size="lg"
-                    className="gap-2"
-                  >
-                    Load More Events
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
+              {totalPages > 1 && (
+                <div className="mt-8">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                            e.preventDefault();
+                            if (page > 1) setPage(page - 1);
+                          }}
+                          className={page <= 1 ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+
+                      {[...Array(totalPages)].map((_, i) => (
+                        <PaginationItem key={i + 1}>
+                          <PaginationLink
+                            href="#"
+                            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                              e.preventDefault();
+                              setPage(i + 1);
+                            }}
+                            isActive={page === i + 1}
+                          >
+                            {i + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                            e.preventDefault();
+                            if (page < totalPages) setPage(page + 1);
+                          }}
+                          className={page >= totalPages ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
                 </div>
               )}
             </>

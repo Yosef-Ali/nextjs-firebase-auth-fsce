@@ -1,20 +1,30 @@
 'use client';
 
+import React from 'react';
 import { useEffect, useState } from 'react';
-import { whatWeDoService } from '@/app/services/what-we-do';
+import { postsService } from '@/app/services/posts';
 import { Post } from '@/app/types/post';
-import { Program } from '@/app/types/program';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ArrowRight, Loader2, CalendarDays } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowRight, CalendarDays } from 'lucide-react';
 import FSCESkeleton from '@/components/FSCESkeleton';
 import Partners from '@/components/partners';
 import CarouselSection from '@/components/carousel';
 import { ProgramSearch } from '@/components/program-search';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
+} from "@/components/ui/pagination";
 
 const categories = [
   {
@@ -30,7 +40,7 @@ const categories = [
   {
     id: 'advocacy',
     title: 'Advocacy',
-    description: "Speaking up and taking action for children\'s rights and needs",
+    description: "Speaking up and taking action for children's rights and needs",
   },
   {
     id: 'humanitarian-response',
@@ -55,39 +65,79 @@ const item = {
 };
 
 export default function WhatWeDoPage() {
-  const [programs, setPrograms] = useState<Post[]>([]);
+  const [categoryPosts, setCategoryPosts] = useState<Record<string, Post[]>>({});
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('child-protection');
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState<Record<string, number>>({});
+  const postsPerPage = 12;
 
   useEffect(() => {
-    const fetchPrograms = async () => {
+    const fetchPosts = async () => {
       try {
-        const data = await whatWeDoService.getAllPrograms();
-        setPrograms(data);
+        const posts: Record<string, Post[]> = {};
+        await Promise.all(
+          categories.map(async (category) => {
+            const data = await postsService.getPostsByCategory(category.id);
+            posts[category.id] = data;
+          })
+        );
+        setCategoryPosts(posts);
       } catch (error) {
-        console.error('Error fetching programs:', error);
+        console.error('Error fetching posts:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPrograms();
+    fetchPosts();
+    // Initialize page numbers for all categories
+    const initialPages = categories.reduce((acc, category) => ({
+      ...acc,
+      [category.id]: 1
+    }), {});
+    setCurrentPage(initialPages);
   }, []);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    // Reset all category pages to 1 when searching
+    const resetPages = categories.reduce((acc, category) => ({
+      ...acc,
+      [category.id]: 1
+    }), {});
+    setCurrentPage(resetPages);
   };
 
-  const filterPrograms = (category: string) => {
-    return programs
-      .filter((program) => program.category === category)
-      .filter((program) =>
-        searchQuery === '' ||
-        program.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        program.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (program.excerpt && program.excerpt.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
+  // Reset page when changing categories
+  const handleCategoryChange = (categoryId: string) => {
+    setActiveCategory(categoryId);
+    setCurrentPage(prev => ({
+      ...prev,
+      [categoryId]: 1
+    }));
+  };
+
+  const getFilteredPosts = (categoryId: string) => {
+    const posts = categoryPosts[categoryId] || [];
+    if (!searchQuery) return posts;
+
+    return posts.filter((post) =>
+      searchQuery === '' ||
+      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (post.excerpt && post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  };
+
+  const getPaginatedPosts = (categoryId: string) => {
+    const filtered = getFilteredPosts(categoryId);
+    const page = currentPage[categoryId] || 1;
+    return filtered.slice((page - 1) * postsPerPage, page * postsPerPage);
+  };
+
+  const getTotalPages = (categoryId: string) => {
+    return Math.ceil(getFilteredPosts(categoryId).length / postsPerPage);
   };
 
   if (loading) {
@@ -107,8 +157,6 @@ export default function WhatWeDoPage() {
             <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
               Discover how we're making a difference in children's lives through our comprehensive programs and initiatives.
             </p>
-
-            {/* Search Box */}
             <ProgramSearch
               onSearch={handleSearch}
               className="mt-10"
@@ -119,7 +167,7 @@ export default function WhatWeDoPage() {
         {/* Programs Section */}
         <section className="py-16">
           <div className="container mx-auto px-4">
-            <Tabs defaultValue={activeCategory} onValueChange={setActiveCategory}>
+            <Tabs defaultValue={activeCategory} onValueChange={handleCategoryChange}>
               <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 {categories.map((category) => (
                   <TabsTrigger
@@ -135,8 +183,18 @@ export default function WhatWeDoPage() {
               {categories.map((category) => (
                 <TabsContent key={category.id} value={category.id}>
                   <div className="mb-8">
-                    <h2 className="text-2xl font-semibold mb-2">{category.title}</h2>
-                    <p className="text-muted-foreground">{category.description}</p>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-2xl font-semibold mb-2">{category.title}</h2>
+                        <p className="text-muted-foreground">{category.description}</p>
+                      </div>
+                      <Link href={`/what-we-do/${category.id}`}>
+                        <Button variant="outline" className="hidden md:flex">
+                          View All {category.title} Programs
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
 
                   <motion.div
@@ -145,16 +203,18 @@ export default function WhatWeDoPage() {
                     animate="show"
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
                   >
-                    {filterPrograms(category.id).map((program) => (
-                      <motion.div key={program.id} variants={item}>
-                        <Link href={`/what-we-do/${category.id}/${program.id}`} className="block group">
+                    {getPaginatedPosts(category.id).map((post) => (
+                      <motion.div key={post.id} variants={item}>
+                        <Link href={`/what-we-do/${category.id}/${post.slug}`} className="block group">
                           <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300">
-                            {program.coverImage && (
+                            {post.coverImage && (
                               <div className="relative w-full pt-[56.25%] overflow-hidden">
-                                <img
-                                  src={program.coverImage}
-                                  alt={program.title}
-                                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                <Image
+                                  src={post.coverImage}
+                                  alt={post.title}
+                                  fill
+                                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                  unoptimized={post.coverImage.startsWith('data:')}
                                 />
                               </div>
                             )}
@@ -166,20 +226,24 @@ export default function WhatWeDoPage() {
                                 </Badge>
                               </div>
                               <CardTitle className="group-hover:text-primary transition-colors">
-                                {program.title}
+                                {post.title}
                               </CardTitle>
                               <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
                                 <CalendarDays className="h-4 w-4" />
-                                <span>{program.createdAt ? new Date(program.createdAt).toLocaleDateString('en-US', {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric'
-                                }) : 'Ongoing'}</span>
+                                <span>
+                                  {post.createdAt ?
+                                    new Date(post.createdAt).toLocaleDateString('en-US', {
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric'
+                                    }) : 'Ongoing'
+                                  }
+                                </span>
                               </div>
                             </CardHeader>
                             <CardContent>
                               <p className="text-muted-foreground line-clamp-2 mb-4">
-                                {program.excerpt || program.content?.substring(0, 150)}
+                                {post.excerpt || post.content?.substring(0, 150)}
                               </p>
                               <div className="flex items-center text-primary font-medium">
                                 Read More
@@ -191,6 +255,73 @@ export default function WhatWeDoPage() {
                       </motion.div>
                     ))}
                   </motion.div>
+
+                  {getTotalPages(category.id) > 1 && (
+                    <div className="mt-8">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              href="#"
+                              onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                                e.preventDefault();
+                                if ((currentPage[category.id] || 1) > 1) {
+                                  setCurrentPage({
+                                    ...currentPage,
+                                    [category.id]: (currentPage[category.id] || 1) - 1
+                                  });
+                                }
+                              }}
+                              className={(currentPage[category.id] || 1) <= 1 ? "pointer-events-none opacity-50" : ""}
+                            />
+                          </PaginationItem>
+
+                          {[...Array(getTotalPages(category.id))].map((_, i) => (
+                            <PaginationItem key={i + 1}>
+                              <PaginationLink
+                                href="#"
+                                onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                                  e.preventDefault();
+                                  setCurrentPage({
+                                    ...currentPage,
+                                    [category.id]: i + 1
+                                  });
+                                }}
+                                isActive={(currentPage[category.id] || 1) === i + 1}
+                              >
+                                {i + 1}
+                              </PaginationLink>
+                            </PaginationItem>
+                          ))}
+
+                          <PaginationItem>
+                            <PaginationNext
+                              href="#"
+                              onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                                e.preventDefault();
+                                if ((currentPage[category.id] || 1) < getTotalPages(category.id)) {
+                                  setCurrentPage({
+                                    ...currentPage,
+                                    [category.id]: (currentPage[category.id] || 1) + 1
+                                  });
+                                }
+                              }}
+                              className={(currentPage[category.id] || 1) >= getTotalPages(category.id) ? "pointer-events-none opacity-50" : ""}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
+                  )}
+
+                  <div className="mt-8 text-center md:hidden">
+                    <Link href={`/what-we-do/${category.id}`}>
+                      <Button variant="outline">
+                        View All {category.title} Programs
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
                 </TabsContent>
               ))}
             </Tabs>
