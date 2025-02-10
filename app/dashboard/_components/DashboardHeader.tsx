@@ -11,17 +11,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { 
-  Bell, 
-  Search, 
+import {
+  Bell,
+  Search,
   Settings,
   User,
   LogOut,
   Menu,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSidebar } from '@/app/context/sidebar-context';
 import { useSearch } from '@/app/context/search-context';
+import Logo from '@/components/Logo';
 
 const DashboardHeader = () => {
   const { signOut } = useAuth();
@@ -67,13 +69,18 @@ const DashboardHeader = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-16 items-center px-4">
-        <Button
-          variant="ghost"
-          className="mr-4 px-2"
-          onClick={() => toggleSidebar()}
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            className="mr-4 px-2"
+            onClick={() => toggleSidebar()}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <Link href="/" className="flex items-center">
+            <Logo />
+          </Link>
+        </div>
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
           <div className="w-full flex-1 md:w-auto md:flex-none">
             <form>
