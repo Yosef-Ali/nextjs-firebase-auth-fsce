@@ -2,11 +2,11 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { SignInForm } from '@/components/auth/sign-in-form';
 import { AuthLoading } from '@/components/auth/auth-loading';
 
-export default function SignInPage() {
+function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading } = useAuth();
@@ -28,9 +28,15 @@ export default function SignInPage() {
 
   return (
     <div className="relative min-h-screen">
-
       <SignInForm />
-
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<AuthLoading />}>
+      <SignInContent />
+    </Suspense>
   );
 }
