@@ -1,96 +1,43 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { Award, Shield, Target, Heart, Users, Lightbulb, Scale, Clock, Sparkles, Calendar, ArrowRight } from "lucide-react";
-import { motion, Variants } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import CarouselSection from "@/components/carousel";
-import AchievementsGrid from "@/app/(marketing)/(routes)/who-we-are/achievements/_components/MeritsGrid";
-import AchievementsGridSkeleton from './_components/AchievementsGridSkeleton';
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { Merit } from './_components/Merit';
-
-interface Achievement {
-  id: string;
-  title: string;
-  description: string;
-  image: string;
-  date: string;
-  category: string;
-  approved: boolean;
-}
-
-const iconComponents = {
-  award: Award,
-  shield: Shield,
-  target: Target,
-  heart: Heart,
-  users: Users,
-  lightbulb: Lightbulb,
-  scale: Scale,
-  clock: Clock,
-  sparkles: Sparkles,
-} as const;
-
-const cardVariants: Variants = {
-  hidden: { 
-    opacity: 0, 
-    y: 50,
-    transition: {
-      duration: 0.3
-    }
-  },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: {
-      delay: i * 0.1,
-      duration: 0.5,
-      ease: "easeOut"
-    }
-  })
-};
+import { useEffect, useState, useRef } from 'react';
+import { Post } from '@/app/types/post';
+import { getPostsByCategory } from '@/app/actions/posts';
+import { ProgramSearch } from '@/components/program-search';
+import { ContentCard } from '@/components/content-display/ContentCard';
+import { StickyPostsSection } from '@/components/content-display/StickyPostsSection';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink } from '@/components/ui/pagination';
+import FSCESkeleton from '@/components/FSCESkeleton';
+import { motion } from 'framer-motion';
+import Partners from '@/components/partners';
 
 export default function AchievementsPage() {
+  const searchResultsRef = useRef<HTMLDivElement>(null);
+  const [achievements, setAchievements] = useState<Post[]>([]);
+  const [stickyAchievements, setStickyAchievements] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [meritsData, setMeritsData] = useState<Merit[]>([]);
-  const [awards, setAwards] = useState<Achievement[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const postsPerPage = 9;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch merits
-        const meritsRef = collection(db, 'merits');
-        const meritsQuery = query(meritsRef, where("approved", "==", true));
-        const meritsSnapshot = await getDocs(meritsQuery);
-        const meritsData = meritsSnapshot.docs.map(doc => {
-          const data = doc.data();
-          const IconComponent = data.iconName && iconComponents[data.iconName.toLowerCase() as keyof typeof iconComponents];
-          return {
-            id: doc.id,
-            title: data.title || '', 
-            description: data.description || '', 
-            ...data,
-            icon: IconComponent ? <IconComponent className="h-6 w-6 text-primary" /> : <Sparkles className="h-6 w-6 text-primary" />
-          } satisfies Merit;
-        });
-        setMeritsData(meritsData);
+        setLoading(true);
+        const achievementsData = await getPostsByCategory('achievements');
 
-        // Fetch awards
-        const awardsRef = collection(db, 'awards');
-        const awardsQuery = query(awardsRef, where("approved", "==", true));
-        const awardsSnapshot = await getDocs(awardsQuery);
-        const awardsData = awardsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Achievement[];
-        setAwards(awardsData);
+        // Split achievements into sticky and regular
+        const sticky = achievementsData.filter((post: Post) => post.sticky)
+          .sort((a, b) => b.createdAt - a.createdAt);
+        const regular = achievementsData.filter((post: Post) => !post.sticky)
+          .sort((a, b) => b.createdAt - a.createdAt);
+
+        setStickyAchievements(sticky);
+        setAchievements(regular);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error('Error fetching achievements:', error);
+        setStickyAchievements([]);
+        setAchievements([]);
       } finally {
         setLoading(false);
       }
@@ -99,110 +46,127 @@ export default function AchievementsPage() {
     fetchData();
   }, []);
 
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setPage(1);
+    setTimeout(() => {
+      searchResultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
+  const filteredAchievements = [...stickyAchievements, ...achievements].filter((achievement: Post) =>
+    searchQuery === '' ||
+    achievement.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    achievement.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredAchievements.length / postsPerPage);
+  const paginatedAchievements = filteredAchievements.slice(
+    (page - 1) * postsPerPage,
+    page * postsPerPage
+  );
+
+  if (loading) {
+    return <FSCESkeleton />;
+  }
+
   return (
-    <>
-      <CarouselSection />
-      <div className="min-h-screen bg-background">
-        <section className="py-20 bg-primary/5">
-          <div className="container mx-auto px-4">
-            <h1 className="text-4xl md:text-5xl font-bold text-center mb-6">
-              Our Achievements
-            </h1>
-            <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto">
-              Celebrating our impact and milestones in transforming lives and building stronger communities.
-            </p>
-          </div>
-        </section>
+    <div className="min-h-screen bg-background">
+      <section className="py-16 bg-primary/5">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-6">
+            Our Achievements
+          </h2>
+          <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
+            Discover the milestones we've reached and the impact we've made in our journey.
+          </p>
 
-        <section className="py-16">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-              <div className="space-y-6">
-                <Card className="hover:shadow-lg transition-shadow border-2 border-primary/10">
-                  <CardHeader>
-                    <CardTitle>Our Comprehensive Impact</CardTitle>
-                    <CardDescription>Key statistics about our presence</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-                        <h3 className="text-3xl font-bold text-primary mb-2">8+</h3>
-                        <p className="text-muted-foreground">Program Offices</p>
-                      </div>
-                      <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-                        <h3 className="text-3xl font-bold text-primary mb-2">20,000+</h3>
-                        <p className="text-muted-foreground">Children & Families Supported</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+          <ProgramSearch
+            onSearch={handleSearch}
+            placeholder="Search achievements..."
+            className="max-w-2xl mx-auto mb-12"
+          />
+        </div>
+      </section>
 
-            {/* Featured Awards Section */}
-            <div className="pb-24">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {[1, 2, 3].map((_, index) => (
-                  <motion.div
-                    key={index}
-                    variants={cardVariants}
-                    custom={index}
-                    className="h-full"
-                  >
-                    <Card className="group overflow-hidden h-full transition-all duration-300 hover:shadow-lg">
-                      <div className="relative aspect-[4/3] overflow-hidden">
-                        <Image
-                          src="/images/placeholder.svg"
-                          alt="Achievement"
-                          fill
-                          className="object-cover transition-transform duration-500 group-hover:scale-105"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                          <div className="text-white">
-                            <Badge variant="secondary" className="mb-2 capitalize">
-                              Achievement
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-
-                      <CardContent className="p-6 space-y-4">
-                        <div className="flex items-center text-sm text-muted-foreground space-x-2">
-                          <Calendar className="h-4 w-4 text-primary" />
-                          <span>2023</span>
-                        </div>
-
-                        <h2 className="text-xl font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors duration-300 line-clamp-2">
-                          Achievement Title
-                        </h2>
-                        
-                        <p className="text-muted-foreground text-sm line-clamp-3">
-                          Description of the achievement will go here. This will be populated from the database.
-                        </p>
-
-                        <Button variant="link" className="p-0 h-auto font-semibold group/link">
-                          Learn More
-                          <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover/link:translate-x-1" />
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            {/* Awards Grid Section */}
-            <div className="pb-24">
-              {loading ? (
-                <AchievementsGridSkeleton />
-              ) : (
-                <AchievementsGrid merits={meritsData} />
+      <section ref={searchResultsRef} className="py-16 bg-white scroll-mt-16">
+        <div className="container mx-auto px-4 max-w-7xl">
+          {searchQuery && (
+            <div className="mb-8">
+              <h3 className="text-2xl font-semibold mb-2">
+                Search Results {filteredAchievements.length > 0 ? `(${filteredAchievements.length})` : ''}
+              </h3>
+              {filteredAchievements.length === 0 && (
+                <p className="text-muted-foreground">No achievements found matching "{searchQuery}"</p>
               )}
             </div>
-          </div>
-        </section>
-      </div>
-    </>
+          )}
+
+          {/* Sticky Achievements Section */}
+          {!searchQuery && stickyAchievements.length > 0 && (
+            <div className="mb-20">
+              <StickyPostsSection
+                posts={stickyAchievements.slice(0, 2)}
+                title="Major Achievements"
+                basePath="/who-we-are/achievements"
+              />
+            </div>
+          )}
+
+          {/* Regular Achievements Grid */}
+          {(searchQuery ? paginatedAchievements : achievements).length > 0 && (
+            <>
+              {!searchQuery && (
+                <div className="mb-8">
+                  <h3 className="text-2xl font-bold">All Achievements</h3>
+                </div>
+              )}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
+              >
+                {(searchQuery ? paginatedAchievements : achievements).map((achievement: Post) => (
+                  <ContentCard
+                    key={achievement.id}
+                    title={achievement.title}
+                    excerpt={achievement.excerpt}
+                    image={achievement.coverImage || "/images/placeholder.svg"}
+                    slug={achievement.slug}
+                    category="Achievement"
+                    createdAt={achievement.createdAt}
+                    href={`/who-we-are/achievements/${achievement.slug}`}
+                    showDate={true}
+                  />
+                ))}
+              </motion.div>
+            </>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && searchQuery && (
+            <div className="mt-8 flex justify-center">
+              <Pagination>
+                <PaginationContent>
+                  {[...Array(totalPages)].map((_, i) => (
+                    <PaginationItem key={i + 1}>
+                      <PaginationLink
+                        onClick={() => setPage(i + 1)}
+                        isActive={page === i + 1}
+                      >
+                        {i + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <Partners />
+    </div>
   );
 }

@@ -1,50 +1,16 @@
 'use client';
 
-import React from 'react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Post } from '@/app/types/post';
-import { ProgramSearch } from '@/components/program-search';
-import { ArrowRight, CalendarDays } from 'lucide-react';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import FSCESkeleton from '@/components/FSCESkeleton';
 import { postsService } from '@/app/services/posts';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious
-} from "@/components/ui/pagination";
-
-// Helper function to format category name
-const formatCategoryName = (category: string) => {
-  return category
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
-
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
-};
+import { ProgramSearch } from '@/components/program-search';
+import { ContentCard } from '@/components/content-display/ContentCard';
+import { HorizontalPostCard } from '@/components/content-display/HorizontalPostCard';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink } from '@/components/ui/pagination';
+import FSCESkeleton from '@/components/FSCESkeleton';
+import { motion } from 'framer-motion';
+import { PinIcon } from 'lucide-react';
 
 export default function CategoryPage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -78,7 +44,7 @@ export default function CategoryPage() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setPage(1); // Reset to first page on new search
+    setPage(1);
     const filteredPosts = posts.filter((post) =>
       query === '' ||
       post.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -97,11 +63,28 @@ export default function CategoryPage() {
   }
 
   const categoryName = formatCategoryName(params.category);
-  const totalPages = Math.ceil(searchResults.length / postsPerPage);
-  const paginatedPosts = searchResults.slice(
+  const stickyPosts = searchResults.filter(post => post.sticky);
+  const regularPosts = searchResults.filter(post => !post.sticky);
+  const totalPages = Math.ceil(regularPosts.length / postsPerPage);
+  const paginatedPosts = regularPosts.slice(
     (page - 1) * postsPerPage,
     page * postsPerPage
   );
+
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -109,141 +92,111 @@ export default function CategoryPage() {
       <section className="py-20 bg-primary/5">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl md:text-5xl font-bold text-center mb-6">
-            {categoryName} Programs
+            {categoryName}
           </h1>
           <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
-            Explore our {categoryName.toLowerCase()} programs and initiatives
+            Learn about our initiatives and impact in {categoryName.toLowerCase()}.
           </p>
           <ProgramSearch
             onSearch={handleSearch}
-            placeholder={`Search ${categoryName.toLowerCase()} programs...`}
-            className="mt-10"
+            placeholder={`Search in ${categoryName}...`}
+            className="max-w-2xl mx-auto"
           />
         </div>
       </section>
 
-      {/* Programs Grid */}
-      <section className="py-16">
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          {searchResults.length === 0 ? (
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-semibold mb-4">No Programs Found</h2>
-              <p className="text-muted-foreground">
-                {searchQuery ?
-                  `No programs found matching "${searchQuery}"` :
-                  `There are currently no programs in the ${categoryName} category.`
-                }
-              </p>
+          {searchQuery && (
+            <div className="mb-8">
+              <h3 className="text-2xl font-semibold mb-2">
+                Search Results {searchResults.length > 0 ? `(${searchResults.length})` : ''}
+              </h3>
+              {searchResults.length === 0 && (
+                <p className="text-muted-foreground">No posts found matching "{searchQuery}"</p>
+              )}
             </div>
-          ) : (
-            <>
+          )}
+
+          {stickyPosts.length > 0 && !searchQuery && (
+            <div className="mb-16">
+              <div className="flex items-center gap-2 mb-8">
+                <PinIcon className="h-6 w-6 text-primary" />
+                <h3 className="text-2xl font-bold">Pinned Posts</h3>
+              </div>
               <motion.div
                 variants={container}
                 initial="hidden"
                 animate="show"
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                className="grid grid-cols-1 lg:grid-cols-2 gap-8"
               >
-                {paginatedPosts.map((post) => (
-                  <motion.div key={post.id} variants={item}>
-                    <Link href={`/what-we-do/${params.category}/${post.slug}`}>
-                      <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300 group">
-                        {post.coverImage && (
-                          <div className="relative w-full pt-[56.25%] overflow-hidden">
-                            <Image
-                              src={post.coverImage}
-                              alt={post.title}
-                              fill
-                              className="object-cover transition-transform duration-300 group-hover:scale-105"
-                              unoptimized={post.coverImage.startsWith('data:')}
-                            />
-                          </div>
-                        )}
-                        <CardHeader>
-                          <div className="flex items-center gap-2 mb-3">
-                            <Badge variant="secondary">Programs</Badge>
-                            <Badge variant="outline" className="text-primary">
-                              {categoryName}
-                            </Badge>
-                          </div>
-                          <CardTitle className="group-hover:text-primary transition-colors">
-                            {post.title}
-                          </CardTitle>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
-                            <CalendarDays className="h-4 w-4" />
-                            <span>
-                              {post.createdAt ?
-                                new Date(post.createdAt).toLocaleDateString('en-US', {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric'
-                                }) : 'Ongoing'
-                              }
-                            </span>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-muted-foreground line-clamp-2 mb-4">
-                            {post.excerpt || post.content?.substring(0, 150)}
-                          </p>
-                          <div className="flex items-center text-primary font-medium">
-                            Read More
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  </motion.div>
+                {stickyPosts.slice(0, 2).map((post) => (
+                  <HorizontalPostCard
+                    key={post.id}
+                    post={post}
+                    href={`/${params.category}/${post.slug}`}
+                  />
                 ))}
               </motion.div>
+            </div>
+          )}
 
-              {totalPages > 1 && (
-                <div className="mt-8">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          href="#"
-                          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                            e.preventDefault();
-                            if (page > 1) setPage(page - 1);
-                          }}
-                          className={page <= 1 ? "pointer-events-none opacity-50" : ""}
-                        />
-                      </PaginationItem>
-
-                      {[...Array(totalPages)].map((_, i) => (
-                        <PaginationItem key={i + 1}>
-                          <PaginationLink
-                            href="#"
-                            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                              e.preventDefault();
-                              setPage(i + 1);
-                            }}
-                            isActive={page === i + 1}
-                          >
-                            {i + 1}
-                          </PaginationLink>
-                        </PaginationItem>
-                      ))}
-
-                      <PaginationItem>
-                        <PaginationNext
-                          href="#"
-                          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                            e.preventDefault();
-                            if (page < totalPages) setPage(page + 1);
-                          }}
-                          className={page >= totalPages ? "pointer-events-none opacity-50" : ""}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
+          {paginatedPosts.length > 0 && (
+            <>
+              {!searchQuery && (
+                <div className="mb-8">
+                  <h3 className="text-2xl font-bold">All Posts</h3>
                 </div>
               )}
+              <motion.div
+                variants={container}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-1 md:grid-cols-3 gap-8"
+              >
+                {paginatedPosts.map((post, index) => (
+                  <ContentCard
+                    key={post.id}
+                    title={post.title}
+                    excerpt={post.excerpt}
+                    image={post.coverImage || "/images/placeholder.svg"}
+                    slug={post.slug}
+                    category={categoryName}
+                    createdAt={post.createdAt}
+                    href={`/${params.category}/${post.slug}`}
+                  />
+                ))}
+              </motion.div>
             </>
+          )}
+
+          {totalPages > 1 && !searchQuery && (
+            <div className="mt-8 flex justify-center">
+              <Pagination>
+                <PaginationContent>
+                  {[...Array(totalPages)].map((_, i) => (
+                    <PaginationItem key={i + 1}>
+                      <PaginationLink
+                        onClick={() => setPage(i + 1)}
+                        isActive={page === i + 1}
+                      >
+                        {i + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                </PaginationContent>
+              </Pagination>
+            </div>
           )}
         </div>
       </section>
     </div>
   );
+}
+
+function formatCategoryName(category: string): string {
+  return category
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }

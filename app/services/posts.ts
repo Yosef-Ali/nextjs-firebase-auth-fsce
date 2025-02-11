@@ -54,6 +54,7 @@ export const postsService = {
                 : ''
           },
           published: Boolean(data?.published),
+          sticky: Boolean(data?.sticky),
           authorId: data?.authorId ?? '',
           authorEmail: data?.authorEmail ?? '',
           date: data?.date ?? new Date().toISOString(),
@@ -119,6 +120,7 @@ export const postsService = {
 
     const postData = {
       ...post,
+      sticky: post.sticky || false,
       category: normalizedCategory,
       createdAt: now,
       updatedAt: now
@@ -134,6 +136,7 @@ export const postsService = {
       content: post.content,
       category: normalizedCategory,
       published: post.published || false,
+      sticky: post.sticky || false,
       authorId: post.authorId || '',
       authorEmail: post.authorEmail || '',
       date: post.date || '',
@@ -161,6 +164,8 @@ export const postsService = {
       const { category, ...restData } = post;
       const baseUpdateData: Partial<Omit<Post, 'category'>> = {
         ...restData,
+        // Only allow sticky posts if they are published
+        sticky: restData.sticky && restData.published !== false ? restData.sticky : false,
         updatedAt: now
       };
 
@@ -370,6 +375,7 @@ export const postsService = {
               : ''
         },
         published: Boolean(data?.published),
+        sticky: Boolean(data?.sticky),
         authorId: data?.authorId ?? '',
         authorEmail: data?.authorEmail ?? '',
         date: data?.date ?? new Date().toISOString(),
@@ -415,6 +421,7 @@ export const postsService = {
               ? { id: data.category, name: data.category }
               : data.category || { id: '', name: '' },
             published: Boolean(data?.published),
+            sticky: Boolean(data?.sticky),
             authorId: data?.authorId ?? '',
             authorEmail: data?.authorEmail ?? '',
             date: data?.date ?? new Date().toISOString(),
@@ -551,6 +558,7 @@ export const postsService = {
                 : ''
           },
           published: Boolean(data?.published),
+          sticky: Boolean(data?.sticky),
           authorId: data?.authorId ?? '',
           authorEmail: data?.authorEmail ?? '',
           date: data?.date ?? new Date().toISOString(),
@@ -589,6 +597,7 @@ function normalizePost(id: string, data: any, category: Category): Post {
     slug: data?.slug ?? id,
     category,
     published: Boolean(data?.published),
+    sticky: Boolean(data?.sticky),
     authorId: data?.authorId ?? '',
     authorEmail: data?.authorEmail ?? '',
     date: data?.date ?? new Date().toISOString(),

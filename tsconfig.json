@@ -39,7 +39,8 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "components/content-display/HorizontalPostCard"
   ],
   "exclude": [
     "node_modules"

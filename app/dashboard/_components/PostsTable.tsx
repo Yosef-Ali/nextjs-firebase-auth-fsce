@@ -21,13 +21,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, PinIcon, EditIcon, Trash2Icon } from 'lucide-react';
 import { Post } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useSearch } from '@/app/context/search-context';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
+import { format } from 'date-fns';
 
 interface PostsTableProps {
   initialPosts: Post[];
@@ -117,7 +118,14 @@ function PostsTable({ initialPosts }: PostsTableProps) {
   const totalPosts = posts.length;
   const publishedPosts = posts.filter(post => post.status === 'published').length;
   const draftPosts = totalPosts - publishedPosts;
-  const uniqueCategories = [...new Set(posts.map(post => post.category?.name))];
+  const uniqueCategories = Array.from(new Set(posts.map(post => post.category?.name)));
+
+  // Sort posts with sticky posts first, then by date
+  const sortedPosts = [...posts].sort((a, b) => {
+    if (a.sticky && !b.sticky) return -1;
+    if (!a.sticky && b.sticky) return 1;
+    return (b.updatedAt || 0) - (a.updatedAt || 0);
+  });
 
   return (
     <div className="space-y-6">
@@ -162,11 +170,18 @@ function PostsTable({ initialPosts }: PostsTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredPosts.map((post) => (
-              <TableRow key={`${post.id}-${post.createdAt}`}>
+            {sortedPosts.map((post) => (
+              <TableRow key={`${post.id}-${post.createdAt}`} className={post.sticky ? "bg-muted/50" : ""}>
                 <TableCell>
                   <div>
-                    <h3 className="font-semibold">{post.title}</h3>
+                    <h3 className="font-semibold">
+                      <div className="flex items-center gap-2">
+                        {post.sticky && (
+                          <PinIcon className="h-4 w-4 text-primary" />
+                        )}
+                        {post.title}
+                      </div>
+                    </h3>
                     <p className="text-sm text-muted-foreground">
                       {post.excerpt || post.content?.slice(0, 100)}...
                     </p>
@@ -186,7 +201,7 @@ function PostsTable({ initialPosts }: PostsTableProps) {
                   </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {new Date(post.updatedAt).toLocaleDateString()}
+                  {format(post.updatedAt, 'MMM d, yyyy')}
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>

@@ -25,6 +25,7 @@ import {
   PaginationNext,
   PaginationPrevious
 } from "@/components/ui/pagination";
+import { StickyPostsSection } from '@/components/content-display/StickyPostsSection';
 
 const categories = [
   {
@@ -70,7 +71,8 @@ export default function WhatWeDoPage() {
   const [activeCategory, setActiveCategory] = useState('child-protection');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState<Record<string, number>>({});
-  const postsPerPage = 12;
+  const [stickyPosts, setStickyPosts] = useState<Post[]>([]);
+  const postsPerPage = 6;
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -80,6 +82,9 @@ export default function WhatWeDoPage() {
           categories.map(async (category) => {
             const data = await postsService.getPostsByCategory(category.id);
             posts[category.id] = data;
+            // Collect sticky posts from all categories
+            const sticky = data.filter(post => post.sticky);
+            setStickyPosts(prev => [...prev, ...sticky]);
           })
         );
         setCategoryPosts(posts);
@@ -89,9 +94,7 @@ export default function WhatWeDoPage() {
         setLoading(false);
       }
     };
-
     fetchPosts();
-    // Initialize page numbers for all categories
     const initialPages = categories.reduce((acc, category) => ({
       ...acc,
       [category.id]: 1
@@ -132,12 +135,23 @@ export default function WhatWeDoPage() {
 
   const getPaginatedPosts = (categoryId: string) => {
     const filtered = getFilteredPosts(categoryId);
+    // Filter out sticky posts
+    const regularPosts = filtered.filter(post => !post.sticky);
     const page = currentPage[categoryId] || 1;
-    return filtered.slice((page - 1) * postsPerPage, page * postsPerPage);
+    return regularPosts.slice((page - 1) * postsPerPage, page * postsPerPage);
+  };
+
+  const getStickyPosts = (categoryId: string) => {
+    const filtered = getFilteredPosts(categoryId);
+    return filtered.filter(post => post.sticky).slice(0, 2); // Show max 2 sticky posts
   };
 
   const getTotalPages = (categoryId: string) => {
     return Math.ceil(getFilteredPosts(categoryId).length / postsPerPage);
+  };
+
+  const getCategoryTitle = (categoryId: string) => {
+    return categories.find(cat => cat.id === categoryId)?.title || categoryId;
   };
 
   if (loading) {
@@ -148,7 +162,7 @@ export default function WhatWeDoPage() {
     <>
       <CarouselSection />
       <div className="min-h-screen bg-background">
-        {/* Hero Section */}
+        {/* Section 1: Hero and Featured Programs */}
         <section className="py-20 bg-primary/5">
           <div className="container mx-auto px-4">
             <h1 className="text-4xl md:text-5xl font-bold text-center mb-6">
@@ -157,16 +171,29 @@ export default function WhatWeDoPage() {
             <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
               Discover how we're making a difference in children's lives through our comprehensive programs and initiatives.
             </p>
-            <ProgramSearch
-              onSearch={handleSearch}
-              className="mt-10"
-            />
+            {/* {!searchQuery && stickyPosts.length > 0 && (
+              <div className="mt-12 w-full">
+                <StickyPostsSection
+                  posts={stickyPosts.slice(0, 2)}
+                  title="Featured Programs"
+                  basePath={`/what-we-do/${activeCategory}`}
+                />
+              </div>
+            )} */}
           </div>
         </section>
 
-        {/* Programs Section */}
+        {/* Section 2: Program Categories and Search */}
         <section className="py-16">
           <div className="container mx-auto px-4">
+            <div className="mb-12">
+              <h2 className="text-2xl font-semibold mb-6 text-center">Explore Our Programs</h2>
+              <ProgramSearch
+                onSearch={handleSearch}
+                className="mb-10"
+              />
+            </div>
+
             <Tabs defaultValue={activeCategory} onValueChange={handleCategoryChange}>
               <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 {categories.map((category) => (
@@ -185,7 +212,7 @@ export default function WhatWeDoPage() {
                   <div className="mb-8">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h2 className="text-2xl font-semibold mb-2">{category.title}</h2>
+                        <h3 className="text-2xl font-semibold mb-2">{category.title}</h3>
                         <p className="text-muted-foreground">{category.description}</p>
                       </div>
                       <Link href={`/what-we-do/${category.id}`}>
@@ -197,6 +224,7 @@ export default function WhatWeDoPage() {
                     </div>
                   </div>
 
+                  {/* Regular Posts Grid */}
                   <motion.div
                     variants={container}
                     initial="hidden"

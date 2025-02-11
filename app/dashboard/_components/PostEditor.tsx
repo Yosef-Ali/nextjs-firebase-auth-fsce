@@ -43,6 +43,7 @@ const formSchema = z.object({
   coverImage: z.string().optional(),
   images: z.array(z.string()).optional(),
   published: z.boolean().default(false),
+  sticky: z.boolean().default(false),
   categoryId: z.string().min(1, 'Category is required'),
   section: z.string().optional(),
   slug: z.string().min(1, 'Slug is required'),
@@ -80,6 +81,7 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
       coverImage: post?.coverImage || '',
       images: post?.images || [],
       published: post?.published || initialData?.published || false,
+      sticky: post?.sticky || false,
       categoryId: post?.category?.id || initialData?.category || '',
       section: post?.section || initialData?.section || '',
       slug: post?.slug || '',
@@ -174,6 +176,7 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
         category: selectedCategory.id,
         coverImage: coverImageUrl || '',
         published: data.published,
+        sticky: data.sticky,
         section: data.section,
         images: data.images || [],
         authorId: currentUser.uid,
@@ -305,28 +308,54 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="published"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <FormLabel className="text-base">
-                  Published
-                </FormLabel>
-                <FormDescription>
-                  Make this post visible to the public
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+        <div className="grid gap-4">
+          <FormField
+            control={form.control}
+            name="published"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">
+                    Published
+                  </FormLabel>
+                  <FormDescription>
+                    Make this post visible to the public
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="sticky"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">
+                    Sticky Post
+                  </FormLabel>
+                  <FormDescription>
+                    Pin this post to appear at the top of listings
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={!form.getValues('published')}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}
@@ -347,7 +376,7 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
                         <button
                           type="button"
                           onClick={() => {
-                            const newImages = [...field.value];
+                            const newImages = [...(field.value || [])];
                             newImages.splice(index, 1);
                             field.onChange(newImages);
                           }}

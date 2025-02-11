@@ -28,6 +28,7 @@ export interface Post {
   coverImage?: string;
   images?: string[];
   featured?: boolean;
+  sticky?: boolean;  // Added sticky field
   section?: string;
   tags?: string[];
   time?: string;
