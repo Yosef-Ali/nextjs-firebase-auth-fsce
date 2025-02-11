@@ -155,7 +155,9 @@ const DashboardAside = () => {
         isCollapsed ? "w-[80px]" : "w-72"
       )}>
         <div className="flex h-16 items-center px-4 border-b">
-          <img src="/Logo.svg" alt="Logo" className="h-8 mb-4" />
+          <Link href="/">
+            <img src="/Logo.svg" alt="Logo" className="h-8 mb-4" />
+          </Link>
         </div>
 
         <div className="flex-1 flex flex-col gap-1 p-4 overflow-y-auto">

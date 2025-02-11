@@ -23,6 +23,7 @@ export default function MediaLibraryPage() {
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadMedia();
@@ -34,10 +35,20 @@ export default function MediaLibraryPage() {
 
   const loadMedia = async () => {
     try {
+      setError(null);
+      setIsLoading(true);
+      console.log('Loading media...');
       const { items } = await mediaService.getMedia();
+      console.log(`Found ${items.length} items`);
       setMedia(items);
     } catch (error) {
       console.error('Error loading media:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load media');
+      toast({
+        title: "Error",
+        description: "Failed to load media. Please check the console for details.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -46,12 +57,12 @@ export default function MediaLibraryPage() {
   const filterMedia = () => {
     let filtered = [...media];
 
-    // Filter by type
+    // Client-side filtering by type
     if (selectedType !== 'all') {
       filtered = filtered.filter(item => item.type === selectedType);
     }
 
-    // Filter by search query
+    // Client-side search
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(item =>
@@ -61,7 +72,7 @@ export default function MediaLibraryPage() {
       );
     }
 
-    // Sort by date (newest first)
+    // Client-side sorting
     filtered.sort((a, b) => {
       const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt).getTime();
       const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : new Date(b.createdAt).getTime();
@@ -97,6 +108,13 @@ export default function MediaLibraryPage() {
         </Button>
       </div>
 
+      {error && (
+        <div className="bg-destructive/10 text-destructive px-4 py-2 rounded-md">
+          <p className="font-medium">Error loading media:</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
+
       <div className="flex items-center space-x-4">
         <div className="relative flex-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -129,11 +147,34 @@ export default function MediaLibraryPage() {
       </Tabs>
 
       <Dialog open={isUploaderOpen} onOpenChange={setIsUploaderOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <MediaUploader
-            onUploadComplete={handleUploadComplete}
-            onCancel={() => setIsUploaderOpen(false)}
-          />
+        <DialogContent className="sm:max-w-[900px]">
+          <DialogHeader>
+            <DialogTitle>Media Gallery</DialogTitle>
+            <DialogDescription>
+              {isLoading ? 'Loading media...' : `${filteredMedia.length} items found`}
+            </DialogDescription>
+          </DialogHeader>
+
+          {isLoading ? (
+            <div className="h-[400px] flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : error ? (
+            <div className="h-[400px] flex items-center justify-center text-destructive">
+              <p>{error}</p>
+            </div>
+          ) : filteredMedia.length === 0 ? (
+            <div className="h-[400px] flex items-center justify-center text-muted-foreground">
+              <p>No media found</p>
+            </div>
+          ) : (
+            <ScrollArea className="h-[400px]">
+              <MediaGrid
+                items={filteredMedia}
+                onView={setSelectedMedia}
+              />
+            </ScrollArea>
+          )}
         </DialogContent>
       </Dialog>
 

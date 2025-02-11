@@ -26,6 +26,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import MediaGrid from '@/app/dashboard/_components/MediaGrid';
+import { mediaService } from '@/app/services/media';
+import { Media } from '@/app/types/media';
 
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Post } from '@/app/types/post';
@@ -35,6 +39,7 @@ import { Category } from '@/app/types/category';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Editor } from '@/components/editor';
 import { useToast } from "@/hooks/use-toast"
+import { Timestamp } from 'firebase/firestore';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -68,6 +73,9 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [galleryMedia, setGalleryMedia] = useState<Media[]>([]);
+  const [isLoadingMedia, setIsLoadingMedia] = useState(false);
   const [images, setImages] = useState<string[]>(post?.images || []);
   const [categories, setCategories] = useState<Category[]>([]);
   const storage = getStorage();
@@ -136,6 +144,8 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
   }, [form.watch('title'), form.watch('content')]);
 
   const uploadImageToFirebase = async (file: File) => {
+    if (!user) throw new Error('You must be logged in to upload images.');
+
     if (!file.type.startsWith('image/')) {
       throw new Error('Invalid file type. Please upload an image.');
     }
@@ -144,10 +154,106 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
       throw new Error('File size exceeds 5MB limit.');
     }
 
-    const storageRef = ref(storage, `images/${file.name}-${Date.now()}`);
-    const snapshot = await uploadBytes(storageRef, file);
-    const url = await getDownloadURL(snapshot.ref);
-    return url;
+    try {
+      const result = await mediaService.uploadMedia(file, {
+        name: file.name,
+        description: '',
+        type: 'image',
+        tags: [],
+        alt: '',
+        caption: '',
+        uploadedBy: user.uid,
+        uploadedByEmail: user.email || '',
+      });
+
+      return result.url;
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw new Error('Failed to upload image. Please try again.');
+    }
+  };
+
+  const loadMedia = async () => {
+    try {
+      setIsLoadingMedia(true);
+      console.log('Fetching media...');
+      const result = await mediaService.getMedia();
+      console.log('Media result:', result);
+
+      if (!result.items || result.items.length === 0) {
+        console.log('No media items found');
+        toast({
+          title: "No Images",
+          description: "No images found in the gallery",
+        });
+        return;
+      }
+
+      const convertedMedia = result.items
+        .filter(item => {
+          console.log('Processing item:', item);
+          return item.type === 'image';
+        })
+        .map(item => {
+          const createdAt = item.createdAt instanceof Timestamp
+            ? item.createdAt.toDate()
+            : typeof item.createdAt === 'string'
+              ? new Date(item.createdAt)
+              : new Date();
+
+          const updatedAt = item.updatedAt instanceof Timestamp
+            ? item.updatedAt.toDate()
+            : typeof item.updatedAt === 'string'
+              ? new Date(item.updatedAt)
+              : new Date();
+
+          return {
+            ...item,
+            createdAt,
+            updatedAt
+          };
+        })
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+      console.log('Converted media:', convertedMedia);
+      setGalleryMedia(convertedMedia);
+    } catch (error) {
+      console.error('Error loading media:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load media gallery: " + (error instanceof Error ? error.message : String(error)),
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingMedia(false);
+    }
+  };
+
+  const handleGallerySelect = (id: string, selected: boolean) => {
+    const media = galleryMedia.find(m => m.id === id);
+    if (!media) return;
+
+    const currentImages = form.getValues('images') || [];
+    const newImages = selected
+      ? currentImages.includes(media.url)
+        ? currentImages // Don't add if already exists
+        : [...currentImages, media.url]
+      : currentImages.filter(url => url !== media.url);
+
+    form.setValue('images', newImages, { shouldValidate: true });
+
+    // Only show toast for actual changes
+    if (selected && !currentImages.includes(media.url)) {
+      toast({
+        title: "Image Added",
+        description: "Image has been added to your post",
+      });
+    } else if (!selected && currentImages.includes(media.url)) {
+      toast({
+        title: "Image Removed",
+        description: "Image has been removed from your post",
+      });
+    }
   };
 
   const onSubmit = async (data: PostFormData) => {
@@ -386,56 +492,119 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
                         </button>
                       </div>
                     ))}
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center hover:border-primary cursor-pointer">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={async (e) => {
-                          try {
-                            const files = Array.from(e.target.files || []);
-                            const uploadPromises = files.map(uploadImageToFirebase);
-                            const urls = await Promise.all(uploadPromises);
-                            field.onChange([...field.value || [], ...urls]);
-                          } catch (error) {
-                            console.error('Error uploading images:', error);
-                            toast({
-                              title: "Error",
-                              description: error instanceof Error ? error.message : "Failed to upload images",
-                              variant: "destructive",
-                            });
-                          }
+                    <div className="flex gap-2">
+                      <div
+                        className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center hover:border-primary cursor-pointer"
+                        onClick={() => {
+                          document.getElementById('image-upload')?.click();
                         }}
-                        className="hidden"
-                        id="image-upload"
-                      />
-                      <label htmlFor="image-upload" className="cursor-pointer flex flex-col items-center">
-                        <svg
-                          className="w-8 h-8 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M12 4v16m8-8H4"
-                          />
-                        </svg>
-                        <span className="mt-2 text-sm text-gray-500">Add Images</span>
-                      </label>
+                      >
+                        <div className="text-center">
+                          <svg
+                            className="w-8 h-8 text-gray-400 mx-auto"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M12 4v16m8-8H4"
+                            />
+                          </svg>
+                          <span className="mt-2 text-sm text-gray-500 block">Upload Images</span>
+                        </div>
+                      </div>
+                      <div
+                        className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center hover:border-primary cursor-pointer"
+                        onClick={() => {
+                          loadMedia();
+                          setIsGalleryOpen(true);
+                        }}
+                      >
+                        <div className="text-center">
+                          <svg
+                            className="w-8 h-8 text-gray-400 mx-auto"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                          <span className="mt-2 text-sm text-gray-500 block">Select from Gallery</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={async (e) => {
+                      try {
+                        const files = Array.from(e.target.files || []);
+                        const uploadPromises = files.map(uploadImageToFirebase);
+                        const urls = await Promise.all(uploadPromises);
+                        field.onChange([...field.value || [], ...urls]);
+                      } catch (error) {
+                        console.error('Error uploading images:', error);
+                        toast({
+                          title: "Error",
+                          description: error instanceof Error ? error.message : "Failed to upload images",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    className="hidden"
+                    id="image-upload"
+                  />
                 </div>
               </FormControl>
               <FormDescription>
-                Upload multiple images for your post. Each image should be less than 5MB.
+                Upload multiple images for your post or select from the media gallery. Each image should be less than 5MB.
               </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
+
+        {/* Gallery Dialog */}
+        <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
+          <DialogContent className="sm:max-w-[900px]">
+            <DialogHeader>
+              <DialogTitle>Select Images from Gallery</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              {isLoadingMedia ? (
+                <div className="h-[400px] flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <div className="h-[400px] overflow-y-auto pr-4 -mr-4">
+                  <MediaGrid
+                    items={galleryMedia}
+                    selectable
+                    selectedItems={galleryMedia
+                      .filter(media => (form.getValues('images') || []).includes(media.url))
+                      .map(media => media.id)}
+                    onSelect={handleGallerySelect}
+                  />
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button type="button" onClick={() => setIsGalleryOpen(false)}>
+                Done
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <div className="flex justify-end space-x-4">
           <Button

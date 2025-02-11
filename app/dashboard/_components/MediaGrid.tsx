@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { MoreHorizontal, Pencil, Trash, Download, Eye } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash, Download, Eye, Image as ImageIcon } from 'lucide-react';
 import { mediaService } from '@/app/services/media';
 import { toast } from '@/hooks/use-toast';
 
@@ -39,6 +40,7 @@ function MediaGrid({
 }: MediaGridProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [mediaToDelete, setMediaToDelete] = useState<Media | null>(null);
+  const [loadError, setLoadError] = useState<{ [key: string]: boolean }>({});
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -80,6 +82,57 @@ function MediaGrid({
     document.body.removeChild(link);
   };
 
+  const getMediaElement = (media: Media) => {
+    const isSvg = media.url.toLowerCase().endsWith('.svg');
+    const className = cn(
+      "transition-transform duration-500 group-hover:scale-105",
+      loadError[media.id] ? "hidden" : "block"
+    );
+
+    if (isSvg) {
+      return (
+        <div className="relative w-full h-full flex items-center justify-center bg-white p-4">
+          <img
+            src={media.url}
+            alt={media.alt || media.name}
+            className={cn(className, "max-w-full max-h-full object-contain")}
+            crossOrigin="anonymous"
+            loading="lazy"
+            onError={(e) => {
+              const img = e.currentTarget;
+              // Try without crossOrigin if first attempt fails
+              if (img.crossOrigin) {
+                img.removeAttribute('crossOrigin');
+                img.src = `${media.url}?${new Date().getTime()}`;
+              } else {
+                setLoadError(prev => ({ ...prev, [media.id]: true }));
+                console.error(`Failed to load image: ${media.url}`);
+              }
+            }}
+            onClick={() => !selectable && onView?.(media)}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className="relative w-full h-full">
+        <Image
+          src={media.url}
+          alt={media.alt || media.name}
+          fill
+          className={cn(className, "object-cover")}
+          onError={() => {
+            setLoadError(prev => ({ ...prev, [media.id]: true }));
+            console.error(`Failed to load image: ${media.url}`);
+          }}
+          onClick={() => !selectable && onView?.(media)}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        />
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -96,24 +149,22 @@ function MediaGrid({
               )}
               {media.type === 'image' ? (
                 <>
-                  <Image
-                    src={media.url || "/images/placeholder.svg"}
-                    alt={media.alt || media.name}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = "/images/placeholder.svg";
-                    }}
-                    onClick={() => onView?.(media)}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                    <div className="text-white">
-                      <Badge variant="secondary" className="mb-2">
-                        {media.type}
-                      </Badge>
+                  {getMediaElement(media)}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <p className="text-white text-sm font-medium truncate">
+                        {media.name}
+                      </p>
+                      <p className="text-white/80 text-xs">
+                        {formatFileSize(media.size)}
+                      </p>
                     </div>
                   </div>
+                  {loadError[media.id] && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                      <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-muted">
@@ -123,47 +174,18 @@ function MediaGrid({
                 </div>
               )}
             </CardContent>
-            <CardFooter className="p-2 flex justify-between items-center border-t">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate group-hover:text-primary transition-colors" title={media.name}>
-                  {media.name}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {formatFileSize(media.size)}
-                </p>
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => onView?.(media)}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    View
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onEdit?.(media)}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleDownload(media)}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-red-600"
-                    onClick={() => setMediaToDelete(media)}
-                  >
-                    <Trash className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </CardFooter>
+            {!selectable && (
+              <CardFooter className="p-2 flex justify-between items-center border-t">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate" title={media.name}>
+                    {media.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatFileSize(media.size)}
+                  </p>
+                </div>
+              </CardFooter>
+            )}
           </Card>
         ))}
       </div>

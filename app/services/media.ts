@@ -4,85 +4,97 @@ import {
   collection,
   query,
   getDocs,
+  getDoc,
   addDoc,
   updateDoc,
   deleteDoc,
   doc,
   serverTimestamp,
-  where,
   orderBy,
-  startAfter,
   limit,
-  Timestamp,
+  where,
 } from 'firebase/firestore';
 import {
   ref,
   uploadBytes,
   getDownloadURL,
   deleteObject,
+  listAll,
+  getMetadata,
 } from 'firebase/storage';
 
 const COLLECTION_NAME = 'media';
 const STORAGE_PATH = 'media';
+const STORAGE_PATHS = ['media/images', 'posts', 'partners', 'resources', 'uploads'];
 
 export const mediaService = {
-  async getMedia(filter?: MediaFilter, lastDoc?: any, pageSize: number = 20): Promise<{ items: Media[]; lastDoc: any }> {
-    const mediaRef = collection(db, COLLECTION_NAME);
-    let q = query(mediaRef, orderBy('createdAt', 'desc'));
+  async getMedia(): Promise<{ items: Media[]; lastDoc: any }> {
+    try {
+      console.log('Starting media fetch...');
+      // Get items from Firestore
+      const mediaRef = collection(db, COLLECTION_NAME);
+      const snapshot = await getDocs(mediaRef);
+      
+      // Get items from Storage
+      const storageItems: Media[] = [];
+      for (const path of STORAGE_PATHS) {
+        try {
+          const storageRef = ref(storage, path);
+          const result = await listAll(storageRef);
+          
+          const items = await Promise.all(
+            result.items.map(async (item) => {
+              try {
+                const url = await getDownloadURL(item);
+                const metadata = await getMetadata(item);
+                return {
+                  id: item.name,
+                  name: item.name,
+                  type: 'image',
+                  url,
+                  size: metadata.size,
+                  mimeType: metadata.contentType || 'image/jpeg',
+                  createdAt: metadata.timeCreated ? new Date(metadata.timeCreated) : new Date(),
+                  updatedAt: metadata.updated ? new Date(metadata.updated) : new Date(),
+                  uploadedBy: metadata.customMetadata?.uploadedBy || '',
+                  uploadedByEmail: metadata.customMetadata?.uploadedByEmail || '',
+                } as Media;
+              } catch (error) {
+                console.error(`Error processing storage item ${item.name}:`, error);
+                return null;
+              }
+            })
+          );
 
-    // Apply filters
-    if (filter) {
-      if (filter.type) {
-        q = query(q, where('type', '==', filter.type));
+          storageItems.push(...items.filter((item): item is Media => item !== null));
+        } catch (error) {
+          console.error(`Error fetching from path ${path}:`, error);
+        }
       }
-      if (filter.uploadedBy) {
-        q = query(q, where('uploadedBy', '==', filter.uploadedBy));
-      }
-      if (filter.tags && filter.tags.length > 0) {
-        q = query(q, where('tags', 'array-contains-any', filter.tags));
-      }
-      if (filter.startDate) {
-        q = query(q, where('createdAt', '>=', Timestamp.fromDate(filter.startDate)));
-      }
-      if (filter.endDate) {
-        q = query(q, where('createdAt', '<=', Timestamp.fromDate(filter.endDate)));
-      }
-    }
 
-    // Apply pagination
-    if (lastDoc) {
-      q = query(q, startAfter(lastDoc));
-    }
-    q = query(q, limit(pageSize));
-
-    const querySnapshot = await getDocs(q);
-    const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
-    
-    const items = querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
+      // Merge Firestore and Storage items
+      const firestoreItems = snapshot.docs.map(doc => ({
         id: doc.id,
-        name: data.name || '',
-        description: data.description || '',
-        type: data.type || 'image',
-        url: data.url || '',
-        thumbnailUrl: data.thumbnailUrl || '',
-        size: data.size || 0,
-        mimeType: data.mimeType || '',
-        width: data.width,
-        height: data.height,
-        duration: data.duration,
-        tags: data.tags || [],
-        alt: data.alt || '',
-        caption: data.caption || '',
-        uploadedBy: data.uploadedBy || '',
-        uploadedByEmail: data.uploadedByEmail || '',
-        createdAt: data.createdAt.toDate(),
-        updatedAt: data.updatedAt.toDate(),
-      } as Media;
-    });
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date(),
+        updatedAt: doc.data().updatedAt?.toDate() || new Date()
+      })) as Media[];
 
-    return { items, lastDoc: lastVisible };
+      const allItems = [...firestoreItems, ...storageItems];
+      
+      // Remove duplicates based on URL
+      const uniqueItems = Array.from(new Map(allItems.map(item => [item.url, item])).values());
+      
+      console.log('Total items found:', uniqueItems.length);
+      
+      return {
+        items: uniqueItems.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+        lastDoc: snapshot.docs[snapshot.docs.length - 1],
+      };
+    } catch (error) {
+      console.error('Error in getMedia:', error);
+      throw error;
+    }
   },
 
   async uploadMedia(file: File, input: Omit<CreateMediaInput, 'url' | 'size' | 'mimeType'>): Promise<Media> {
@@ -90,33 +102,38 @@ export const mediaService = {
     const timestamp = Date.now();
     const extension = file.name.split('.').pop();
     const filename = `${timestamp}-${Math.random().toString(36).substring(2, 15)}.${extension}`;
-    const path = `${STORAGE_PATH}/${input.type}/${filename}`;
+    const path = `${STORAGE_PATH}/images/${filename}`; // Always store in images folder
 
     // Upload file to Firebase Storage
     const storageRef = ref(storage, path);
     await uploadBytes(storageRef, file);
     const url = await getDownloadURL(storageRef);
 
-    // Create media document
+    // Create media document with explicit type
     const now = serverTimestamp();
     const mediaData = {
-      ...input,
+      type: 'image', // Always set type as image
+      name: file.name,
+      description: input.description || '',
       url,
       size: file.size,
       mimeType: file.type,
+      tags: input.tags || [],
+      alt: input.alt || '',
+      caption: input.caption || '',
+      uploadedBy: input.uploadedBy,
+      uploadedByEmail: input.uploadedByEmail,
       createdAt: now,
       updatedAt: now,
     };
 
+    console.log('Creating media document:', mediaData);
     const docRef = await addDoc(collection(db, COLLECTION_NAME), mediaData);
     const currentDate = new Date();
 
     return {
       id: docRef.id,
-      ...input,
-      url,
-      size: file.size,
-      mimeType: file.type,
+      ...mediaData,
       createdAt: currentDate,
       updatedAt: currentDate,
     } as Media;
@@ -134,18 +151,31 @@ export const mediaService = {
   async deleteMedia(id: string): Promise<void> {
     // Get the media document
     const mediaRef = doc(db, COLLECTION_NAME, id);
-    const mediaDoc = await getDocs(query(collection(db, COLLECTION_NAME), where('id', '==', id)));
-    const mediaData = mediaDoc.docs[0]?.data();
+    const mediaDoc = await getDoc(mediaRef);
+    const mediaData = mediaDoc.data();
+
+    if (!mediaDoc.exists()) {
+      throw new Error('Media not found');
+    }
 
     if (mediaData?.url) {
       // Delete the file from storage
       const fileRef = ref(storage, mediaData.url);
-      await deleteObject(fileRef);
+      try {
+        await deleteObject(fileRef);
+      } catch (error) {
+        console.error('Error deleting file from storage:', error);
+        // Continue with document deletion even if storage deletion fails
+      }
 
       // Delete thumbnail if exists
       if (mediaData.thumbnailUrl) {
         const thumbnailRef = ref(storage, mediaData.thumbnailUrl);
-        await deleteObject(thumbnailRef);
+        try {
+          await deleteObject(thumbnailRef);
+        } catch (error) {
+          console.error('Error deleting thumbnail from storage:', error);
+        }
       }
     }
 

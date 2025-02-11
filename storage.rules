@@ -2,23 +2,40 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    match /partners/{fileName} {
-      allow read: if true;
-      allow write: if request.auth != null;
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
     }
     
-    match /posts/{fileName} {
-      allow read: if true;
-      allow write: if request.auth != null;
+    function isAdmin() {
+      return isAuthenticated() && 
+        firestore.get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    match /images/{fileName} {
+    // Allow read access to all files in all media folders
+    match /media/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAuthenticated();
     }
-    
-    match /{allPaths=**} {
-      allow read, write: if true;  // Temporarily allow all access for testing
+
+    match /posts/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    match /partners/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    match /resources/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    match /uploads/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
     }
   }
 }

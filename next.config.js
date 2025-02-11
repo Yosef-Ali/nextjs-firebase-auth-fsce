@@ -6,7 +6,7 @@ const nextConfig = {
       config.optimization = config.optimization || {};
       config.optimization.splitChunks = config.optimization.splitChunks || {};
       config.optimization.splitChunks.cacheGroups = config.optimization.splitChunks.cacheGroups || {};
-      
+
       // Set the styles configuration
       config.optimization.splitChunks.cacheGroups.styles = {
         name: 'styles',
@@ -35,6 +35,9 @@ const nextConfig = {
       'plan-international.org',
       'www.sos-childrensvillages.org'
     ],
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   async headers() {
     return [
