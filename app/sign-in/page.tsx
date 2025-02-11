@@ -1,58 +1,36 @@
 'use client';
 
-import React, { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { SignInForm } from '@/components/auth/sign-in-form';
-import Image from 'next/image';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { SignInForm } from '@/components/auth/sign-in-form';
+import { AuthLoading } from '@/components/auth/auth-loading';
 
-function SignInContent() {
+export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading } = useAuth();
   const callbackUrl = searchParams?.get('callbackUrl') ?? '/dashboard';
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (user && !loading) {
       router.replace(callbackUrl);
     }
   }, [user, loading, router, callbackUrl]);
 
-  // Show loading state while checking auth
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
+    return <AuthLoading />;
   }
 
-  // If we have a user, don't render the form while redirecting
   if (user) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto" />
-          <p className="mt-4">Redirecting to dashboard...</p>
-        </div>
-      </div>
-    );
+    return <AuthLoading message="Redirecting to dashboard..." />;
   }
 
-  return <SignInForm />;
-}
-
-export default function SignIn() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex h-screen items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        </div>
-      }
-    >
-      <SignInContent />
-    </Suspense>
+    <div className="relative min-h-screen">
+
+      <SignInForm />
+
+    </div>
   );
 }
