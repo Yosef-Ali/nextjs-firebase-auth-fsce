@@ -6,34 +6,28 @@ service firebase.storage {
     function isAuthenticated() {
       return request.auth != null;
     }
-    
-    function isAdmin() {
-      return isAuthenticated() && 
-        firestore.get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+
+    match /{allPaths=**} {
+      // Allow public read access to all files
+      allow read: if true;
+      
+      // Allow authenticated users to upload images with size and type restrictions
+      allow write: if isAuthenticated()
+        && (
+          // Check file size (max 5MB)
+          request.resource.size <= 5 * 1024 * 1024
+          // Verify content type is an image
+          && request.resource.contentType.matches('image/.*')
+        );
     }
 
-    // Allow read access to all files in all media folders
-    match /media/{allPaths=**} {
+    // Special rules for media directories
+    match /media/{mediaId} {
       allow read: if true;
       allow write: if isAuthenticated();
     }
 
-    match /posts/{allPaths=**} {
-      allow read: if true;
-      allow write: if isAuthenticated();
-    }
-
-    match /partners/{allPaths=**} {
-      allow read: if true;
-      allow write: if isAuthenticated();
-    }
-
-    match /resources/{allPaths=**} {
-      allow read: if true;
-      allow write: if isAuthenticated();
-    }
-
-    match /uploads/{allPaths=**} {
+    match /posts/{postId} {
       allow read: if true;
       allow write: if isAuthenticated();
     }

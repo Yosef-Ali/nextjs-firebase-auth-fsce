@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -40,6 +41,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Editor } from '@/components/editor';
 import { useToast } from "@/hooks/use-toast"
 import { Timestamp } from 'firebase/firestore';
+import { ImageSelector } from "@/components/image-selector";
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -79,6 +81,7 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
   const [images, setImages] = useState<string[]>(post?.images || []);
   const [categories, setCategories] = useState<Category[]>([]);
   const storage = getStorage();
+  const [loadingGalleryStart, setLoadingGalleryStart] = useState(false);
 
   const form = useForm<PostFormData>({
     resolver: zodResolver(formSchema),
@@ -176,12 +179,9 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
   const loadMedia = async () => {
     try {
       setIsLoadingMedia(true);
-      console.log('Fetching media...');
       const result = await mediaService.getMedia();
-      console.log('Media result:', result);
 
       if (!result.items || result.items.length === 0) {
-        console.log('No media items found');
         toast({
           title: "No Images",
           description: "No images found in the gallery",
@@ -189,39 +189,31 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
         return;
       }
 
-      const convertedMedia = result.items
+      const validImageTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+      const filteredMedia = result.items
         .filter(item => {
-          console.log('Processing item:', item);
-          return item.type === 'image';
+          if (item.type !== 'image') return false;
+          const extension = item.url.split('.').pop()?.toLowerCase();
+          return extension && validImageTypes.includes(extension);
         })
-        .map(item => {
-          const createdAt = item.createdAt instanceof Timestamp
+        .map(item => ({
+          ...item,
+          createdAt: item.createdAt instanceof Timestamp
             ? item.createdAt.toDate()
-            : typeof item.createdAt === 'string'
-              ? new Date(item.createdAt)
-              : new Date();
-
-          const updatedAt = item.updatedAt instanceof Timestamp
+            : new Date(item.createdAt),
+          updatedAt: item.updatedAt instanceof Timestamp
             ? item.updatedAt.toDate()
-            : typeof item.updatedAt === 'string'
-              ? new Date(item.updatedAt)
-              : new Date();
-
-          return {
-            ...item,
-            createdAt,
-            updatedAt
-          };
-        })
+            : new Date(item.updatedAt)
+        }))
         .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-      console.log('Converted media:', convertedMedia);
-      setGalleryMedia(convertedMedia);
+      console.log('Filtered media items:', filteredMedia.length);
+      setGalleryMedia(filteredMedia);
     } catch (error) {
       console.error('Error loading media:', error);
       toast({
         title: "Error",
-        description: "Failed to load media gallery: " + (error instanceof Error ? error.message : String(error)),
+        description: error instanceof Error ? error.message : "Failed to load media",
         variant: "destructive",
       });
     } finally {
@@ -253,6 +245,23 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
         title: "Image Removed",
         description: "Image has been removed from your post",
       });
+    }
+  };
+
+  const openGallery = async () => {
+    try {
+      setLoadingGalleryStart(true);
+      setIsGalleryOpen(true);
+      await loadMedia();
+    } catch (error) {
+      console.error('Error loading gallery:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load media gallery. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingGalleryStart(false);
     }
   };
 
@@ -391,6 +400,27 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
 
         <FormField
           control={form.control}
+          name="coverImage"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Cover Image</FormLabel>
+              <FormDescription>
+                Select a cover image for your post
+              </FormDescription>
+              <FormControl>
+                <ImageSelector
+                  value={field.value}
+                  onChange={field.onChange}
+                  className="w-full"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="categoryId"
           render={({ field }) => (
             <FormItem>
@@ -494,7 +524,7 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
                     ))}
                     <div className="flex gap-2">
                       <div
-                        className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center hover:border-primary cursor-pointer"
+                        className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center hover:border-primary cursor-pointer transition-colors"
                         onClick={() => {
                           document.getElementById('image-upload')?.click();
                         }}
@@ -517,27 +547,41 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
                         </div>
                       </div>
                       <div
-                        className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center hover:border-primary cursor-pointer"
+                        className={cn(
+                          "border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center transition-colors",
+                          !loadingGalleryStart && "hover:border-primary cursor-pointer",
+                          loadingGalleryStart && "opacity-50 cursor-not-allowed"
+                        )}
                         onClick={() => {
-                          loadMedia();
-                          setIsGalleryOpen(true);
+                          if (!loadingGalleryStart) {
+                            openGallery();
+                          }
                         }}
                       >
                         <div className="text-center">
-                          <svg
-                            className="w-8 h-8 text-gray-400 mx-auto"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
-                          </svg>
-                          <span className="mt-2 text-sm text-gray-500 block">Select from Gallery</span>
+                          {loadingGalleryStart ? (
+                            <>
+                              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                              <span className="mt-2 text-sm text-gray-500 block">Loading...</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg
+                                className="w-8 h-8 text-gray-400 mx-auto"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                              </svg>
+                              <span className="mt-2 text-sm text-gray-500 block">Select from Gallery</span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -575,18 +619,29 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
         />
 
         {/* Gallery Dialog */}
-        <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
-          <DialogContent className="sm:max-w-[900px]">
+        <Dialog
+          open={isGalleryOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              setIsGalleryOpen(false);
+              setGalleryMedia([]);
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-[900px] h-[80vh] flex flex-col">
             <DialogHeader>
               <DialogTitle>Select Images from Gallery</DialogTitle>
             </DialogHeader>
-            <div className="py-4">
+            <div className="flex-1 min-h-0 py-4">
               {isLoadingMedia ? (
-                <div className="h-[400px] flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <div className="h-full flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mb-4"></div>
+                    <p className="text-sm text-muted-foreground">Loading media gallery...</p>
+                  </div>
                 </div>
               ) : (
-                <div className="h-[400px] overflow-y-auto pr-4 -mr-4">
+                <div className="h-full overflow-y-auto pr-4 -mr-4">
                   <MediaGrid
                     items={galleryMedia}
                     selectable
@@ -598,7 +653,7 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
                 </div>
               )}
             </div>
-            <DialogFooter>
+            <DialogFooter className="border-t pt-4">
               <Button type="button" onClick={() => setIsGalleryOpen(false)}>
                 Done
               </Button>

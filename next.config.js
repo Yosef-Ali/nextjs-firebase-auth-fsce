@@ -1,43 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      // Ensure the necessary objects exist
-      config.optimization = config.optimization || {};
-      config.optimization.splitChunks = config.optimization.splitChunks || {};
-      config.optimization.splitChunks.cacheGroups = config.optimization.splitChunks.cacheGroups || {};
-
-      // Set the styles configuration
-      config.optimization.splitChunks.cacheGroups.styles = {
-        name: 'styles',
-        test: /\.css$/,
-        chunks: 'all',
-        enforce: true
-      };
-    }
+  webpack: (config) => {
     return config;
   },
-  reactStrictMode: true,
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   images: {
-    domains: [
-      'images.unsplash.com',
-      'firebasestorage.googleapis.com',
-      'lh3.googleusercontent.com',
-      'www.unicef.org',
-      'www.savethechildren.org',
-      'www.wvi.org',
-      'plan-international.org',
-      'www.sos-childrensvillages.org'
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+        pathname: '/**',
+      },
     ],
-    dangerouslyAllowSVG: true,
-    contentDispositionType: 'attachment',
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    domains: ['firebasestorage.googleapis.com'],
+    unoptimized: true,
   },
   async headers() {
     return [
@@ -45,13 +20,21 @@ const nextConfig = {
         source: '/:path*',
         headers: [
           {
-            key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin-allow-popups',
+            key: 'Access-Control-Allow-Origin',
+            value: '*'
           },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET'
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization'
+          }
         ],
       },
-    ];
-  },
-};
+    ]
+  }
+}
 
 module.exports = nextConfig;

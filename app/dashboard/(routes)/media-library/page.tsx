@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { 
+import {
   Card,
   CardContent,
   CardHeader,
@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { 
+import {
   Download,
   Link as LinkIcon,
   Upload,
@@ -64,14 +64,14 @@ export default function MediaLibraryPage() {
         const storageRef = ref(storage, path);
         try {
           const result = await listAll(storageRef);
-          
+
           const items = await Promise.all(
             result.items.map(async (item) => {
               const url = await getDownloadURL(item);
               const metadata = await getMetadata(item);
-              
+
               totalSize += metadata.size;
-              
+
               return {
                 url,
                 name: item.name,
@@ -81,16 +81,16 @@ export default function MediaLibraryPage() {
               };
             })
           );
-          
+
           allItems.push(...items);
         } catch (error) {
           console.error(`Error fetching items from ${path}:`, error);
         }
       }
-      
+
       // Sort items by creation date (oldest first)
       const sortedItems = allItems.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-      
+
       setMediaItems(sortedItems);
       setTotalStorageUsed(totalSize);
     } catch (error) {
@@ -221,33 +221,31 @@ export default function MediaLibraryPage() {
           <div className="text-sm text-muted-foreground mb-1">
             Storage: {`${(totalStorageUsed / (1024 * 1024)).toFixed(2)} MB / ${(MAX_STORAGE_BYTES / (1024 * 1024)).toFixed(2)} MB`}
           </div>
-          <Progress 
-            value={storageUsagePercentage} 
-            className={`h-2 ${
-              storageStatus === 'danger' 
-                ? 'bg-destructive/20' 
-                : storageStatus === 'warning' 
-                ? 'bg-warning/20' 
-                : 'bg-primary/20'
-            }`}
+          <Progress
+            value={storageUsagePercentage}
+            className={`h-2 ${storageStatus === 'danger'
+                ? 'bg-destructive/20'
+                : storageStatus === 'warning'
+                  ? 'bg-warning/20'
+                  : 'bg-primary/20'
+              }`}
           />
         </div>
         {storageStatus !== 'normal' && (
           <div className="flex items-center space-x-2 text-sm">
-            <AlertTriangle 
-              className={`h-5 w-5 ${
-                storageStatus === 'danger' 
-                  ? 'text-destructive' 
+            <AlertTriangle
+              className={`h-5 w-5 ${storageStatus === 'danger'
+                  ? 'text-destructive'
                   : 'text-warning'
-              }`} 
+                }`}
             />
             <span className={
-              storageStatus === 'danger' 
-                ? 'text-destructive' 
+              storageStatus === 'danger'
+                ? 'text-destructive'
                 : 'text-warning'
             }>
-              {storageStatus === 'danger' 
-                ? 'Limit Reached' 
+              {storageStatus === 'danger'
+                ? 'Limit Reached'
                 : 'Almost Full'}
             </span>
           </div>

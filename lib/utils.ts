@@ -1,16 +1,16 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 import { Timestamp } from "firebase/firestore"
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 export function formatDate(input: number | string | Date | Timestamp | null | undefined): string {
   if (!input) return '';
-  
+
   let date: Date;
-  
+
   try {
     if (input instanceof Timestamp) {
       date = input.toDate();

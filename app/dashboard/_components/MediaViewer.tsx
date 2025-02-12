@@ -1,15 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import Image from 'next/image';
+import { useState, useEffect } from 'react';
 import { Media } from '@/app/types/media';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Download, Edit, X } from 'lucide-react';
+import { Download, Edit, ImageIcon, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
 
 interface MediaViewerProps {
   media: Media;
@@ -19,14 +20,96 @@ interface MediaViewerProps {
 
 export function MediaViewer({ media, onClose, onEdit }: MediaViewerProps) {
   const [isImageLoading, setIsImageLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
+
+  useEffect(() => {
+    let mounted = true;
+    setIsImageLoading(true);
+    setLoadError(false);
+
+    const loadImage = async () => {
+      try {
+        const img = document.createElement('img');
+
+        await new Promise((resolve, reject) => {
+          const timeoutId = setTimeout(() => {
+            if (mounted) {
+              reject(new Error('Image load timeout'));
+            }
+          }, 15000); // 15 second timeout
+
+          img.onload = () => {
+            clearTimeout(timeoutId);
+            if (mounted) {
+              resolve(null);
+            }
+          };
+
+          img.onerror = () => {
+            clearTimeout(timeoutId);
+            if (mounted) {
+              reject(new Error('Image load failed'));
+            }
+          };
+
+          img.src = media.url;
+        });
+
+        if (mounted) {
+          setIsImageLoading(false);
+          console.log('Image loaded successfully:', media.url);
+        }
+      } catch (error) {
+        if (mounted) {
+          console.error('Image load error:', error);
+          setLoadError(true);
+          setIsImageLoading(false);
+
+          if (retryCount < maxRetries) {
+            console.log(`Retrying image load (${retryCount + 1}/${maxRetries})...`);
+            setRetryCount(prev => prev + 1);
+          } else {
+            toast({
+              title: "Error",
+              description: "Failed to load image after multiple attempts",
+              variant: "destructive",
+            });
+          }
+        }
+      }
+    };
+
+    loadImage();
+
+    return () => {
+      mounted = false;
+    };
+  }, [media.url, retryCount]);
+
+  const handleRetry = () => {
+    setRetryCount(0);
+    setLoadError(false);
+    setIsImageLoading(true);
+  };
 
   const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = media.url;
-    link.download = media.name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      const link = document.createElement('a');
+      link.href = media.url;
+      link.download = media.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download image",
+        variant: "destructive",
+      });
+    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -37,168 +120,119 @@ export function MediaViewer({ media, onClose, onEdit }: MediaViewerProps) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const renderMedia = () => {
-    switch (media.type) {
-      case 'image':
-        return (
-          <div className="relative aspect-square">
-            <Image
-              src={media.url}
-              alt={media.alt || media.name}
-              fill
-              className={`
-                object-contain
-                transition-opacity duration-300
-                ${isImageLoading ? 'opacity-0' : 'opacity-100'}
-              `}
-              onLoadingComplete={() => setIsImageLoading(false)}
-            />
-          </div>
-        );
-      case 'video':
-        return (
-          <video
-            src={media.url}
-            controls
-            className="w-full"
-            style={{ maxHeight: '500px' }}
-          >
-            Your browser does not support the video tag.
-          </video>
-        );
-      case 'audio':
-        return (
-          <audio
-            src={media.url}
-            controls
-            className="w-full mt-4"
-          >
-            Your browser does not support the audio tag.
-          </audio>
-        );
-      default:
-        return (
-          <div className="flex items-center justify-center h-64 bg-muted rounded-lg">
-            <Badge variant="secondary" className="text-lg">
-              {media.type.toUpperCase()}
-            </Badge>
-          </div>
-        );
-    }
-  };
-
   return (
-    <Card className="w-full max-w-3xl mx-auto">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="text-xl">{media.name}</CardTitle>
-          <CardDescription>
-            {media.type.charAt(0).toUpperCase() + media.type.slice(1)} • {formatFileSize(media.size)}
-          </CardDescription>
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </CardHeader>
-
-      <CardContent>
-        <div className="space-y-6">
-          {renderMedia()}
-
-          <ScrollArea className="h-[200px] rounded-md border p-4">
-            <div className="space-y-4">
-              {media.description && (
-                <>
-                  <div>
-                    <h4 className="text-sm font-medium">Description</h4>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {media.description}
-                    </p>
-                  </div>
-                  <Separator />
-                </>
-              )}
-
-              {media.type === 'image' && media.alt && (
-                <>
-                  <div>
-                    <h4 className="text-sm font-medium">Alt Text</h4>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {media.alt}
-                    </p>
-                  </div>
-                  <Separator />
-                </>
-              )}
-
-              {media.type === 'image' && media.caption && (
-                <>
-                  <div>
-                    <h4 className="text-sm font-medium">Caption</h4>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {media.caption}
-                    </p>
-                  </div>
-                  <Separator />
-                </>
-              )}
-
-              {media.tags && media.tags.length > 0 && (
-                <>
-                  <div>
-                    <h4 className="text-sm font-medium">Tags</h4>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {media.tags.map((tag, index) => (
-                        <Badge key={index} variant="secondary">
-                          {tag}
-                        </Badge>
-                      ))}
+    <div className="flex flex-col h-full">
+      <div className="flex-1 min-h-0">
+        <Card className="h-full">
+          <CardContent className="p-0 relative aspect-video">
+            {media.type === 'image' ? (
+              <div className="relative w-full h-full bg-muted">
+                {isImageLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+                      {retryCount > 0 && (
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          Retrying... ({retryCount}/{maxRetries})
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <Separator />
-                </>
-              )}
-
-              <div className="space-y-2">
-                <div>
-                  <h4 className="text-sm font-medium">Uploaded</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {format(new Date(media.createdAt), 'PPpp')}
-                  </p>
-                </div>
-                
-                <div>
-                  <h4 className="text-sm font-medium">Last Modified</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {format(new Date(media.updatedAt), 'PPpp')}
-                  </p>
-                </div>
+                )}
+                {loadError ? (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto" />
+                      <p className="mt-2 text-sm text-muted-foreground">Failed to load image</p>
+                      {retryCount < maxRetries && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRetry}
+                          className="mt-2"
+                        >
+                          Retry
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <img
+                    src={media.url}
+                    alt={media.alt || media.name}
+                    className={cn(
+                      "w-full h-full object-contain transition-opacity duration-300",
+                      isImageLoading ? "opacity-0" : "opacity-100"
+                    )}
+                    onError={() => setLoadError(true)}
+                  />
+                )}
               </div>
-            </div>
-          </ScrollArea>
-        </div>
-      </CardContent>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-muted">
+                <Badge variant="secondary" className="text-lg">
+                  {media.type.toUpperCase()}
+                </Badge>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-      <CardFooter className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={() => onEdit(media)}
-        >
-          <Edit className="mr-2 h-4 w-4" />
-          Edit
-        </Button>
-        <Button
-          onClick={handleDownload}
-        >
-          <Download className="mr-2 h-4 w-4" />
-          Download
-        </Button>
-      </CardFooter>
-    </Card>
+      <ScrollArea className="flex-shrink-0 h-48 mt-4">
+        <div className="space-y-4">
+          <div>
+            <h3 className="font-medium">Details</h3>
+            <Separator className="my-2" />
+            <dl className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Name</dt>
+                <dd className="font-medium">{media.name}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Size</dt>
+                <dd className="font-medium">{formatFileSize(media.size)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Type</dt>
+                <dd className="font-medium">{media.type}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Uploaded</dt>
+                <dd className="font-medium">
+                  {media.createdAt ? format(new Date(media.createdAt), 'PP') : 'Unknown'}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Uploaded By</dt>
+                <dd className="font-medium">{media.uploadedByEmail || 'Unknown'}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={handleDownload}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={() => onEdit(media)}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          </div>
+        </div>
+      </ScrollArea>
+    </div>
   );
 }
 

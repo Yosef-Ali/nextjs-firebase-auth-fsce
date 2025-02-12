@@ -13,8 +13,10 @@
         "maxAgeSeconds": 3600,
         "responseHeader": [
             "Content-Type",
-            "Content-Disposition",
-            "Access-Control-Allow-Origin"
+            "Authorization",
+            "Content-Length",
+            "User-Agent",
+            "x-goog-resumable"
         ]
     }
 ]
