@@ -144,7 +144,7 @@ export class UsersService {
       const newUserData = {
         email: targetEmail,
         role,
-        status: UserStatus.INVITED,
+        status: UserStatus.PENDING,
         invitedBy: adminEmail,
         invitationToken,
         createdAt: new Date().toISOString(),

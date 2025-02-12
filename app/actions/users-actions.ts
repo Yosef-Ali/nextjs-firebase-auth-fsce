@@ -24,12 +24,21 @@ interface UserInviteResponse {
 // Server action to get all users
 export async function getUsers(): Promise<ServiceResponse<User[]>> {
   try {
-    const users = await usersService.getAllUsers()
-    revalidatePath("/admin/users")
-    return { success: true, data: users }
+    const result = await usersService.getAllUsers();
+    revalidatePath("/admin/users");
+    if (result.success && result.data) {
+      return {
+        success: true,
+        data: result.data
+      };
+    }
+    return {
+      success: false,
+      error: result.error || "Failed to fetch users"
+    };
   } catch (error) {
-    console.error("Error fetching users:", error)
-    return { success: false, error: "Failed to fetch users" }
+    console.error("Error fetching users:", error);
+    return { success: false, error: "Failed to fetch users" };
   }
 }
 
@@ -81,7 +90,7 @@ export async function updateUserRole(
       currentRole,
       targetRole: role,
       error: result.error,
-      details: result.details
+      details: result.details || {}
     });
 
     return {
@@ -137,13 +146,13 @@ export async function deleteUser(
     }
 
     const result = await usersService.deleteUser(userId);
-    
+
     if (result.success) {
       // Ensure all relevant paths are revalidated
       revalidatePath("/admin/users");
       revalidatePath("/dashboard/users");
       revalidatePath("/");
-      
+
       return {
         success: true,
         details: {

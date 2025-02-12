@@ -133,10 +133,10 @@ class UserCoreService {
     }
   }
 
-  async getAllUsers(): Promise<User[]> {
+  async getAllUsers(): Promise<{ success: boolean; data?: User[]; error?: string }> {
     try {
       const snapshot = await getDocs(this.usersRef);
-      return snapshot.docs
+      const users = snapshot.docs
         .map((doc) => {
           try {
             return convertToAppUser({ ...doc.data(), uid: doc.id }) as User;
@@ -146,15 +146,24 @@ class UserCoreService {
           }
         })
         .filter((user): user is User => user !== null);
+
+      return { success: true, data: users };
     } catch (error) {
       console.error("Error getting all users:", error);
-      throw error;
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to fetch users"
+      };
     }
   }
 
-  async updateUserRole(uid: string, role: UserRole): Promise<void> {
+  async updateUserRole(uid: string, role: UserRole): Promise<{ success: boolean; error?: string; details?: any }> {
     if (!uid?.trim()) {
-      throw new Error("Valid User ID is required");
+      return {
+        success: false,
+        error: "Valid User ID is required",
+        details: { uid }
+      };
     }
 
     try {
@@ -162,16 +171,34 @@ class UserCoreService {
       const existingUser = await this.getUser(uid);
 
       if (!existingUser) {
-        throw new Error(`User with ID ${uid} not found`);
+        return {
+          success: false,
+          error: `User with ID ${uid} not found`,
+          details: { uid }
+        };
       }
 
       await updateDoc(userRef, {
         role,
         updatedAt: Date.now(),
       });
+
+      return {
+        success: true,
+        details: {
+          uid,
+          previousRole: existingUser.role,
+          newRole: role,
+          timestamp: Date.now()
+        }
+      };
     } catch (error) {
       console.error("Error updating user role:", error);
-      throw error;
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to update user role",
+        details: { uid }
+      };
     }
   }
 
@@ -221,6 +248,13 @@ class UserCoreService {
         const isAdmin = firebaseUser.email && ADMIN_EMAILS.includes(firebaseUser.email);
 
         const userData: User = {
+          invitedBy: null,
+          invitationToken: null,
+          emailVerified: firebaseUser.emailVerified,
+          metadata: {
+            lastLogin: Date.now(),
+            createdAt: Date.now()
+          },
           uid: firebaseUser.uid,
           email: firebaseUser.email || '',
           displayName: firebaseUser.displayName || '',

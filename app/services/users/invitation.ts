@@ -56,7 +56,7 @@ class UserInvitationService {
         this.usersRef,
         where("email", "==", email),
         where("invitationToken", "==", token),
-        where("status", "==", UserStatus.INVITED)
+        where("status", "==", "INVITED")
       );
 
       const querySnapshot = await getDocs(usersQuery);
@@ -135,7 +135,7 @@ class UserInvitationService {
       const newUserData: Partial<User> = {
         email: targetEmail,
         role,
-        status: UserStatus.INVITED,
+        status: "INVITED" as UserStatus,
         invitedBy: adminEmail,
         invitationToken,
         createdAt: Date.now(),
