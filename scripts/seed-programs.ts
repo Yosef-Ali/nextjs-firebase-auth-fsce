@@ -56,7 +56,7 @@ const programs = [
     date: new Date().toISOString(),
     featured: true,
   },
-  
+
   // Youth Empowerment Programs
   {
     title: "Leadership Development Program",
@@ -110,7 +110,7 @@ const programs = [
     date: new Date().toISOString(),
     featured: true,
   },
-  
+
   // Advocacy Programs
   {
     title: "Child Rights Advocacy Network",
@@ -164,7 +164,7 @@ const programs = [
     date: new Date().toISOString(),
     featured: true,
   },
-  
+
   // Humanitarian Response Programs
   {
     title: "Emergency Child Support",
@@ -222,7 +222,7 @@ const programs = [
 
 async function seedPrograms() {
   const programsCollection = collection(db, 'posts');
-  
+
   for (const program of programs) {
     try {
       const docRef = await addDoc(programsCollection, {

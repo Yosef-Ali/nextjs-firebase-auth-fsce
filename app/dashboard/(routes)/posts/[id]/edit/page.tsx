@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
-import { PostEditor } from '@/app/dashboard/_components/PostEditor';
+import { PostEditor } from '@/app/dashboard/_components/posts/PostEditor';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { useEffect, useState } from 'react';
 import { Post } from '@/app/types/post';
@@ -24,11 +24,11 @@ export default function EditPostPage() {
   useEffect(() => {
     const loadPost = async () => {
       if (!user || !id) return;
-      
+
       try {
         const docRef = doc(db, 'posts', id);
         const docSnap = await getDoc(docRef);
-        
+
         if (docSnap.exists()) {
           const data = docSnap.data();
           setPost({

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { PostEditor } from '@/app/dashboard/_components/PostEditor';
+import { PostEditor } from '@/app/dashboard/_components/posts/PostEditor';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';

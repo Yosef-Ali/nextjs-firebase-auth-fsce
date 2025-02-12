@@ -158,7 +158,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   return (
     <div>
       <div className="mb-4 flex items-center gap-4">
-        {value.map((url) => (
+        {value.filter(url => url && url.trim() !== '').map((url) => (
           <div key={url} className="relative w-[200px] h-[200px] rounded-lg overflow-hidden">
             <div className="z-10 absolute top-2 right-2">
               <Button 
