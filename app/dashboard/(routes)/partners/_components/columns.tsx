@@ -2,11 +2,11 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
-import { ExternalLink } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { Partner } from "@/types";
 
-export const columns: ColumnDef<Partner, unknown>[] = [
+export const columns: ColumnDef<Partner>[] = [
   {
     accessorKey: "order",
     header: "Order",
@@ -15,28 +15,37 @@ export const columns: ColumnDef<Partner, unknown>[] = [
     accessorKey: "logoUrl",
     header: "Logo",
     cell: ({ row }) => {
-      const name = row.original.name;
+      const name = row.original.name || "";
+      const logo = row.original.logoUrl;
       const initials = name
-        ? name
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .toUpperCase()
-        : "";
+        .split(" ")
+        .map((n) => n?.[0] || "")
+        .join("")
+        .toUpperCase();
 
       return (
-        <div className="relative h-12 w-12">
-          {row.original.logoUrl ? (
+        <div className="relative flex items-center justify-center w-12 h-12 overflow-hidden bg-gray-100 rounded-md">
+          {logo ? (
             <Image
-              src={row.original.logoUrl || ""}
-              alt={name || ""}
-              className="object-contain"
+              src={logo}
+              alt={name}
               fill
+              className="object-contain"
+              sizes="48px"
+              onError={(e) => {
+                // If image fails to load, show initials instead
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const parent = target.parentElement;
+                if (parent) {
+                  parent.innerHTML = `<span class="text-lg font-bold text-gray-500">${initials}</span>`;
+                }
+              }}
             />
           ) : (
-            <div className="h-full w-full flex items-center justify-center bg-gray-100 text-gray-600">
+            <span className="text-lg font-bold text-gray-500">
               {initials}
-            </div>
+            </span>
           )}
         </div>
       );
@@ -50,46 +59,34 @@ export const columns: ColumnDef<Partner, unknown>[] = [
     accessorKey: "partnerType",
     header: "Type",
     cell: ({ row }) => (
-      <div className="capitalize">
+      <Badge
+        variant={
+          row.original.partnerType === "partner" ? "default" : "secondary"
+        }
+      >
         {row.original.partnerType}
-      </div>
+      </Badge>
     ),
-  },
-  {
-    accessorKey: "email",
-    header: "Email",
-  },
-  {
-    accessorKey: "phone",
-    header: "Phone",
   },
   {
     accessorKey: "website",
     header: "Website",
-    cell: ({ row }) => (
-      row.original.website ? (
-        <a 
-          href={row.original.website} 
-          target="_blank" 
+    cell: ({ row }) => {
+      const website = row.original.website;
+      return website ? (
+        <a
+          href={website}
+          target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
+          className="text-blue-600 hover:underline"
         >
-          Visit <ExternalLink className="h-4 w-4" />
+          {website}
         </a>
-      ) : null
-    ),
-  },
-  {
-    accessorKey: "description",
-    header: "Description",
-    cell: ({ row }) => (
-      <div className="max-w-[300px] truncate">
-        {row.original.description}
-      </div>
-    ),
+      ) : null;
+    },
   },
   {
     id: "actions",
     cell: ({ row }) => <CellAction data={row.original} />,
   },
-] as ColumnDef<Partner, unknown>[];
+];

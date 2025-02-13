@@ -1,11 +1,10 @@
 export interface Partner {
   id: string;
   name: string;
-  email: string;
-  order: number;
-  phone: string;
-  partnerType: "partner" | "membership";
+  logo: string;
+  website: string;
+  partnerType: 'strategic' | 'membership';
   description?: string;
-  logo?: string;
-  website?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
