@@ -2,39 +2,32 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { usersService } from '@/app/services/users';
 import { UserStatus } from '@/app/types/user';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 function VerifyContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isVerifying, setIsVerifying] = useState(true);
+  const { userData } = useAuth();
 
   useEffect(() => {
     const verifyUser = async () => {
       try {
+        if (!userData) {
+          toast({
+            title: 'Error',
+            description: 'User not found. Please try signing in again.',
+            variant: 'destructive',
+          });
+          router.push('/sign-in');
+          return;
+        }
+
         if (searchParams) {
           const role = searchParams.get('role');
-          // Verify the user's role and status
-          const currentUser = await usersService.getCurrentUser();
-          if (!currentUser) {
-            toast({
-              title: 'Error',
-              description: 'User not found. Please try signing in again.',
-              variant: 'destructive',
-            });
-            router.push('/sign-in');
-            return;
-          }
-
-          // Update user's status to active if they were invited
-          if (currentUser.status === UserStatus.INVITED) {
-            await usersService.createOrUpdateUser(currentUser.uid, {
-              status: UserStatus.ACTIVE,
-            });
-          }
 
           // Redirect based on role
           if (role === 'admin') {

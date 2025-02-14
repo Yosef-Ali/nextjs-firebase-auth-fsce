@@ -37,16 +37,20 @@ const formSchema = z.object({
   description: z.string().optional(),
   logo: z.string().optional(),
   order: z.coerce.number().min(1),
+  partnerType: z.enum(['strategic', 'membership']) as z.ZodType<'strategic' | 'membership'>
 });
 
-type PartnerFormValues = z.infer<typeof formSchema>;
+type PartnerFormValues = z.infer<typeof formSchema> & {
+  id?: string;
+};
 
 interface PartnerFormProps {
-  initialData?: PartnerFormValues & { id: string };
+  initialData?: PartnerFormValues;
   partnerId?: string;
+  onSuccess?: () => void;
 }
 
-export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId }) => {
+export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId, onSuccess }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -62,6 +66,7 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
       description: "",
       logo: "",
       order: 1,
+      partnerType: "membership"
     },
   });
 
@@ -72,7 +77,7 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
         ...data,
         updatedAt: new Date(),
       };
-      
+
       if (partnerId) {
         await updateDocument("partners", partnerId, submissionData);
         toast({
@@ -89,7 +94,7 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
           description: "Partner created successfully",
         });
       }
-      router.push("/dashboard/partners");
+      onSuccess?.(); // Call onSuccess if provided
     } catch (error) {
       toast({
         title: "Error",
@@ -113,7 +118,7 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
                 <FormLabel>Logo</FormLabel>
                 <FormControl>
                   <ImageUpload
-                    value={Array.isArray(field.value) ? field.value : field.value ? [field.value] : []}
+                    value={field.value ? [field.value] : []}
                     onChange={(url) => field.onChange(url)}
                     onRemove={() => field.onChange("")}
                     disabled={isLoading}
@@ -192,14 +197,40 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
                 <FormItem>
                   <FormLabel>Display Order</FormLabel>
                   <FormControl>
-                    <Input 
+                    <Input
                       disabled={isLoading}
-                      type="number" 
+                      type="number"
                       min="1"
-                      placeholder="Display order" 
+                      placeholder="Display order"
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="partnerType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Partner Type</FormLabel>
+                  <Select
+                    disabled={isLoading}
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select partner type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="strategic">Strategic</SelectItem>
+                      <SelectItem value="membership">Membership</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

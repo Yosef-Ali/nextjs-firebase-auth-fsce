@@ -1,3 +1,5 @@
+"use client";
+
 import { UserRole, UserStatus, UserMetadata, User } from '@/app/types/user';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
@@ -14,6 +16,7 @@ import {
     UserCredential,
     sendPasswordResetEmail
 } from 'firebase/auth';
+import { authorization } from '../lib/authorization';
 
 export interface AuthUser extends FirebaseUser {
     role?: UserRole;
@@ -56,10 +59,28 @@ export function useAuth(): AuthContextType {
             displayName: userData.displayName || firebaseUser.displayName,
             photoURL: userData.photoURL || firebaseUser.photoURL,
             metadata: {
-                lastLogin: now,
-                createdAt: userData.createdAt || now
+                lastLogin: firebaseUser.metadata?.lastSignInTime ? new Date(firebaseUser.metadata.lastSignInTime).getTime() : now,
+                createdAt: userData.createdAt || (firebaseUser.metadata?.creationTime ? new Date(firebaseUser.metadata.creationTime).getTime() : now)
             }
         };
+    };
+
+    // Handle role-based routing
+    const handleRoleBasedRedirect = (userData: User) => {
+        const currentPath = window.location.pathname;
+        const isProtectedRoute = currentPath.startsWith('/dashboard');
+
+        if (!isProtectedRoute) return;
+
+        if (!authorization.hasRole(userData as AuthUser, UserRole.EDITOR)) {
+            router.replace('/unauthorized');
+            return;
+        }
+
+        // Specific dashboard section restrictions
+        if (currentPath.includes('/dashboard/users') && !authorization.canManageUsers(userData as AuthUser)) {
+            router.replace('/dashboard');
+        }
     };
 
     useEffect(() => {
@@ -80,14 +101,17 @@ export function useAuth(): AuthContextType {
                         setUser(authUser);
                         setUserData(userMetadata);
 
-                        // Only redirect if we're on a protected route
-                        const isProtectedRoute = window.location.pathname.startsWith('/dashboard');
-                        if (isProtectedRoute && userData.role !== UserRole.ADMIN && userData.role !== UserRole.AUTHOR) {
-                            router.replace('/unauthorized');
+                        // Check if user is active
+                        if (userData.status !== UserStatus.ACTIVE) {
+                            router.replace('/account-pending');
+                            return;
                         }
+
+                        handleRoleBasedRedirect(userData);
                     } else {
                         setUser(null);
                         setUserData(null);
+                        router.replace('/sign-in');
                     }
                 } else {
                     setUser(null);
@@ -106,10 +130,24 @@ export function useAuth(): AuthContextType {
         return () => unsubscribe();
     }, [router]);
 
-    const handleAuthError = (error: any) => {
+    const handleAuthError = (error: any): AuthError => {
         console.error('Authentication error:', error);
-        setError(error as AuthError);
-        throw error;
+        const errorMessage = error.code === 'auth/user-not-found' ? 'No account found with this email' :
+            error.code === 'auth/wrong-password' ? 'Incorrect password' :
+                error.code === 'auth/invalid-email' ? 'Invalid email format' :
+                    error.code === 'auth/email-already-in-use' ? 'Email already registered' :
+                        error.code === 'auth/too-many-requests' ? 'Too many attempts. Please try again later' :
+                            error.code === 'auth/popup-closed-by-user' ? 'Sign-in popup was closed' :
+                                'Authentication failed';
+
+        const authError = {
+            message: errorMessage,
+            name: 'AuthError',
+            code: error.code
+        } as AuthError;
+
+        setError(authError);
+        return authError;
     };
 
     const signIn = async (email: string, password: string): Promise<UserMetadata> => {

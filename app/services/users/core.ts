@@ -97,13 +97,17 @@ class UserCoreService {
   }
 
   async getCurrentUser(firebaseUser: FirebaseUser | null): Promise<User | null> {
-    if (!firebaseUser?.uid) {
-      console.warn("No Firebase user provided to getCurrentUser");
-      return null;
-    }
+    if (!firebaseUser?.uid) return null;
 
     try {
-      return await this.getUser(firebaseUser.uid);
+      const userRef = this.getUserRef(firebaseUser.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (!userDoc.exists()) {
+        return await this.createUserIfNotExists(firebaseUser);
+      }
+
+      return userDoc.data() as User;
     } catch (error) {
       console.error("Error getting current user:", error);
       throw error;
@@ -157,48 +161,32 @@ class UserCoreService {
     }
   }
 
-  async updateUserRole(uid: string, role: UserRole): Promise<{ success: boolean; error?: string; details?: any }> {
-    if (!uid?.trim()) {
-      return {
-        success: false,
-        error: "Valid User ID is required",
-        details: { uid }
-      };
-    }
+  async updateUserRole(uid: string, newRole: UserRole): Promise<void> {
+    if (!uid) throw new Error("Valid user ID required");
 
     try {
       const userRef = this.getUserRef(uid);
-      const existingUser = await this.getUser(uid);
+      const userDoc = await getDoc(userRef);
 
-      if (!existingUser) {
-        return {
-          success: false,
-          error: `User with ID ${uid} not found`,
-          details: { uid }
-        };
+      if (!userDoc.exists()) {
+        throw new Error(`User with ID ${uid} not found`);
       }
 
-      await updateDoc(userRef, {
-        role,
-        updatedAt: Date.now(),
-      });
+      const currentData = userDoc.data() as User;
 
-      return {
-        success: true,
-        details: {
-          uid,
-          previousRole: existingUser.role,
-          newRole: role,
-          timestamp: Date.now()
-        }
-      };
+      // Prevent downgrading SUPER_ADMIN
+      if (currentData.role === UserRole.SUPER_ADMIN && newRole !== UserRole.SUPER_ADMIN) {
+        throw new Error("Cannot modify SUPER_ADMIN role");
+      }
+
+      await setDoc(userRef, {
+        ...currentData,
+        role: newRole,
+        updatedAt: Date.now()
+      }, { merge: true });
     } catch (error) {
       console.error("Error updating user role:", error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Failed to update user role",
-        details: { uid }
-      };
+      throw error;
     }
   }
 
@@ -238,54 +226,61 @@ class UserCoreService {
   }
 
   async createUserIfNotExists(firebaseUser: FirebaseUser): Promise<User | null> {
+    if (!firebaseUser?.uid) {
+      console.warn("No user ID provided to createUserIfNotExists");
+      return null;
+    }
+
     try {
-      const db = getFirestore();
-      const userRef = doc(db, 'users', firebaseUser.uid);
+      const userRef = this.getUserRef(firebaseUser.uid);
       const userDoc = await getDoc(userRef);
 
-      if (!userDoc.exists()) {
-        // Check if user's email is in admin list
-        const isAdmin = firebaseUser.email && ADMIN_EMAILS.includes(firebaseUser.email);
+      // Check if user already exists
+      if (userDoc.exists()) {
+        const existingData = userDoc.data() as User;
 
-        const userData: User = {
-          invitedBy: null,
-          invitationToken: null,
-          emailVerified: firebaseUser.emailVerified,
-          metadata: {
-            lastLogin: Date.now(),
-            createdAt: Date.now()
-          },
-          uid: firebaseUser.uid,
-          email: firebaseUser.email || '',
-          displayName: firebaseUser.displayName || '',
-          photoURL: firebaseUser.photoURL || null,
-          role: isAdmin ? UserRole.ADMIN : UserRole.USER,
-          status: UserStatus.ACTIVE,
-          createdAt: Date.now(),
-          updatedAt: Date.now()
-        };
+        // Update role if email is in admin list
+        if (firebaseUser.email &&
+          ADMIN_EMAILS.includes(firebaseUser.email.toLowerCase()) &&
+          existingData.role !== UserRole.SUPER_ADMIN &&
+          existingData.role !== UserRole.ADMIN) {
+          const updatedData = {
+            ...existingData,
+            role: UserRole.ADMIN,
+            updatedAt: Date.now()
+          };
+          await setDoc(userRef, updatedData, { merge: true });
+          return updatedData;
+        }
 
-        await setDoc(userRef, userData);
-        return userData;
+        return existingData;
       }
 
-      const existingUserData = userDoc.data() as User;
+      // Create new user
+      const userData: User = {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email || "",
+        displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || "Unnamed User",
+        photoURL: firebaseUser.photoURL || null,
+        emailVerified: firebaseUser.emailVerified,
+        role: firebaseUser.email && ADMIN_EMAILS.includes(firebaseUser.email.toLowerCase())
+          ? UserRole.ADMIN
+          : UserRole.USER,
+        status: UserStatus.ACTIVE,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        metadata: {
+          lastLogin: Date.now(),
+          createdAt: Date.now()
+        }
+      };
 
-      // If user exists but is in admin list and not an admin, update their role
-      if (firebaseUser.email && ADMIN_EMAILS.includes(firebaseUser.email) && existingUserData.role !== UserRole.ADMIN) {
-        const updatedData = {
-          ...existingUserData,
-          role: UserRole.ADMIN,
-          updatedAt: Date.now()
-        };
-        await updateDoc(userRef, updatedData);
-        return updatedData;
-      }
-
-      return existingUserData;
+      // Create user document
+      await setDoc(userRef, userData);
+      return userData;
     } catch (error) {
       console.error('Error in createUserIfNotExists:', error);
-      return null;
+      throw error;
     }
   }
 }

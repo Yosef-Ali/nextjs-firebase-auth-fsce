@@ -8,6 +8,7 @@ import { doc, setDoc, collection, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { AboutContent } from '@/app/types/about';
 import { useAuth } from '@/app/providers/AuthProvider';
+import { AppUser } from '@/app/types/user';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Authorization } from '@/app/lib/authorization';
@@ -28,7 +29,7 @@ export default function AboutSectionForm({
   const [authError, setAuthError] = useState<string | null>(null);
   const { toast } = useToast();
   const [content, setContent] = useState(initialData?.content || '');
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth() as { user: AppUser | null; loading: boolean };
 
   // If authentication is still loading, show a loading indicator
   if (authLoading) {

@@ -8,6 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { EditIcon, Trash2Icon } from "lucide-react";
 
 import { format } from 'date-fns';
@@ -94,7 +95,7 @@ export default function PostTable({ posts, isLoading, onEdit, onDelete }: PostTa
               <TableCell className="font-medium">{post.title}</TableCell>
               <TableCell>
                 <Badge variant="secondary">
-                  {post.category}
+                  {post.category.name}
                 </Badge>
               </TableCell>
               <TableCell>

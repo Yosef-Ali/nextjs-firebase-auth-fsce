@@ -24,13 +24,13 @@ export const ourFileRouter = {
   imageUploader: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
     .middleware(handleAuth)
     .onUploadComplete(async ({ file }) => {
-      console.log("Image uploaded:", file.url);
+      console.log("Image uploaded:", file);
     }),
 
   resourceUploader: f({ blob: { maxFileSize: "16MB", maxFileCount: 1 } })
     .middleware(handleAuth)
     .onUploadComplete(async ({ file }) => {
-      console.log("Resource uploaded:", file.url);
+      console.log("Resource uploaded:", file);
     }),
 } satisfies FileRouter;
 

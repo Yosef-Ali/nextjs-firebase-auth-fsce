@@ -87,7 +87,18 @@ export default function EditPartnerPage() {
         <Separator />
         {partner && (
           <PartnerForm
-            initialData={partner}
+            initialData={{
+              id: partner.id,
+              name: partner.name,
+              email: partner.email,
+              phone: partner.phone,
+              website: partner.website,
+              description: partner.description,
+              logo: partner.logo,
+              order: partner.order,
+              partnerType: partner.partnerType
+            }}
+            partnerId={partner.id}
             onSuccess={() => router.push("/dashboard/partners")}
           />
         )}

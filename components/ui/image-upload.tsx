@@ -57,7 +57,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           // Extract the file path from the URL
           const urlPath = decodeURIComponent(url.split('/o/')[1].split('?')[0]);
           const fileRef = ref(storage, urlPath);
-          
+
           // Delete the file from storage
           await deleteObject(fileRef);
           toast({
@@ -119,7 +119,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       }
 
       setUploading(true);
-      
+
       // Delete existing image if there is one and it's a Firebase Storage URL
       if (value[0] && isFirebaseStorageUrl(value[0])) {
         await handleRemove(value[0]);
@@ -131,7 +131,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       await uploadBytes(fileRef, file);
       const downloadUrl = await getDownloadURL(fileRef);
       onChange(downloadUrl);
-      
+
       toast({
         title: "Success",
         description: "Image uploaded successfully"
@@ -161,10 +161,10 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         {value.filter(url => url && url.trim() !== '').map((url) => (
           <div key={url} className="relative w-[200px] h-[200px] rounded-lg overflow-hidden">
             <div className="z-10 absolute top-2 right-2">
-              <Button 
-                type="button" 
-                onClick={() => handleRemove(url)} 
-                variant="destructive" 
+              <Button
+                type="button"
+                onClick={() => handleRemove(url)}
+                variant="destructive"
                 size="sm"
                 disabled={disabled || uploading}
               >
@@ -175,7 +175,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
               fill
               className="object-cover"
               alt="Image"
-              src={url}
+              src={url as string}  // Type assertion since we know it's a string at this point
+              sizes="(max-width: 200px) 100vw, 200px"
               onError={(e) => {
                 // Handle image load error
                 console.error(`Failed to load image: ${url}`);

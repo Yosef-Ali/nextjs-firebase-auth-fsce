@@ -12,41 +12,44 @@ export const columns: ColumnDef<Partner>[] = [
     header: "Order",
   },
   {
-    accessorKey: "logoUrl",
+    accessorKey: "logo",
     header: "Logo",
     cell: ({ row }) => {
       const name = row.original.name || "";
-      const logo = row.original.logoUrl;
+      const logo = row.original.logo || "";  // Convert undefined to empty string
       const initials = name
         .split(" ")
         .map((n) => n?.[0] || "")
         .join("")
         .toUpperCase();
 
-      return (
-        <div className="relative flex items-center justify-center w-12 h-12 overflow-hidden bg-gray-100 rounded-md">
-          {logo ? (
-            <Image
-              src={logo}
-              alt={name}
-              fill
-              className="object-contain"
-              sizes="48px"
-              onError={(e) => {
-                // If image fails to load, show initials instead
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                const parent = target.parentElement;
-                if (parent) {
-                  parent.innerHTML = `<span class="text-lg font-bold text-gray-500">${initials}</span>`;
-                }
-              }}
-            />
-          ) : (
+      if (!logo) {
+        return (
+          <div className="relative flex items-center justify-center w-12 h-12 overflow-hidden bg-gray-100 rounded-md">
             <span className="text-lg font-bold text-gray-500">
               {initials}
             </span>
-          )}
+          </div>
+        );
+      }
+
+      return (
+        <div className="relative flex items-center justify-center w-12 h-12 overflow-hidden bg-gray-100 rounded-md">
+          <Image
+            src={logo as string}  // Type assertion since we know it's a string at this point
+            alt={name}
+            fill
+            className="object-contain"
+            sizes="48px"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              const parent = target.parentElement;
+              if (parent) {
+                parent.innerHTML = `<span class="text-lg font-bold text-gray-500">${initials}</span>`;
+              }
+            }}
+          />
         </div>
       );
     },

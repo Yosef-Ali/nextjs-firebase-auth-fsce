@@ -90,7 +90,7 @@ export default function NewsDetailPage() {
               <Badge variant="secondary">News</Badge>
               {article.category && (
                 <Badge variant="outline" className="text-primary">
-                  {article.category}
+                  {article.category.name}
                 </Badge>
               )}
             </div>
@@ -170,7 +170,7 @@ export default function NewsDetailPage() {
                           <Badge variant="secondary">News</Badge>
                           {article.category && (
                             <Badge variant="outline" className="text-primary">
-                              {article.category}
+                              {article.category.name}
                             </Badge>
                           )}
                         </div>

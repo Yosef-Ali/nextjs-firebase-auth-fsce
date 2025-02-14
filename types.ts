@@ -5,7 +5,7 @@ export interface Partner {
   phone: string;
   website?: string;
   description?: string;
-  logoUrl?: string;
+  logo?: string;
   position: string;
   partnerType: 'partner' | 'membership';
   order: number;

@@ -5,7 +5,7 @@ import { Plus, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { mediaService } from '@/app/services/media';
 import { Media } from '@/app/types/media';
@@ -13,6 +13,7 @@ import MediaGrid from '@/app/dashboard/_components/MediaGrid';
 import { MediaUploader } from '@/app/dashboard/_components/MediaUploader';
 import MediaViewer from '@/app/dashboard/_components/MediaViewer';
 import MediaEditor from '@/app/dashboard/_components/MediaEditor';
+import { toast } from '@/hooks/use-toast';
 
 export default function MediaLibraryPage() {
   const [media, setMedia] = useState<Media[]>([]);

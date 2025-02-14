@@ -96,9 +96,9 @@ export default function PartnersPage() {
                   <div className="flex flex-col h-full">
                     <div className="w-full bg-white p-4">
                       <div className="w-32 h-32 relative mx-auto">
-                        {partner.logoUrl ? (
+                        {partner.logo ? (
                           <Image
-                            src={partner.logoUrl}
+                            src={partner.logo}
                             alt={partner.name}
                             fill
                             className="object-contain"
@@ -148,9 +148,9 @@ export default function PartnersPage() {
                   <div className="flex flex-col h-full">
                     <div className="w-full bg-white p-4">
                       <div className="w-32 h-32 relative mx-auto">
-                        {partner.logoUrl ? (
+                        {partner.logo? (
                           <Image
-                            src={partner.logoUrl}
+                            src={partner.logo}
                             alt={partner.name}
                             fill
                             className="object-contain"

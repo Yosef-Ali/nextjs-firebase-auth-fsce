@@ -20,10 +20,16 @@ export const PartnersClient = () => {
           const data = doc.data();
           return {
             id: doc.id,
-            ...data,
-            order: data.order || Number.MAX_SAFE_INTEGER,
-            partnerType: data.partnerType || "partner",
-            createdAt: data.createdAt?.toDate(),
+            name: data.name || "",
+            email: data.email || "",
+            phone: data.phone || "",
+            logo: data.logo,
+            website: data.website,
+            order: data.order || 1,
+            partnerType: data.partnerType || "membership",
+            description: data.description,
+            createdAt: data.createdAt?.toDate() || new Date(),
+            updatedAt: data.updatedAt?.toDate() || new Date()
           } as Partner;
         });
         setPartners(partners);

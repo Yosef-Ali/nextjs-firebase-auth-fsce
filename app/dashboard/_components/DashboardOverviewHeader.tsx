@@ -16,7 +16,6 @@ import {
   User as UserIcon,
   Settings,
   LogOut,
-  Home,
   Users,
   FileText,
   Image as ImageIcon,
@@ -31,7 +30,7 @@ interface QuickAction {
 }
 
 const DashboardOverviewHeader = () => {
-  const { user, userData, signOut } = useAuth();
+  const { userData, signOut } = useAuth();
   const isAdmin = true; // Allow all users access
 
   const quickActions: QuickAction[] = [

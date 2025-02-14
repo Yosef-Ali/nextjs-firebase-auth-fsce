@@ -87,7 +87,7 @@ export default function EventDetailPage() {
               <Badge variant="secondary">Event</Badge>
               {event.category && (
                 <Badge variant="outline" className="text-primary">
-                  {event.category}
+                  {event.category.name}
                 </Badge>
               )}
             </div>
@@ -181,7 +181,7 @@ export default function EventDetailPage() {
                           <Badge variant="secondary">Event</Badge>
                           {event.category && (
                             <Badge variant="outline" className="text-primary">
-                              {event.category}
+                              {event.category.name}
                             </Badge>
                           )}
                         </div>

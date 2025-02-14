@@ -20,8 +20,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { MoreHorizontal, PinIcon, EditIcon, Trash2Icon } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { MoreHorizontal, PinIcon } from 'lucide-react';
 import { Post } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
 import { useAuth } from '@/lib/hooks/useAuth';
@@ -39,7 +39,6 @@ function PostsTable({ initialPosts }: PostsTableProps) {
   const router = useRouter();
   const { searchQuery } = useSearch();
   const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {

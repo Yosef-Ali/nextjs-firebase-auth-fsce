@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Heading } from '@/components/ui/heading';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { usersService } from '@/app/services/users';
@@ -16,7 +15,7 @@ const STORAGE_LIMIT_MB = 1024; // 1GB storage
 const DATABASE_LIMIT_MB = 500; // 500MB database
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user: currentUser } = useAuth();
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalPosts: 0,
@@ -29,14 +28,14 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const users = await usersService.getAllUsers();
+        const response = await usersService.getAllUsers();
         // Simulated storage and database stats - replace with actual data fetching
         const mockStorageUsed = 150; // MB
         const mockDatabaseUsed = 50; // MB
         
         setStats(prev => ({
           ...prev,
-          totalUsers: users.length,
+          totalUsers: response.data?.length || 0,
           storageUsed: mockStorageUsed,
           databaseUsed: mockDatabaseUsed
         }));
@@ -123,20 +122,11 @@ export default function DashboardPage() {
             <HardDrive className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <div className="text-2xl font-bold">
-                {stats.storageUsed < 1000 
-                  ? `${stats.storageUsed}MB` 
-                  : `${(stats.storageUsed/1024).toFixed(2)}GB`} / 1GB
-              </div>
-              <Progress 
-                value={storagePercentage} 
-                className="h-2" 
-                variant={storagePercentage > 80 ? "destructive" : "default"}
-              />
-              {storagePercentage >= 80 && (
-                <p className="text-xs text-amber-500">Storage usage is getting high</p>
-              )}
+            <div className="mt-4">
+              <Progress value={storagePercentage} className="h-2" />
+              <p className="mt-2 text-sm text-muted-foreground">
+                {stats.storageUsed}MB / {STORAGE_LIMIT_MB}MB used
+              </p>
             </div>
           </CardContent>
         </Card>

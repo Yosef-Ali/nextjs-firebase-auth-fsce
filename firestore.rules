@@ -1,35 +1,69 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
-    function isAuthenticated() {
+    // Helper functions for role checking
+    function isSignedIn() {
       return request.auth != null;
     }
     
-    function isAdminUser() {
-      return isAuthenticated() && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function hasRole(role) {
+      let userData = getUserData();
+      return userData != null && userData.role == role;
+    }
+    
+    function isAdmin() {
+      let userData = getUserData();
+      return userData != null && (userData.role == 'admin' || userData.role == 'super_admin');
+    }
+    
+    function isAuthor() {
+      let userData = getUserData();
+      return userData != null && (userData.role == 'author' || isAdmin());
+    }
+    
+    function isEditor() {
+      let userData = getUserData();
+      return userData != null && (userData.role == 'editor' || isAuthor());
+    }
+    
+    function isActive() {
+      let userData = getUserData();
+      return userData != null && userData.status == 'active';
     }
 
-    // Media collection rules - simplified for basic operations
-    match /media/{mediaId} {
-      allow read: if true;  // Allow all reads
-      allow create: if isAuthenticated();
-      allow update, delete: if isAuthenticated() && (
-        resource.data.uploadedBy == request.auth.uid || isAdminUser()
-      );
-      // No complex queries that require indexes
-    }
-
+    // User collection rules
     match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && (
+        (request.auth.uid == userId && !("role" in request.resource.data)) || 
+        isAdmin()
+      );
+      allow delete: if isAdmin();
     }
 
+    // Posts collection rules
     match /posts/{postId} {
       allow read: if true;
-      allow create: if request.auth != null && isAuthorOrAdmin();
-      allow update, delete: if request.auth != null && (isAdmin() || (isAuthorOfPost() && isAuthorOrAdmin()));
+      allow create: if isSignedIn() && isAuthor() && isActive();
+      allow update: if isSignedIn() && isActive() && (
+        (resource.data.authorId == request.auth.uid && isAuthor()) ||
+        isEditor()
+      );
+      allow delete: if isSignedIn() && isActive() && (
+        resource.data.authorId == request.auth.uid || 
+        isAdmin()
+      );
+    }
+
+    // Settings collection rules
+    match /settings/{settingId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
   }
 }

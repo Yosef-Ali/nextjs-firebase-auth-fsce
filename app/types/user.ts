@@ -1,75 +1,34 @@
-// Importing necessary types
-import { User as FirebaseUser } from 'firebase/auth';
+import { User as FirebaseUser, UserMetadata as FirebaseUserMetadata } from 'firebase/auth';
 
-// Enum for user roles
+// Enum for user roles with clear hierarchy
 export enum UserRole {
-  ADMIN = 'admin',
-  AUTHOR = 'author',
-  USER = 'user'
+  SUPER_ADMIN = 'super_admin',  // Has full system access
+  ADMIN = 'admin',              // Has administrative access
+  AUTHOR = 'author',            // Can manage content
+  EDITOR = 'editor',            // Can edit content
+  USER = 'user',               // Basic authenticated user
+  GUEST = 'guest'              // Unauthenticated user
 }
 
+// User status enum
 export enum UserStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  PENDING = 'pending',
-  BLOCKED = 'blocked'
+  ACTIVE = 'active',           // User is active and can access the system
+  INACTIVE = 'inactive',       // User account is temporarily disabled
+  PENDING = 'pending',         // Awaiting email verification or approval
+  BLOCKED = 'blocked'          // User access has been revoked
 }
 
 // Base interface for user metadata
 export interface UserMetadata {
   uid: string;
-  email: string | null;  // Changed to match FirebaseUser type
+  email: string | null;
   role: UserRole;
-  status: UserStatus;  // Add this line
+  status: UserStatus;
   displayName: string | null;
   photoURL: string | null;
   metadata: {
     lastLogin: number;
     createdAt: number;
-  };
-}
-
-// Custom AppUser type that includes all necessary properties
-export type AppUser = Partial<FirebaseUser> & {
-  uid: string;
-  email: string;
-  displayName: string | null;
-  photoURL: string | null;
-  role: UserRole;
-  status: UserStatus;
-  createdAt?: number;
-  updatedAt?: number;
-  invitedBy?: string | null;
-  invitationToken?: string | null;
-  emailVerified: boolean;
-  metadata?: {
-    lastLogin?: number;
-    createdAt?: number;
-  };
-  providerData?: any[];
-}
-
-// Extended user interface that includes an id field
-export interface ExtendedAppUser extends AppUser {  // Updated to 'ExtendedAppUser'
-  id: string;
-}
-
-// Interface for updating user data
-export interface AppUserUpdateData {  // Updated to 'AppUserUpdateData'
-  role?: UserRole;
-  status?: UserStatus;
-  email?: string;
-  displayName?: string;
-  photoURL?: string;
-}
-
-export interface UserDataResult {
-  uid: string;
-  role: UserRole;
-  status: UserStatus; // Add this line
-  metadata?: {
-    createdAt?: number;
-    lastLogin?: number;
   };
 }
 
@@ -92,15 +51,33 @@ export interface User {
   };
 }
 
-const userMetadata: UserMetadata = {
-  uid: 'some-uid',
-  email: 'user@example.com',
-  role: UserRole.USER, // Add the status property
-  status: UserStatus.ACTIVE,
-  displayName: 'User Name',
-  photoURL: null,
-  metadata: {
-    lastLogin: Date.now(),
-    createdAt: Date.now(),
-  },
-};
+// Extended metadata interface that includes both Firebase and custom fields
+export interface ExtendedUserMetadata extends FirebaseUserMetadata {
+  lastLogin: number;
+  createdAt: number;
+}
+
+// Custom AppUser type that extends FirebaseUser
+export interface AppUser extends FirebaseUser {
+  role: UserRole;
+  status: UserStatus;
+  createdAt?: number;
+  updatedAt?: number;
+  invitedBy?: string | null;
+  invitationToken?: string | null;
+  metadata: ExtendedUserMetadata;
+}
+
+// Extended user interface that includes an id field
+export interface ExtendedAppUser extends AppUser {
+  id: string;
+}
+
+// Interface for updating user data
+export interface AppUserUpdateData {
+  role?: UserRole;
+  status?: UserStatus;
+  email?: string;
+  displayName?: string;
+  photoURL?: string;
+}

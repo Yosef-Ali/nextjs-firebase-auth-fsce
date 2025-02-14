@@ -1,5 +1,21 @@
 import { User as FirebaseUser } from 'firebase/auth';
-import { AppUser as AppUserType, UserRole as AppUserRole, UserStatus } from '@/app/types/user';  // Import AppUser
+import { AppUser as AppUserType, UserRole as AppUserRole, UserStatus } from '@/app/types/user';
+
+// Role hierarchy definition - each role includes permissions of roles that come after it
+const ROLE_HIERARCHY = {
+  [AppUserRole.SUPER_ADMIN]: [AppUserRole.SUPER_ADMIN, AppUserRole.ADMIN, AppUserRole.AUTHOR, AppUserRole.EDITOR, AppUserRole.USER],
+  [AppUserRole.ADMIN]: [AppUserRole.ADMIN, AppUserRole.AUTHOR, AppUserRole.EDITOR, AppUserRole.USER],
+  [AppUserRole.AUTHOR]: [AppUserRole.AUTHOR, AppUserRole.EDITOR, AppUserRole.USER],
+  [AppUserRole.EDITOR]: [AppUserRole.EDITOR, AppUserRole.USER],
+  [AppUserRole.USER]: [AppUserRole.USER],
+  [AppUserRole.GUEST]: [AppUserRole.GUEST]
+};
+
+// Define a constant for admin emails that can be easily updated
+const ADMIN_EMAILS = [
+  process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+  'dev.yosefali@gmail.com'
+].filter(Boolean) as string[];
 
 interface AuthorizationContext {
   user: AppUserType | null;
@@ -9,7 +25,7 @@ interface AuthorizationContext {
 export class Authorization {
   private static instance: Authorization;
 
-  constructor() {}
+  private constructor() { }
 
   public static getInstance(): Authorization {
     if (!Authorization.instance) {
@@ -18,39 +34,62 @@ export class Authorization {
     return Authorization.instance;
   }
 
+  public hasRole(user: AppUserType | null, requiredRole: AppUserRole): boolean {
+    if (!user?.role) return false;
+    return ROLE_HIERARCHY[user.role]?.includes(requiredRole) || false;
+  }
+
   public isAdmin(user: AppUserType | null): boolean {
     if (!user) return false;
-    return user.role === AppUserRole.ADMIN;
+    return this.hasRole(user, AppUserRole.ADMIN) || this.hasRole(user, AppUserRole.SUPER_ADMIN);
   }
 
   public isAuthor(user: AppUserType | null): boolean {
     if (!user) return false;
-    return user.role === AppUserRole.AUTHOR || user.role === AppUserRole.ADMIN;
+    return this.hasRole(user, AppUserRole.AUTHOR);
   }
 
-  // Get user role from user document
-  // @param user User object
-  // @returns UserRole
-  static getUserRole(user: FirebaseUser | null): AppUserRole {
-    if (!user) return AppUserRole.USER;
-    return user.role || AppUserRole.USER;
+  public canManageUsers(user: AppUserType | null): boolean {
+    return this.isAdmin(user);
   }
 
-  // Create authorization context
-  // @param user User object
-  // @param resourceOwnerId Optional resource owner ID
-  // @returns AuthorizationContext
+  public canEditContent(user: AppUserType | null): boolean {
+    if (!user) return false;
+    return this.hasRole(user, AppUserRole.EDITOR);
+  }
+
+  public canCreateContent(user: AppUserType | null): boolean {
+    if (!user) return false;
+    return this.hasRole(user, AppUserRole.AUTHOR);
+  }
+
+  public isActiveUser(user: AppUserType | null): boolean {
+    return user?.status === UserStatus.ACTIVE;
+  }
+
+  // Create authorization context with full user information
   static createContext(user: FirebaseUser | null, resourceOwnerId?: string): AuthorizationContext {
+    if (!user) {
+      return { user: null, resourceOwnerId };
+    }
+
+    // Determine role based on email for admin or default to USER
+    const role = user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())
+      ? AppUserRole.ADMIN
+      : AppUserRole.USER;
+
     return {
-      user: user ? {
+      user: {
         ...user,
-        role: this.getUserRole(user),
+        role,
         status: UserStatus.ACTIVE,
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        invitedBy: null,
-        invitationToken: null,
-      } as AppUserType : null,
+        metadata: {
+          lastLogin: user.metadata?.lastSignInTime ? new Date(user.metadata.lastSignInTime).getTime() : Date.now(),
+          createdAt: user.metadata?.creationTime ? new Date(user.metadata.creationTime).getTime() : Date.now()
+        }
+      } as AppUserType,
       resourceOwnerId
     };
   }
@@ -138,15 +177,21 @@ export class Authorization {
   }
 }
 
+// Export singleton instance
+export const authorization = Authorization.getInstance();
+
 // Utility function to handle unauthorized access
-// @param context Authorization context
-// @param requiredRole Minimum role required
-// @throws Error if access is not permitted
 export function assertAuthorized(
   context: AuthorizationContext,
   requiredRole: AppUserRole = AppUserRole.USER
 ): void {
-  if (!Authorization.canAccess(context, requiredRole)) {
+  const auth = Authorization.getInstance();
+
+  if (!context.user || !auth.hasRole(context.user, requiredRole)) {
     throw new Error('Unauthorized access');
+  }
+
+  if (!auth.isActiveUser(context.user)) {
+    throw new Error('Account is not active');
   }
 }
