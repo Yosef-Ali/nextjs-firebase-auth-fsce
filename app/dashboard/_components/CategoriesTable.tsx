@@ -21,37 +21,57 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MoreHorizontal, Pencil, Trash } from 'lucide-react';
 import { Category } from '@/app/types/category';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { toast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface CategoriesTableProps {
   categories: Category[];
   onEdit: (category: Category) => void;
   onDelete: (category: Category) => Promise<void>;
   isLoading?: boolean;
+  canManage?: boolean;
 }
 
-function CategoriesTable({ categories, onEdit, onDelete, isLoading = false }: CategoriesTableProps) {
-  const { user } = useAuth();
+export default function CategoriesTable({
+  categories,
+  onEdit,
+  onDelete,
+  isLoading = false,
+  canManage = false
+}: CategoriesTableProps) {
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteClick = (category: Category) => {
+    setCategoryToDelete(category);
+  };
+
+  const handleConfirmDelete = async () => {
     if (categoryToDelete) {
-      try {
-        await onDelete(categoryToDelete);
-        toast({
-          title: 'Success',
-          description: 'Category deleted successfully',
-        });
-        setCategoryToDelete(null);
-        setDeleteError(null);
-      } catch (error) {
-        setDeleteError('Failed to delete category. Please try again later.');
-      }
+      await onDelete(categoryToDelete);
+      setCategoryToDelete(null);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="rounded-md border">
+        <div className="h-12 px-4 border-b flex items-center justify-between bg-muted/30">
+          <Skeleton className="h-4 w-[100px]" />
+          <Skeleton className="h-4 w-[80px]" />
+          <Skeleton className="h-4 w-[60px]" />
+          <Skeleton className="h-4 w-[100px]" />
+        </div>
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="flex items-center justify-between p-4 border-b last:border-0">
+            <Skeleton className="h-4 w-[180px]" />
+            <Skeleton className="h-4 w-[60px]" />
+            <Skeleton className="h-6 w-[80px] rounded-full" />
+            <Skeleton className="h-8 w-8 rounded-md" />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -59,37 +79,23 @@ function CategoriesTable({ categories, onEdit, onDelete, isLoading = false }: Ca
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Description</TableHead>
             <TableHead>Items</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isLoading ? (
-            <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center">
-                Loading categories...
+          {categories.map((category) => (
+            <TableRow key={category.id}>
+              <TableCell>{category.name}</TableCell>
+              <TableCell>{category.itemCount || 0}</TableCell>
+              <TableCell>
+                <Badge variant="outline" className="capitalize">
+                  {category.type || 'post'}
+                </Badge>
               </TableCell>
-            </TableRow>
-          ) : categories.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center">
-                No categories found.
-              </TableCell>
-            </TableRow>
-          ) : (
-            categories.map((category) => (
-              <TableRow key={category.id}>
-                <TableCell className="font-medium">{category.name}</TableCell>
-                <TableCell>{category.description || '-'}</TableCell>
-                <TableCell>
-                  <Badge variant="secondary">
-                    {category.itemCount || 0} {(category.itemCount || 0) === 1 ? 'item' : 'items'}
-                  </Badge>
-                </TableCell>
-                <TableCell>{new Date(category.createdAt).toLocaleDateString()}</TableCell>
-                <TableCell>
+              <TableCell className="text-right">
+                {canManage ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
@@ -104,19 +110,21 @@ function CategoriesTable({ categories, onEdit, onDelete, isLoading = false }: Ca
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         className="text-red-600"
-                        onClick={() => setCategoryToDelete(category)}
+                        onClick={() => handleDeleteClick(category)}
                       >
                         <Trash className="mr-2 h-4 w-4" />
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
+                ) : (
+                  <Badge variant="secondary">View Only</Badge>
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
 
@@ -125,18 +133,15 @@ function CategoriesTable({ categories, onEdit, onDelete, isLoading = false }: Ca
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the category "{categoryToDelete?.name}".
+              This will permanently delete the category &quot;{categoryToDelete?.name}&quot;.
               This action cannot be undone.
             </AlertDialogDescription>
-            {deleteError && (
-              <div className="mt-4 text-red-600">{deleteError}</div>
-            )}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              onClick={handleConfirmDelete}
               className="bg-red-600 hover:bg-red-700"
-              onClick={handleDeleteConfirm}
             >
               Delete
             </AlertDialogAction>
@@ -146,5 +151,3 @@ function CategoriesTable({ categories, onEdit, onDelete, isLoading = false }: Ca
     </>
   );
 }
-
-export default CategoriesTable;

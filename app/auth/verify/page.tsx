@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { UserStatus } from '@/app/types/user';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/app/hooks/use-auth';
 
 function VerifyContent() {
   const searchParams = useSearchParams();
@@ -82,7 +82,7 @@ function VerifyContent() {
 
 export default function VerifyPage() {
   return (
-    <Suspense 
+    <Suspense
       fallback={
         <div className="flex flex-col items-center justify-center min-h-screen">
           <h1 className="text-2xl font-bold mb-4">Loading...</h1>

@@ -3,7 +3,7 @@
 import type { Metadata } from "next";
 import './globals.css'
 import { Inter } from 'next/font/google'
-import { AuthProvider } from '@/app/providers/AuthProvider';
+import { AuthProvider } from '@/lib/context/auth-context';
 import { Toaster } from "@/components/ui/toaster"
 import AuthRedirectHandler from '@/components/auth/AuthRedirectHandler';
 import { useEffect } from 'react';

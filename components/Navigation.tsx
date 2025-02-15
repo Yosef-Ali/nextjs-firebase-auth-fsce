@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/app/hooks/use-auth';
 import { Logo } from './Logo';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -26,10 +26,10 @@ export default function Navigation() {
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
 
   const isActive = (path: string) => pathname === path;
-  
+
   const toggleSubmenu = (title: string) => {
-    setExpandedMenus(prev => 
-      prev.includes(title) 
+    setExpandedMenus(prev =>
+      prev.includes(title)
         ? prev.filter(item => item !== title)
         : [...prev, title]
     );
@@ -132,7 +132,7 @@ export default function Navigation() {
               </Button>
             </Link>
           )}
-          
+
           {/* Mobile Menu Button */}
           <Button
             variant="ghost"
@@ -161,7 +161,7 @@ export default function Navigation() {
                       )}
                     >
                       <span>{item.title}</span>
-                      <ChevronDown 
+                      <ChevronDown
                         className={cn(
                           'h-4 w-4 transition-transform duration-200',
                           isSubmenuExpanded(item.title) ? 'transform rotate-180' : ''

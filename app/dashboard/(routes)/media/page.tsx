@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { mediaService } from '@/app/services/media';
 import { Media } from '@/app/types/media';
 import MediaGrid from '@/app/dashboard/_components/MediaGrid';
@@ -14,8 +15,10 @@ import { MediaUploader } from '@/app/dashboard/_components/MediaUploader';
 import MediaViewer from '@/app/dashboard/_components/MediaViewer';
 import MediaEditor from '@/app/dashboard/_components/MediaEditor';
 import { toast } from '@/hooks/use-toast';
+import { withRoleProtection } from '@/app/lib/withRoleProtection';
+import { UserRole } from '@/app/types/user';
 
-export default function MediaLibraryPage() {
+function MediaLibraryPage() {
   const [media, setMedia] = useState<Media[]>([]);
   const [filteredMedia, setFilteredMedia] = useState<Media[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -75,8 +78,8 @@ export default function MediaLibraryPage() {
 
     // Client-side sorting
     filtered.sort((a, b) => {
-      const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt).getTime();
-      const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : new Date(b.createdAt).getTime();
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
       return dateB - dateA;
     });
 
@@ -94,88 +97,81 @@ export default function MediaLibraryPage() {
     loadMedia();
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <p className="text-muted-foreground">Loading media...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="h-full flex flex-col space-y-4 p-8">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-semibold tracking-tight">Media Library</h2>
-          <p className="text-sm text-muted-foreground">
-            Manage your media files and assets
-          </p>
+    <div className="container p-6 mx-auto space-y-8">
+      <Card className="bg-transparent border-none shadow-none">
+        <CardHeader className="px-0">
+          <CardTitle className="text-3xl font-bold tracking-tight text-foreground">
+            Media Library
+          </CardTitle>
+          <CardDescription className="text-base text-muted-foreground">
+            Manage and organize media files. Upload, categorize, and track various types of media assets.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
+      <Card className="bg-transparent border rounded-lg shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between border-b rounded-t-lg">
+          <h3 className="text-lg font-semibold leading-none tracking-tight">Media</h3>
+          <Button onClick={() => setIsUploaderOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Upload Media
+          </Button>
+        </CardHeader>
+
+        <div className="p-4 space-y-4">
+          {error && (
+            <div className="p-4 text-red-500 border-b">
+              <p className="font-medium">Error loading media:</p>
+              <p className="text-sm">{error}</p>
+            </div>
+          )}
+
+          <div className="flex items-center space-x-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search media..."
+                className="pl-8"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <Tabs defaultValue="all" value={selectedType} onValueChange={setSelectedType}>
+            <TabsList>
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="image">Images</TabsTrigger>
+              <TabsTrigger value="video">Videos</TabsTrigger>
+              <TabsTrigger value="audio">Audio</TabsTrigger>
+              <TabsTrigger value="document">Documents</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value={selectedType} className="mt-4">
+              <ScrollArea className="h-[calc(100vh-380px)]">
+                <MediaGrid items={filteredMedia} onView={setSelectedMedia} />
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
         </div>
-        <Button onClick={() => setIsUploaderOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Upload Media
-        </Button>
-      </div>
-
-      {error && (
-        <div className="bg-destructive/10 text-destructive px-4 py-2 rounded-md">
-          <p className="font-medium">Error loading media:</p>
-          <p className="text-sm">{error}</p>
-        </div>
-      )}
-
-      <div className="flex items-center space-x-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search media..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <Tabs defaultValue="all" value={selectedType} onValueChange={setSelectedType}>
-        <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="image">Images</TabsTrigger>
-          <TabsTrigger value="video">Videos</TabsTrigger>
-          <TabsTrigger value="audio">Audio</TabsTrigger>
-          <TabsTrigger value="document">Documents</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value={selectedType} className="mt-4">
-          <ScrollArea className="h-[calc(100vh-280px)]">
-            <MediaGrid
-              items={filteredMedia}
-              onView={setSelectedMedia}
-            />
-          </ScrollArea>
-        </TabsContent>
-      </Tabs>
+      </Card>
 
       <Dialog open={isUploaderOpen} onOpenChange={setIsUploaderOpen}>
         <DialogContent className="sm:max-w-[900px]">
           <DialogHeader>
-            <DialogTitle>Media Gallery</DialogTitle>
-            <DialogDescription>
-              {isLoading ? 'Loading media...' : `${filteredMedia.length} items found`}
-            </DialogDescription>
+            <DialogTitle>Upload Media</DialogTitle>
+            <DialogDescription>Add new media files to your library</DialogDescription>
           </DialogHeader>
-
-          {isLoading ? (
-            <div className="h-[400px] flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : error ? (
-            <div className="h-[400px] flex items-center justify-center text-destructive">
-              <p>{error}</p>
-            </div>
-          ) : filteredMedia.length === 0 ? (
-            <div className="h-[400px] flex items-center justify-center text-muted-foreground">
-              <p>No media found</p>
-            </div>
-          ) : (
-            <ScrollArea className="h-[400px]">
-              <MediaGrid
-                items={filteredMedia}
-                onView={setSelectedMedia}
-              />
-            </ScrollArea>
-          )}
+          <MediaUploader onComplete={handleUploadComplete} />
         </DialogContent>
       </Dialog>
 
@@ -202,3 +198,5 @@ export default function MediaLibraryPage() {
     </div>
   );
 }
+
+export default withRoleProtection(MediaLibraryPage, UserRole.ADMIN);

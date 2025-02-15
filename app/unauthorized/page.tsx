@@ -1,13 +1,49 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/app/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ShieldAlert } from 'lucide-react';
+import { useEffect } from 'react';
+import { LoadingScreen } from '@/components/loading-screen';
+import { UserRole, UserStatus } from '@/app/types/user';
+import { toast } from '@/hooks/use-toast';
 
 export default function UnauthorizedPage() {
-  const { user, userData } = useAuth();
+  const { user, userData, loading, error } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Authentication Error",
+        description: error.message,
+        variant: "destructive"
+      });
+      router.replace('/sign-in');
+      return;
+    }
+
+    if (!loading) {
+      if (!user) {
+        router.replace('/sign-in');
+      } else if (userData?.status !== UserStatus.ACTIVE) {
+        router.replace('/pending-approval');
+      } else if (userData?.role === UserRole.ADMIN || userData?.role === UserRole.AUTHOR) {
+        // If user actually has access, redirect them away from this page
+        router.replace('/dashboard');
+      }
+    }
+  }, [user, userData, loading, router, error]);
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  // If we're still loading user data, show loading state
+  if (!userData && user) {
+    return <LoadingScreen />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

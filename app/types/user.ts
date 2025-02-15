@@ -81,3 +81,9 @@ export interface AppUserUpdateData {
   displayName?: string;
   photoURL?: string;
 }
+
+// Result type for user data operations
+export interface UserDataResult {
+  user: User;
+  metadata: ExtendedUserMetadata;
+}

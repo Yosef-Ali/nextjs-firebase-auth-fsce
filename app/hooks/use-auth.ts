@@ -1,230 +1,150 @@
 "use client";
 
-import { UserRole, UserStatus, UserMetadata, User } from '@/app/types/user';
-import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
-import { usersService } from '@/app/services/users';
+import { getUserData, createUserData, UserData } from '@/app/lib/firebase/user-service';
+import { UserRole, UserStatus } from '../types/user';
+import type { AppUser, UserMetadata } from '../types/user';
+import type { AuthErrorCodes } from '../types/auth-types';
 import {
     signInWithEmailAndPassword,
-    signOut as firebaseSignOut,
-    onAuthStateChanged,
-    User as FirebaseUser,
-    GoogleAuthProvider,
     signInWithPopup,
+    GoogleAuthProvider,
     createUserWithEmailAndPassword,
-    UserCredential,
-    sendPasswordResetEmail
+    signOut as firebaseSignOut,
+    sendPasswordResetEmail,
+    onAuthStateChanged,
+    UserCredential
 } from 'firebase/auth';
-import { authorization } from '../lib/authorization';
 
-export interface AuthUser extends FirebaseUser {
-    role?: UserRole;
-    status?: UserStatus;
+const googleProvider = new GoogleAuthProvider();
+
+function convertToUserMetadata(userData: UserData): UserMetadata {
+    const now = Date.now();
+    return {
+        uid: userData.uid,
+        email: userData.email || null,
+        role: userData.role || UserRole.USER,
+        status: userData.status || UserStatus.PENDING,
+        displayName: userData.displayName || null,
+        photoURL: null,
+        metadata: {
+            lastLogin: userData.metadata?.lastLogin || now,
+            createdAt: userData.metadata?.createdAt || now
+        }
+    };
 }
 
-interface AuthError extends Error {
-    code?: string;
-}
-
-interface AuthContextType {
-    user: AuthUser | null;
-    userData: UserMetadata | null;
-    loading: boolean;
-    error: Error | null;
-    signIn: (email: string, password: string) => Promise<UserMetadata>;
-    signOut: () => Promise<void>;
-    signInWithGoogle: () => Promise<{ userCredential: UserCredential; userData: UserMetadata }>;
-    signUp: (email: string, password: string, displayName: string) => Promise<{ userCredential: UserCredential; userData: UserMetadata }>;
-    resetPassword: (email: string) => Promise<void>;
-}
-
-export function useAuth(): AuthContextType {
-    const [user, setUser] = useState<AuthUser | null>(null);
+export function useAuth() {
+    const [user, setUser] = useState<AppUser | null>(null);
     const [userData, setUserData] = useState<UserMetadata | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<AuthError | null>(null);
+    const [error, setError] = useState<Error | null>(null);
     const router = useRouter();
 
-    const createUserMetadata = (
-        firebaseUser: FirebaseUser,
-        userData: User
-    ): UserMetadata => {
-        const now = Date.now();
-        return {
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            role: userData.role,
-            status: userData.status,
-            displayName: userData.displayName || firebaseUser.displayName,
-            photoURL: userData.photoURL || firebaseUser.photoURL,
-            metadata: {
-                lastLogin: firebaseUser.metadata?.lastSignInTime ? new Date(firebaseUser.metadata.lastSignInTime).getTime() : now,
-                createdAt: userData.createdAt || (firebaseUser.metadata?.creationTime ? new Date(firebaseUser.metadata.creationTime).getTime() : now)
-            }
-        };
-    };
-
-    // Handle role-based routing
-    const handleRoleBasedRedirect = (userData: User) => {
-        const currentPath = window.location.pathname;
-        const isProtectedRoute = currentPath.startsWith('/dashboard');
-
-        if (!isProtectedRoute) return;
-
-        if (!authorization.hasRole(userData as AuthUser, UserRole.EDITOR)) {
-            router.replace('/unauthorized');
-            return;
-        }
-
-        // Specific dashboard section restrictions
-        if (currentPath.includes('/dashboard/users') && !authorization.canManageUsers(userData as AuthUser)) {
-            router.replace('/dashboard');
-        }
-    };
-
     useEffect(() => {
+        let mounted = true;
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            if (!mounted) return;
+
             try {
+                setLoading(true);
                 setError(null);
+
                 if (firebaseUser) {
-                    const userData = await usersService.createUserIfNotExists(firebaseUser);
-                    if (userData) {
-                        const authUser = {
-                            ...firebaseUser,
-                            role: userData.role,
-                            status: userData.status
-                        } as AuthUser;
+                    try {
+                        // Get user data from Firestore
+                        const userDoc = await getUserData(firebaseUser);
 
-                        const userMetadata = createUserMetadata(firebaseUser, userData);
-
-                        setUser(authUser);
-                        setUserData(userMetadata);
-
-                        // Check if user is active
-                        if (userData.status !== UserStatus.ACTIVE) {
-                            router.replace('/account-pending');
-                            return;
+                        if (userDoc) {
+                            if (mounted) {
+                                setUserData(convertToUserMetadata(userDoc));
+                                setUser(firebaseUser as AppUser);
+                            }
+                        } else {
+                            // If no user data exists, create it
+                            const newUserData = await createUserData(firebaseUser, firebaseUser.displayName || '');
+                            if (mounted) {
+                                setUserData(convertToUserMetadata(newUserData));
+                                setUser(firebaseUser as AppUser);
+                            }
                         }
-
-                        handleRoleBasedRedirect(userData);
-                    } else {
-                        setUser(null);
-                        setUserData(null);
-                        router.replace('/sign-in');
+                    } catch (e) {
+                        console.error("Error handling user data:", e);
+                        if (mounted) {
+                            setError(e as Error);
+                        }
                     }
                 } else {
-                    setUser(null);
-                    setUserData(null);
+                    if (mounted) {
+                        setUser(null);
+                        setUserData(null);
+                    }
                 }
-            } catch (err) {
-                console.error('Error in auth state change:', err);
-                setError(err as AuthError);
-                setUser(null);
-                setUserData(null);
+            } catch (e) {
+                console.error("Auth state change error:", e);
+                if (mounted) {
+                    setError(e as Error);
+                }
             } finally {
-                setLoading(false);
+                if (mounted) {
+                    setLoading(false);
+                }
             }
         });
 
-        return () => unsubscribe();
-    }, [router]);
+        return () => {
+            mounted = false;
+            unsubscribe();
+        };
+    }, []);
 
-    const handleAuthError = (error: any): AuthError => {
-        console.error('Authentication error:', error);
-        const errorMessage = error.code === 'auth/user-not-found' ? 'No account found with this email' :
-            error.code === 'auth/wrong-password' ? 'Incorrect password' :
-                error.code === 'auth/invalid-email' ? 'Invalid email format' :
-                    error.code === 'auth/email-already-in-use' ? 'Email already registered' :
-                        error.code === 'auth/too-many-requests' ? 'Too many attempts. Please try again later' :
-                            error.code === 'auth/popup-closed-by-user' ? 'Sign-in popup was closed' :
-                                'Authentication failed';
-
-        const authError = {
-            message: errorMessage,
-            name: 'AuthError',
-            code: error.code
-        } as AuthError;
-
-        setError(authError);
-        return authError;
-    };
-
-    const signIn = async (email: string, password: string): Promise<UserMetadata> => {
+    const signIn = async (email: string, password: string) => {
         try {
             setError(null);
             const result = await signInWithEmailAndPassword(auth, email, password);
-            const userData = await usersService.createUserIfNotExists(result.user);
-            if (!userData) {
-                throw new Error('Failed to create or fetch user data');
+            const userDoc = await getUserData(result.user);
+            if (userDoc) {
+                setUserData(convertToUserMetadata(userDoc));
+                return { user: result.user, userData: userDoc };
             }
-            // Set user and userData state immediately after successful sign in
-            const authUser = {
-                ...result.user,
-                role: userData.role,
-                status: userData.status
-            } as AuthUser;
-            setUser(authUser);
-            const metadata = createUserMetadata(result.user, userData);
-            setUserData(metadata);
-            return metadata;
-        } catch (error: any) {
-            // Handle specific Firebase auth errors
-            const errorMessage = error.code === 'auth/user-not-found' ? 'No account found with this email' :
-                error.code === 'auth/wrong-password' ? 'Incorrect password' :
-                    error.code === 'auth/invalid-email' ? 'Invalid email format' :
-                        error.code === 'auth/too-many-requests' ? 'Too many attempts. Please try again later' :
-                            'Failed to sign in';
-            const authError = {
-                message: errorMessage,
-                name: 'AuthError',
-                code: error.code
-            } as AuthError;
-            throw authError;
+            throw new Error('User data not found after sign in');
+        } catch (e) {
+            console.error("Sign in error:", e);
+            setError(e as Error);
+            throw e;
         }
     };
 
-    const signUp = async (email: string, password: string, displayName: string): Promise<{ userCredential: UserCredential; userData: UserMetadata }> => {
+    const signInWithGoogle = async () => {
+        try {
+            setError(null);
+            const result = await signInWithPopup(auth, googleProvider);
+            const userDoc = await getUserData(result.user);
+            if (userDoc) {
+                setUserData(convertToUserMetadata(userDoc));
+                return { user: result.user, userData: userDoc };
+            }
+            throw new Error('User data not found after Google sign in');
+        } catch (e) {
+            console.error("Google sign in error:", e);
+            setError(e as Error);
+            throw e;
+        }
+    };
+
+    const signUp = async (email: string, password: string, displayName: string) => {
         try {
             setError(null);
             const result = await createUserWithEmailAndPassword(auth, email, password);
-            const userData = await usersService.createUserIfNotExists(result.user);
-            if (!userData) {
-                throw new Error('Failed to create user data');
-            }
-            return {
-                userCredential: result,
-                userData: createUserMetadata(result.user, userData)
-            };
-        } catch (error) {
-            return handleAuthError(error);
-        }
-    };
-
-    const signInWithGoogle = async (): Promise<{ userCredential: UserCredential; userData: UserMetadata }> => {
-        try {
-            setError(null);
-            const provider = new GoogleAuthProvider();
-            const result = await signInWithPopup(auth, provider);
-            const userData = await usersService.createUserIfNotExists(result.user);
-            if (!userData) {
-                throw new Error('Failed to create or fetch user data');
-            }
-            return {
-                userCredential: result,
-                userData: createUserMetadata(result.user, userData)
-            };
-        } catch (error) {
-            return handleAuthError(error);
-        }
-    };
-
-    const resetPassword = async (email: string): Promise<void> => {
-        try {
-            setError(null);
-            await sendPasswordResetEmail(auth, email);
-        } catch (error) {
-            handleAuthError(error);
+            const newUserData = await createUserData(result.user, displayName);
+            setUserData(convertToUserMetadata(newUserData));
+            return { user: result.user, userData: newUserData };
+        } catch (e) {
+            console.error("Sign up error:", e);
+            setError(e as Error);
+            throw e;
         }
     };
 
@@ -232,10 +152,41 @@ export function useAuth(): AuthContextType {
         try {
             setError(null);
             await firebaseSignOut(auth);
-            router.replace('/sign-in');
-        } catch (error) {
-            handleAuthError(error);
+            setUser(null);
+            setUserData(null);
+            router.push('/');
+        } catch (e) {
+            console.error("Sign out error:", e);
+            setError(e as Error);
+            throw e;
         }
+    };
+
+    const resetPassword = async (email: string) => {
+        try {
+            setError(null);
+            await sendPasswordResetEmail(auth, email);
+        } catch (e) {
+            console.error("Password reset error:", e);
+            setError(e as Error);
+            throw e;
+        }
+    };
+
+    const hasRole = (requiredRole: UserRole): boolean => {
+        if (!userData || !userData.role) return false;
+
+        // Define role hierarchy
+        const roleHierarchy: Record<UserRole, UserRole[]> = {
+            [UserRole.SUPER_ADMIN]: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.AUTHOR, UserRole.EDITOR, UserRole.USER, UserRole.GUEST],
+            [UserRole.ADMIN]: [UserRole.ADMIN, UserRole.AUTHOR, UserRole.EDITOR, UserRole.USER, UserRole.GUEST],
+            [UserRole.AUTHOR]: [UserRole.AUTHOR, UserRole.EDITOR, UserRole.USER, UserRole.GUEST],
+            [UserRole.EDITOR]: [UserRole.EDITOR, UserRole.USER, UserRole.GUEST],
+            [UserRole.USER]: [UserRole.USER, UserRole.GUEST],
+            [UserRole.GUEST]: [UserRole.GUEST]
+        };
+
+        return roleHierarchy[userData.role]?.includes(requiredRole) || false;
     };
 
     return {
@@ -244,9 +195,10 @@ export function useAuth(): AuthContextType {
         loading,
         error,
         signIn,
-        signOut,
         signInWithGoogle,
         signUp,
-        resetPassword
+        signOut,
+        resetPassword,
+        hasRole
     };
 }

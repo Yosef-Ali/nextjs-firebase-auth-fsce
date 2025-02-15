@@ -6,18 +6,33 @@ service firebase.storage {
     function isAuthenticated() {
       return request.auth != null;
     }
+    
+    // Allowed file types
+    function isAllowedFileType() {
+      return request.resource.contentType.matches('application/pdf') ||
+             request.resource.contentType.matches('application/msword') ||
+             request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.wordprocessingml.document') ||
+             request.resource.contentType.matches('application/vnd.ms-excel') ||
+             request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') ||
+             request.resource.contentType.matches('application/vnd.ms-powerpoint') ||
+             request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.presentationml.presentation') ||
+             request.resource.contentType.matches('audio/mpeg') ||
+             request.resource.contentType.matches('video/mp4') ||
+             request.resource.contentType.matches('image/jpeg') ||
+             request.resource.contentType.matches('image/png');
+    }
 
     match /{allPaths=**} {
       // Allow public read access to all files
       allow read: if true;
       
-      // Allow authenticated users to upload images with size and type restrictions
+      // Allow authenticated users to upload files with size and type restrictions
       allow write: if isAuthenticated()
         && (
-          // Check file size (max 5MB)
-          request.resource.size <= 5 * 1024 * 1024
-          // Verify content type is an image
-          && request.resource.contentType.matches('image/.*')
+          // Check file size (max 16MB)
+          request.resource.size <= 16 * 1024 * 1024
+          // Verify content type is allowed
+          && isAllowedFileType()
         );
     }
 

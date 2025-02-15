@@ -1,176 +1,187 @@
 # Firebase Authentication Interaction Overview
 
-## Firebase Packages and Versions
+## Core Structure
 
-### Core Dependencies
-```json
-{
-  "dependencies": {
-    "firebase": "^10.7.0",
-    "firebase-admin": "^11.11.1",
-    "@firebase/app": "^0.9.25",
-    "@firebase/auth": "^1.5.0",
-    "@firebase/firestore": "^4.4.0",
-    "firebase-functions": "^4.5.0"
-  }
-}
-```
+### Key Files
+- `/lib/context/auth-context.tsx` - Auth context provider
+- `/app/hooks/use-auth.ts` - Core auth hook implementation
+- `/app/services/users/core.ts` - User service core functionality
+- `/app/services/client/users.ts` - Client-side user service
+- `/app/lib/withAuth.tsx` - Auth HOC protection
+- `/app/lib/withRoleProtection.tsx` - Role-based protection
+- `/app/types/user.ts` - Core user types and enums
+- `/app/types/auth-types.ts` - Auth-specific types
+- `/app/utils/user-utils.ts` - User data conversion utilities
 
-### Client-Side Firebase Modules
-- `@firebase/app`: Core Firebase functionality
-- `@firebase/auth`: Authentication features
-- `@firebase/firestore`: Firestore database operations
-- `@firebase/storage`: File storage capabilities (optional)
-
-### Server-Side Firebase Modules
-- `firebase-admin`: Admin SDK for privileged access
-- `firebase-functions`: Cloud Functions implementation
-
-### Development Dependencies
-```json
-{
-  "devDependencies": {
-    "firebase-tools": "^12.9.1",
-    "@types/firebase": "^3.2.1"
-  }
-}
-```
-
-## 1. Firebase Initialization
-
-### Server-Side (Admin SDK)
-```typescript
-// functions/src/users.ts
-admin.initializeApp();
-const auth = admin.auth();
-const db = admin.firestore();
-```
-
-## 2. User Management Functions
-
-### User Creation
-- Triggered on new user signup
-- Creates Firestore user document
-- Sets default role and timestamps
-
-```typescript
-// functions/src/users.ts
-export const onNewUserCreated = onUserCreated(async (event) => {
-  const user = event.data;
-  const userData = {
-    uid: user.uid,
-    email: user.email,
-    role: 'user',
-    createdAt: admin.firestore.FieldValue.serverTimestamp()
-  };
-  await db.collection('users').doc(user.uid).set(userData);
-});
-```
-
-## 3. User Service Layer
-
-Key functionalities:
-- User data retrieval
-- User creation/updates
-- Role management
-- Profile updates
-
-## 4. Authentication Context
-
-Provides:
-- Current user state
-- Loading state
-- Authentication methods
-- Role-based access control
-
-```typescript
-// app/context/AuthContext.tsx
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  signInWithGoogle: () => Promise<User | null>;
-  signInWithEmail: (email: string, password: string) => Promise<User | null>;
-  signUpWithEmail: (email: string, password: string) => Promise<User | null>;
-  logout: () => Promise<void>;
-}
-```
-
-## 5. Authentication Flow
+## 1. Authentication Flow
 
 ### Sign-Up Process
 1. User submits registration form
 2. Firebase creates authentication record
-3. Cloud Function triggers user document creation
-4. User receives verification email
+3. Client user service creates Firestore user document
+4. User metadata is initialized with default role
+5. Role-based redirects are handled
 
 ### Sign-In Process
-1. User submits credentials
+1. User provides credentials (email/password or Google)
 2. Firebase validates authentication
-3. Application loads user data
-4. Context updates with user state
+3. Client service loads/updates user data
+4. Auth context updates with user state
+5. Role-based access control is applied
 
 ### Session Management
-- Persistent sessions using Firebase
+- Firebase handles persistent sessions
 - Automatic token refresh
-- Secure state management
+- Real-time auth state monitoring
+- Role-based session validation
 
-## 6. Security Implementation
+## 2. User Management
+
+### Core User Service Features
+```typescript
+class UserCoreService {
+  // Create/update user document with role inheritance
+  async createUserIfNotExists(firebaseUser: FirebaseUser): Promise<User | null>;
+  
+  // Get user data with full metadata
+  async getUser(uid: string): Promise<User | null>;
+  
+  // Get all users (admin only)
+  async getAllUsers(): Promise<User[]>;
+  
+  // Role management with validation
+  async updateUserRole(uid: string, role: UserRole): Promise<{ 
+    success: boolean; 
+    error?: string; 
+    details?: any; 
+  }>;
+  
+  // User deletion with cleanup
+  async deleteUser(uid: string): Promise<{ 
+    success: boolean; 
+    error?: string; 
+    details?: any; 
+  }>;
+}
+```
+
+### User Types
+```typescript
+enum UserRole {
+  SUPER_ADMIN = 'super_admin',  // Has full system access
+  ADMIN = 'admin',              // Has administrative access
+  AUTHOR = 'author',            // Can manage content
+  EDITOR = 'editor',            // Can edit content
+  USER = 'user',                // Basic authenticated user
+  GUEST = 'guest'              // Unauthenticated user
+}
+
+enum UserStatus {
+  ACTIVE = 'active',           // User is active
+  INACTIVE = 'inactive',       // Account disabled
+  PENDING = 'pending',         // Awaiting verification
+  BLOCKED = 'blocked'          // Access revoked
+}
+
+interface User {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  role: UserRole;
+  status: UserStatus;
+  createdAt: number;
+  updatedAt: number;
+  invitedBy: string | null;
+  invitationToken: string | null;
+  emailVerified: boolean;
+  metadata: {
+    lastLogin: number;
+    createdAt: number;
+  };
+}
+```
+
+## 3. Security Implementation
+
+### Role-Based Access Control
+```typescript
+// Role hierarchy definition
+const ROLE_HIERARCHY = {
+  [UserRole.SUPER_ADMIN]: [SUPER_ADMIN, ADMIN, AUTHER, USER],
+  [UserRole.ADMIN]: [ADMIN, AUTHER, USER],
+  [UserRole.AUTHER]: [AUTHER, USER],
+  [UserRole.USER]: [USER]
+};
+
+// Using withRoleProtection HOC with hierarchy
+export function AdminPage() {
+  return withRoleProtection(PageComponent, UserRole.ADMIN);
+}
+
+// Using withAuth HOC for basic protection
+export function ProtectedPage() {
+  return withAuth(PageComponent);
+}
+```
 
 ### Firestore Rules
 ```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // Helper functions for role checking
+    function isSignedIn() {
+      return request.auth != null;
     }
-    match /posts/{postId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == resource.data.authorId;
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function hasRole(role) {
+      let userData = getUserData();
+      return userData != null && userData.role == role;
+    }
+    
+    function isAdmin() {
+      let userData = getUserData();
+      return userData != null && 
+        (userData.role == 'admin' || userData.role == 'super_admin');
+    }
+    
+    // User collection rules
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && 
+        (request.auth.uid == userId || isAdmin());
     }
   }
 }
 ```
 
-### Protected Routes
+## 4. Authentication Context Usage
+
 ```typescript
-// Example protected route component
-'use client';
-
-function ProtectedPage() {
-  const { user, loading } = useAuthContext();
-
-  if (loading) return <LoadingScreen />;
-  if (!user) return <UnauthorizedMessage />;
+function ProtectedComponent() {
+  const { 
+    user,           // Firebase user with extended properties
+    userData,       // Additional user metadata
+    loading,        // Auth state loading indicator
+    error          // Auth error state
+  } = useAuth();
   
-  return <ProtectedContent />;
+  if (loading) return <LoadingScreen />;
+  if (!user || error) return <SignInPrompt />;
+  if (user.status !== UserStatus.ACTIVE) return <PendingApproval />;
+  
+  return <AuthenticatedContent />;
 }
 ```
 
-## 7. Role-Based Access Control
+## 5. Environment Configuration
 
-### User Roles
-- `admin`: Full system access
-- `author`: Content management access
-- `user`: Basic access rights
-
-### Role Assignment
-```typescript
-const isAdmin = email && Authorization.getAdminEmails().includes(email.toLowerCase());
-const role = isAdmin ? 'admin' : 'user';
-```
-
-## 8. Email Service Integration
-
-Handles:
-- Welcome emails
-- Password reset
-- Email verification
-- Role update notifications
-
-## 9. Environment Configuration
-
-Required variables in `.env.local`:
+Required in `.env.local`:
 ```
 NEXT_PUBLIC_FIREBASE_API_KEY=
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
@@ -178,46 +189,60 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
+NEXT_PUBLIC_ADMIN_EMAIL=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=
 ```
 
-## 10. Error Handling
+## 6. Error Handling
 
-- Authentication errors
-- Permission errors
-- Network issues
-- Invalid tokens
+### Auth Error Types
+```typescript
+type AuthErrorCodes =
+  | 'auth/invalid-email'
+  | 'auth/user-disabled'
+  | 'auth/user-not-found'
+  | 'auth/wrong-password'
+  | 'auth/email-already-in-use'
+  | 'auth/weak-password'
+  | 'auth/operation-not-allowed'
+  | 'auth/popup-closed-by-user'
+  | 'auth/cancelled-popup-request'
+  | 'auth/popup-blocked';
+```
 
-## 11. Best Practices
+## 7. Best Practices
 
 1. Security
-   - Never expose sensitive credentials
-   - Implement proper role checks
-   - Use secure session management
+   - Use role hierarchy for permissions
+   - Implement proper type inheritance
+   - Keep sensitive operations server-side
+   - Validate all user input
+   - Use custom claims for role management
 
 2. Performance
-   - Optimize authentication state updates
-   - Cache user data appropriately
-   - Minimize database reads
+   - Use real-time listeners efficiently
+   - Implement proper user data caching
+   - Batch Firestore operations
+   - Minimize auth state changes
 
 3. User Experience
-   - Clear error messages
-   - Loading states
-   - Proper redirects
-   - Session persistence
+   - Handle all auth states appropriately
+   - Implement role-based redirects
+   - Show clear error messages
+   - Maintain proper loading states
+   - Support multiple auth providers
 
-## 12. Testing Considerations
+4. Code Organization
+   - Centralize type definitions
+   - Use proper type inheritance
+   - Implement consistent error handling
+   - Maintain clear separation of concerns
+   - Document security implementations
 
-1. Unit Tests
-   - Authentication methods
-   - Role checks
-   - Protected routes
-
-2. Integration Tests
-   - Sign-up flow
-   - Sign-in flow
-   - Permission checks
-
-3. E2E Tests
-   - Complete authentication flows
-   - Role-based access scenarios
-   - Error handling
+5. Maintenance
+   - Keep dependencies updated
+   - Monitor auth state changes
+   - Log important auth events
+   - Regular security audits
+   - Document all role changes

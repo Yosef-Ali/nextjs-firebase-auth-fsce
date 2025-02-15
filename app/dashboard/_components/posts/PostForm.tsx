@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form } from '@/components/ui/form';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/app/hooks/use-auth';
 import { useToast } from "@/hooks/use-toast";
 import { useState } from 'react';
 import { Category } from '@/app/types/category';

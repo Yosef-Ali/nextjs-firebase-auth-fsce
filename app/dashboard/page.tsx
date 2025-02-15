@@ -3,18 +3,20 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/app/hooks/use-auth';
 import { usersService } from '@/app/services/users';
 import { Users, FileText, BookOpen, Image, HardDrive, Database, AlertTriangle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import DashboardOverviewHeader from './_components/DashboardOverviewHeader';
+import { withRoleProtection } from '@/app/lib/withRoleProtection';
+import { UserRole } from '@/app/types/user';
 
 // Firebase Free Tier Limits
 const STORAGE_LIMIT_MB = 1024; // 1GB storage
 const DATABASE_LIMIT_MB = 500; // 500MB database
 
-export default function DashboardPage() {
+function DashboardPage() {
   const { user: currentUser } = useAuth();
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -32,10 +34,10 @@ export default function DashboardPage() {
         // Simulated storage and database stats - replace with actual data fetching
         const mockStorageUsed = 150; // MB
         const mockDatabaseUsed = 50; // MB
-        
+
         setStats(prev => ({
           ...prev,
-          totalUsers: response.data?.length || 0,
+          totalUsers: response.length || 0,
           storageUsed: mockStorageUsed,
           databaseUsed: mockDatabaseUsed
         }));
@@ -54,9 +56,9 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto p-6 space-y-8">
       <DashboardOverviewHeader />
-      
+
       <Separator />
-      
+
       {!isAdmin && (
         <Alert>
           <AlertTriangle className="h-4 w-4" />
@@ -139,8 +141,8 @@ export default function DashboardPage() {
           <CardContent>
             <div className="space-y-2">
               <div className="text-2xl font-bold">{stats.databaseUsed}MB / 500MB</div>
-              <Progress 
-                value={databasePercentage} 
+              <Progress
+                value={databasePercentage}
                 className="h-2"
                 variant={databasePercentage > 80 ? "destructive" : "default"}
               />
@@ -180,3 +182,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+export default withRoleProtection(DashboardPage, UserRole.ADMIN);

@@ -24,10 +24,9 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { MoreHorizontal, PinIcon } from 'lucide-react';
 import { Post } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/app/hooks/use-auth';
 import { useSearch } from '@/app/context/search-context';
 import { toast } from '@/hooks/use-toast';
-import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
 
 interface PostsTableProps {
@@ -52,9 +51,9 @@ function PostsTable({ initialPosts }: PostsTableProps) {
 
     try {
       setIsDeleting(true);
-      const deleteResult = await postsService.deletePost(user.uid, postId);
-
-      if (deleteResult) {
+      const success = await postsService.deletePost(postId);
+      
+      if (success) {
         setPosts(posts.filter(post => post.id !== postId));
         toast({
           title: 'Success',
@@ -63,7 +62,7 @@ function PostsTable({ initialPosts }: PostsTableProps) {
       } else {
         toast({
           title: 'Error',
-          description: 'You are not authorized to delete this post',
+          description: 'Failed to delete post',
           variant: 'destructive',
         });
       }
@@ -85,11 +84,14 @@ function PostsTable({ initialPosts }: PostsTableProps) {
 
     const query = searchQuery.toLowerCase();
     return posts.filter((post) => {
+      const categoryName = typeof post.category === 'string' 
+        ? post.category 
+        : post.category?.name || '';
       return (
         post.title?.toLowerCase().includes(query) ||
         post.excerpt?.toLowerCase().includes(query) ||
         post.content?.toLowerCase().includes(query) ||
-        post.category?.name?.toLowerCase().includes(query)
+        categoryName.toLowerCase().includes(query)
       );
     });
   }, [posts, searchQuery]);
@@ -101,23 +103,17 @@ function PostsTable({ initialPosts }: PostsTableProps) {
   if (filteredPosts.length === 0) {
     if (searchQuery) {
       return (
-        <div className="text-center py-10 text-muted-foreground">
+        <div className="py-10 text-center text-muted-foreground">
           No posts found matching "{searchQuery}"
         </div>
       );
     }
     return (
-      <div className="text-center py-10 text-muted-foreground">
+      <div className="py-10 text-center text-muted-foreground">
         No posts found
       </div>
     );
   }
-
-  // Calculate stats
-  const totalPosts = posts.length;
-  const publishedPosts = posts.filter(post => post.status === 'published').length;
-  const draftPosts = totalPosts - publishedPosts;
-  const uniqueCategories = Array.from(new Set(posts.map(post => post.category?.name)));
 
   // Sort posts with sticky posts first, then by date
   const sortedPosts = [...posts].sort((a, b) => {
@@ -127,111 +123,84 @@ function PostsTable({ initialPosts }: PostsTableProps) {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{totalPosts}</div>
-            <p className="text-xs text-muted-foreground">Total Posts</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{publishedPosts}</div>
-            <p className="text-xs text-muted-foreground">Published Posts</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{draftPosts}</div>
-            <p className="text-xs text-muted-foreground">Draft Posts</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{uniqueCategories.length}</div>
-            <p className="text-xs text-muted-foreground">Categories</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Posts Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[300px]">Title & Excerpt</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Author</TableHead>
-              <TableHead>Updated</TableHead>
-              <TableHead className="text-right">Action</TableHead>
+    <div className="overflow-hidden">
+      <Table className="bg-transparent">
+        <TableHeader>
+          <TableRow className="bg-transparent hover:bg-transparent">
+            <TableHead className="w-[300px]">Title & Excerpt</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Author</TableHead>
+            <TableHead>Updated</TableHead>
+            <TableHead className="text-right">Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sortedPosts.map((post) => (
+            <TableRow key={`${post.id}-${post.createdAt}`} className={`bg-transparent hover:bg-muted/50 ${post.sticky ? "bg-muted/50" : ""}`}>
+              <TableCell>
+                <div>
+                  <h3 className="font-semibold">
+                    <div className="flex items-center gap-2">
+                      {post.sticky && (
+                        <PinIcon className="w-4 h-4 text-primary" />
+                      )}
+                      {post.title}
+                    </div>
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {post.excerpt || post.content?.slice(0, 100)}...
+                  </p>
+                </div>
+              </TableCell>
+              <TableCell>
+                <Badge variant="secondary">
+                  {typeof post.category === 'string' 
+                    ? post.category 
+                    : post.category?.name || 'Uncategorized'}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback>
+                      {post.authorEmail?.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm">{post.authorEmail}</span>
+                </div>
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {format(post.updatedAt, 'MMM d, yyyy')}
+              </TableCell>
+              <TableCell className="text-right">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="w-8 h-8 p-0">
+                      <span className="sr-only">Open menu</span>
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuItem
+                      onClick={() => router.push(`/dashboard/posts/${post.id}/edit`)}
+                    >
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-red-600"
+                      onClick={() => handleDelete(post.id)}
+                    >
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedPosts.map((post) => (
-              <TableRow key={`${post.id}-${post.createdAt}`} className={post.sticky ? "bg-muted/50" : ""}>
-                <TableCell>
-                  <div>
-                    <h3 className="font-semibold">
-                      <div className="flex items-center gap-2">
-                        {post.sticky && (
-                          <PinIcon className="h-4 w-4 text-primary" />
-                        )}
-                        {post.title}
-                      </div>
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {post.excerpt || post.content?.slice(0, 100)}...
-                    </p>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{post.category?.name}</Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>
-                        {post.authorEmail?.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm">{post.authorEmail}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {format(post.updatedAt, 'MMM d, yyyy')}
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem
-                        onClick={() => router.push(`/dashboard/posts/${post.id}/edit`)}
-                      >
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-red-600"
-                        onClick={() => handleDelete(post.id)}
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }

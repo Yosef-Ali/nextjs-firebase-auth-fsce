@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -26,10 +26,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import FileUploadCard from './FileUploadCard';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/app/hooks/use-auth';
 import { Resource } from '@/app/types/resource';
 import { resourcesService } from '@/app/services/resources';
 import { toast } from 'sonner';
+import { authorization } from '@/lib/authorization';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -50,8 +51,16 @@ interface ResourceEditorProps {
 
 export function ResourceEditor({ resource, mode = 'create' }: ResourceEditorProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
+
+  // Verify user has permission to manage resources
+  useEffect(() => {
+    if (userData && !authorization.isAdmin(userData)) {
+      toast.error('You do not have permission to manage resources');
+      router.push('/dashboard/resources');
+    }
+  }, [userData, router]);
 
   const form = useForm<ResourceFormData>({
     resolver: zodResolver(formSchema),
@@ -65,8 +74,14 @@ export function ResourceEditor({ resource, mode = 'create' }: ResourceEditorProp
   });
 
   const onSubmit = async (data: ResourceFormData) => {
-    if (!user) {
+    if (!user || !userData) {
       toast.error('You must be logged in to save resources');
+      return;
+    }
+
+    // Double-check permissions before saving
+    if (!authorization.isAdmin(userData)) {
+      toast.error('You do not have permission to manage resources');
       return;
     }
 
@@ -78,11 +93,13 @@ export function ResourceEditor({ resource, mode = 'create' }: ResourceEditorProp
         updatedAt: Date.now(),
         createdAt: resource?.createdAt || Date.now(),
         publishedDate: data.published ? Date.now() : null,
+        authorId: user.uid,
+        authorEmail: user.email || '',
         slug: data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         category: 'media' as const,
       };
 
-      if (resource) {
+      if (mode === 'edit' && resource) {
         await resourcesService.updateResource(resource.id, resourceData);
         toast.success('Resource updated successfully');
       } else {
@@ -97,6 +114,11 @@ export function ResourceEditor({ resource, mode = 'create' }: ResourceEditorProp
       setIsSaving(false);
     }
   };
+
+  // Return null if user doesn't have permission
+  if (!userData || !authorization.isAdmin(userData)) {
+    return null;
+  }
 
   return (
     <Form {...form}>
@@ -123,7 +145,7 @@ export function ResourceEditor({ resource, mode = 'create' }: ResourceEditorProp
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <Textarea 
+                  <Textarea
                     placeholder="Enter resource description"
                     className="h-32"
                     {...field}

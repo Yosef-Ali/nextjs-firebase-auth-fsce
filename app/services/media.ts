@@ -22,6 +22,7 @@ import {
   listAll,
   getMetadata,
 } from 'firebase/storage';
+import { serializeData } from '@/app/utils/serialization';
 
 const COLLECTION_NAME = 'media';
 const STORAGE_PATH = 'media';
@@ -34,20 +35,20 @@ export const mediaService = {
       // Get items from Firestore
       const mediaRef = collection(db, COLLECTION_NAME);
       const snapshot = await getDocs(mediaRef);
-      
+
       // Get items from Storage
       const storageItems: Media[] = [];
       for (const path of STORAGE_PATHS) {
         try {
           const storageRef = ref(storage, path);
           const result = await listAll(storageRef);
-          
+
           const items = await Promise.all(
             result.items.map(async (item) => {
               try {
                 const url = await getDownloadURL(item);
                 const metadata = await getMetadata(item);
-                return {
+                return serializeData({
                   id: item.name,
                   name: item.name,
                   type: 'image',
@@ -58,7 +59,7 @@ export const mediaService = {
                   updatedAt: metadata.updated ? new Date(metadata.updated) : new Date(),
                   uploadedBy: metadata.customMetadata?.uploadedBy || '',
                   uploadedByEmail: metadata.customMetadata?.uploadedByEmail || '',
-                } as Media;
+                }) as Media;
               } catch (error) {
                 console.error(`Error processing storage item ${item.name}:`, error);
                 return null;
@@ -73,20 +74,18 @@ export const mediaService = {
       }
 
       // Merge Firestore and Storage items
-      const firestoreItems = snapshot.docs.map(doc => ({
+      const firestoreItems = snapshot.docs.map(doc => serializeData({
         id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate() || new Date(),
-        updatedAt: doc.data().updatedAt?.toDate() || new Date()
+        ...doc.data()
       })) as Media[];
 
       const allItems = [...firestoreItems, ...storageItems];
-      
+
       // Remove duplicates based on URL
       const uniqueItems = Array.from(new Map(allItems.map(item => [item.url, item])).values());
-      
+
       console.log('Total items found:', uniqueItems.length);
-      
+
       return {
         items: uniqueItems.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
         lastDoc: snapshot.docs[snapshot.docs.length - 1],
@@ -131,12 +130,12 @@ export const mediaService = {
     const docRef = await addDoc(collection(db, COLLECTION_NAME), mediaData);
     const currentDate = new Date();
 
-    return {
+    return serializeData({
       id: docRef.id,
       ...mediaData,
       createdAt: currentDate,
       updatedAt: currentDate,
-    } as Media;
+    }) as Media;
   },
 
   async updateMedia(id: string, media: Partial<Media>): Promise<void> {

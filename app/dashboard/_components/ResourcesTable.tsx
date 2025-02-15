@@ -20,10 +20,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, Plus, ArrowUpDown, Download } from 'lucide-react';
+import {
+  MoreHorizontal,
+  ArrowUpDown,
+  Download,
+  Pencil,
+  Trash
+} from 'lucide-react';
 import { Resource } from '@/app/types/resource';
 import { resourcesService } from '@/app/services/resources';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/app/hooks/use-auth';
 import { toast } from '@/hooks/use-toast';
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from 'date-fns';
@@ -32,10 +38,10 @@ interface ResourcesTableProps {
   initialResources: Resource[];
 }
 
-export function ResourcesTable({ initialResources }: ResourcesTableProps) {
-  const { user } = useAuth();
+export function ResourcesTable({ initialResources = [] }: ResourcesTableProps) {
+  const { user, userData } = useAuth();
   const router = useRouter();
-  const [resources, setResources] = useState<Resource[]>([]);
+  const [resources, setResources] = useState<Resource[]>(initialResources);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [sortConfig, setSortConfig] = useState<{
@@ -43,8 +49,13 @@ export function ResourcesTable({ initialResources }: ResourcesTableProps) {
     direction: 'asc' | 'desc';
   }>({ key: 'updatedAt', direction: 'desc' });
 
+  // Helper function to check if user has admin access
+  const checkAdminAccess = () => {
+    if (!user || !userData) return false;
+    return userData.role === 'admin' || userData.role === 'super_admin';
+  };
+
   useEffect(() => {
-    setResources(initialResources);
     const loadResources = async () => {
       if (!user) return;
       try {
@@ -62,7 +73,7 @@ export function ResourcesTable({ initialResources }: ResourcesTableProps) {
       }
     };
     loadResources();
-  }, [user, initialResources]);
+  }, [user]);
 
   const handleSort = (key: 'title' | 'type' | 'updatedAt') => {
     setSortConfig((currentConfig) => ({
@@ -83,7 +94,15 @@ export function ResourcesTable({ initialResources }: ResourcesTableProps) {
   });
 
   const handleDelete = async (resourceId: string) => {
-    if (!user || isDeleting) return;
+    if (!user || isDeleting || !checkAdminAccess()) {
+      toast({
+        title: 'Access Denied',
+        description: 'You do not have permission to delete resources',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       setIsDeleting(true);
       await resourcesService.deleteResource(resourceId);
@@ -109,108 +128,98 @@ export function ResourcesTable({ initialResources }: ResourcesTableProps) {
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-20 w-full" />
+        <Skeleton className="w-full h-20" />
+        <Skeleton className="w-full h-20" />
+        <Skeleton className="w-full h-20" />
       </div>
     );
   }
 
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Resources</h2>
-        <Button onClick={() => router.push('/dashboard/resources/new')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Resource
-        </Button>
-      </div>
+  const canManageResources = checkAdminAccess();
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('title')}
-                  className="flex items-center gap-1"
+  return (
+    <div className="overflow-hidden bg-transparent">
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="w-[300px]">Title</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Last Updated</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Downloads</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sortedResources.map((resource) => (
+            <TableRow key={resource.id} className="hover:bg-muted/50">
+              <TableCell>{resource.title}</TableCell>
+              <TableCell>
+                <Badge variant="outline" className="bg-transparent">
+                  {resource.type}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                {format(resource.updatedAt, 'MMM dd, yyyy')}
+              </TableCell>
+              <TableCell>
+                <Badge
+                  variant="outline"
+                  className={`bg-transparent ${resource.published ? 'border-primary text-primary' : ''}`}
                 >
-                  Title
-                  <ArrowUpDown className="h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('type')}
-                  className="flex items-center gap-1"
-                >
-                  Type
-                  <ArrowUpDown className="h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead>Downloads</TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('updatedAt')}
-                  className="flex items-center gap-1"
-                >
-                  Last Updated
-                  <ArrowUpDown className="h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedResources.map((resource) => (
-              <TableRow key={resource.id}>
-                <TableCell className="font-medium">{resource.title}</TableCell>
-                <TableCell>
-                  <Badge variant="secondary">
-                    {resource.type.charAt(0).toUpperCase() + resource.type.slice(1)}
-                  </Badge>
-                </TableCell>
-                <TableCell>{resource.downloadCount}</TableCell>
-                <TableCell>{format(resource.updatedAt, 'MMM d, yyyy')}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  {resource.published ? 'Published' : 'Draft'}
+                </Badge>
+              </TableCell>
+              <TableCell>{resource.downloadCount || 0}</TableCell>
+              <TableCell className="text-right">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="w-8 h-8 p-0"
+                    >
+                      <span className="sr-only">Open menu</span>
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    {resource.fileUrl && (
                       <DropdownMenuItem
                         onClick={() => window.open(resource.fileUrl, '_blank')}
                       >
-                        <Download className="h-4 w-4 mr-2" />
+                        <Download className="w-4 h-4 mr-2" />
                         Download
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => router.push(`/dashboard/resources/${resource.id}`)}
-                      >
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-red-600"
-                        onClick={() => handleDelete(resource.id)}
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+                    )}
+                    {canManageResources && (
+                      <>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            router.push(`/dashboard/resources/${resource.id}`)
+                          }
+                        >
+                          <Pencil className="w-4 h-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(resource.id)}
+                          className="text-red-600"
+                          disabled={isDeleting}
+                        >
+                          <Trash className="w-4 h-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }

@@ -26,19 +26,16 @@ export async function getUsers(): Promise<ServiceResponse<User[]>> {
   try {
     const result = await usersService.getAllUsers();
     revalidatePath("/admin/users");
-    if (result.success && result.data) {
-      return {
-        success: true,
-        data: result.data
-      };
-    }
     return {
-      success: false,
-      error: result.error || "Failed to fetch users"
+      success: true,
+      data: result
     };
   } catch (error) {
     console.error("Error fetching users:", error);
-    return { success: false, error: "Failed to fetch users" };
+    return {
+      success: false,
+      error: "Failed to fetch users"
+    };
   }
 }
 

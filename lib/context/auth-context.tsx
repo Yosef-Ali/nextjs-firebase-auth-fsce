@@ -1,21 +1,10 @@
 'use client';
 
 import { createContext, useContext, ReactNode } from 'react';
-import { useAuth } from '@/lib/hooks/useAuth';
-import type { AuthUser, UserMetadata } from '@/app/types/user';
+import { useAuth } from '@/app/hooks/use-auth';
+import type { AppUser, UserMetadata } from '@/app/types/user';
 import type { UserCredential } from 'firebase/auth';
-
-interface AuthContextType {
-    user: AuthUser | null;
-    userData: UserMetadata | null;
-    loading: boolean;
-    error: Error | null;
-    signIn: (email: string, password: string) => Promise<UserMetadata>;
-    signOut: () => Promise<void>;
-    signInWithGoogle: () => Promise<{ userCredential: UserCredential; userData: UserMetadata }>;
-    signUp: (email: string, password: string, displayName: string) => Promise<{ userCredential: UserCredential; userData: UserMetadata }>;
-    resetPassword: (email: string) => Promise<void>;
-}
+import type { AuthContextType } from '@/app/types/auth-types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 

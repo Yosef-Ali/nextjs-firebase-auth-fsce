@@ -3,7 +3,7 @@ import { UseFormReturn } from 'react-hook-form';
 import { PostFormData } from './PostForm';
 import { Media } from '@/app/types/media';
 import { mediaService } from '@/app/services/media';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/app/hooks/use-auth';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import {

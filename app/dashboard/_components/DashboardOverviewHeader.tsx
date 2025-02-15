@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/app/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -11,8 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { 
-  Bell, 
+import {
+  Bell,
   User as UserIcon,
   Settings,
   LogOut,
@@ -67,7 +67,7 @@ const DashboardOverviewHeader = () => {
             Here's what's happening with your {isAdmin ? 'system' : 'account'}
           </p>
         </div>
-        
+
         <div className="flex items-center gap-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

@@ -1,54 +1,50 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/app/providers/AuthProvider';
+import { useForm } from 'react-hook-form';
+import { useAuthContext } from '@/lib/context/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
-import Logo from '@/components/Logo';
-import BgPattern from './BgPattern';
+import { Logo } from '@/components/Logo';
+import * as z from 'zod';
 
-export function SignInForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signInWithGoogle } = useAuth();
+const formSchema = z.object({
+  email: z.string().email('Invalid email'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+export default function SignInForm() {
+  const { signIn } = useAuthContext();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      await signIn(email, password);
-      toast({
-        title: 'Success',
-        description: 'Successfully signed in!',
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true);
+  const onSubmit = async (data: FormData) => {
     try {
-      await signInWithGoogle();
+      setIsLoading(true);
+      await signIn(data.email, data.password);
       toast({
-        title: 'Success',
-        description: 'Successfully signed in with Google!',
+        title: "Success",
+        description: "Signed in successfully",
       });
-    } catch (error: any) {
+    } catch (error) {
+      console.error('Sign in error:', error);
       toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to sign in. Please check your credentials.",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -56,113 +52,85 @@ export function SignInForm() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left side - Vector Background */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gray-50 relative">
-        <div className="absolute top-8 left-8">
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-background">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="text-center">
           <Link href="/" aria-label="Home">
             <Logo size={1.2} />
           </Link>
+          <h2 className="mt-6 text-3xl font-bold tracking-tight text-foreground">
+            Sign in to your account
+          </h2>
         </div>
-        <div className="absolute inset-0">
-          <BgPattern />
-        </div>
-        <div className="absolute bottom-8 left-8 max-w-md space-y-2">
-          <p className="text-lg font-semibold text-primary">Welcome Back</p>
-          <p className="text-sm text-gray-600">Empowering Communities, Transforming Lives</p>
-          <p className="text-xs text-gray-500">Together we can make a difference in Ethiopian communities</p>
-        </div>
-      </div>
 
-      {/* Right side - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-6">
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold tracking-tight">Sign in to your account</h2>
-            <p className="text-sm text-muted-foreground">
-              Don't have an account?{' '}
-              <Link href="/sign-up" className="text-primary hover:underline font-medium">
-                Sign up
-              </Link>
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="bg-card px-4 py-8 shadow sm:rounded-lg sm:px-10">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-foreground">
                   Email address
                 </label>
                 <Input
                   id="email"
                   type="email"
-                  autoComplete="email"
-                  required
+                  {...form.register('email')}
+                  className="mt-1"
                   disabled={isLoading}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="m@example.com"
-                  className="w-full"
                 />
+                {form.formState.errors.email && (
+                  <p className="mt-1 text-sm text-destructive">{form.formState.errors.email.message}</p>
+                )}
               </div>
-              <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-foreground">
                   Password
                 </label>
                 <Input
                   id="password"
                   type="password"
-                  autoComplete="current-password"
-                  required
+                  {...form.register('password')}
+                  className="mt-1"
                   disabled={isLoading}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full"
                 />
+                {form.formState.errors.password && (
+                  <p className="mt-1 text-sm text-destructive">{form.formState.errors.password.message}</p>
+                )}
               </div>
-              <div className="flex items-center justify-end">
-                <Link 
-                  href="/forgot-password" 
-                  className="text-sm font-medium text-primary hover:underline"
-                >
-                  Forgot your password?
-                </Link>
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Signing in...' : 'Sign in'}
+              </Button>
+            </form>
+
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-muted" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                </div>
+              </div>
+
+              <div className="mt-6 flex flex-col space-y-4">
+                <p className="text-center text-sm text-muted-foreground">
+                  Don't have an account?{' '}
+                  <Link href="/sign-up" className="text-primary hover:underline font-medium">
+                    Sign up
+                  </Link>
+                </p>
+                <p className="text-center text-sm text-muted-foreground">
+                  <Link
+                    href="/forgot-password"
+                    className="text-primary hover:underline font-medium"
+                  >
+                    Forgot your password?
+                  </Link>
+                </p>
               </div>
             </div>
-            
-            <div className="space-y-4">
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                    Signing in...
-                  </>
-                ) : (
-                  'Sign in'
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={handleGoogleSignIn}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                    Please wait...
-                  </>
-                ) : (
-                  'Sign in with Google'
-                )}
-              </Button>
-            </div>
-          </form>
+          </div>
         </div>
       </div>
     </div>

@@ -70,7 +70,7 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events, showTitle = tru
                       )}
                       {event.category && (
                         <Badge variant="secondary" className="bg-white/20 hover:bg-white/30 capitalize">
-                          {event.category}
+                          {typeof event.category === 'string' ? event.category : event.category.name}
                         </Badge>
                       )}
                     </div>
@@ -86,7 +86,7 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events, showTitle = tru
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Clock className="h-3.5 w-3.5" />
-                        <span>By {event.author?.name || 'Anonymous'}</span>
+                        <span>By {event.authorId || 'Anonymous'}</span>
                       </div>
                     </div>
 

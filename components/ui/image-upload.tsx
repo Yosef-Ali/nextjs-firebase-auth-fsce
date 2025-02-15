@@ -8,7 +8,7 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
-import { useAuth } from "@/app/providers/AuthProvider";
+import { useAuth } from "@/app/hooks/use-auth";
 
 interface ImageUploadProps {
   disabled?: boolean;

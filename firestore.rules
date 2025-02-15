@@ -17,17 +17,20 @@ service cloud.firestore {
     
     function isAdmin() {
       let userData = getUserData();
-      return userData != null && (userData.role == 'admin' || userData.role == 'super_admin');
+      return userData != null && 
+        (userData.role == 'admin' || userData.role == 'super_admin');
     }
     
     function isAuthor() {
       let userData = getUserData();
-      return userData != null && (userData.role == 'author' || isAdmin());
+      return userData != null && 
+        (userData.role == 'author' || isAdmin());
     }
     
     function isEditor() {
       let userData = getUserData();
-      return userData != null && (userData.role == 'editor' || isAuthor());
+      return userData != null && 
+        (userData.role == 'editor' || isAuthor());
     }
     
     function isActive() {
@@ -35,35 +38,64 @@ service cloud.firestore {
       return userData != null && userData.status == 'active';
     }
 
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
     // User collection rules
     match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isSignedIn() && (
-        (request.auth.uid == userId && !("role" in request.resource.data)) || 
-        isAdmin()
-      );
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && (isOwner(userId) || isAdmin());
       allow delete: if isAdmin();
     }
 
     // Posts collection rules
     match /posts/{postId} {
-      allow read: if true;
+      allow read;
       allow create: if isSignedIn() && isAuthor() && isActive();
-      allow update: if isSignedIn() && isActive() && (
-        (resource.data.authorId == request.auth.uid && isAuthor()) ||
-        isEditor()
-      );
-      allow delete: if isSignedIn() && isActive() && (
-        resource.data.authorId == request.auth.uid || 
-        isAdmin()
-      );
+      allow update: if isSignedIn() && isActive() && 
+        (isAdmin() || (isAuthor() && resource.data.authorId == request.auth.uid));
+      allow delete: if isSignedIn() && isActive() && 
+        (isAdmin() || (isAuthor() && resource.data.authorId == request.auth.uid));
     }
 
-    // Settings collection rules
-    match /settings/{settingId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
+    // Resources collection rules
+    match /resources/{resourceId} {
+      allow read;
+      allow write: if isSignedIn() && isAdmin() && isActive();
+    }
+
+    // Categories collection rules
+    match /categories/{categoryId} {
+      allow read;
+      allow write: if isSignedIn() && isAdmin() && isActive();
+    }
+
+    // Media collection rules
+    match /media/{mediaId} {
+      allow read;
+      allow create: if isSignedIn() && isAuthor() && isActive();
+      allow update, delete: if isSignedIn() && isActive() && 
+        (isAdmin() || (isAuthor() && resource.data.uploadedBy == request.auth.uid));
+    }
+
+    // Board members collection rules
+    match /board-members/{memberId} {
+      allow read;
+      allow write: if isSignedIn() && isAdmin() && isActive();
+    }
+
+    // Partners collection rules
+    match /partners/{partnerId} {
+      allow read;
+      allow write: if isSignedIn() && isAdmin() && isActive();
+    }
+
+    // Program offices collection rules
+    match /programOffices/{officeId} {
+      allow read;
+      allow write: if isSignedIn() && isAdmin() && isActive();
     }
   }
 }

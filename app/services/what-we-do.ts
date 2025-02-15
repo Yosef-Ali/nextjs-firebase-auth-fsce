@@ -129,7 +129,9 @@ class WhatWeDoService {
 
   async createProgram(data: Omit<Post, 'id'>): Promise<Post> {
     try {
-      const uniqueId = await this.generateUniqueId(data.title, data.category);
+      // Convert category to string if it's a Category object
+      const categoryString = typeof data.category === 'string' ? data.category : data.category.name;
+      const uniqueId = await this.generateUniqueId(data.title, categoryString);
       const programData = {
         ...data,
         id: uniqueId,

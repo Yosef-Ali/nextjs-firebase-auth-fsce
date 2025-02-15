@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/app/providers/AuthProvider';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import Logo from '@/components/Logo';
 import BgPattern from './BgPattern';
+import { useAuth } from '@/app/hooks/use-auth';
 
 export function SignUpForm() {
   const [email, setEmail] = useState('');

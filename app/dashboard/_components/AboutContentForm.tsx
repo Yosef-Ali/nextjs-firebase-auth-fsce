@@ -2,12 +2,15 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { doc, setDoc, collection, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { AboutContent } from '@/app/types/about';
+import { useAuth } from '@/app/hooks/use-auth';
+import { authorization, Authorization } from '@/lib/authorization';
+import { AppUser, UserRole as AppUserRole } from '@/app/types/user';
+import { withRoleProtection } from '@/app/lib/withRoleProtection';
 
 interface AboutContentFormProps {
   initialData?: AboutContent;
@@ -15,23 +18,27 @@ interface AboutContentFormProps {
   onSuccess?: () => void;
 }
 
-export default function AboutContentForm({ initialData, section, onSuccess }: AboutContentFormProps) {
+function AboutContentForm({ initialData, section, onSuccess }: AboutContentFormProps) {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const [content, setContent] = useState(initialData?.content || '');
-  const isEditing = !!initialData;
+  const { user, userData } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const docRef = initialData?.id 
+      if (!userData || !Authorization.canAccess({ user: userData as AppUser }, AppUserRole.AUTHOR)) {
+        throw new Error('You do not have permission to edit this content');
+      }
+
+      const docRef = initialData?.id
         ? doc(db, 'about', initialData.id)
         : doc(collection(db, 'about'));
 
       const title = `Our ${section.charAt(0).toUpperCase()}${section.slice(1)}`;
-      
+
       await setDoc(docRef, {
         title,
         content,
@@ -40,12 +47,16 @@ export default function AboutContentForm({ initialData, section, onSuccess }: Ab
         published: true,
         excerpt: content.substring(0, 150) + (content.length > 150 ? '...' : ''),
         updatedAt: Timestamp.now(),
-        ...(initialData ? {} : { createdAt: Timestamp.now() })
+        updatedBy: user?.uid,
+        ...(initialData ? {} : {
+          createdAt: Timestamp.now(),
+          createdBy: user?.uid
+        })
       }, { merge: true });
 
       toast({
         title: 'Success',
-        description: `${title} has been ${isEditing ? 'updated' : 'created'} successfully.`,
+        description: `${title} has been ${initialData ? 'updated' : 'created'} successfully.`,
       });
 
       if (onSuccess) {
@@ -55,7 +66,7 @@ export default function AboutContentForm({ initialData, section, onSuccess }: Ab
       console.error('Error saving content:', error);
       toast({
         title: 'Error',
-        description: 'Something went wrong. Please try again.',
+        description: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -79,15 +90,11 @@ export default function AboutContentForm({ initialData, section, onSuccess }: Ab
           />
         </div>
       </div>
-
-      <div className="flex justify-end gap-4">
-        <Button
-          type="submit"
-          disabled={loading}
-        >
-          {loading ? 'Saving...' : (isEditing ? 'Update' : 'Create')}
-        </Button>
-      </div>
+      <Button type="submit" disabled={loading}>
+        {loading ? 'Saving...' : initialData ? 'Update Content' : 'Create Content'}
+      </Button>
     </form>
   );
 }
+
+export default withRoleProtection(AboutContentForm, AppUserRole.AUTHOR);

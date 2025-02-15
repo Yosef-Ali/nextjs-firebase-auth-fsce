@@ -4,19 +4,19 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import Image from 'next/image';
-import MediaLibraryPage from '@/app/dashboard/(routes)/media-library/page';
+import MediaLibrary from '@/components/media-library/MediaLibrary';
+import { ImageIcon } from 'lucide-react';
 
 interface ImageSelectorProps {
-    value?: string;
-    onChange: (url: string) => void;
+    onImageSelect: (url: string) => void;
     className?: string;
 }
 
-export function ImageSelector({ value, onChange, className }: ImageSelectorProps) {
+export function ImageSelector({ onImageSelect, className }: ImageSelectorProps) {
     const [isOpen, setIsOpen] = useState(false);
 
     const handleImageSelect = (item: { url: string }) => {
-        onChange(item.url);
+        onImageSelect(item.url);
         setIsOpen(false);
     };
 
@@ -24,24 +24,14 @@ export function ImageSelector({ value, onChange, className }: ImageSelectorProps
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
                 <div className={className}>
-                    {value ? (
-                        <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border">
-                            <Image
-                                src={value}
-                                alt="Selected image"
-                                fill
-                                className="object-cover"
-                            />
-                        </div>
-                    ) : (
-                        <Button variant="outline" className="w-full">
-                            Select Image
-                        </Button>
-                    )}
+                    <Button variant="outline">
+                        <ImageIcon className="mr-2 h-4 w-4" />
+                        Select Image
+                    </Button>
                 </div>
             </DialogTrigger>
             <DialogContent className="w-full max-w-4xl h-[80vh]">
-                <MediaLibraryPage
+                <MediaLibrary
                     selectionMode={true}
                     onSelect={handleImageSelect}
                     onClose={() => setIsOpen(false)}

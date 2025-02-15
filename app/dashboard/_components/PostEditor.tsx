@@ -32,7 +32,7 @@ import MediaGrid from '@/app/dashboard/_components/MediaGrid';
 import { mediaService } from '@/app/services/media';
 import { Media } from '@/app/types/media';
 
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/app/hooks/use-auth';
 import { Post } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
 import { categoriesService } from '@/app/services/categories';
@@ -404,16 +404,14 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Cover Image</FormLabel>
+              <FormControl>
+                <ImageSelector
+                  onImageSelect={(url) => field.onChange(url)}
+                />
+              </FormControl>
               <FormDescription>
                 Select a cover image for your post
               </FormDescription>
-              <FormControl>
-                <ImageSelector
-                  value={field.value}
-                  onChange={field.onChange}
-                  className="w-full"
-                />
-              </FormControl>
               <FormMessage />
             </FormItem>
           )}

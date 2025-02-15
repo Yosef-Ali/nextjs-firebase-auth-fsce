@@ -1,19 +1,19 @@
 "use client";
 
-import { generateUploadButton } from "@uploadthing/react";
+import { CustomUploadButton } from '@/components/ui/upload-button';
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
+import { useState } from 'react';
+import { toast } from '@/hooks/use-toast';
 import type { OurFileRouter } from "@/app/api/uploadthing/core";
-import { toast } from "sonner";
-
-const UploadButton = generateUploadButton<OurFileRouter>();
 
 interface ImageUploadProps {
   disabled?: boolean;
   onChange: (value: string) => void;
   onRemove: () => void;
   value: string;
+  className?: string;
 }
 
 export function ImageUpload({
@@ -21,9 +21,12 @@ export function ImageUpload({
   onChange,
   onRemove,
   value,
+  className
 }: ImageUploadProps) {
+  const [isUploading, setIsUploading] = useState(false);
+
   return (
-    <div className="mb-4 flex items-center gap-4">
+    <div className={`mb-4 flex items-center gap-4 ${className}`}>
       <div className="relative w-[200px] h-[200px] rounded-md overflow-hidden border">
         {value ? (
           <div className="relative aspect-square">
@@ -31,42 +34,28 @@ export function ImageUpload({
           </div>
         ) : (
           <div className="flex items-center justify-center h-full">
-            <UploadButton
+            <CustomUploadButton
               endpoint="imageUploader"
+              onUploadBegin={() => {
+                setIsUploading(true);
+              }}
               onClientUploadComplete={(res) => {
-                if (res && res.length > 0) {
-                  onChange(res[0].url);
-                  toast.success("Image uploaded successfully");
+                setIsUploading(false);
+                if (res?.[0]) {
+                  onChange(res[0].fileUrl);
+                  toast({
+                    title: "Success",
+                    description: "Image uploaded successfully"
+                  });
                 }
               }}
               onUploadError={(error: Error) => {
-                console.error("Upload error details:", {
-                  message: error.message,
-                  stack: error.stack
+                setIsUploading(false);
+                toast({
+                  title: "Error",
+                  description: error.message || "Failed to upload image",
+                  variant: "destructive"
                 });
-                
-                if (error.message.includes("logged in")) {
-                  toast.error("Please make sure you are logged in before uploading");
-                } else if (error.message.includes("size")) {
-                  toast.error("Image must be under 4MB in size");
-                } else {
-                  toast.error("Failed to upload image. Please try again");
-                }
-              }}
-              onUploadBegin={() => {
-                toast.info("Uploading image...");
-              }}
-              appearance={{
-                button: {
-                  background: "transparent",
-                },
-                container: {
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "1rem",
-                  padding: "2rem",
-                },
               }}
             />
           </div>

@@ -9,10 +9,9 @@ import {
   updateDoc,
   deleteDoc,
   doc,
-  Timestamp,
   serverTimestamp,
-  QueryConstraint,
 } from 'firebase/firestore';
+import { serializeData } from '@/app/utils/serialization';
 
 const COLLECTION_NAME = 'posts';
 
@@ -21,7 +20,6 @@ export const eventsService = {
     try {
       console.log('Events Service: Getting upcoming events');
       const postsRef = collection(db, COLLECTION_NAME);
-      // Match all possible category formats for events
       const q = query(
         postsRef,
         where('category', 'in', [
@@ -33,30 +31,10 @@ export const eventsService = {
       );
 
       const querySnapshot = await getDocs(q);
-      console.log('Events Service: Found', querySnapshot.size, 'events');
-
-      let events = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        console.log('Events Service: Processing event:', data.title);
-        return {
-          id: doc.id,
-          ...data,
-          category: typeof data.category === 'string'
-            ? { id: 'events', name: 'Events' }
-            : data.category || { id: 'events', name: 'Events' },
-          date: data.date || new Date().toISOString(),
-          createdAt: data.createdAt instanceof Timestamp
-            ? data.createdAt.toMillis()
-            : typeof data.createdAt === 'number'
-              ? data.createdAt
-              : Date.now(),
-          updatedAt: data.updatedAt instanceof Timestamp
-            ? data.updatedAt.toMillis()
-            : typeof data.updatedAt === 'number'
-              ? data.updatedAt
-              : Date.now(),
-        } as Post;
-      });
+      let events = querySnapshot.docs.map(doc => serializeData({
+        id: doc.id,
+        ...doc.data()
+      })) as Post[];
 
       // Filter future events and sort by date
       const now = new Date();
@@ -73,10 +51,11 @@ export const eventsService = {
             return false;
           }
         })
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .slice(0, limit);
 
       console.log('Events Service: Returning', events.length, 'upcoming events');
-      return limit ? events.slice(0, limit) : events;
+      return events;
     } catch (error) {
       console.error('Events Service: Error getting upcoming events:', error);
       return [];
@@ -87,7 +66,6 @@ export const eventsService = {
     try {
       console.log('Events Service: Getting all events');
       const postsRef = collection(db, COLLECTION_NAME);
-      // Match all possible category formats for events
       const q = query(
         postsRef,
         where('category', 'in', [
@@ -101,27 +79,10 @@ export const eventsService = {
       const querySnapshot = await getDocs(q);
       console.log('Events Service: Found', querySnapshot.size, 'events');
 
-      let events = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          category: typeof data.category === 'string'
-            ? { id: 'events', name: 'Events' }
-            : data.category || { id: 'events', name: 'Events' },
-          date: data.date || new Date().toISOString(),
-          createdAt: data.createdAt instanceof Timestamp
-            ? data.createdAt.toMillis()
-            : typeof data.createdAt === 'number'
-              ? data.createdAt
-              : Date.now(),
-          updatedAt: data.updatedAt instanceof Timestamp
-            ? data.updatedAt.toMillis()
-            : typeof data.updatedAt === 'number'
-              ? data.updatedAt
-              : Date.now(),
-        } as Post;
-      });
+      let events = querySnapshot.docs.map(doc => serializeData({
+        id: doc.id,
+        ...doc.data()
+      })) as Post[];
 
       if (!includePastEvents) {
         const now = new Date();
@@ -158,18 +119,10 @@ export const eventsService = {
       }
 
       const doc = querySnapshot.docs[0];
-      const data = doc.data();
-      const createdAt = data.createdAt;
-      const updatedAt = data.updatedAt;
-
-      return {
+      return serializeData({
         id: doc.id,
-        ...data,
-        createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() :
-          typeof createdAt === 'number' ? createdAt : Date.now(),
-        updatedAt: updatedAt instanceof Timestamp ? updatedAt.toMillis() :
-          typeof updatedAt === 'number' ? updatedAt : Date.now(),
-      } as Post;
+        ...doc.data()
+      }) as Post;
     } catch (error) {
       console.error('Error getting event by slug:', error);
       return null;

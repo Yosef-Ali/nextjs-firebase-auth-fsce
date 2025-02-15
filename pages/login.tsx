@@ -3,7 +3,7 @@
 import Auth from '@/components/Auth';
 import AuthRedirectHandler from '@/components/auth/AuthRedirectHandler';
 import { Logo } from '@/components/Logo';
-import { AuthProvider } from '@/app/providers/AuthProvider';
+import { AuthProvider } from '@/lib/context/auth-context';
 
 export default function LoginPage() {
   return (

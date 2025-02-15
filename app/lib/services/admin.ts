@@ -1,6 +1,7 @@
 import { getApps, initializeApp, cert, ServiceAccount } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
+import { UserRole } from '@/app/types/user';
 
 // Initialize Firebase Admin (only for admin operations)
 const serviceAccount = {
@@ -74,7 +75,7 @@ export async function getUserByEmail(email: string) {
   }
 }
 
-export async function updateUserRole(uid: string, role: string) {
+export async function updateUserRole(uid: string, role: UserRole) {
   try {
     await adminAuth.setCustomUserClaims(uid, { role });
     await adminDb.collection('users').doc(uid).update({

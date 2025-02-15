@@ -95,16 +95,14 @@ export default function PostFormFields({
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel>Cover Image</FormLabel>
+                        <FormControl>
+                            <ImageSelector
+                                onImageSelect={(url) => field.onChange(url)}
+                            />
+                        </FormControl>
                         <FormDescription>
                             Select a cover image for your post
                         </FormDescription>
-                        <FormControl>
-                            <ImageSelector
-                                value={field.value}
-                                onChange={field.onChange}
-                                className="w-full"
-                            />
-                        </FormControl>
                         <FormMessage />
                     </FormItem>
                 )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/app/hooks/use-auth';
 import { useEffect, Suspense } from 'react';
 import { SignInForm } from '@/components/auth/sign-in-form';
 import { AuthLoading } from '@/components/auth/auth-loading';

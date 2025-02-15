@@ -5,6 +5,7 @@ import { CellAction } from "./cell-action";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { Partner } from "@/types";
+import { useState } from "react";
 
 export const columns: ColumnDef<Partner>[] = [
   {
@@ -15,40 +16,37 @@ export const columns: ColumnDef<Partner>[] = [
     accessorKey: "logo",
     header: "Logo",
     cell: ({ row }) => {
+      const [imageError, setImageError] = useState(false);
       const name = row.original.name || "";
-      const logo = row.original.logo || "";  // Convert undefined to empty string
+      const logo = row.original.logo || "";
       const initials = name
         .split(" ")
         .map((n) => n?.[0] || "")
         .join("")
         .toUpperCase();
 
-      if (!logo) {
-        return (
-          <div className="relative flex items-center justify-center w-12 h-12 overflow-hidden bg-gray-100 rounded-md">
-            <span className="text-lg font-bold text-gray-500">
-              {initials}
-            </span>
-          </div>
-        );
+      const renderInitials = () => (
+        <div className="relative flex items-center justify-center w-12 h-12 overflow-hidden bg-gray-100 rounded-md">
+          <span className="text-lg font-bold text-gray-500">
+            {initials}
+          </span>
+        </div>
+      );
+
+      if (!logo || imageError) {
+        return renderInitials();
       }
 
       return (
         <div className="relative flex items-center justify-center w-12 h-12 overflow-hidden bg-gray-100 rounded-md">
           <Image
-            src={logo as string}  // Type assertion since we know it's a string at this point
+            src={logo}
             alt={name}
             fill
             className="object-contain"
             sizes="48px"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-              const parent = target.parentElement;
-              if (parent) {
-                parent.innerHTML = `<span class="text-lg font-bold text-gray-500">${initials}</span>`;
-              }
-            }}
+            onError={() => setImageError(true)}
+            priority
           />
         </div>
       );

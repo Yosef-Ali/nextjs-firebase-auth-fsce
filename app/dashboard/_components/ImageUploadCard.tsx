@@ -66,7 +66,7 @@ export default function ImageUploadCard({ type, aspectRatio, onImageUpload, init
       const url = await getDownloadURL(snapshot.ref)
       setPreview(url)
       onImageUpload(url)
-      
+
       toast({
         title: "Success",
         description: "Image uploaded successfully"

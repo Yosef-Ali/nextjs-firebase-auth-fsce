@@ -1,34 +1,27 @@
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/app/hooks/use-auth';
-import { authorization } from '@/app/lib/authorization';
-import { UserRole } from '@/app/types/user';
-import { LoadingScreen } from '@/components/loading-screen/LoadingScreen';
+'use client';
 
-export function withAuth(
-    WrappedComponent: React.ComponentType,
-    requiredRole: UserRole = UserRole.USER
+import { useEffect } from 'react';
+import { useAuth } from '@/app/hooks/use-auth';
+import { useRouter } from 'next/navigation';
+import { UserStatus } from '@/app/types/user';
+import { LoadingScreen } from '@/components/loading-screen';
+
+export function withAuth<P extends object>(
+    WrappedComponent: React.ComponentType<P>
 ) {
-    return function ProtectedRoute(props: any) {
+    return function ProtectedRoute(props: P) {
         const { user, userData, loading } = useAuth();
         const router = useRouter();
 
         useEffect(() => {
             if (!loading) {
-                if (!user || !userData) {
+                if (!user) {
                     router.replace('/sign-in');
                     return;
                 }
 
-                const authUser = { ...user, role: userData.role, status: userData.status };
-
-                if (!authorization.hasRole(authUser, requiredRole)) {
-                    router.replace('/unauthorized');
-                    return;
-                }
-
-                if (!authorization.isActiveUser(authUser)) {
-                    router.replace('/account-pending');
+                if (userData?.status !== UserStatus.ACTIVE) {
+                    router.replace('/pending-approval');
                     return;
                 }
             }

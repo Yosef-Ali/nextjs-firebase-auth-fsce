@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/app/hooks/use-auth';
 import {
   LayoutDashboard,
   BookOpenIcon,
@@ -29,6 +29,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { UserRole } from '@/app/types/user';
+import { withRoleProtection } from '@/app/lib/withRoleProtection';
 
 const DashboardAside = () => {
   const pathname = usePathname();
@@ -151,8 +152,8 @@ const DashboardAside = () => {
   return (
     <aside className="relative">
       <div className={cn(
-        "flex flex-col h-full border-r bg-white transition-all duration-300 fixed inset-y-0 z-20",
-        isCollapsed ? "w-[80px]" : "w-72"
+        "flex flex-col h-full border-r bg-transparent transition-all duration-300 fixed inset-y-0 z-20",
+        isCollapsed ? "w-[80px]" : "w-[270px]"
       )}>
         <div className="flex h-16 items-center px-4 border-b">
           <img src="/Logo.svg" alt="Logo" className="h-8 mb-4" />
@@ -220,4 +221,4 @@ const DashboardAside = () => {
   );
 };
 
-export default DashboardAside;
+export default withRoleProtection(DashboardAside, UserRole.ADMIN);

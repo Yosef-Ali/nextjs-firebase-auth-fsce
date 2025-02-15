@@ -3,22 +3,15 @@ export type MediaType = 'image' | 'video' | 'document' | 'audio';
 export interface Media {
   id: string;
   name: string;
-  description?: string;
-  type: MediaType;
   url: string;
-  thumbnailUrl?: string;
-  size: number;
-  mimeType: string;
-  width?: number;
-  height?: number;
-  duration?: number;
-  tags?: string[];
+  type: string;
+  size?: number;
   alt?: string;
   caption?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  uploadedBy: string;
-  uploadedByEmail: string;
+  description?: string;
+  tags?: string[];
+  createdAt: number;
+  updatedAt?: number;
 }
 
 export type CreateMediaInput = Omit<Media, 'id' | 'createdAt' | 'updatedAt' | 'thumbnailUrl'>;

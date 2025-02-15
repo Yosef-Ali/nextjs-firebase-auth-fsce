@@ -1,110 +1,66 @@
 'use client';
 
-import { useRouter, useParams } from 'next/navigation';
-import { PostEditor } from '@/app/dashboard/_components/posts/PostEditor';
-import { useAuth } from '@/app/providers/AuthProvider';
+import { useParams } from 'next/navigation';
+import { withRoleProtection } from '@/app/lib/withRoleProtection';
+import { UserRole } from '@/app/types/user';
+import { useAuthContext } from '@/lib/context/auth-context';
+import { PostEditor } from '@/app/dashboard/_components/PostEditor';
 import { useEffect, useState } from 'react';
-import { Post } from '@/app/types/post';
-import { doc, getDoc, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { toast } from '@/hooks/use-toast';
 import { postsService } from '@/app/services/posts';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from '@/hooks/use-toast';
+import type { Post } from '@/app/types/post';
 
-export default function EditPostPage() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+function EditPostPage() {
+  const { user } = useAuthContext();
   const params = useParams();
-  const id = params?.id as string;
   const [post, setPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadPost = async () => {
-      if (!user || !id) return;
+    const fetchPost = async () => {
+      if (!params?.id) return;
 
       try {
-        const docRef = doc(db, 'posts', id);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setPost({
-            id: docSnap.id,
-            ...data,
-            createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
-            updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() : Date.now()
-          } as Post);
+        const fetchedPost = await postsService.getPostById(params.id as string);
+        if (fetchedPost) {
+          setPost(fetchedPost);
         } else {
           toast({
-            title: "Error",
-            description: "Post not found",
-            variant: "destructive"
+            title: 'Error',
+            description: 'Post not found',
+            variant: 'destructive',
           });
-          router.push('/dashboard/posts');
         }
       } catch (error) {
-        console.error('Error loading post:', error);
+        console.error('Error fetching post:', error);
         toast({
-          title: "Error",
-          description: "Failed to load post",
-          variant: "destructive"
+          title: 'Error',
+          description: 'Failed to load post',
+          variant: 'destructive',
         });
-        router.push('/dashboard/posts');
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (!loading) {
-      if (!user) {
-        router.push('/sign-in');
-        return;
-      }
-      loadPost();
+    if (user) {
+      fetchPost();
     }
-  }, [loading, user, router, id]);
+  }, [params?.id, user]);
 
-  if (loading || isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            onClick={() => router.back()}
-            className="mb-4"
-            disabled
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-        </div>
-        <Skeleton className="h-[200px] w-full" />
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-[250px]" />
-          <Skeleton className="h-4 w-[200px]" />
-        </div>
-      </div>
-    );
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
 
   if (!post) {
-    return null;
+    return <div>Post not found</div>;
   }
 
   return (
-    <div className="space-y-4">
-      <Button
-        variant="ghost"
-        onClick={() => router.back()}
-        className="mb-4"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back
-      </Button>
+    <div className="p-6">
       <PostEditor post={post} />
     </div>
   );
 }
+
+export default withRoleProtection(EditPostPage, UserRole.ADMIN);

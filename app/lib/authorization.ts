@@ -7,14 +7,15 @@ const ROLE_HIERARCHY = {
   [AppUserRole.ADMIN]: [AppUserRole.ADMIN, AppUserRole.AUTHOR, AppUserRole.EDITOR, AppUserRole.USER],
   [AppUserRole.AUTHOR]: [AppUserRole.AUTHOR, AppUserRole.EDITOR, AppUserRole.USER],
   [AppUserRole.EDITOR]: [AppUserRole.EDITOR, AppUserRole.USER],
-  [AppUserRole.USER]: [AppUserRole.USER],
-  [AppUserRole.GUEST]: [AppUserRole.GUEST]
+  [AppUserRole.USER]: [AppUserRole.USER]
 };
 
 // Define a constant for admin emails that can be easily updated
 const ADMIN_EMAILS = [
   process.env.NEXT_PUBLIC_ADMIN_EMAIL,
-  'dev.yosefali@gmail.com'
+  'dev.yosef@gmail.com',
+  'yaredd.degefu@gmail.com',
+  'mekdesyared@gmail.com'
 ].filter(Boolean) as string[];
 
 interface AuthorizationContext {
@@ -49,131 +50,40 @@ export class Authorization {
     return this.hasRole(user, AppUserRole.AUTHOR);
   }
 
-  public canManageUsers(user: AppUserType | null): boolean {
-    return this.isAdmin(user);
-  }
-
-  public canEditContent(user: AppUserType | null): boolean {
+  public isEditor(user: AppUserType | null): boolean {
     if (!user) return false;
     return this.hasRole(user, AppUserRole.EDITOR);
   }
 
-  public canCreateContent(user: AppUserType | null): boolean {
+  public canManageUsers(user: AppUserType | null): boolean {
+    return this.isAdmin(user);
+  }
+
+  public canManageContent(user: AppUserType | null): boolean {
+    return this.isAuthor(user) || this.isAdmin(user);
+  }
+
+  public canEditContent(user: AppUserType | null): boolean {
+    return this.isEditor(user) || this.isAuthor(user) || this.isAdmin(user);
+  }
+
+  public canDeleteContent(user: AppUserType | null, authorId?: string): boolean {
     if (!user) return false;
-    return this.hasRole(user, AppUserRole.AUTHOR);
+    if (this.isAdmin(user)) return true;
+    if (this.isAuthor(user) && authorId === user.uid) return true;
+    return false;
   }
 
   public isActiveUser(user: AppUserType | null): boolean {
     return user?.status === UserStatus.ACTIVE;
   }
 
-  // Create authorization context with full user information
-  static createContext(user: FirebaseUser | null, resourceOwnerId?: string): AuthorizationContext {
-    if (!user) {
-      return { user: null, resourceOwnerId };
-    }
-
-    // Determine role based on email for admin or default to USER
-    const role = user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())
-      ? AppUserRole.ADMIN
-      : AppUserRole.USER;
-
-    return {
-      user: {
-        ...user,
-        role,
-        status: UserStatus.ACTIVE,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        metadata: {
-          lastLogin: user.metadata?.lastSignInTime ? new Date(user.metadata.lastSignInTime).getTime() : Date.now(),
-          createdAt: user.metadata?.creationTime ? new Date(user.metadata.creationTime).getTime() : Date.now()
-        }
-      } as AppUserType,
-      resourceOwnerId
-    };
+  public canAccessDashboard(user: AppUserType | null): boolean {
+    return this.isActiveUser(user) && (this.isAuthor(user) || this.isAdmin(user));
   }
 
-  // Determine if a user has permission to access a resource
-  // @param context Authorization context
-  // @param requiredRole Minimum role required
-  // @returns Boolean indicating access permission
-  static canAccess(userOrContext: AuthorizationContext | AppUserType, requiredRole: AppUserRole = AppUserRole.USER): boolean {
-    let user: AppUserType | null = null;
-    let resourceOwnerId: string | undefined = undefined;
-
-    if ((userOrContext as AuthorizationContext).user) {
-      const context = userOrContext as AuthorizationContext;
-      user = context.user;
-      resourceOwnerId = context.resourceOwnerId;
-    } else {
-      user = userOrContext as AppUserType;
-    }
-
-    if (!user) return false;
-
-    // Admin has full access
-    if (user.role === AppUserRole.ADMIN) {
-      return true;
-    }
-
-    // Author can access their own resources and create new ones
-    if (user.role === AppUserRole.AUTHOR) {
-      if (requiredRole === AppUserRole.USER || requiredRole === AppUserRole.AUTHOR) {
-        return resourceOwnerId ? user.uid === resourceOwnerId : true;
-      }
-      return false;
-    }
-
-    // Regular user has minimal access
-    return requiredRole === AppUserRole.USER;
-  }
-
-  // Check if the user is an admin
-  // @param user User object
-  // @returns Boolean indicating admin status
-  static isAdmin(user: AppUserType | null): boolean {
-    if (!user) return false;
-    return user.role === AppUserRole.ADMIN;
-  }
-
-  // Add an admin email to the list of admin emails
-
-  // Remove an admin email from the list of admin emails
-
-  // Get the current list of admin emails
-
-  // Check if a user can create a post
-  // @param user User object
-  // @returns Boolean indicating permission
-  static canCreatePost(user: FirebaseUser | null): boolean {
-    const someValue = this.canAccess(this.createContext(user), AppUserRole.AUTHOR);
-    return someValue !== null && someValue !== undefined ? someValue : false;
-  }
-
-  // Check if a user can delete a post
-  // @param user User object
-  // @param postAuthorId Post author ID
-  // @returns Boolean indicating permission
-  static canDeletePost(user: FirebaseUser | null, postAuthorId?: string): boolean {
-    const context = this.createContext(user, postAuthorId);
-    // Ensure context is valid before proceeding
-    if (!context || !context.user) return false;
-    return this.canAccess(context, AppUserRole.ADMIN) || false;
-  }
-
-  // Check if a user can manage users
-  // @param user User object
-  // @returns Boolean indicating permission
-  static canManageUsers(user: FirebaseUser | null): boolean {
-    return this.canAccess(this.createContext(user), AppUserRole.ADMIN);
-  }
-
-  // Check if a user can invite authors
-  // @param user User object
-  // @returns Boolean indicating permission
-  static canInviteAuthors(user: FirebaseUser | null): boolean {
-    return this.canAccess(this.createContext(user), AppUserRole.ADMIN);
+  public createContext(user: AppUserType | null, resourceOwnerId?: string): AuthorizationContext {
+    return { user, resourceOwnerId };
   }
 }
 

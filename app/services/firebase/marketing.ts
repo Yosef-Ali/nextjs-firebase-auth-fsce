@@ -19,6 +19,7 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { serializeData } from '@/app/utils/serialization';
 
 export type PostStatus = "draft" | "published" | "archived";
 
@@ -196,30 +197,10 @@ class MarketingService {
 
       const querySnapshot = await getDocs(q);
 
-      return querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        const createdAt = data.createdAt;
-        const updatedAt = data.updatedAt;
-        const category = data.category || {};
-
-        return {
-          id: doc.id,
-          title: data?.title ?? '',
-          content: data?.content ?? '',
-          excerpt: data?.excerpt ?? '',
-          slug: data?.slug ?? doc.id,
-          category: {
-            id: category.id ?? category ?? '',
-            name: category.name ?? category ?? ''
-          },
-          status: data?.status,
-          authorId: data?.authorId ?? '',
-          authorName: data?.authorName ?? '',
-          authorImage: data?.authorImage ?? '',
-          createdAt: createdAt instanceof Timestamp ? createdAt.toDate() : new Date(),
-          updatedAt: updatedAt instanceof Timestamp ? updatedAt.toDate() : new Date(),
-        } as Post;
-      });
+      return querySnapshot.docs.map(doc => serializeData({
+        id: doc.id,
+        ...doc.data()
+      })) as Post[];
     } catch (error) {
       console.error('Error getting user posts:', error);
       throw error;
@@ -235,30 +216,12 @@ class MarketingService {
         return null;
       }
 
-      const data = docSnap.data();
-      const createdAt = data.createdAt;
-      const updatedAt = data.updatedAt;
-      const category = data.category || {};
-
-      return {
+      return serializeData({
         id: docSnap.id,
-        title: data?.title ?? '',
-        content: data?.content ?? '',
-        excerpt: data?.excerpt ?? '',
-        slug: data?.slug ?? docSnap.id,
-        category: {
-          id: category.id ?? category ?? '',
-          name: category.name ?? category ?? ''
-        },
-        status: data?.status,
-        authorId: data?.authorId ?? '',
-        authorName: data?.authorName ?? '',
-        authorImage: data?.authorImage ?? '',
-        createdAt: createdAt instanceof Timestamp ? createdAt.toDate() : new Date(),
-        updatedAt: updatedAt instanceof Timestamp ? updatedAt.toDate() : new Date(),
-      } as Post;
+        ...docSnap.data()
+      }) as Post;
     } catch (error) {
-      console.error('Error getting post by ID:', error);
+      console.error('Error getting post:', error);
       throw error;
     }
   }
@@ -277,28 +240,10 @@ class MarketingService {
       }
 
       const doc = querySnapshot.docs[0];
-      const data = doc.data();
-      const createdAt = data.createdAt;
-      const updatedAt = data.updatedAt;
-      const category = data.category || {};
-
-      return {
+      return serializeData({
         id: doc.id,
-        title: data?.title ?? '',
-        content: data?.content ?? '',
-        excerpt: data?.excerpt ?? '',
-        slug: data?.slug ?? doc.id,
-        category: {
-          id: category.id ?? category ?? '',
-          name: category.name ?? category ?? ''
-        },
-        status: data?.status,
-        authorId: data?.authorId ?? '',
-        authorName: data?.authorName ?? '',
-        authorImage: data?.authorImage ?? '',
-        createdAt: createdAt instanceof Timestamp ? createdAt.toDate() : new Date(),
-        updatedAt: updatedAt instanceof Timestamp ? updatedAt.toDate() : new Date(),
-      } as Post;
+        ...doc.data()
+      }) as Post;
     } catch (error) {
       console.error('Error getting page content:', error);
       throw error;
@@ -356,30 +301,10 @@ class MarketingService {
       );
 
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        const createdAt = data.createdAt;
-        const updatedAt = data.updatedAt;
-        const category = data.category || {};
-
-        return {
-          id: doc.id,
-          title: data?.title ?? '',
-          content: data?.content ?? '',
-          excerpt: data?.excerpt ?? '',
-          slug: data?.slug ?? doc.id,
-          category: {
-            id: category.id ?? category ?? '',
-            name: category.name ?? category ?? ''
-          },
-          status: data?.status,
-          authorId: data?.authorId ?? '',
-          authorName: data?.authorName ?? '',
-          authorImage: data?.authorImage ?? '',
-          createdAt: createdAt instanceof Timestamp ? createdAt.toDate() : new Date(),
-          updatedAt: updatedAt instanceof Timestamp ? updatedAt.toDate() : new Date(),
-        } as Post;
-      });
+      return querySnapshot.docs.map(doc => serializeData({
+        id: doc.id,
+        ...doc.data()
+      })) as Post[];
     } catch (error) {
       console.error(`Error fetching ${categoryId} posts:`, error);
       return [];

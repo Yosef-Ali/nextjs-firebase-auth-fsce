@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/app/hooks/useAuth';
 import {
   Download,
   Link as LinkIcon,
@@ -47,6 +47,7 @@ export default function MediaLibraryPage() {
   const { user } = useAuth();
 
   const storagePaths = [
+    'media/images',
     'posts',
     'partners',
     'resources',

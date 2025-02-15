@@ -7,7 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { doc, setDoc, collection, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { AboutContent } from '@/app/types/about';
-import { useAuth } from '@/app/providers/AuthProvider';
+import { useAuthContext } from '@/lib/context/auth-context';
 import { AppUser } from '@/app/types/user';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
@@ -20,16 +20,16 @@ interface AboutSectionFormProps {
   onSuccess?: () => void;
 }
 
-export default function AboutSectionForm({ 
-  initialData, 
-  section, 
-  onSuccess 
+export default function AboutSectionForm({
+  initialData,
+  section,
+  onSuccess
 }: AboutSectionFormProps) {
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const { toast } = useToast();
   const [content, setContent] = useState(initialData?.content || '');
-  const { user, loading: authLoading } = useAuth() as { user: AppUser | null; loading: boolean };
+  const { user, loading: authLoading } = useAuthContext() as { user: AppUser | null; loading: boolean };
 
   // If authentication is still loading, show a loading indicator
   if (authLoading) {
@@ -42,7 +42,7 @@ export default function AboutSectionForm({
 
   // Determine user's authorization context
   const authContext = Authorization.createContext(
-    user, 
+    user,
     initialData?.authorId // Pass the original creator's ID
   );
 
@@ -75,7 +75,7 @@ export default function AboutSectionForm({
         throw new Error('Unauthorized: You do not have permission to modify this content.');
       }
 
-      const docRef = initialData?.id 
+      const docRef = initialData?.id
         ? doc(db, 'about', initialData.id)
         : doc(collection(db, 'about'));
 
@@ -88,9 +88,9 @@ export default function AboutSectionForm({
         createdBy: initialData?.authorId || user?.uid,
         updatedBy: user?.uid,
         updatedAt: Timestamp.now(),
-        ...(initialData ? {} : { 
+        ...(initialData ? {} : {
           createdAt: Timestamp.now(),
-          createdBy: user?.uid 
+          createdBy: user?.uid
         })
       }, { merge: true });
 
@@ -103,8 +103,8 @@ export default function AboutSectionForm({
     } catch (error) {
       console.error('Error saving content:', error);
       setAuthError(
-        error instanceof Error 
-          ? error.message 
+        error instanceof Error
+          ? error.message
           : 'An error occurred while saving the content. Please try again.'
       );
     } finally {
@@ -120,8 +120,8 @@ export default function AboutSectionForm({
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Access Restricted</AlertTitle>
           <AlertDescription>
-            {Authorization.isAdmin(user) 
-              ? 'Unable to verify admin credentials.' 
+            {Authorization.isAdmin(user)
+              ? 'Unable to verify admin credentials.'
               : 'You do not have permission to modify this content. Only administrators or original creators can edit.'}
           </AlertDescription>
         </Alert>
@@ -131,7 +131,7 @@ export default function AboutSectionForm({
           <Textarea
             placeholder={sectionDetails[section].placeholder}
             value={content}
-            onChange={() => {}}
+            onChange={() => { }}
             className="min-h-[200px] resize-none"
             disabled
           />
@@ -140,9 +140,9 @@ export default function AboutSectionForm({
           </p>
         </div>
 
-        <Button 
-          variant="outline" 
-          disabled 
+        <Button
+          variant="outline"
+          disabled
           className="w-full"
         >
           Access Denied

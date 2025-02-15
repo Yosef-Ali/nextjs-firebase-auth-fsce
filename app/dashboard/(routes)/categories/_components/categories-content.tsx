@@ -5,23 +5,28 @@ import { Category } from '@/app/types/category';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Card, CardHeader } from "@/components/ui/card";
 import CategoriesTable from '@/app/dashboard/_components/CategoriesTable';
 import CategoryEditor from '@/app/dashboard/_components/CategoryEditor';
 import { categoriesService } from '@/app/services/categories';
 import { toast } from '@/hooks/use-toast';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/app/hooks/use-auth';
+import { UserRole } from '@/app/types/user';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface CategoriesContentProps {
   initialCategories: Category[];
 }
 
 export default function CategoriesContent({ initialCategories }: CategoriesContentProps) {
-  const { user } = useAuth();
+  const { user, userData, loading: authLoading } = useAuth();
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const canManageCategories = userData?.role === UserRole.ADMIN || userData?.role === UserRole.SUPER_ADMIN;
 
   const fetchCategories = async () => {
     try {
@@ -48,6 +53,15 @@ export default function CategoriesContent({ initialCategories }: CategoriesConte
   }, []);
 
   const handleEdit = async (category: Category) => {
+    if (!canManageCategories) {
+      toast({
+        title: 'Unauthorized',
+        description: 'You do not have permission to edit categories',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -61,10 +75,10 @@ export default function CategoriesContent({ initialCategories }: CategoriesConte
   };
 
   const handleDelete = async (category: Category) => {
-    if (!user) {
+    if (!canManageCategories) {
       toast({
-        title: 'Error',
-        description: 'You must be logged in to delete categories',
+        title: 'Unauthorized',
+        description: 'You do not have permission to delete categories',
         variant: 'destructive',
       });
       return;
@@ -92,10 +106,10 @@ export default function CategoriesContent({ initialCategories }: CategoriesConte
   };
 
   const handleSave = async (category: Category) => {
-    if (!user) {
+    if (!canManageCategories) {
       toast({
-        title: 'Error',
-        description: 'You must be logged in to save categories',
+        title: 'Unauthorized',
+        description: 'You do not have permission to manage categories',
         variant: 'destructive',
       });
       return;
@@ -103,7 +117,7 @@ export default function CategoriesContent({ initialCategories }: CategoriesConte
 
     // Check for duplicate category name
     const isDuplicate = categories.some(
-      existingCategory => 
+      existingCategory =>
         existingCategory.name.toLowerCase() === category.name.toLowerCase() &&
         existingCategory.id !== category.id
     );
@@ -148,26 +162,43 @@ export default function CategoriesContent({ initialCategories }: CategoriesConte
     setError(null);
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Categories</h2>
-        <Button onClick={() => setIsEditorOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Category
-        </Button>
+  if (authLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-[200px]" />
+          <Skeleton className="h-10 w-[120px]" />
+        </div>
+        <Skeleton className="h-[400px] w-full rounded-md" />
       </div>
+    );
+  }
 
-      {error && (
-        <div className="text-red-500 mb-4">{error}</div>
-      )}
+  return (
+    <div>
+      <Card className="bg-transparent border rounded-lg shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between border-b rounded-t-lg">
+          <h3 className="text-lg font-semibold leading-none tracking-tight">Categories</h3>
+          {canManageCategories && (
+            <Button onClick={() => setIsEditorOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Category
+            </Button>
+          )}
+        </CardHeader>
 
-      <CategoriesTable
-        categories={categories.filter(cat => cat.type === 'post' && !cat.parentId)}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        isLoading={isLoading}
-      />
+        {error && (
+          <div className="p-4 text-red-500 border-b">{error}</div>
+        )}
+
+        <CategoriesTable
+          categories={categories.filter(cat => cat.type === 'post' && !cat.parentId)}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          isLoading={isLoading}
+          canManage={canManageCategories}
+        />
+      </Card>
 
       <Dialog open={isEditorOpen} onOpenChange={setIsEditorOpen}>
         <DialogContent>
@@ -181,7 +212,7 @@ export default function CategoriesContent({ initialCategories }: CategoriesConte
             category={selectedCategory}
             type="post"
             onSave={handleSave}
-            onCancel={() => handleEditorClose()}
+            onCancel={handleEditorClose}
           />
         </DialogContent>
       </Dialog>
