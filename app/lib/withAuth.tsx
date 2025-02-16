@@ -3,7 +3,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/hooks/use-auth';
 import { authorization } from '@/app/lib/authorization';
 import { UserRole } from '@/app/types/user';
-import { LoadingScreen } from '@/components/loading-screen/LoadingScreen';
 
 export function withAuth(
     WrappedComponent: React.ComponentType,
@@ -35,7 +34,11 @@ export function withAuth(
         }, [user, userData, loading, router]);
 
         if (loading) {
-            return <LoadingScreen />;
+            return (
+                <div className="flex items-center justify-center min-h-screen">
+                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900" />
+                </div>
+            );
         }
 
         if (!user || !userData) {
