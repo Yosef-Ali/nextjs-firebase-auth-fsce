@@ -46,9 +46,10 @@ type ResourceFormData = z.infer<typeof formSchema>;
 interface ResourceEditorProps {
   resource?: Resource;
   mode?: 'create' | 'edit';
+  onSuccess?: () => void;
 }
 
-export function ResourceEditor({ resource, mode = 'create' }: ResourceEditorProps) {
+export function ResourceEditor({ resource, mode = 'create', onSuccess }: ResourceEditorProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
@@ -89,6 +90,7 @@ export function ResourceEditor({ resource, mode = 'create' }: ResourceEditorProp
         await resourcesService.createResource(resourceData);
         toast.success('Resource created successfully');
       }
+      onSuccess?.(); // Call onSuccess callback if provided
       router.push('/dashboard/resources');
     } catch (error) {
       console.error('Error saving resource:', error);
@@ -123,7 +125,7 @@ export function ResourceEditor({ resource, mode = 'create' }: ResourceEditorProp
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <Textarea 
+                  <Textarea
                     placeholder="Enter resource description"
                     className="h-32"
                     {...field}

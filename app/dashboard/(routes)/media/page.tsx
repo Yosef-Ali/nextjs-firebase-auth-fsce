@@ -5,14 +5,12 @@ import { Plus, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { mediaService } from '@/app/services/media';
 import { Media } from '@/app/types/media';
 import MediaGrid from '@/app/dashboard/_components/MediaGrid';
-import { MediaUploader } from '@/app/dashboard/_components/MediaUploader';
-import MediaViewer from '@/app/dashboard/_components/MediaViewer';
-import MediaEditor from '@/app/dashboard/_components/MediaEditor';
+import { UploadDialog } from '@/app/dashboard/_components/UploadDialog';
+import { MediaDialog } from '@/app/dashboard/_components/MediaDialog';
 import { toast } from '@/hooks/use-toast';
 
 export default function MediaLibraryPage() {
@@ -147,58 +145,25 @@ export default function MediaLibraryPage() {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={isUploaderOpen} onOpenChange={setIsUploaderOpen}>
-        <DialogContent className="sm:max-w-[900px]">
-          <DialogHeader>
-            <DialogTitle>Media Gallery</DialogTitle>
-            <DialogDescription>
-              {isLoading ? 'Loading media...' : `${filteredMedia.length} items found`}
-            </DialogDescription>
-          </DialogHeader>
+      <UploadDialog
+        isOpen={isUploaderOpen}
+        onOpenChange={setIsUploaderOpen}
+        isLoading={isLoading}
+        error={error}
+        filteredMedia={filteredMedia}
+        onView={setSelectedMedia}
+      />
 
-          {isLoading ? (
-            <div className="h-[400px] flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : error ? (
-            <div className="h-[400px] flex items-center justify-center text-destructive">
-              <p>{error}</p>
-            </div>
-          ) : filteredMedia.length === 0 ? (
-            <div className="h-[400px] flex items-center justify-center text-muted-foreground">
-              <p>No media found</p>
-            </div>
-          ) : (
-            <ScrollArea className="h-[400px]">
-              <MediaGrid
-                items={filteredMedia}
-                onView={setSelectedMedia}
-              />
-            </ScrollArea>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={selectedMedia !== null}
+      <MediaDialog
+        media={selectedMedia}
+        isOpen={selectedMedia !== null}
         onOpenChange={(open) => !open && setSelectedMedia(null)}
-      >
-        <DialogContent className="sm:max-w-[800px]">
-          {selectedMedia && !isEditing ? (
-            <MediaViewer
-              media={selectedMedia}
-              onClose={() => setSelectedMedia(null)}
-              onEdit={() => setIsEditing(true)}
-            />
-          ) : selectedMedia && isEditing ? (
-            <MediaEditor
-              media={selectedMedia}
-              onSave={handleEditComplete}
-              onCancel={() => setIsEditing(false)}
-            />
-          ) : null}
-        </DialogContent>
-      </Dialog>
+        isEditing={isEditing}
+        onEdit={() => setIsEditing(true)}
+        onClose={() => setSelectedMedia(null)}
+        onEditComplete={handleEditComplete}
+        onCancelEdit={() => setIsEditing(false)}
+      />
     </div>
   );
 }
