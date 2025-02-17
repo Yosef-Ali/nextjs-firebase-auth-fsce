@@ -1,14 +1,14 @@
-import admin from 'firebase-admin';
-import serviceAccount from '@/fsce-2024-firebase-adminsdk-hvhpp-4f942b32f6.json';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
-        databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
-    });
+if (!getApps().length) {
+  initializeApp({
+    credential: cert({
+      projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    }),
+  });
 }
 
-const adminAuth = admin.auth();
-const adminDb = admin.firestore();
-
-export { adminAuth, adminDb };
+export const adminDb = getFirestore();
