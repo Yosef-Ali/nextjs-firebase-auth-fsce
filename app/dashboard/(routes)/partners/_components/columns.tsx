@@ -2,91 +2,80 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
-import { Badge } from "@/components/ui/badge";
-import Image from "next/image";
 import { Partner } from "@/types";
+import { Badge } from "@/components/ui/badge";
+
+const isValidUrl = (urlString: string) => {
+  try {
+    new URL(urlString);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
 
 export const columns: ColumnDef<Partner>[] = [
   {
-    accessorKey: "order",
-    header: "Order",
-  },
-  {
-    accessorKey: "logo",
-    header: "Logo",
+    accessorKey: "name",
+    header: "Name",
     cell: ({ row }) => {
-      const name = row.original.name || "";
-      const logo = row.original.logo || "";  // Convert undefined to empty string
-      const initials = name
-        .split(" ")
-        .map((n) => n?.[0] || "")
-        .join("")
-        .toUpperCase();
-
-      if (!logo) {
-        return (
-          <div className="relative flex items-center justify-center w-12 h-12 overflow-hidden bg-gray-100 rounded-md">
-            <span className="text-lg font-bold text-gray-500">
-              {initials}
-            </span>
-          </div>
-        );
-      }
-
+      const partner = row.original;
       return (
-        <div className="relative flex items-center justify-center w-12 h-12 overflow-hidden bg-gray-100 rounded-md">
-          <Image
-            src={logo as string}  // Type assertion since we know it's a string at this point
-            alt={name}
-            fill
-            className="object-contain"
-            sizes="48px"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-              const parent = target.parentElement;
-              if (parent) {
-                parent.innerHTML = `<span class="text-lg font-bold text-gray-500">${initials}</span>`;
-              }
-            }}
-          />
+        <div className="flex items-center gap-2">
+          {partner.logo && (
+            <img 
+              src={partner.logo} 
+              alt={partner.name} 
+              className="h-10 w-10 object-contain rounded-md"
+            />
+          )}
+          <div>
+            <div className="font-medium">{partner.name}</div>
+            <div className="text-sm text-muted-foreground">{partner.email}</div>
+          </div>
         </div>
       );
     },
   },
   {
-    accessorKey: "name",
-    header: "Name",
-  },
-  {
     accessorKey: "partnerType",
     header: "Type",
-    cell: ({ row }) => (
-      <Badge
-        variant={
-          row.original.partnerType === "partner" ? "default" : "secondary"
-        }
-      >
-        {row.original.partnerType}
-      </Badge>
-    ),
+    cell: ({ row }) => {
+      const type = row.getValue("partnerType") as string;
+      return (
+        <Badge variant={type === 'PREMIUM' ? 'default' : 'secondary'}>
+          {type.toLowerCase()}
+        </Badge>
+      );
+    },
   },
   {
     accessorKey: "website",
     header: "Website",
     cell: ({ row }) => {
-      const website = row.original.website;
-      return website ? (
-        <a
-          href={website}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 hover:underline"
-        >
-          {website}
-        </a>
-      ) : null;
+      const website = row.getValue("website") as string;
+      if (!website || !isValidUrl(website)) return null;
+      
+      try {
+        const url = new URL(website);
+        return (
+          <a 
+            href={website}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
+            {url.hostname}
+          </a>
+        );
+      } catch {
+        return website;
+      }
     },
+  },
+  {
+    accessorKey: "order",
+    header: "Display Order",
   },
   {
     id: "actions",
