@@ -61,7 +61,7 @@ export const columns: ColumnDef<User>[] = [
       let date: Date | null = null;
 
       // Handle Firebase Timestamp
-      if (rawDate?.toDate) {
+      if (typeof rawDate === 'object' && rawDate !== null && 'toDate' in rawDate) {
         date = rawDate.toDate();
       }
       // Handle numeric timestamps
@@ -99,6 +99,14 @@ export const columns: ColumnDef<User>[] = [
                 // Dispatch edit event directly instead of navigating
                 const event = new CustomEvent('edit-user', { detail: user.id });
                 document.dispatchEvent(event);
+              },
+            },
+            {
+              label: 'Delete User',
+              onClick: () => {
+                document.dispatchEvent(
+                  new CustomEvent('delete-user', { detail: user.id })
+                );
               },
             },
           ]}

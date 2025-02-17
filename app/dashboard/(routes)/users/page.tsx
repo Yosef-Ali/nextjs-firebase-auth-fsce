@@ -11,12 +11,26 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { User, UserRole, UserStatus } from '@/app/types/user';
 import { useUsersListener } from '@/app/hooks/use-users-listener';
 import { UserEditor } from './_components/UserEditor';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { usersService } from '@/app/services/users';
 
 export default function UsersPage() {
   const router = useRouter();
   const { users, isLoading } = useUsersListener();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { toast } = useToast();
 
   // Calculate user statistics
   const totalUsers = users.length;
@@ -31,11 +45,44 @@ export default function UsersPage() {
       setIsEditorOpen(true);
     };
 
+    const handleDeleteUser = (event: Event) => {
+      const customEvent = event as CustomEvent<string>;
+      setUserToDelete(customEvent.detail);
+      setIsDeleteDialogOpen(true);
+    };
+
     document.addEventListener('edit-user', handleEditUser);
+    document.addEventListener('delete-user', handleDeleteUser);
+
     return () => {
       document.removeEventListener('edit-user', handleEditUser);
+      document.removeEventListener('delete-user', handleDeleteUser);
     };
   }, []);
+
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete) return;
+
+    try {
+      setIsDeleting(true);
+      await usersService.deleteUser(userToDelete);
+      toast({
+        title: "User deleted",
+        description: "The user has been successfully deleted.",
+      });
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete user. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setUserToDelete(null);
+    }
+  };
 
   const handleInviteClick = () => {
     router.push('/dashboard/users/invite');
@@ -47,6 +94,7 @@ export default function UsersPage() {
   };
 
   const selectedUser = users.find(u => u.id === selectedUserId);
+  const userToDeleteDetails = users.find(u => u.id === userToDelete);
 
   return (
     <div className="container mx-auto py-10">
@@ -111,6 +159,34 @@ export default function UsersPage() {
             onClose={handleEditorClose}
           />
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Delete User</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete {userToDeleteDetails?.displayName || userToDeleteDetails?.email}? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteDialogOpen(false)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
