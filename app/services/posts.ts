@@ -101,45 +101,26 @@ export const postsService = {
       typeof category.updatedAt === 'number';
   },
 
-  async createPost(post: Omit<Post, 'id' | 'createdAt' | 'updatedAt' | 'category'> & { category: string | Category }): Promise<Post> {
-    const normalizedCategory = await this.getNormalizedCategory(post.category);
-    const now = Date.now();
-    const postData = {
-      ...post,
-      sticky: post.sticky || false,
-      category: normalizedCategory,
-      date: this.normalizeDate(post.date || now),
-      createdAt: now,
-      updatedAt: now
-    };
+  async createPost(data: Omit<Post, 'id' | 'createdAt' | 'updatedAt'>): Promise<Post> {
+    try {
+      const now = Date.now();
+      const postData = {
+        ...data,
+        createdAt: now,
+        updatedAt: now,
+        slug: data.slug || this.createSlug(data.title),
+      };
 
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), postData);
-
-    const newPost: Post = {
-      id: docRef.id,
-      title: post.title,
-      slug: post.slug,
-      excerpt: post.excerpt || '',
-      content: post.content,
-      category: normalizedCategory,
-      published: post.published || false,
-      sticky: post.sticky || false,
-      authorId: post.authorId || '',
-      authorEmail: post.authorEmail || '',
-      date: this.normalizeDate(post.date || now),
-      featured: post.featured || false,
-      coverImage: post.coverImage,
-      images: post.images || [],
-      section: post.section,
-      tags: post.tags || [],
-      time: post.time,
-      location: post.location,
-      status: post.status as PostStatus,
-      createdAt: now,
-      updatedAt: now
-    };
-
-    return newPost;
+      const docRef = await addDoc(collection(db, 'posts'), postData);
+      
+      return {
+        id: docRef.id,
+        ...postData,
+      };
+    } catch (error) {
+      console.error('Error creating post:', error);
+      throw error;
+    }
   },
 
   async updatePost(id: string, post: Partial<Omit<Post, 'category'>> & { category?: string | Category }, userId: string): Promise<boolean> {
@@ -187,8 +168,10 @@ export const postsService = {
   createSlug(title: string): string {
     return title
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
   },
 
   async getPostsByCategory(category: string, limit?: number): Promise<Post[]> {

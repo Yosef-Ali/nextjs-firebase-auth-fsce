@@ -1,8 +1,10 @@
+'use client';
+
 import { useState, useEffect } from 'react';
+import { useToast } from "@/hooks/use-toast";
+import { categoriesService } from '@/app/services/categories';
 import { Category } from '@/app/types/category';
 import { Post } from '@/app/types/post';
-import { categoriesService } from '@/app/services/categories';
-import { useToast } from "@/hooks/use-toast";
 import { PostForm } from './PostForm';
 
 interface PostEditorProps {

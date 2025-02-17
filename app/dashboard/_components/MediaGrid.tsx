@@ -23,69 +23,70 @@ function ImageItem({ media, onClick, selectable }: { media: Media; onClick?: () 
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorDetails, setErrorDetails] = useState<string>('');
-  const [imageUrl, setImageUrl] = useState<string>(media.url);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
+
+  // Debug log when component mounts
+  useEffect(() => {
+    console.log('ImageItem mounted with media:', media);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
-    setIsLoading(true);
-    setHasError(false);
-    setErrorDetails('');
-
-    // Add a cache-busting parameter to the URL
-    const cacheBuster = `?t=${Date.now()}`;
-    const urlWithCacheBuster = `${media.url}${cacheBuster}`;
-    setImageUrl(urlWithCacheBuster);
+    console.log('Starting load effect with URL:', media.url);
 
     const loadImage = async () => {
+      if (!media.url) {
+        console.log('No URL provided');
+        setHasError(true);
+        setErrorDetails('No image URL provided');
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        // Create a new image object
+        setIsLoading(true);
+        console.log('Setting up new image load for:', media.url);
+
         const img = new Image();
-
-        // Add crossOrigin attribute
-        img.crossOrigin = 'anonymous';
-
-        // Create a promise to handle image loading
+        
         await new Promise((resolve, reject) => {
           const timeoutId = setTimeout(() => {
+            console.log('Image load timed out');
             reject(new Error('Image load timed out'));
           }, 10000);
 
           img.onload = () => {
+            console.log('Image loaded successfully:', media.url);
             clearTimeout(timeoutId);
-            if (isMounted) {
-              setIsLoading(false);
-              setHasError(false);
-              console.log('Image loaded successfully:', media.url);
-            }
             resolve(null);
           };
 
-          img.onerror = (error) => {
+          img.onerror = (event) => {
+            console.log('Image load failed:', event);
             clearTimeout(timeoutId);
-            console.error('Image load error:', error);
-            reject(new Error('Image failed to load'));
+            reject(new Error('Image load failed'));
           };
 
-          // Start loading the image
-          img.src = urlWithCacheBuster;
+          img.src = media.url;
         });
 
-      } catch (error) {
         if (isMounted) {
-          console.error('Image load error:', error);
+          setIsLoading(false);
+          setHasError(false);
+        }
+      } catch (error) {
+        console.log('Load error:', error);
+        if (isMounted) {
           setHasError(true);
           setIsLoading(false);
-          setErrorDetails(error instanceof Error ? error.message : 'Unknown error');
+          setErrorDetails(error instanceof Error ? error.message : 'Failed to load image');
 
-          // Try loading without crossOrigin as fallback
-          const retryImg = new Image();
-          retryImg.src = urlWithCacheBuster;
-          retryImg.onload = () => {
-            if (isMounted) {
-              setIsLoading(false);
-              setHasError(false);
-            }
-          };
+          if (retryCount < MAX_RETRIES) {
+            const delay = 1000 * (retryCount + 1);
+            console.log(`Will retry in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+            setTimeout(() => setRetryCount(prev => prev + 1), delay);
+          }
         }
       }
     };
@@ -94,53 +95,54 @@ function ImageItem({ media, onClick, selectable }: { media: Media; onClick?: () 
 
     return () => {
       isMounted = false;
+      console.log('Cleanup: component unmounting');
     };
-  }, [media.url]);
+  }, [media.url, retryCount]);
 
   if (hasError) {
+    console.log('Rendering error state');
     return (
-      <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted p-4">
-        <div className="text-center space-y-2">
-          <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto" />
+      <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-muted">
+        <div className="space-y-2 text-center">
+          <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground" />
           <p className="text-sm text-muted-foreground">Failed to load image</p>
           {errorDetails && (
             <Alert variant="destructive" className="mt-2">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className="w-4 h-4" />
               <AlertDescription>
                 {errorDetails}
               </AlertDescription>
             </Alert>
           )}
-          <button
-            onClick={() => {
-              setIsLoading(true);
-              setHasError(false);
-              setErrorDetails('');
-              const newCacheBuster = `?t=${Date.now()}`;
-              setImageUrl(`${media.url}${newCacheBuster}`);
-            }}
-            className="text-xs text-primary hover:text-primary/80 underline mt-2"
-          >
-            Retry
-          </button>
+          {retryCount < MAX_RETRIES && (
+            <button
+              onClick={() => setRetryCount(0)}
+              className="mt-2 text-xs underline text-primary hover:text-primary/80"
+            >
+              Retry ({retryCount + 1}/{MAX_RETRIES})
+            </button>
+          )}
         </div>
       </div>
     );
   }
 
+  console.log('Rendering image with loading:', isLoading);
   return (
     <div className="relative w-full h-full">
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted">
           <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-            <p className="text-sm text-muted-foreground mt-2">Loading...</p>
+            <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
+            <p className="mt-2 text-sm text-muted-foreground">
+              Loading{retryCount > 0 ? ` (Attempt ${retryCount + 1}/${MAX_RETRIES})` : '...'}
+            </p>
           </div>
         </div>
       )}
 
       <img
-        src={imageUrl}
+        src={media.url}
         alt={media.alt || media.name}
         className={cn(
           "absolute inset-0 w-full h-full object-cover transition-all duration-300",
@@ -148,23 +150,16 @@ function ImageItem({ media, onClick, selectable }: { media: Media; onClick?: () 
         )}
         onClick={() => !selectable && onClick?.()}
         onLoad={() => {
-          console.log('Image loaded in DOM:', imageUrl);
+          console.log('Image element loaded:', media.url);
           setIsLoading(false);
         }}
         onError={(e) => {
-          console.error('Image error in DOM:', e);
+          console.log('Image element error:', e);
           setHasError(true);
           setIsLoading(false);
+          setErrorDetails('Failed to load image');
         }}
       />
-
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-          <p className="text-white text-sm font-medium truncate">
-            {media.name}
-          </p>
-        </div>
-      </div>
     </div>
   );
 }
@@ -193,12 +188,12 @@ function MediaGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {items.map((media) => (
-        <Card key={media.id} className="group overflow-hidden">
-          <CardContent className="p-0 relative aspect-square">
+        <Card key={media.id} className="overflow-hidden group">
+          <CardContent className="relative p-0 aspect-square">
             {selectable && (
-              <div className="absolute top-2 left-2 z-20">
+              <div className="absolute z-20 top-2 left-2">
                 <Checkbox
                   checked={selectedItems.includes(media.id)}
                   onCheckedChange={(checked) => onSelect?.(media.id, checked as boolean)}
@@ -212,7 +207,7 @@ function MediaGrid({
                 selectable={selectable}
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-muted">
+              <div className="flex items-center justify-center w-full h-full bg-muted">
                 <Badge variant="secondary" className="text-lg">
                   {media.type.toUpperCase()}
                 </Badge>
@@ -220,7 +215,7 @@ function MediaGrid({
             )}
           </CardContent>
           {!selectable && (
-            <CardFooter className="p-2 flex justify-between items-center border-t">
+            <CardFooter className="flex items-center justify-between p-2 border-t">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate" title={media.name}>
                   {media.name}

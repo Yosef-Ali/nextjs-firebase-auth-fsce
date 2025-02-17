@@ -6,10 +6,11 @@ import { Form } from '@/components/ui/form';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useToast } from "@/hooks/use-toast";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Category } from '@/app/types/category';
 import { postsService } from '@/app/services/posts';
 import PostFormFields from './PostFormFields';
+import { Button } from '@/components/ui/button';
 
 const formSchema = z.object({
     title: z.string().min(1, 'Title is required'),
@@ -44,6 +45,7 @@ export function PostForm({ post, initialData, categories, onSuccess }: PostFormP
     const { user } = useAuth();
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
+    const [titleValue, setTitleValue] = useState(post?.title || initialData?.title || '');
 
     const form = useForm<PostFormData>({
         resolver: zodResolver(formSchema),
@@ -61,8 +63,50 @@ export function PostForm({ post, initialData, categories, onSuccess }: PostFormP
         },
     });
 
+    // Handle title changes separately
+    const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newTitle = e.target.value;
+        setTitleValue(newTitle);
+        form.setValue('title', newTitle);
+        
+        // Update form values
+        if (!post?.slug) {
+            const timer = setTimeout(() => {
+                const generatedSlug = postsService.createSlug(newTitle);
+                form.setValue('slug', generatedSlug, { 
+                    shouldValidate: true,
+                    shouldDirty: true,
+                });
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    };
+
+    // Watch content for excerpt generation
+    const content = form.watch('content');
+
+    // Auto-generate excerpt when content changes
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (content) {
+                const plainText = content.replace(/<[^>]*>/g, '');
+                const excerpt = plainText.slice(0, 150) + (plainText.length > 150 ? '...' : '');
+                form.setValue('excerpt', excerpt, { shouldValidate: true });
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [content, form]);
+
     const onSubmit = async (data: PostFormData) => {
-        if (!user) return;
+        if (!user) {
+            toast({
+                title: "Error",
+                description: "You must be logged in to create a post",
+                variant: "destructive",
+            });
+            return;
+        }
 
         try {
             setIsSaving(true);
@@ -71,7 +115,7 @@ export function PostForm({ post, initialData, categories, onSuccess }: PostFormP
             if (!selectedCategory) {
                 toast({
                     title: "Error",
-                    description: "Please select a valid category.",
+                    description: "Please select a valid category",
                     variant: "destructive",
                 });
                 return;
@@ -96,43 +140,26 @@ export function PostForm({ post, initialData, categories, onSuccess }: PostFormP
             };
 
             if (post?.id) {
-                const success = await postsService.updatePost(post.id, postData, user.uid);
-                if (success) {
-                    toast({
-                        title: "Success",
-                        description: "Post updated successfully",
-                    });
-                    router.push('/dashboard/posts');
-                } else {
-                    toast({
-                        title: "Error",
-                        description: "Failed to update post",
-                        variant: "destructive",
-                    });
-                }
+                await postsService.updatePost(post.id, postData, user.uid);
+                toast({
+                    title: "Success",
+                    description: "Post updated successfully",
+                });
             } else {
-                const newPost = await postsService.createPost(postData);
-                if (newPost) {
-                    toast({
-                        title: "Success",
-                        description: "Post created successfully",
-                    });
-                    router.push('/dashboard/posts');
-                } else {
-                    toast({
-                        title: "Error",
-                        description: "Failed to create post",
-                        variant: "destructive",
-                    });
-                }
+                await postsService.createPost(postData);
+                toast({
+                    title: "Success",
+                    description: "Post created successfully",
+                });
             }
 
             onSuccess?.();
+            router.push('/dashboard/posts');
         } catch (error) {
             console.error('Error saving post:', error);
             toast({
                 title: "Error",
-                description: "An error occurred while saving the post",
+                description: error instanceof Error ? error.message : "An error occurred while saving the post",
                 variant: "destructive",
             });
         } finally {
@@ -142,14 +169,26 @@ export function PostForm({ post, initialData, categories, onSuccess }: PostFormP
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <PostFormFields
-                    form={form}
+            <form 
+                onSubmit={form.handleSubmit(onSubmit)} 
+                className="space-y-8"
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+            >
+                <PostFormFields 
+                    form={form} 
                     categories={categories}
-                    isSaving={isSaving}
-                    onCancel={() => router.back()}
-                    isEditing={!!post}
+                    onTitleChange={handleTitleChange}
+                    titleValue={titleValue}
                 />
+                <div className="flex justify-end gap-4">
+                    <Button 
+                        type="submit" 
+                        disabled={isSaving}
+                    >
+                        {isSaving ? "Saving..." : "Save"}
+                    </Button>
+                </div>
             </form>
         </Form>
     );
