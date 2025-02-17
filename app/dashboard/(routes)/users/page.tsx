@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
@@ -9,9 +10,13 @@ import { columns } from './_components/columns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { User, UserRole, UserStatus } from '@/app/types/user';
 import { useUsersListener } from '@/app/hooks/use-users-listener';
+import { UserEditor } from './_components/UserEditor';
 
 export default function UsersPage() {
-  const { users, loading } = useUsersListener();
+  const router = useRouter();
+  const { users, isLoading } = useUsersListener();
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
 
   // Calculate user statistics
   const totalUsers = users.length;
@@ -19,13 +24,37 @@ export default function UsersPage() {
   const adminUsers = users.filter(user => user.role === UserRole.ADMIN).length;
   const authorUsers = users.filter(user => user.role === UserRole.AUTHOR).length;
 
+  useEffect(() => {
+    const handleEditUser = (event: Event) => {
+      const customEvent = event as CustomEvent<string>;
+      setSelectedUserId(customEvent.detail);
+      setIsEditorOpen(true);
+    };
+
+    document.addEventListener('edit-user', handleEditUser);
+    return () => {
+      document.removeEventListener('edit-user', handleEditUser);
+    };
+  }, []);
+
+  const handleInviteClick = () => {
+    router.push('/dashboard/users/invite');
+  };
+
+  const handleEditorClose = () => {
+    setIsEditorOpen(false);
+    setSelectedUserId(null);
+  };
+
+  const selectedUser = users.find(u => u.id === selectedUserId);
+
   return (
     <div className="container mx-auto py-10">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Users Management</h1>
-          <Button onClick={() => window.location.href = '/dashboard/users/invite'}>
+          <Button onClick={handleInviteClick}>
             <Plus className="mr-2 h-4 w-4" />
             Invite User
           </Button>
@@ -33,36 +62,53 @@ export default function UsersPage() {
 
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="p-6">
-            <div className="text-2xl font-bold">{totalUsers}</div>
-            <p className="text-xs text-muted-foreground">Total Users</p>
+          <Card>
+            <div className="p-6">
+              <div className="text-2xl font-bold">{totalUsers}</div>
+              <p className="text-xs text-muted-foreground">Total Users</p>
+            </div>
           </Card>
-          <Card className="p-6">
-            <div className="text-2xl font-bold">{activeUsers}</div>
-            <p className="text-xs text-muted-foreground">Active Users</p>
+          <Card>
+            <div className="p-6">
+              <div className="text-2xl font-bold">{activeUsers}</div>
+              <p className="text-xs text-muted-foreground">Active Users</p>
+            </div>
           </Card>
-          <Card className="p-6">
-            <div className="text-2xl font-bold">{adminUsers}</div>
-            <p className="text-xs text-muted-foreground">Administrators</p>
+          <Card>
+            <div className="p-6">
+              <div className="text-2xl font-bold">{adminUsers}</div>
+              <p className="text-xs text-muted-foreground">Admins</p>
+            </div>
           </Card>
-          <Card className="p-6">
-            <div className="text-2xl font-bold">{authorUsers}</div>
-            <p className="text-xs text-muted-foreground">Authors</p>
+          <Card>
+            <div className="p-6">
+              <div className="text-2xl font-bold">{authorUsers}</div>
+              <p className="text-xs text-muted-foreground">Authors</p>
+            </div>
           </Card>
         </div>
 
         {/* Users Table */}
-        {loading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-32 w-full" />
+        <Card>
+          <div className="p-6">
+            {isLoading ? (
+              <Skeleton className="h-[400px] w-full" />
+            ) : (
+              <DataTable
+                columns={columns}
+                data={users}
+                searchKey="email"
+              />
+            )}
           </div>
-        ) : (
-          <DataTable
-            columns={columns}
-            data={users}
-            searchKey="email"
-            searchPlaceholder="Search users..."
+        </Card>
+
+        {/* Edit Dialog */}
+        {selectedUser && (
+          <UserEditor
+            user={selectedUser}
+            isOpen={isEditorOpen}
+            onClose={handleEditorClose}
           />
         )}
       </div>
