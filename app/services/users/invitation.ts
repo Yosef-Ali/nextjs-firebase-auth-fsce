@@ -86,20 +86,29 @@ class UserInvitationService {
     try {
       const users = await userCoreService.getAllUsers();
       const adminEmails = [
-        process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+        process.env.NEXT_PUBLIC_ADMIN_EMAIL || '',
         "dev.yosefali@gmail.com",
         "yaredd.degefu@gmail.com",
         "mekdesyared@gmail.com"
-      ].filter(Boolean);
+      ].filter(Boolean) as string[]; // Explicitly type as string[] after filtering out falsy values
 
-      for (const user of users) {
-        if (user.email && adminEmails.includes(user.email)) {
-          await userCoreService.updateUserRole(user.uid, UserRole.ADMIN);
-        }
-      }
+      await this.processUsers(users, adminEmails);
     } catch (error) {
       console.error("Error updating user roles based on admin emails:", error);
       throw error;
+    }
+  }
+
+  async processUsers(users: { success: boolean; data?: User[]; error?: string }, adminEmails: string[]) {
+    if (!users.success || !users.data) {
+      return;
+    }
+
+    const userArray = Array.isArray(users.data) ? users.data : [users.data];
+    for (const user of userArray) {
+      if (user.email && adminEmails.includes(user.email)) {
+        await userCoreService.updateUserRole(user.uid, UserRole.ADMIN);
+      }
     }
   }
 

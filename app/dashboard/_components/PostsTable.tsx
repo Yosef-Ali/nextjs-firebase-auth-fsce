@@ -29,6 +29,7 @@ import { useSearch } from '@/app/context/search-context';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
+import { getCategoryName } from '@/app/utils/category';
 
 interface PostsTableProps {
   initialPosts: Post[];
@@ -89,7 +90,7 @@ function PostsTable({ initialPosts }: PostsTableProps) {
         post.title?.toLowerCase().includes(query) ||
         post.excerpt?.toLowerCase().includes(query) ||
         post.content?.toLowerCase().includes(query) ||
-        post.category?.name?.toLowerCase().includes(query)
+        isPostInCategory(post, query)
       );
     });
   }, [posts, searchQuery]);
@@ -117,7 +118,10 @@ function PostsTable({ initialPosts }: PostsTableProps) {
   const totalPosts = posts.length;
   const publishedPosts = posts.filter(post => post.status === 'published').length;
   const draftPosts = totalPosts - publishedPosts;
-  const uniqueCategories = Array.from(new Set(posts.map(post => post.category?.name)));
+  const uniqueCategories = Array.from(new Set(posts.map(post => getCategoryName(post.category))));
+
+  const isPostInCategory = (post: Post, categoryFilter: string) =>
+    getCategoryName(post.category)?.toLowerCase().includes(categoryFilter.toLowerCase());
 
   // Sort posts with sticky posts first, then by date
   const sortedPosts = [...posts].sort((a, b) => {
@@ -186,9 +190,13 @@ function PostsTable({ initialPosts }: PostsTableProps) {
                     </p>
                   </div>
                 </TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{post.category?.name}</Badge>
-                </TableCell>
+                {post.category && (
+                  <TableCell>
+                    <Badge variant="secondary">
+                      {getCategoryName(post.category)}
+                    </Badge>
+                  </TableCell>
+                )}
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">

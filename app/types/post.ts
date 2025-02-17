@@ -1,3 +1,5 @@
+import { Category } from './category';
+
 export interface Author {
   id: string;
   name: string;
@@ -7,33 +9,30 @@ export interface Author {
 
 export type PostStatus = 'draft' | 'published' | 'archived';
 
-export interface Category {
-  id: string;
-  name: string;
-}
-
 export interface Post {
   id: string;
   title: string;
   slug: string;
   excerpt: string;
   content: string;
-  category: Category;  // Changed from string | Category to just Category
+  category: Category | string;
   published: boolean;
   authorId: string;
   authorEmail: string;
-  date: string;
-  createdAt: number;  // timestamp in milliseconds
-  updatedAt: number;  // timestamp in milliseconds
+  authorName?: string;
+  sticky: boolean;
+  section?: string;
+  createdAt: number;
+  updatedAt: number;
   coverImage?: string;
   images?: string[];
-  featured?: boolean;
-  sticky?: boolean;  // Added sticky field
-  section?: string;
   tags?: string[];
   time?: string;
   location?: string;
   status?: PostStatus;
+  date?: number;
+  author?: Author;
+  featured?: boolean;
 }
 
 export type CreatePostInput = Omit<Post, 'id' | 'createdAt' | 'updatedAt'>;

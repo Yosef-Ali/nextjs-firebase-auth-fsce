@@ -42,24 +42,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   const mapUserToMetadata = (firebaseUser: FirebaseUser, userDoc?: User | null): UserMetadata => {
+    const now = Date.now();
     return {
       uid: firebaseUser.uid,
-      email: firebaseUser.email ?? '',
-      displayName: userDoc?.displayName ?? firebaseUser.displayName ?? '',
-      photoURL: userDoc?.photoURL ?? firebaseUser.photoURL ?? '',
+      email: firebaseUser.email,
+      displayName: userDoc?.displayName ?? firebaseUser.displayName,
+      photoURL: userDoc?.photoURL ?? firebaseUser.photoURL,
       emailVerified: firebaseUser.emailVerified,
-      isAnonymous: firebaseUser.isAnonymous,
+      lastLogin: now,
+      createdAt: userDoc?.createdAt ?? now,
       role: userDoc?.role ?? UserRole.USER,
-      status: userDoc?.status ?? UserStatus.ACTIVE,
-      createdAt: userDoc?.createdAt ?? Date.now(),
-      updatedAt: userDoc?.updatedAt ?? Date.now(),
-      invitedBy: userDoc?.invitedBy ?? null,
-      invitationToken: userDoc?.invitationToken ?? null,
-      metadata: {
-        lastLogin: Date.now(),
-        createdAt: userDoc?.createdAt ?? Date.now()
-      }
-    } as UserMetadata;
+      status: userDoc?.status ?? UserStatus.ACTIVE
+    };
   };
 
   useEffect(() => {
@@ -152,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user?.email) {
       throw new Error('No user email found');
     }
-    
+
     try {
       const credential = await signInWithEmailAndPassword(auth, user.email, password);
       return credential;

@@ -1,6 +1,8 @@
 import { collection, getDocs, query, where, Timestamp, QueryConstraint } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Post, Category } from '@/app/types/post';
+import { Post } from '@/app/types/post';
+import { Category } from '@/app/types/category';
+import { ensureCategory, getCategoryId } from '@/app/utils/category';
 
 const COLLECTION_NAME = 'posts';
 
@@ -45,17 +47,31 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
       const category = data.category || {};
 
       // Normalize category to correct format
-      const normalizedCategory: Category = {
-        id: typeof category === 'string' ? category : category.id || '',
-        name: typeof category === 'string'
-          ? category.charAt(0).toUpperCase() + category.slice(1)
-          : category.name || ''
-      };
+      // Use ensureCategory helper which handles all required Category fields
+      const normalizedCategory = ensureCategory(
+        typeof category === 'string' ? category : category.id || ''
+      );
 
-      return {
+      const post: Post = {
         id: doc.id,
-        ...data,
+        title: data.title || '',
+        slug: data.slug || '',
+        excerpt: data.excerpt || '',
+        content: data.content || '',
         category: normalizedCategory,
+        published: data.published || false,
+        authorId: data.authorId || '',
+        authorEmail: data.authorEmail || '',
+        sticky: data.sticky || false,
+        featured: data.featured || false,
+        section: data.section,
+        coverImage: data.coverImage,
+        images: data.images || [],
+        tags: data.tags || [],
+        time: data.time,
+        location: data.location,
+        status: data.status,
+        date: data.date,
         createdAt: data.createdAt instanceof Timestamp
           ? data.createdAt.toMillis()
           : typeof data.createdAt === 'number'
@@ -66,7 +82,8 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
           : typeof data.updatedAt === 'number'
             ? data.updatedAt
             : Date.now()
-      } as Post;
+      };
+      return post;
     });
 
     // Apply filters in memory
@@ -77,7 +94,10 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
     if (options.category) {
       posts = posts.filter(post => {
         const searchCategory = options.category?.toLowerCase();
-        return post.category.id.toLowerCase() === searchCategory;
+        const categoryId = typeof post.category === 'string'
+          ? post.category.toLowerCase()
+          : post.category.id.toLowerCase();
+        return categoryId === searchCategory;
       });
     }
 
@@ -113,19 +133,8 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
 
     const doc = querySnapshot.docs[0];
     const data = doc.data();
-    const categoryValue = data.category || {};
-    const category: Category = {
-      id: typeof categoryValue === 'string'
-        ? categoryValue
-        : typeof categoryValue === 'object' && categoryValue?.id
-          ? categoryValue.id
-          : '',
-      name: typeof categoryValue === 'string'
-        ? categoryValue.charAt(0).toUpperCase() + categoryValue.slice(1)
-        : typeof categoryValue === 'object' && categoryValue?.name
-          ? categoryValue.name
-          : ''
-    };
+    // Use ensureCategory helper for consistent category normalization
+    const category = ensureCategory(data.category || '');
 
     const post: Post = {
       id: doc.id,
@@ -137,6 +146,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
       published: data.published || false,
       authorId: data.authorId || '',
       authorEmail: data.authorEmail || '',
+      sticky: data.sticky || false,
       date: data.date || '',
       featured: data.featured || false,
       coverImage: data.coverImage,
@@ -188,4 +198,74 @@ export async function getPostsByCategory(category: string): Promise<Post[]> {
 export async function getPostsByTag(tag: string): Promise<Post[]> {
   console.log('Getting posts by tag:', tag);
   return getPosts({ tag, published: true });
+}
+
+export const postsService = {
+  async getPostsByCategory(category: string, limit?: number): Promise<Post[]> {
+    try {
+      console.log('Service: Getting posts by category:', category);
+      const postsRef = collection(db, COLLECTION_NAME);
+      let posts: Post[] = [];
+
+      // Special cases for specific categories
+      if (category.toLowerCase() === 'child-protection') {
+        const specialQuery = query(
+          postsRef,
+          where('published', '==', true),
+          where('category.id', '==', 'RMglo9PIj6wNdQNSFcuA')
+        );
+        const specialSnapshot = await getDocs(specialQuery);
+        posts = posts.concat(specialSnapshot.docs.map(doc => {
+          const data = doc.data();
+          const post: Post = {
+            id: doc.id,
+            title: data.title || '',
+            slug: data.slug || '',
+            excerpt: data.excerpt || '',
+            content: data.content || '',
+            category: ensureCategory('child-protection'),
+            published: data.published || false,
+            authorId: data.authorId || '',
+            authorEmail: data.authorEmail || '',
+            sticky: data.sticky || false,
+            featured: data.featured || false,
+            section: data.section,
+            coverImage: data.coverImage,
+            images: data.images || [],
+            tags: data.tags || [],
+            time: data.time,
+            location: data.location,
+            status: data.status,
+            date: data.date,
+            createdAt: data.createdAt || Date.now(),
+            updatedAt: data.updatedAt || Date.now()
+          };
+          return post;
+        }));
+      }
+
+      // Remove duplicates by ID
+      const uniquePosts = Array.from(
+        new Map(posts.map(post => [post.id, {
+          ...post,
+          category: ensureCategory(post.category)
+        }])).values()
+      );
+
+      // Sort by creation date (newest first) and apply limit if specified
+      const sortedPosts = uniquePosts.sort((a, b) => b.createdAt - a.createdAt);
+
+      return limit ? sortedPosts.slice(0, limit) : sortedPosts;
+    } catch (error) {
+      console.error('Error getting posts by category:', error);
+      return [];
+    }
+  },
+
+  filterPostsByCategory(posts: Post[], searchCategory: string): Post[] {
+    return posts.filter(post => {
+      const categoryId = getCategoryId(post.category);
+      return categoryId.toLowerCase() === searchCategory.toLowerCase();
+    });
+  }
 }

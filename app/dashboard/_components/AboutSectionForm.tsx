@@ -13,6 +13,11 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Authorization } from '@/app/lib/authorization';
 import { UserRole } from '@/app/types/user';
+import { User } from 'firebase/auth';
+import { User as AppUserType } from '@/app/types/user';
+
+// Add this interface to merge AppUser and Firebase User types
+interface MergedUser extends Omit<User, keyof AppUser>, AppUser { }
 
 interface AboutSectionFormProps {
   initialData?: AboutContent;
@@ -20,10 +25,10 @@ interface AboutSectionFormProps {
   onSuccess?: () => void;
 }
 
-export default function AboutSectionForm({ 
-  initialData, 
-  section, 
-  onSuccess 
+export default function AboutSectionForm({
+  initialData,
+  section,
+  onSuccess
 }: AboutSectionFormProps) {
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -40,10 +45,39 @@ export default function AboutSectionForm({
     );
   }
 
-  // Determine user's authorization context
+  // Update the authContext creation
   const authContext = Authorization.createContext(
-    user, 
-    initialData?.authorId // Pass the original creator's ID
+    user ? {
+      ...user,
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      photoURL: user.photoURL,
+      emailVerified: user.emailVerified || false,
+      isAnonymous: user.isAnonymous || false,
+      tenantId: null,
+      phoneNumber: null,
+      providerId: 'firebase',
+      metadata: {
+        creationTime: user.createdAt?.toString() || '',
+        lastSignInTime: user.metadata?.lastLogin?.toString() || ''
+      },
+      providerData: user.providerData || [],
+      refreshToken: '',
+      getIdToken: () => Promise.resolve(''),
+      getIdTokenResult: () => Promise.resolve({
+        token: '',
+        signInProvider: null,
+        claims: {},
+        authTime: '',
+        issuedAtTime: '',
+        expirationTime: '',
+      }),
+      reload: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
+      toJSON: () => ({}),
+    } as unknown as User : null,
+    initialData?.authorId
   );
 
   const sectionDetails = {
@@ -75,7 +109,7 @@ export default function AboutSectionForm({
         throw new Error('Unauthorized: You do not have permission to modify this content.');
       }
 
-      const docRef = initialData?.id 
+      const docRef = initialData?.id
         ? doc(db, 'about', initialData.id)
         : doc(collection(db, 'about'));
 
@@ -88,9 +122,9 @@ export default function AboutSectionForm({
         createdBy: initialData?.authorId || user?.uid,
         updatedBy: user?.uid,
         updatedAt: Timestamp.now(),
-        ...(initialData ? {} : { 
+        ...(initialData ? {} : {
           createdAt: Timestamp.now(),
-          createdBy: user?.uid 
+          createdBy: user?.uid
         })
       }, { merge: true });
 
@@ -103,8 +137,8 @@ export default function AboutSectionForm({
     } catch (error) {
       console.error('Error saving content:', error);
       setAuthError(
-        error instanceof Error 
-          ? error.message 
+        error instanceof Error
+          ? error.message
           : 'An error occurred while saving the content. Please try again.'
       );
     } finally {
@@ -120,8 +154,8 @@ export default function AboutSectionForm({
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Access Restricted</AlertTitle>
           <AlertDescription>
-            {Authorization.isAdmin(user) 
-              ? 'Unable to verify admin credentials.' 
+            {Authorization.isAdmin(user)
+              ? 'Unable to verify admin credentials.'
               : 'You do not have permission to modify this content. Only administrators or original creators can edit.'}
           </AlertDescription>
         </Alert>
@@ -131,7 +165,7 @@ export default function AboutSectionForm({
           <Textarea
             placeholder={sectionDetails[section].placeholder}
             value={content}
-            onChange={() => {}}
+            onChange={() => { }}
             className="min-h-[200px] resize-none"
             disabled
           />
@@ -140,9 +174,9 @@ export default function AboutSectionForm({
           </p>
         </div>
 
-        <Button 
-          variant="outline" 
-          disabled 
+        <Button
+          variant="outline"
+          disabled
           className="w-full"
         >
           Access Denied

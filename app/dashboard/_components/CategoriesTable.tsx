@@ -88,7 +88,11 @@ function CategoriesTable({ categories, onEdit, onDelete, isLoading = false }: Ca
                     {category.itemCount || 0} {(category.itemCount || 0) === 1 ? 'item' : 'items'}
                   </Badge>
                 </TableCell>
-                <TableCell>{new Date(category.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  {category.createdAt 
+                      ? new Date(category.createdAt).toLocaleDateString()
+                      : 'N/A'}
+                </TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

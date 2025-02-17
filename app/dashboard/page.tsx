@@ -32,7 +32,7 @@ export default function DashboardPage() {
         // Simulated storage and database stats - replace with actual data fetching
         const mockStorageUsed = 150; // MB
         const mockDatabaseUsed = 50; // MB
-        
+
         setStats(prev => ({
           ...prev,
           totalUsers: response.data?.length || 0,
@@ -54,9 +54,9 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto p-6 space-y-8">
       <DashboardOverviewHeader />
-      
+
       <Separator />
-      
+
       {!isAdmin && (
         <Alert>
           <AlertTriangle className="h-4 w-4" />
@@ -109,6 +109,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Media</CardTitle>
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -139,8 +140,8 @@ export default function DashboardPage() {
           <CardContent>
             <div className="space-y-2">
               <div className="text-2xl font-bold">{stats.databaseUsed}MB / 500MB</div>
-              <Progress 
-                value={databasePercentage} 
+              <Progress
+                value={databasePercentage}
                 className="h-2"
                 variant={databasePercentage > 80 ? "destructive" : "default"}
               />

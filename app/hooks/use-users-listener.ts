@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { AppUser } from '../types/user';
+import { AppUser, UserRole, UserStatus } from '../types/user';
 import { convertToAppUser } from '../utils/user-utils';
 
 export function useUsersListener() {
@@ -11,7 +11,6 @@ export function useUsersListener() {
 
   useEffect(() => {
     setIsLoading(true);
-
     // Create a query for the users collection
     const usersQuery = query(collection(db, 'users'));
 
@@ -21,7 +20,12 @@ export function useUsersListener() {
       (snapshot) => {
         const updatedUsers = snapshot.docs.map(doc => {
           const userData = doc.data();
-          return convertToAppUser({ ...userData, uid: doc.id });
+          const baseUser = convertToAppUser({ ...userData, uid: doc.id } as any);
+          if (baseUser) {
+            baseUser.role = userData.role || UserRole.USER;
+            baseUser.status = userData.status || UserStatus.ACTIVE;
+          }
+          return baseUser;
         });
         setUsers(updatedUsers.filter(user => user !== null) as AppUser[]);
         setIsLoading(false);

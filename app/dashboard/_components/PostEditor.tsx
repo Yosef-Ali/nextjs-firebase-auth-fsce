@@ -26,11 +26,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import MediaGrid from '@/app/dashboard/_components/MediaGrid';
 import { mediaService } from '@/app/services/media';
 import { Media } from '@/app/types/media';
+import { ensureCategory, getCategoryId } from '@/app/utils/category';
 
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Post } from '@/app/types/post';
@@ -83,6 +84,10 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
   const storage = getStorage();
   const [loadingGalleryStart, setLoadingGalleryStart] = useState(false);
 
+  const categoryId = post?.category ? (
+    typeof post.category === 'string' ? post.category : post.category.id
+  ) : initialData?.category || '';
+
   const form = useForm<PostFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -93,7 +98,7 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
       images: post?.images || [],
       published: post?.published || initialData?.published || false,
       sticky: post?.sticky || false,
-      categoryId: post?.category?.id || initialData?.category || '',
+      categoryId,
       section: post?.section || initialData?.section || '',
       slug: post?.slug || '',
     },
@@ -288,19 +293,19 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
         title: data.title,
         content: data.content,
         excerpt: data.excerpt,
-        category: selectedCategory.id,
-        coverImage: coverImageUrl || '',
+        category: ensureCategory(selectedCategory.id),
+        coverImage: data.coverImage || '',
         published: data.published,
-        sticky: data.sticky,
+        sticky: data.sticky || false,
         section: data.section,
         images: data.images || [],
         authorId: currentUser.uid,
         authorEmail: currentUser.email || '',
         slug: data.slug,
-        date: new Date().toISOString(),
+        date: Date.now(),
         tags: [],
         featured: false,
-      };
+      } satisfies Omit<Post, 'id' | 'createdAt' | 'updatedAt'>;
 
       if (post?.id) {
         const success = await postsService.updatePost(post.id, postData, currentUser.uid);

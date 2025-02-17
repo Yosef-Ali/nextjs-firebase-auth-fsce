@@ -46,16 +46,19 @@ export function useAuth(): AuthContextType {
   ): UserMetadata => {
     const now = Date.now();
     return {
-      uid: firebaseUser.uid,
-      email: firebaseUser.email,
-      role: userData.role,
-      status: userData.status,
+      lastLogin: now,
+      createdAt: userData.createdAt || now,
+      role: userData.role || UserRole.USER,
+      status: userData.status || UserStatus.ACTIVE,
       displayName: userData.displayName || firebaseUser.displayName,
+      email: userData.email || firebaseUser.email,
       photoURL: userData.photoURL || firebaseUser.photoURL,
-      metadata: {
-        lastLogin: now,
-        createdAt: userData.createdAt || now
-      }
+      uid: firebaseUser.uid,
+      emailVerified: firebaseUser.emailVerified,
+      providerData: firebaseUser.providerData,
+      refreshToken: firebaseUser.refreshToken,
+      phoneNumber: firebaseUser.phoneNumber,
+      tenantId: firebaseUser.tenantId
     };
   };
 

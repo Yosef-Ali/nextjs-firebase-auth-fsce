@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
-import { getFirestore, Firestore } from "firebase/firestore";
+import { getFirestore, Firestore, enableIndexedDbPersistence, initializeFirestore, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 
@@ -16,15 +16,31 @@ const firebaseConfig = {
 
 // Initialize Firebase
 let app: FirebaseApp;
+let db: any;
 
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
+  // Initialize Firestore with settings for better offline support
+  db = initializeFirestore(app, {
+    cacheSizeBytes: CACHE_SIZE_UNLIMITED
+  });
+
+  // Enable offline persistence only on client side
+  if (typeof window !== 'undefined') {
+    enableIndexedDbPersistence(db).catch((err) => {
+      if (err.code === 'failed-precondition') {
+        console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+      } else if (err.code === 'unimplemented') {
+        console.warn('The current browser does not support offline persistence');
+      }
+    });
+  }
 } else {
   app = getApps()[0];
+  db = getFirestore(app);
 }
 
 const auth = getAuth(app);
-const db = getFirestore(app);
 const storage = getStorage(app);
 
 // Enable emulators for local development

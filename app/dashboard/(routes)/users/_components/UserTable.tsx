@@ -37,7 +37,7 @@ import {
   Shield,
   User as UserIcon,
 } from 'lucide-react';
-import { AppUser, UserRole } from '@/app/types/user';
+import { AppUser, UserRole, UserStatus } from '@/app/types/user';
 
 interface UserTableProps {
   users: AppUser[];
@@ -121,7 +121,7 @@ const UserTable: FC<UserTableProps> = ({
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
+                  <Badge variant={user.status === UserStatus.ACTIVE ? 'default' : 'secondary'}>
                     {user.status}
                   </Badge>
                 </TableCell>

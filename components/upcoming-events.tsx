@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { CalendarDays, Clock, MapPin, ArrowRight } from 'lucide-react';
 import { Post } from '@/app/types/post';
 import { formatDate } from '@/lib/utils';
+import { Category } from '@/app/types/category';
 import ClientCarousel from './client-carousel';
 
 interface UpcomingEventsProps {
@@ -70,7 +71,7 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events, showTitle = tru
                       )}
                       {event.category && (
                         <Badge variant="secondary" className="bg-white/20 hover:bg-white/30 capitalize">
-                          {event.category}
+                          {typeof event.category === 'string' ? event.category : event.category.name}
                         </Badge>
                       )}
                     </div>
@@ -86,7 +87,7 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events, showTitle = tru
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Clock className="h-3.5 w-3.5" />
-                        <span>By {event.author?.name || 'Anonymous'}</span>
+                        <span>By {event.authorName || event.authorEmail || 'Anonymous'}</span>
                       </div>
                     </div>
 

@@ -13,6 +13,7 @@ import { Post } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
 import { formatDate } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { getCategoryName } from '@/app/utils/category';
 
 export default function NewsDetailPage() {
   const params = useParams();
@@ -90,7 +91,7 @@ export default function NewsDetailPage() {
               <Badge variant="secondary">News</Badge>
               {article.category && (
                 <Badge variant="outline" className="text-primary">
-                  {article.category.name}
+                  {getCategoryName(article.category)}
                 </Badge>
               )}
             </div>
@@ -170,7 +171,7 @@ export default function NewsDetailPage() {
                           <Badge variant="secondary">News</Badge>
                           {article.category && (
                             <Badge variant="outline" className="text-primary">
-                              {article.category.name}
+                              {getCategoryName(article.category)}
                             </Badge>
                           )}
                         </div>

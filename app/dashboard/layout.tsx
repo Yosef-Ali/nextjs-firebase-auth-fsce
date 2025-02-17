@@ -23,7 +23,7 @@ function DashboardContent({ children }: DashboardLayoutProps) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && userData && userData.role !== UserRole.ADMIN && userData.role !== UserRole.AUTHOR) {
+    if (!loading && userData && userData.role !== UserRole.ADMIN && userData.role !== UserRole.SUPER_ADMIN && userData.role !== UserRole.AUTHOR) {
       router.replace('/unauthorized');
     }
   }, [userData, loading, router]);

@@ -19,9 +19,7 @@ const COLLECTION_NAME = 'posts';
 export const eventsService = {
   async getUpcomingEvents(limit: number = 3): Promise<Post[]> {
     try {
-      console.log('Events Service: Getting upcoming events');
       const postsRef = collection(db, COLLECTION_NAME);
-      // Match all possible category formats for events
       const q = query(
         postsRef,
         where('category', 'in', [
@@ -33,18 +31,15 @@ export const eventsService = {
       );
 
       const querySnapshot = await getDocs(q);
-      console.log('Events Service: Found', querySnapshot.size, 'events');
-
       let events = querySnapshot.docs.map(doc => {
         const data = doc.data();
-        console.log('Events Service: Processing event:', data.title);
         return {
           id: doc.id,
           ...data,
           category: typeof data.category === 'string'
             ? { id: 'events', name: 'Events' }
             : data.category || { id: 'events', name: 'Events' },
-          date: data.date || new Date().toISOString(),
+          date: data.date || Date.now(),
           createdAt: data.createdAt instanceof Timestamp
             ? data.createdAt.toMillis()
             : typeof data.createdAt === 'number'
@@ -58,36 +53,21 @@ export const eventsService = {
         } as Post;
       });
 
-      // Filter future events and sort by date
-      const now = new Date();
-      console.log('Events Service: Filtering events from', now);
+      const now = Date.now();
       events = events
-        .filter(event => {
-          try {
-            const eventDate = new Date(event.date);
-            const isValid = !isNaN(eventDate.getTime()) && eventDate >= now;
-            console.log('Events Service: Event date check:', event.title, eventDate, isValid);
-            return isValid;
-          } catch (e) {
-            console.error('Events Service: Invalid date for event:', event.title, event.date);
-            return false;
-          }
-        })
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        .filter(event => event.date && event.date >= now)
+        .sort((a, b) => (a.date || 0) - (b.date || 0));
 
-      console.log('Events Service: Returning', events.length, 'upcoming events');
       return limit ? events.slice(0, limit) : events;
     } catch (error) {
-      console.error('Events Service: Error getting upcoming events:', error);
+      console.error('Error getting upcoming events:', error);
       return [];
     }
   },
 
   async getAllEvents(includePastEvents = false): Promise<Post[]> {
     try {
-      console.log('Events Service: Getting all events');
       const postsRef = collection(db, COLLECTION_NAME);
-      // Match all possible category formats for events
       const q = query(
         postsRef,
         where('category', 'in', [
@@ -99,8 +79,6 @@ export const eventsService = {
       );
 
       const querySnapshot = await getDocs(q);
-      console.log('Events Service: Found', querySnapshot.size, 'events');
-
       let events = querySnapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -109,7 +87,7 @@ export const eventsService = {
           category: typeof data.category === 'string'
             ? { id: 'events', name: 'Events' }
             : data.category || { id: 'events', name: 'Events' },
-          date: data.date || new Date().toISOString(),
+          date: data.date || Date.now(),
           createdAt: data.createdAt instanceof Timestamp
             ? data.createdAt.toMillis()
             : typeof data.createdAt === 'number'
@@ -124,25 +102,14 @@ export const eventsService = {
       });
 
       if (!includePastEvents) {
-        const now = new Date();
-        console.log('Events Service: Filtering out past events');
-        events = events
-          .filter(event => {
-            try {
-              const eventDate = new Date(event.date);
-              return !isNaN(eventDate.getTime()) && eventDate >= now;
-            } catch (e) {
-              console.error('Events Service: Invalid date for event:', event.title, event.date);
-              return false;
-            }
-          });
+        const now = Date.now();
+        events = events.filter(event => event.date && event.date >= now);
       }
 
-      events = events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      console.log('Events Service: Returning', events.length, 'events');
+      events = events.sort((a, b) => (a.date || 0) - (b.date || 0));
       return events;
     } catch (error) {
-      console.error('Events Service: Error getting all events:', error);
+      console.error('Error getting all events:', error);
       return [];
     }
   },
@@ -159,16 +126,21 @@ export const eventsService = {
 
       const doc = querySnapshot.docs[0];
       const data = doc.data();
-      const createdAt = data.createdAt;
-      const updatedAt = data.updatedAt;
 
       return {
         id: doc.id,
         ...data,
-        createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() :
-          typeof createdAt === 'number' ? createdAt : Date.now(),
-        updatedAt: updatedAt instanceof Timestamp ? updatedAt.toMillis() :
-          typeof updatedAt === 'number' ? updatedAt : Date.now(),
+        date: data.date || Date.now(),
+        createdAt: data.createdAt instanceof Timestamp
+          ? data.createdAt.toMillis()
+          : typeof data.createdAt === 'number'
+            ? data.createdAt
+            : Date.now(),
+        updatedAt: data.updatedAt instanceof Timestamp
+          ? data.updatedAt.toMillis()
+          : typeof data.updatedAt === 'number'
+            ? data.updatedAt
+            : Date.now(),
       } as Post;
     } catch (error) {
       console.error('Error getting event by slug:', error);
@@ -177,11 +149,12 @@ export const eventsService = {
   },
 
   async createEvent(event: Omit<Post, 'id' | 'createdAt' | 'updatedAt'>): Promise<Post> {
-    const now = serverTimestamp();
+    const now = Date.now();
     const eventData = {
       ...event,
       createdAt: now,
       updatedAt: now,
+      date: event.date || now
     };
 
     const docRef = await addDoc(collection(db, COLLECTION_NAME), eventData);
@@ -189,17 +162,19 @@ export const eventsService = {
     return {
       id: docRef.id,
       ...event,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
+      date: event.date || now
     } as Post;
   },
 
   async updateEvent(id: string, event: Partial<Post>): Promise<boolean> {
     try {
+      const now = Date.now();
       const eventRef = doc(db, COLLECTION_NAME, id);
       await updateDoc(eventRef, {
         ...event,
-        updatedAt: serverTimestamp()
+        updatedAt: now
       });
       return true;
     } catch (error) {

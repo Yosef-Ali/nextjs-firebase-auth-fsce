@@ -14,6 +14,7 @@ import { EditIcon, Trash2Icon } from "lucide-react";
 import { format } from 'date-fns';
 import { Card, CardContent } from "@/components/ui/card";
 import { Post } from '@/app/types/post';
+import { getCategoryName } from '@/app/utils/category';
 
 interface PostTableProps {
   posts: Post[];
@@ -43,7 +44,7 @@ export default function PostTable({ posts, isLoading, onEdit, onDelete }: PostTa
   const totalPosts = posts.length;
   const publishedPosts = posts.filter(post => post.status === 'published').length;
   const draftPosts = totalPosts - publishedPosts;
-  const categories = [...new Set(posts.map(post => post.category))];
+  const categories = [...new Set(posts.map(post => getCategoryName(post.category)))];
 
   // Sort posts by updatedAt in descending order (newest first)
   const sortedPosts = [...posts].sort((a, b) => {
@@ -95,7 +96,7 @@ export default function PostTable({ posts, isLoading, onEdit, onDelete }: PostTa
               <TableCell className="font-medium">{post.title}</TableCell>
               <TableCell>
                 <Badge variant="secondary">
-                  {post.category.name}
+                  {getCategoryName(post.category)}
                 </Badge>
               </TableCell>
               <TableCell>

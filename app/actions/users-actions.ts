@@ -1,7 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { User, UserRole } from "@/app/types/user"
+import { User, UserRole, UserStatus } from "@/app/types/user"
 import { usersService } from "@/app/services/users"
 
 // Define return types for better type safety
@@ -186,6 +186,51 @@ export async function deleteUser(
         userId,
         errorMessage,
         status: 'error',
+        timestamp: new Date().toISOString()
+      }
+    };
+  }
+}
+
+// Server action to update user status
+export async function updateUserStatus(
+  userId: string,
+  status: UserStatus
+): Promise<ServiceResponse> {
+  try {
+    const result = await usersService.updateUserStatus(userId, status);
+    if (result.success) {
+      revalidatePath("/admin/users");
+      revalidatePath("/dashboard/users");
+      return {
+        success: true,
+        details: {
+          uid: userId,
+          targetStatus: status,
+          timestamp: new Date().toISOString()
+        }
+      };
+    }
+    return {
+      success: false,
+      error: result.error || 'Failed to update user status',
+      details: result.details
+    };
+  } catch (error) {
+    const typedError = error as Error;
+    console.error('Server Action - updateUserStatus error:', {
+      userId,
+      targetStatus: status,
+      error: typedError.message,
+      stack: typedError.stack
+    });
+    return {
+      success: false,
+      error: typedError.message || 'An unexpected error occurred while updating user status',
+      details: {
+        uid: userId,
+        targetStatus: status,
+        errorType: typedError.name || 'UnknownError',
         timestamp: new Date().toISOString()
       }
     };

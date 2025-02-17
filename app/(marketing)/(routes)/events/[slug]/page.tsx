@@ -13,6 +13,7 @@ import { Post } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
 import { formatDate } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { getCategoryName } from '@/app/utils/category';
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -87,7 +88,7 @@ export default function EventDetailPage() {
               <Badge variant="secondary">Event</Badge>
               {event.category && (
                 <Badge variant="outline" className="text-primary">
-                  {event.category.name}
+                  {getCategoryName(event.category)}
                 </Badge>
               )}
             </div>
@@ -181,7 +182,7 @@ export default function EventDetailPage() {
                           <Badge variant="secondary">Event</Badge>
                           {event.category && (
                             <Badge variant="outline" className="text-primary">
-                              {event.category.name}
+                              {getCategoryName(event.slug)}
                             </Badge>
                           )}
                         </div>

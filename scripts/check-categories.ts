@@ -1,92 +1,101 @@
-import * as admin from 'firebase-admin';
-import { getFirestore } from 'firebase-admin/firestore';
+import { db } from '../lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { Category } from '@/app/types/category';
 
-// Initialize Firebase Admin
-const serviceAccount = require('../fsce-2024-firebase-adminsdk-hvhpp-4f942b32f6.json');
-
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-    });
+interface PostWithError {
+    id: string;
+    title: string;
+    category: string;
+    error: string;
 }
 
-const db = getFirestore();
+async function main() {
+    const categoriesRef = collection(db, 'categories');
+    const postsRef = collection(db, 'posts');
 
-async function checkCategoriesAndPosts() {
+    console.log('Checking categories and posts...');
+
     try {
         // Get all categories
-        const categoriesSnapshot = await db.collection('categories').get();
+        const categoriesSnapshot = await getDocs(categoriesRef);
         const categories = categoriesSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+            ...doc.data(),
+            id: doc.id
+        })) as Category[];
 
-        console.log('\n=== Available Categories ===');
-        categories.forEach(cat => {
-            console.log(`ID: ${cat.id}, Name: ${cat.name}, Type: ${cat.type}`);
-        });
+        // Group categories by name
+        const categoryGroups = categories.reduce((groups, cat) => {
+            const key = cat.name.toLowerCase().trim();
+            if (!groups[key]) {
+                groups[key] = [];
+            }
+            groups[key].push(cat);
+            return groups;
+        }, {} as Record<string, Category[]>);
 
-        // Get all posts
-        const postsSnapshot = await db.collection('posts').get();
-        const posts = postsSnapshot.docs.map(doc => ({
-            id: doc.id,
-            title: doc.data().title,
-            category: doc.data().category
-        }));
+        // Find duplicate categories
+        const duplicates = Object.entries(categoryGroups)
+            .filter(([_, cats]) => cats.length > 1)
+            .map(([name, cats]) => ({
+                name,
+                categories: cats
+            }));
 
-        console.log('\n=== Posts Category Distribution ===');
-        const categoryDistribution = new Map();
-        const invalidCategories = [];
+        if (duplicates.length > 0) {
+            console.log('\nFound duplicate categories:');
+            duplicates.forEach(({ name, categories }) => {
+                console.log(`\nDuplicate category "${name}":`);
+                categories.forEach(cat => {
+                    console.log(`ID: ${cat.id}, Name: ${(cat as Category).name}, Type: ${(cat as Category).type}`);
+                });
+            });
+        }
 
-        posts.forEach(post => {
-            const categoryId = post.category?.id;
-            const categoryName = post.category?.name;
+        // Check posts for invalid categories
+        const postsSnapshot = await getDocs(postsRef);
+        const invalidPosts: PostWithError[] = [];
 
-            if (!categoryId || !categoryName) {
-                invalidCategories.push({
-                    postId: post.id,
+        postsSnapshot.docs.forEach(doc => {
+            const post = doc.data();
+            if (!post.category) {
+                invalidPosts.push({
+                    id: doc.id,
                     title: post.title,
-                    category: post.category
+                    category: 'missing',
+                    error: 'Missing category'
                 });
                 return;
             }
 
-            if (!categoryDistribution.has(categoryId)) {
-                categoryDistribution.set(categoryId, {
-                    name: categoryName,
-                    count: 0
+            const categoryExists = categories.some(cat =>
+                cat.id === post.category ||
+                cat.name.toLowerCase() === post.category.toLowerCase()
+            );
+
+            if (!categoryExists) {
+                invalidPosts.push({
+                    id: doc.id,
+                    title: post.title,
+                    category: post.category,
+                    error: 'Invalid category'
                 });
             }
-            categoryDistribution.get(categoryId).count++;
         });
 
-        categoryDistribution.forEach((value, key) => {
-            console.log(`Category "${value.name}" (${key}): ${value.count} posts`);
-        });
-
-        if (invalidCategories.length > 0) {
-            console.log('\n=== Posts with Invalid Categories ===');
-            invalidCategories.forEach(post => {
-                console.log(`Post "${post.title}" (${post.id}): Invalid category:`, post.category);
+        if (invalidPosts.length > 0) {
+            console.log('\nFound posts with invalid categories:');
+            invalidPosts.forEach(post => {
+                console.log(`Post "${post.title}" (${post.id}): ${post.error}: ${post.category}`);
             });
         }
 
-        // Check for posts with non-existent category IDs
-        const validCategoryIds = new Set(categories.map(cat => cat.id));
-        const postsWithNonExistentCategories = posts.filter(post =>
-            post.category?.id && !validCategoryIds.has(post.category.id)
-        );
-
-        if (postsWithNonExistentCategories.length > 0) {
-            console.log('\n=== Posts with Non-existent Category IDs ===');
-            postsWithNonExistentCategories.forEach(post => {
-                console.log(`Post "${post.title}" (${post.id}) has category ID "${post.category?.id}" which doesn't exist`);
-            });
+        if (duplicates.length === 0 && invalidPosts.length === 0) {
+            console.log('No issues found!');
         }
 
     } catch (error) {
-        console.error('Error checking categories and posts:', error);
+        console.error('Error checking categories:', error);
     }
 }
 
-checkCategoriesAndPosts();
+main().catch(console.error);

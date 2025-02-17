@@ -1,83 +1,73 @@
-import { User as FirebaseUser, UserMetadata as FirebaseUserMetadata } from 'firebase/auth';
+import { BaseModel } from './base';
 
-// Enum for user roles with clear hierarchy
 export enum UserRole {
-  SUPER_ADMIN = 'super_admin',  // Has full system access
-  ADMIN = 'admin',              // Has administrative access
-  AUTHOR = 'author',            // Can manage content
-  EDITOR = 'editor',            // Can edit content
-  USER = 'user',               // Basic authenticated user
-  GUEST = 'guest'              // Unauthenticated user
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  ADMIN = 'ADMIN',
+  AUTHOR = 'AUTHOR',
+  EDITOR = 'EDITOR',
+  USER = 'USER',
+  GUEST = 'GUEST'
 }
 
-// User status enum
 export enum UserStatus {
-  ACTIVE = 'active',           // User is active and can access the system
-  INACTIVE = 'inactive',       // User account is temporarily disabled
-  PENDING = 'pending',         // Awaiting email verification or approval
-  BLOCKED = 'blocked'          // User access has been revoked
+  ACTIVE = 'active',
+  PENDING = 'pending',
+  BLOCKED = 'blocked',
+  INACTIVE = 'inactive'
 }
 
-// Base interface for user metadata
 export interface UserMetadata {
-  uid: string;
-  email: string | null;
-  role: UserRole;
-  status: UserStatus;
-  displayName: string | null;
-  photoURL: string | null;
-  metadata: {
-    lastLogin: number;
-    createdAt: number;
-  };
-}
-
-// Base serializable user interface
-export interface User {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-  role: UserRole;
-  status: UserStatus;
-  createdAt: number;
-  updatedAt: number;
-  invitedBy: string | null;
-  invitationToken: string | null;
-  emailVerified: boolean;
-  metadata: {
-    lastLogin: number;
-    createdAt: number;
-  };
-}
-
-// Extended metadata interface that includes both Firebase and custom fields
-export interface ExtendedUserMetadata extends FirebaseUserMetadata {
   lastLogin: number;
   createdAt: number;
-}
-
-// Custom AppUser type that extends FirebaseUser
-export interface AppUser extends FirebaseUser {
   role: UserRole;
   status: UserStatus;
-  createdAt?: number;
-  updatedAt?: number;
-  invitedBy?: string | null;
-  invitationToken?: string | null;
-  metadata: ExtendedUserMetadata;
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+  uid: string;
+  emailVerified: boolean;
+  providerData?: any[];
+  refreshToken?: string;
+  phoneNumber?: string | null;
+  tenantId?: string | null;
 }
 
-// Extended user interface that includes an id field
-export interface ExtendedAppUser extends AppUser {
+export interface User extends BaseModel {
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL: string | null;
+  emailVerified: boolean;
+  isAnonymous: boolean;
+  role: UserRole;
+  status: UserStatus;
+  metadata: UserMetadata;
+  invitedBy: string | null;
+  invitationToken: string | null;
   id: string;
+  providerData?: any[];
+  delete?: () => Promise<void>;
+  getIdToken?: (forceRefresh?: boolean) => Promise<string>;
+  getIdTokenResult?: (forceRefresh?: boolean) => Promise<any>;
+  reload?: () => Promise<void>;
+  toJSON?: () => object;
+  refreshToken?: string;
+  tenantId?: string | null;
+  phoneNumber?: string | null;
 }
 
-// Interface for updating user data
-export interface AppUserUpdateData {
-  role?: UserRole;
-  status?: UserStatus;
-  email?: string;
-  displayName?: string;
-  photoURL?: string;
+export interface AppUser extends User {
+  delete: () => Promise<void>;
+  getIdToken: (forceRefresh?: boolean) => Promise<string>;
+  getIdTokenResult: (forceRefresh?: boolean) => Promise<any>;
+  reload: () => Promise<void>;
+  toJSON: () => object;
+  providerData: any[];
+  refreshToken?: string;
+}
+
+export interface UserDataResult {
+  success: boolean;
+  user: User;
+  error?: string;
 }

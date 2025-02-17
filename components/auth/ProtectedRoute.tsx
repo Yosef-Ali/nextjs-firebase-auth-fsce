@@ -10,7 +10,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   const { userData, loading } = useAuth();
 
   useEffect(() => {
-    if (!loading && userData && userData.role !== UserRole.ADMIN && userData.role !== UserRole.AUTHOR) {
+    if (!loading && userData && userData.role !== UserRole.ADMIN && userData.role !== UserRole.SUPER_ADMIN && userData.role !== UserRole.AUTHOR) {
       router.replace('/unauthorized');
     }
   }, [userData, loading, router]);
@@ -23,7 +23,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     );
   }
 
-  if (!userData || (userData.role !== UserRole.ADMIN && userData.role !== UserRole.AUTHOR)) {
+  if (!userData || (userData.role !== UserRole.ADMIN && userData.role !== UserRole.SUPER_ADMIN && userData.role !== UserRole.AUTHOR)) {
     return null;
   }
 

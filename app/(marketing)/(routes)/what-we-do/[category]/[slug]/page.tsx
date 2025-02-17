@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { getCategoryName } from '@/app/utils/category';
 import Link from 'next/link';
 import Image from 'next/image';
 import { whatWeDoService } from '@/app/services/what-we-do';
@@ -99,7 +100,7 @@ export default function DetailPage() {
             <div className="flex items-center gap-2 mb-4">
               <Badge variant="secondary">Programs</Badge>
               <Badge variant="outline" className="text-primary">
-                {post.category?.name || params?.category}
+                {getCategoryName(post.category) || params?.category}
               </Badge>
             </div>
             <h1 className="text-4xl font-bold mb-4">{post.title}</h1>

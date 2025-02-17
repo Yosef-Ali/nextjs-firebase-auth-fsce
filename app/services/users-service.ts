@@ -1,30 +1,115 @@
 import { adminAuth, adminDb } from "../lib/firebase-admin"
-import { type User, UserRole, UserStatus } from "../types/user"
+import { type User, UserRole, UserStatus, UserMetadata } from "../types/user"
 import { emailService } from "./email"
+import { User as FirebaseUser } from "firebase/auth";
+
+// Helper function to create a user with required fields
+function createUserWithDefaults(data: Partial<User>): User {
+  const now = Date.now();
+  return {
+    uid: data.uid || '',
+    email: data.email || '',  // Changed from null to empty string
+    displayName: data.displayName || '',  // Changed from null to empty string
+    photoURL: data.photoURL || null,
+    role: data.role || UserRole.USER,
+    status: data.status || UserStatus.ACTIVE,
+    emailVerified: data.emailVerified || false,
+    createdAt: data.createdAt || now,
+    updatedAt: data.updatedAt || now,
+    isAnonymous: false,
+    id: data.uid || '',  // Added id field
+    metadata: {
+      lastLogin: data.metadata?.lastLogin || now,
+      createdAt: data.metadata?.createdAt || now,
+      role: data.role || UserRole.USER,
+      status: data.status || UserStatus.ACTIVE,
+      displayName: data.displayName || '',
+      email: data.email || '',
+      photoURL: data.photoURL || null,
+      uid: data.uid || '',
+      emailVerified: data.emailVerified || false,
+      providerData: data.providerData || [],
+      refreshToken: data.refreshToken,
+      phoneNumber: data.phoneNumber || null,
+      tenantId: data.tenantId || null
+    },
+    providerData: [],
+    refreshToken: data.refreshToken,
+    tenantId: data.tenantId || null,
+    phoneNumber: data.phoneNumber || null,
+    invitedBy: data.invitedBy || null,
+    invitationToken: data.invitationToken || null
+  };
+}
 
 export class UsersService {
   private usersCollection = adminDb.collection("users")
 
-  async createUserIfNotExists(user: User): Promise<User | null> {
+  async createUserIfNotExists(firebaseUser: FirebaseUser): Promise<User | null> {
     try {
-      const userRef = this.usersCollection.doc(user.uid)
+      const userRef = this.usersCollection.doc(firebaseUser.uid)
       const userDoc = await userRef.get()
+      const now = Date.now();
 
       if (!userDoc.exists) {
-        const userData = {
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
-          role: UserRole.USER,
+        const { customClaims } = await adminAuth.getUser(firebaseUser.uid)
+        const role = customClaims?.role || UserRole.USER
+
+        const userData: User = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          displayName: firebaseUser.displayName || '',
+          photoURL: firebaseUser.photoURL || null,
+          role,
           status: UserStatus.ACTIVE,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }
+          isAnonymous: false,
+          id: firebaseUser.uid,
+          emailVerified: firebaseUser.emailVerified,
+          createdAt: now,
+          updatedAt: now,
+          invitedBy: null,
+          invitationToken: null,
+          metadata: {
+            lastLogin: now,
+            createdAt: now,
+            role,
+            status: UserStatus.ACTIVE,
+            displayName: firebaseUser.displayName || '',
+            email: firebaseUser.email || '',
+            photoURL: firebaseUser.photoURL || null,
+            uid: firebaseUser.uid,
+            emailVerified: firebaseUser.emailVerified,
+            providerData: firebaseUser.providerData,
+            refreshToken: firebaseUser.refreshToken,
+            phoneNumber: firebaseUser.phoneNumber,
+            tenantId: firebaseUser.tenantId
+          }
+        };
+
+        await adminAuth.setCustomUserClaims(firebaseUser.uid, { role })
         await userRef.set(userData)
-        return this.mapUser({ id: user.uid, ...userData })
+
+        return userData;
       }
 
-      return this.mapUser({ id: user.uid, ...userDoc.data() })
+      const existingUserData = userDoc.data() as User;
+      // Ensure role is synced with custom claims
+      const { customClaims } = await adminAuth.getUser(firebaseUser.uid)
+      if (customClaims?.role && existingUserData && customClaims.role !== existingUserData.role) {
+        const updatedData = {
+          ...existingUserData,
+          role: customClaims.role,
+          updatedAt: now,
+          metadata: {
+            ...existingUserData.metadata,
+            role: customClaims.role
+          }
+        };
+        await userRef.update(updatedData);
+        return updatedData;
+      }
+
+      return existingUserData;
     } catch (error) {
       console.error("Error in createUserIfNotExists:", error)
       return null
@@ -168,22 +253,54 @@ export class UsersService {
   }
 
   private mapUser(data: any): User {
+    const now = Date.now();
     return {
       uid: data.id,
-      email: data.email,
-      displayName: data.displayName,
-      photoURL: data.photoURL,
-      role: data.role,
-      status: data.status,
+      email: data.email || '',
+      displayName: data.displayName || '',
+      photoURL: data.photoURL || null,
+      role: data.role || UserRole.USER,
+      status: data.status || UserStatus.ACTIVE,
+      isAnonymous: false,
+      id: data.id,
+      emailVerified: data.emailVerified ?? false,
       createdAt: new Date(data.createdAt).getTime(),
       updatedAt: new Date(data.updatedAt).getTime(),
-      invitedBy: data.invitedBy,
-      invitationToken: data.invitationToken,
-      emailVerified: data.emailVerified ?? false,
-      metadata: data.metadata ?? {},
-    }
+      invitedBy: data.invitedBy || null,
+      invitationToken: data.invitationToken || null,
+      metadata: {
+        lastLogin: data.metadata?.lastLogin || now,
+        createdAt: data.metadata?.createdAt || now,
+        role: data.role || UserRole.USER,
+        status: data.status || UserStatus.ACTIVE,
+        displayName: data.displayName || '',
+        email: data.email || '',
+        photoURL: data.photoURL || null,
+        uid: data.id,
+        emailVerified: data.emailVerified ?? false,
+        providerData: data.providerData || [],
+        refreshToken: data.refreshToken,
+        phoneNumber: data.phoneNumber || null,
+        tenantId: data.tenantId || null
+      }
+    };
   }
 }
 
 export const usersService = new UsersService()
+
+// Update the createUser function
+export async function createUser(data: Partial<User>): Promise<User> {
+  return createUserWithDefaults(data);
+}
+
+// Update the updateUser function
+export async function updateUser(uid: string, data: Partial<User>): Promise<User> {
+  const now = Date.now();
+  const updatedData = {
+    ...data,
+    updatedAt: now
+  };
+  return createUserWithDefaults({ ...updatedData, uid });
+}
 

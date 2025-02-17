@@ -178,7 +178,7 @@ export function PostImagesField({ form }: PostImagesFieldProps) {
                                             ) : (
                                                 <Image
                                                     src={imageUrl}
-                                                    alt={`Uploaded image ${index + 1}`}
+                                                    alt={`Post image ${index + 1}`}
                                                     width={320}
                                                     height={160}
                                                     className="w-full h-40 object-cover rounded-lg"

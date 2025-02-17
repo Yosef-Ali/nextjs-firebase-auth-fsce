@@ -1,7 +1,7 @@
 'use client';
 
 import { UserRole, UserStatus, type User } from "@/app/types/user";
-import { getUsers, inviteUser, updateUserRole, deleteUser } from "@/app/actions/users-actions";
+import { getUsers, inviteUser, updateUserRole, deleteUser, updateUserStatus } from "@/app/actions/users-actions";
 import { usersService as mainUsersService } from "@/app/services/users";
 import { User as FirebaseUser } from "firebase/auth";
 
@@ -53,6 +53,18 @@ class ClientUsersService {
       }
     } catch (error) {
       console.error("Error updating user role:", error);
+      throw error;
+    }
+  }
+
+  async updateUserStatus(uid: string, status: UserStatus): Promise<void> {
+    try {
+      const result = await updateUserStatus(uid, status);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update user status');
+      }
+    } catch (error) {
+      console.error("Error updating user status:", error);
       throw error;
     }
   }

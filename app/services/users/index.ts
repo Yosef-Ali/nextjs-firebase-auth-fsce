@@ -1,5 +1,5 @@
-import { User, UserRole, UserStatus } from "../../types/user";
 import { User as FirebaseUser } from "firebase/auth";
+import { User, UserRole, UserStatus } from "@/app/types/user";
 import { userCoreService } from "./core";
 import { userAuthService } from "./auth";
 import { userInvitationService } from "./invitation";
@@ -32,7 +32,18 @@ export class UsersService {
         updatedAt: Date.now(),
         metadata: {
           lastLogin: Date.now(),
-          createdAt: Date.now()
+          createdAt: Date.now(),
+          role: UserRole.USER,
+          status: UserStatus.ACTIVE,
+          displayName: firebaseUser.displayName || "",
+          email: firebaseUser.email || "",
+          photoURL: firebaseUser.photoURL || null,
+          uid: firebaseUser.uid,
+          emailVerified: firebaseUser.emailVerified,
+          providerData: firebaseUser.providerData || [],
+          refreshToken: firebaseUser.refreshToken || "",
+          phoneNumber: firebaseUser.phoneNumber || null,
+          tenantId: firebaseUser.tenantId || null
         }
       };
 

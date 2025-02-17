@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/hooks/use-auth';
 import { authorization } from '@/app/lib/authorization';
 import { UserRole } from '@/app/types/user';
+import { convertToAppUser } from '@/app/utils/user-utils';
 
 export function withAuth(
     WrappedComponent: React.ComponentType,
@@ -18,14 +19,13 @@ export function withAuth(
                     router.replace('/sign-in');
                     return;
                 }
-
-                const authUser = { ...user, role: userData.role, status: userData.status };
-
-                if (!authorization.hasRole(authUser, requiredRole)) {
+                const baseUser = convertToAppUser(user);
+                const authUser = baseUser ? { ...baseUser, role: userData.role, status: userData.status } : null;
+                
+                if (!authUser || !authorization.hasRole(authUser, requiredRole)) {
                     router.replace('/unauthorized');
                     return;
                 }
-
                 if (!authorization.isActiveUser(authUser)) {
                     router.replace('/account-pending');
                     return;
@@ -40,11 +40,9 @@ export function withAuth(
                 </div>
             );
         }
-
         if (!user || !userData) {
             return null;
         }
-
         return <WrappedComponent {...props} />;
     };
 }

@@ -1,6 +1,7 @@
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, query, where, orderBy, Timestamp, addDoc, updateDoc, deleteDoc, limit, setDoc } from 'firebase/firestore';
 import { Post } from '@/app/types/post';
+import { Category } from '@/app/types/category';
 
 // Helper function to generate slug from title
 const generateSlug = (title: string): string => {
@@ -115,16 +116,50 @@ class WhatWeDoService {
   }
 
   // Helper function to generate a unique ID for a program
-  private async generateUniqueId(title: string, category: string): Promise<string> {
-    const baseId = title
+  private async generateUniqueId(title: string, category: Category | string): Promise<string> {
+    let baseSlug = '';
+
+    // If category is an object, use its ID
+    if (typeof category !== 'string') {
+      baseSlug = `${category.id}-${title}`;
+    } else {
+      baseSlug = `${category}-${title}`;
+    }
+
+    const slug = baseSlug
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
 
-    const categoryPrefix = category.split('-')[0];
-    const timestamp = Date.now().toString(36);
+    // Check if the slug exists
+    const q = query(
+      collection(db, this.collectionName),
+      where('slug', '==', slug)
+    );
+    const querySnapshot = await getDocs(q);
 
-    return `${categoryPrefix}-${baseId}-${timestamp}`;
+    if (querySnapshot.empty) {
+      return slug;
+    }
+
+    // If slug exists, append a number
+    let counter = 1;
+    let newSlug = `${slug}-${counter}`;
+
+    while (true) {
+      const q = query(
+        collection(db, this.collectionName),
+        where('slug', '==', newSlug)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        return newSlug;
+      }
+
+      counter++;
+      newSlug = `${slug}-${counter}`;
+    }
   }
 
   async createProgram(data: Omit<Post, 'id'>): Promise<Post> {

@@ -102,10 +102,9 @@ export default function CategoriesContent({ initialCategories }: CategoriesConte
     }
 
     // Check for duplicate category name
-    const isDuplicate = categories.some(
-      existingCategory => 
-        existingCategory.name.toLowerCase() === category.name.toLowerCase() &&
-        existingCategory.id !== category.id
+    const isDuplicate = categories.some(existingCategory => 
+      existingCategory.name?.toLowerCase() === category.name?.toLowerCase() &&
+      existingCategory.id !== category.id
     );
 
     if (isDuplicate) {

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { UserRole } from '@/app/types/user';
+import { Spinner } from '@/components/ui/spinner';
 import { LoadingScreen } from '@/components/loading-screen/LoadingScreen';
 
 export function withRoleProtection(Component: React.ComponentType<any>, requiredRoles: UserRole[]) {
@@ -20,7 +21,7 @@ export function withRoleProtection(Component: React.ComponentType<any>, required
         if (loading) {
             return (
                 <div className="flex items-center justify-center min-h-screen">
-                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900" />
+                    <Spinner className="h-32 w-32" />
                 </div>
             );
         }

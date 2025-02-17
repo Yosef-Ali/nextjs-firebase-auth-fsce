@@ -3,7 +3,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Category } from '@/app/types/category';
+import { Category, CategoryType } from '@/app/types/category';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -22,14 +22,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 const formSchema = z.object({
   name: z.string().min(2),
   description: z.string().optional(),
-  type: z.enum(['post', 'resource', 'award', 'recognition']),
+  type: z.enum(['post', 'resource', 'award', 'recognition'] as const satisfies readonly CategoryType[]),
   icon: z.string().optional(),
   featured: z.boolean().optional()
 });
 
 interface CategoryEditorProps {
   category?: Category;
-  type: 'post' | 'resource' | 'award' | 'recognition';
+  type: CategoryType;
   onSave: (savedCategory: Category) => void;
   onCancel: () => void;
 }
@@ -51,19 +51,19 @@ export function CategoryEditor({ category, type, onSave, onCancel }: CategoryEdi
         <CardTitle>{category ? 'Edit Category' : 'New Category'}</CardTitle>
         <CardDescription>
           {type === 'award' ? 'Create or edit an award category' :
-           type === 'recognition' ? 'Create or edit a recognition category' :
-           type === 'resource' ? 'Create or edit a resource category' :
-           'Create or edit a post category'}
+            type === 'recognition' ? 'Create or edit a recognition category' :
+              type === 'resource' ? 'Create or edit a resource category' :
+                'Create or edit a post category'}
         </CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit((data) => {
           onSave({
             ...data,
-            id: category?.id || '',
-            slug: category?.slug || data.name.toLowerCase().replace(/\s+/g, '-'),
-            createdAt: category?.createdAt || new Date(),
-            updatedAt: new Date(),
+            id: category?.id || crypto.randomUUID(),
+            slug: data.name.toLowerCase().replace(/\s+/g, '-'),
+            createdAt: category?.createdAt || Date.now(),
+            updatedAt: Date.now(),
           } as Category);
         })}>
           <CardContent className="space-y-4">

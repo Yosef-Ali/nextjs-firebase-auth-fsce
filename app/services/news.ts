@@ -59,7 +59,7 @@ class NewsService {
 
       // Filter and sort in memory
       return posts
-        .filter(post => post.category?.id === 'news' && (includeUnpublished || post.published))
+        .filter(post => post.category && typeof post.category !== 'string' && post.category.id === 'news' && (includeUnpublished || post.published))
         .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
         .slice(0, count);
     } catch (error) {
@@ -114,7 +114,7 @@ class NewsService {
 
       // Sort in memory
       return posts
-        .filter(post => post.category?.id === 'news' && (includeUnpublished || post.published))
+        .filter(post => post.category && typeof post.category !== 'string' && post.category.id === 'news' && (includeUnpublished || post.published))
         .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     } catch (error) {
       console.error('Error getting all posts:', error);

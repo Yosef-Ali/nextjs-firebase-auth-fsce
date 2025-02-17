@@ -8,10 +8,12 @@ import { motion, useAnimation, Variants } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { postsService } from '@/app/services/posts';
 import { categoriesService } from '@/app/services/categories';
-import { Post, Category } from '@/app/types/post';
+import { Post } from '@/app/types/post';
+import { Category } from '@/app/types/category';
 import Link from 'next/link';
 import { ArrowRight, Calendar } from "lucide-react";
 import { ContentCard } from "./content-display/ContentCard";
+import { getCategoryId, getCategoryName } from '@/app/utils/category';
 
 interface TabContentProps {
   posts: Post[];
@@ -32,12 +34,18 @@ export default function FeaturedSection() {
         // Then get posts
         const fetchedPosts = await postsService.getPublishedPosts();
 
-        // Map the categories properly, ensuring Child Protection and Events are correctly identified
-        const mappedCategories = fetchedCategories.map(category => ({
-          ...category,
-          id: category.id === 'RMglo9PIj6wNdQNSFcuA' ? 'child-protection' : category.id,
-          name: category.id === 'RMglo9PIj6wNdQNSFcuA' ? 'Child Protection' : category.name
-        }));
+        // Map the categories, ensuring Child Protection is correctly identified
+        const mappedCategories = fetchedCategories.map(category => {
+          const baseCategory = category.id === 'RMglo9PIj6wNdQNSFcuA' ? {
+            ...category,
+            id: 'child-protection',
+            name: 'Child Protection',
+            slug: 'child-protection',
+            type: 'post' as const,
+          } : category;
+
+          return baseCategory;
+        });
 
         setPosts(fetchedPosts);
         setCategories(mappedCategories);
@@ -53,13 +61,12 @@ export default function FeaturedSection() {
 
   const filterPostsByCategory = (categoryId: string) => {
     return posts.filter(post => {
-      const postCategoryId = post.category?.id?.toLowerCase();
-      const postCategoryName = post.category?.name?.toLowerCase();
+      const postCategoryId = getCategoryId(post.category);
 
       // Handle Child Protection special case
       if (categoryId === 'child-protection' &&
         (postCategoryId === 'rmglo9pij6wndqnsfcua' ||
-          postCategoryName === 'child protection')) {
+          getCategoryName(post.category).toLowerCase() === 'child protection')) {
         return true;
       }
 
@@ -67,7 +74,7 @@ export default function FeaturedSection() {
       if (categoryId === 'events' &&
         (postCategoryId === 'events' ||
           postCategoryId === 'event' ||
-          postCategoryName === 'events')) {
+          getCategoryName(post.category).toLowerCase() === 'events')) {
         return true;
       }
 

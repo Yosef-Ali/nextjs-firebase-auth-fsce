@@ -1,16 +1,23 @@
-export interface Category {
+import { BaseModel } from './base';
+
+export type CategoryType = 'post' | 'resource' | 'award' | 'recognition';
+
+export interface Category extends BaseModel {
   id: string;
   name: string;
+  title?: string;
   slug: string;
+  type: CategoryType;
   description?: string;
+  icon?: string;
+  featured?: boolean;
   parentId?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  count?: number; // Number of posts in this category
-  itemCount?: number; // Number of items in this category
-  type: 'post' | 'resource'; // Category type
-  featured?: boolean; // Featured property
-  icon?: string; // Optional icon property
+  itemCount?: number;
+  createdAt: number;
+  updatedAt: number;
+  menuPath?: string | null;
 }
 
-export type CreateCategoryInput = Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'count' | 'itemCount'>;
+export type CategoryWithPosts = Category & {
+  posts: number;
+};

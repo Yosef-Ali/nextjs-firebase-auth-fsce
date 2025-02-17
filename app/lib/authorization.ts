@@ -1,21 +1,21 @@
 import { User as FirebaseUser } from 'firebase/auth';
-import { AppUser as AppUserType, UserRole as AppUserRole, UserStatus } from '@/app/types/user';
-
-// Role hierarchy definition - each role includes permissions of roles that come after it
-const ROLE_HIERARCHY = {
-  [AppUserRole.SUPER_ADMIN]: [AppUserRole.SUPER_ADMIN, AppUserRole.ADMIN, AppUserRole.AUTHOR, AppUserRole.EDITOR, AppUserRole.USER],
-  [AppUserRole.ADMIN]: [AppUserRole.ADMIN, AppUserRole.AUTHOR, AppUserRole.EDITOR, AppUserRole.USER],
-  [AppUserRole.AUTHOR]: [AppUserRole.AUTHOR, AppUserRole.EDITOR, AppUserRole.USER],
-  [AppUserRole.EDITOR]: [AppUserRole.EDITOR, AppUserRole.USER],
-  [AppUserRole.USER]: [AppUserRole.USER],
-  [AppUserRole.GUEST]: [AppUserRole.GUEST]
-};
+import { AppUser as AppUserType, UserRole, UserStatus } from '@/app/types/user';
 
 // Define a constant for admin emails that can be easily updated
 const ADMIN_EMAILS = [
   process.env.NEXT_PUBLIC_ADMIN_EMAIL,
   'dev.yosefali@gmail.com'
 ].filter(Boolean) as string[];
+
+// Role hierarchy definition - each role includes permissions of roles that come after it
+const ROLE_HIERARCHY: Record<UserRole, UserRole[]> = {
+  [UserRole.SUPER_ADMIN]: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.AUTHOR, UserRole.EDITOR, UserRole.USER],
+  [UserRole.ADMIN]: [UserRole.ADMIN, UserRole.AUTHOR, UserRole.EDITOR, UserRole.USER],
+  [UserRole.AUTHOR]: [UserRole.AUTHOR, UserRole.EDITOR, UserRole.USER],
+  [UserRole.EDITOR]: [UserRole.EDITOR, UserRole.USER],
+  [UserRole.USER]: [UserRole.USER],
+  [UserRole.GUEST]: [UserRole.GUEST]
+};
 
 interface AuthorizationContext {
   user: AppUserType | null;
@@ -34,19 +34,19 @@ export class Authorization {
     return Authorization.instance;
   }
 
-  public hasRole(user: AppUserType | null, requiredRole: AppUserRole): boolean {
+  public hasRole(user: AppUserType | null, requiredRole: UserRole): boolean {
     if (!user?.role) return false;
     return ROLE_HIERARCHY[user.role]?.includes(requiredRole) || false;
   }
 
   public isAdmin(user: AppUserType | null): boolean {
     if (!user) return false;
-    return this.hasRole(user, AppUserRole.ADMIN) || this.hasRole(user, AppUserRole.SUPER_ADMIN);
+    return this.hasRole(user, UserRole.ADMIN) || this.hasRole(user, UserRole.SUPER_ADMIN);
   }
 
   public isAuthor(user: AppUserType | null): boolean {
     if (!user) return false;
-    return this.hasRole(user, AppUserRole.AUTHOR);
+    return this.hasRole(user, UserRole.AUTHOR);
   }
 
   public canManageUsers(user: AppUserType | null): boolean {
@@ -55,12 +55,12 @@ export class Authorization {
 
   public canEditContent(user: AppUserType | null): boolean {
     if (!user) return false;
-    return this.hasRole(user, AppUserRole.EDITOR);
+    return this.hasRole(user, UserRole.EDITOR);
   }
 
   public canCreateContent(user: AppUserType | null): boolean {
     if (!user) return false;
-    return this.hasRole(user, AppUserRole.AUTHOR);
+    return this.hasRole(user, UserRole.AUTHOR);
   }
 
   public isActiveUser(user: AppUserType | null): boolean {
@@ -73,23 +73,36 @@ export class Authorization {
       return { user: null, resourceOwnerId };
     }
 
+    const now = Date.now();
     // Determine role based on email for admin or default to USER
     const role = user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())
-      ? AppUserRole.ADMIN
-      : AppUserRole.USER;
+      ? UserRole.ADMIN
+      : UserRole.USER;
 
     return {
       user: {
         ...user,
+        email: user.email || '', // Convert null to empty string
+        displayName: user.displayName || '', // Convert null to empty string
         role,
         status: UserStatus.ACTIVE,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        createdAt: now,
+        updatedAt: now,
         metadata: {
-          lastLogin: user.metadata?.lastSignInTime ? new Date(user.metadata.lastSignInTime).getTime() : Date.now(),
-          createdAt: user.metadata?.creationTime ? new Date(user.metadata.creationTime).getTime() : Date.now()
-        }
-      } as AppUserType,
+          lastLogin: user.metadata?.lastSignInTime ? new Date(user.metadata.lastSignInTime).getTime() : now,
+          createdAt: user.metadata?.creationTime ? new Date(user.metadata.creationTime).getTime() : now,
+          role,
+          status: UserStatus.ACTIVE,
+          displayName: user.displayName || '', // Convert null to empty string
+          email: user.email || '', // Convert null to empty string
+          photoURL: user.photoURL,
+          uid: user.uid,
+          emailVerified: user.emailVerified
+        },
+        invitedBy: null,
+        invitationToken: null,
+        id: user.uid
+      },
       resourceOwnerId
     };
   }
@@ -98,7 +111,7 @@ export class Authorization {
   // @param context Authorization context
   // @param requiredRole Minimum role required
   // @returns Boolean indicating access permission
-  static canAccess(userOrContext: AuthorizationContext | AppUserType, requiredRole: AppUserRole = AppUserRole.USER): boolean {
+  static canAccess(userOrContext: AuthorizationContext | AppUserType, requiredRole: UserRole = UserRole.USER): boolean {
     let user: AppUserType | null = null;
     let resourceOwnerId: string | undefined = undefined;
 
@@ -113,20 +126,20 @@ export class Authorization {
     if (!user) return false;
 
     // Admin has full access
-    if (user.role === AppUserRole.ADMIN) {
+    if (user.role === UserRole.ADMIN) {
       return true;
     }
 
     // Author can access their own resources and create new ones
-    if (user.role === AppUserRole.AUTHOR) {
-      if (requiredRole === AppUserRole.USER || requiredRole === AppUserRole.AUTHOR) {
+    if (user.role === UserRole.AUTHOR) {
+      if (requiredRole === UserRole.USER || requiredRole === UserRole.AUTHOR) {
         return resourceOwnerId ? user.uid === resourceOwnerId : true;
       }
       return false;
     }
 
     // Regular user has minimal access
-    return requiredRole === AppUserRole.USER;
+    return requiredRole === UserRole.USER;
   }
 
   // Check if the user is an admin
@@ -134,7 +147,7 @@ export class Authorization {
   // @returns Boolean indicating admin status
   static isAdmin(user: AppUserType | null): boolean {
     if (!user) return false;
-    return user.role === AppUserRole.ADMIN;
+    return user.role === UserRole.ADMIN;
   }
 
   // Add an admin email to the list of admin emails
@@ -147,7 +160,7 @@ export class Authorization {
   // @param user User object
   // @returns Boolean indicating permission
   static canCreatePost(user: FirebaseUser | null): boolean {
-    const someValue = this.canAccess(this.createContext(user), AppUserRole.AUTHOR);
+    const someValue = this.canAccess(this.createContext(user), UserRole.AUTHOR);
     return someValue !== null && someValue !== undefined ? someValue : false;
   }
 
@@ -159,21 +172,21 @@ export class Authorization {
     const context = this.createContext(user, postAuthorId);
     // Ensure context is valid before proceeding
     if (!context || !context.user) return false;
-    return this.canAccess(context, AppUserRole.ADMIN) || false;
+    return this.canAccess(context, UserRole.ADMIN) || false;
   }
 
   // Check if a user can manage users
   // @param user User object
   // @returns Boolean indicating permission
   static canManageUsers(user: FirebaseUser | null): boolean {
-    return this.canAccess(this.createContext(user), AppUserRole.ADMIN);
+    return this.canAccess(this.createContext(user), UserRole.ADMIN);
   }
 
   // Check if a user can invite authors
   // @param user User object
   // @returns Boolean indicating permission
   static canInviteAuthors(user: FirebaseUser | null): boolean {
-    return this.canAccess(this.createContext(user), AppUserRole.ADMIN);
+    return this.canAccess(this.createContext(user), UserRole.ADMIN);
   }
 }
 
@@ -183,7 +196,7 @@ export const authorization = Authorization.getInstance();
 // Utility function to handle unauthorized access
 export function assertAuthorized(
   context: AuthorizationContext,
-  requiredRole: AppUserRole = AppUserRole.USER
+  requiredRole: UserRole = UserRole.USER
 ): void {
   const auth = Authorization.getInstance();
 

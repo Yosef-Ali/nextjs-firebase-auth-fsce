@@ -9,6 +9,16 @@ interface WithRoleProtectionProps {
   [key: string]: any;
 }
 
+// Define role hierarchy
+const roleHierarchy: Record<UserRole, UserRole[]> = {
+  [UserRole.SUPER_ADMIN]: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EDITOR, UserRole.AUTHOR, UserRole.USER, UserRole.GUEST],
+  [UserRole.ADMIN]: [UserRole.ADMIN, UserRole.EDITOR, UserRole.AUTHOR, UserRole.USER, UserRole.GUEST],
+  [UserRole.EDITOR]: [UserRole.EDITOR, UserRole.AUTHOR, UserRole.USER, UserRole.GUEST],
+  [UserRole.AUTHOR]: [UserRole.AUTHOR, UserRole.USER, UserRole.GUEST],
+  [UserRole.USER]: [UserRole.USER, UserRole.GUEST],
+  [UserRole.GUEST]: [UserRole.GUEST]
+};
+
 export const withRoleProtection = <P extends WithRoleProtectionProps>(
   WrappedComponent: React.ComponentType<P>,
   requiredRole: UserRole
@@ -21,11 +31,15 @@ export const withRoleProtection = <P extends WithRoleProtectionProps>(
       if (!loading) {
         if (!userData) {
           router.push('/sign-in');
-        } else if (userData.role !== requiredRole) {
-          router.push('/unauthorized');
+        } else {
+          // Check if user has the required role or higher in the hierarchy
+          const hasRequiredRole = roleHierarchy[userData.role]?.includes(requiredRole);
+          if (!hasRequiredRole) {
+            router.push('/unauthorized');
+          }
         }
       }
-    }, [userData, loading, router]);
+    }, [userData, loading, router, requiredRole]);
 
     if (loading) {
       return (
@@ -35,7 +49,7 @@ export const withRoleProtection = <P extends WithRoleProtectionProps>(
       );
     }
 
-    if (!userData || userData.role !== requiredRole) {
+    if (!userData || !roleHierarchy[userData.role]?.includes(requiredRole)) {
       return null;
     }
 
