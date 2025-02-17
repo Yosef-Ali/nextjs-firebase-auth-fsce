@@ -49,7 +49,7 @@ function ImageItem({ media, onClick, selectable }: { media: Media; onClick?: () 
         console.log('Setting up new image load for:', media.url);
 
         const img = new Image();
-        
+
         await new Promise((resolve, reject) => {
           const timeoutId = setTimeout(() => {
             console.log('Image load timed out');
@@ -196,7 +196,7 @@ function MediaGrid({
               <div className="absolute z-20 top-2 left-2">
                 <Checkbox
                   checked={selectedItems.includes(media.id)}
-                  onCheckedChange={(checked) => onSelect?.(media.id, checked as boolean)}
+                  onCheckedChange={(checked: boolean | 'indeterminate') => onSelect?.(media.id, checked as boolean)}
                 />
               </div>
             )}
