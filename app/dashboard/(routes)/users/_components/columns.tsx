@@ -1,56 +1,26 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { CellAction } from "./cell-action";
 import { User, UserRole, UserStatus } from "@/app/types/user";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-
-const formatDate = (value: any): string => {
-  if (!value) return "N/A";
-  
-  try {
-    let date: Date;
-    
-    if (value instanceof Date) {
-      date = value;
-    } else if (typeof value === 'number') {
-      // Handle milliseconds timestamp
-      date = new Date(value);
-    } else if (typeof value === 'string') {
-      // Handle ISO string or other date string formats
-      date = new Date(value);
-    } else if (value.toDate && typeof value.toDate === 'function') {
-      // Handle Firestore Timestamp
-      date = value.toDate();
-    } else {
-      return "Invalid date";
-    }
-    
-    // Validate the date is valid
-    if (isNaN(date.getTime())) {
-      return "Invalid date";
-    }
-    
-    return format(date, 'MMM d, yyyy');
-  } catch (error) {
-    console.error("Date formatting error:", error);
-    return "Invalid date";
-  }
-};
+import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { CellAction } from "./cell-action";
 
 export const columns: ColumnDef<User>[] = [
   {
     accessorKey: "displayName",
-    header: "User",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="User" />
+    ),
     cell: ({ row }) => {
       const user = row.original;
       return (
         <div className="flex items-center gap-2">
           {user.photoURL && (
-            <img 
-              src={user.photoURL} 
-              alt={user.displayName} 
+            <img
+              src={user.photoURL}
+              alt={user.displayName}
               className="h-8 w-8 rounded-full object-cover"
             />
           )}
@@ -60,48 +30,86 @@ export const columns: ColumnDef<User>[] = [
           </div>
         </div>
       );
-    },
+    }
+  },
+  {
+    accessorKey: "email",
+    header: "Email",
+    enableHiding: true,
   },
   {
     accessorKey: "role",
-    header: "Role",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Role" />
+    ),
     cell: ({ row }) => {
       const role = row.getValue("role") as UserRole;
       return (
-        <Badge variant={role === UserRole.ADMIN ? 'default' : 'secondary'}>
-          {role?.toLowerCase() || 'user'}
+        <Badge variant={role === UserRole.ADMIN ? "destructive" : "default"}>
+          {(role || UserRole.USER).toLowerCase()}
         </Badge>
       );
     },
   },
   {
     accessorKey: "status",
-    header: "Status",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Status" />
+    ),
     cell: ({ row }) => {
       const status = row.getValue("status") as UserStatus;
       return (
-        <Badge 
-          variant={status === UserStatus.ACTIVE ? 'success' : 'destructive'}
-        >
-          {status?.toLowerCase() || 'inactive'}
+        <Badge variant={status === UserStatus.ACTIVE ? "default" : "secondary"}>
+          {(status || UserStatus.PENDING).toLowerCase()}
         </Badge>
       );
     },
   },
   {
     accessorKey: "createdAt",
-    header: "Joined",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Joined" />
+    ),
     cell: ({ row }) => {
-      return formatDate(row.getValue("createdAt"));
-    },
-  },
-  {
-    accessorKey: "lastLogin",
-    header: "Last Login",
-    cell: ({ row }) => {
-      const lastLogin = row.original.metadata?.lastLogin;
-      if (!lastLogin) return "Never";
-      return formatDate(lastLogin);
+      const createdAt = row.getValue("createdAt");
+      console.log("CreatedAt value:", createdAt, "Type:", typeof createdAt);
+
+      if (!createdAt) return "Unknown";
+
+      try {
+        let date: Date;
+
+        if (typeof createdAt === 'number') {
+          // Validate timestamp
+          if (createdAt < 0 || !Number.isFinite(createdAt)) {
+            console.warn("Invalid timestamp:", createdAt);
+            return "Invalid date";
+          }
+          date = new Date(createdAt);
+        } else if (typeof createdAt === 'string') {
+          // Try parsing string formats
+          const parsedTime = Date.parse(createdAt);
+          if (isNaN(parsedTime)) {
+            console.warn("Invalid date string:", createdAt);
+            return "Invalid date";
+          }
+          date = new Date(createdAt);
+        } else {
+          console.warn("Unexpected createdAt type:", typeof createdAt);
+          return "Invalid date";
+        }
+
+        // Validate resulting date
+        if (!(date instanceof Date) || isNaN(date.getTime())) {
+          console.warn("Invalid date object:", date);
+          return "Invalid date";
+        }
+
+        return format(date, "MMM d, yyyy");
+      } catch (error) {
+        console.error("Error formatting date:", error, "Value:", createdAt);
+        return "Invalid date";
+      }
     },
   },
   {

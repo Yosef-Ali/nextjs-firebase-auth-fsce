@@ -26,11 +26,24 @@ export const onUserUpdated = functions.firestore
     // If role has changed, update custom claims
     if (newData.role !== previousData.role) {
       try {
-        await admin.auth().setCustomUserClaims(userId, { role: newData.role });
-        console.log(`Successfully updated custom claims for user ${userId}`);
+        // Get user from Auth
+        const userRecord = await admin.auth().getUser(userId);
+        
+        // Update custom claims
+        await admin.auth().setCustomUserClaims(userId, { 
+          role: newData.role,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Log successful update
+        console.log(`Updated custom claims for user ${userId} with role ${newData.role}`);
+        
+        return { success: true };
       } catch (error) {
         console.error(`Error updating custom claims for user ${userId}:`, error);
         throw error;
       }
     }
+    
+    return null;
   });

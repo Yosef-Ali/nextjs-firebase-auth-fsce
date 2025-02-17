@@ -5,44 +5,36 @@ import crypto from 'crypto';
 export function convertFirestoreDataToAppUser(data: any): AppUser {
   const now = Date.now();
 
+  // Ensure required fields have proper default values
   const appUser: AppUser = {
     uid: data.uid || '',
     role: data.role || UserRole.USER,
     status: data.status || UserStatus.ACTIVE,
-    createdAt: data.createdAt || now,
-    updatedAt: data.updatedAt || now,
+    createdAt: data.createdAt || new Date().toISOString(),
+    updatedAt: data.updatedAt || new Date().toISOString(),
     email: data.email || '',
     displayName: data.displayName || '',
     photoURL: data.photoURL || null,
     emailVerified: Boolean(data.emailVerified),
-    isAnonymous: Boolean(data.isAnonymous),
     providerData: Array.isArray(data.providerData) ? data.providerData : [],
-    refreshToken: data.refreshToken || '',
+    refreshToken: data.refreshToken || null,
     tenantId: data.tenantId || null,
     phoneNumber: data.phoneNumber || null,
-    id: data.uid || '',  // Adding required id field
-    invitedBy: data.invitedBy || null,  // Adding required invitedBy field
-    invitationToken: data.invitationToken || null,  // Adding required invitationToken field
+    id: data.uid || '',
+    invitedBy: data.invitedBy || null,
+    invitationToken: data.invitationToken || null,
     metadata: {
-      lastLogin: data.metadata?.lastLogin || now,
-      createdAt: data.metadata?.createdAt || now,
+      lastLogin: typeof data.metadata?.lastLogin === 'number' ? data.metadata.lastLogin : now,
+      createdAt: typeof data.metadata?.createdAt === 'number' ? data.metadata.createdAt : now,
       role: data.role || UserRole.USER,
       status: data.status || UserStatus.ACTIVE,
-      displayName: data.displayName || '',
-      email: data.email || '',
-      photoURL: data.photoURL || null,
-      uid: data.uid || '',
-      emailVerified: Boolean(data.emailVerified),
-      providerData: data.providerData || [],
-      refreshToken: data.refreshToken || '',
-      phoneNumber: data.phoneNumber || null,
-      tenantId: data.tenantId || null
     },
+    // Add required AppUser methods
     delete: () => Promise.resolve(),
-    getIdToken: () => Promise.resolve(''),
-    getIdTokenResult: () => Promise.resolve({} as IdTokenResult),
+    getIdToken: (forceRefresh?: boolean) => Promise.resolve(''),
+    getIdTokenResult: (forceRefresh?: boolean) => Promise.resolve({} as IdTokenResult),
     reload: () => Promise.resolve(),
-    toJSON: () => ({})
+    toJSON: () => ({ ...appUser })
   };
 
   return appUser;

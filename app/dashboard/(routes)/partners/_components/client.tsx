@@ -26,11 +26,7 @@ export const PartnersClient = () => {
             logo: data.logo,
             website: data.website,
             order: data.order || 1,
-            partnerType: data.partnerType || "membership",
-            description: data.description,
-            createdAt: data.createdAt?.toDate() || new Date(),
-            updatedAt: data.updatedAt?.toDate() || new Date()
-          } as Partner;
+          };
         });
         setPartners(partners);
         setIsLoading(false);
@@ -43,17 +39,11 @@ export const PartnersClient = () => {
   return (
     <>
       <Separator />
-      {isLoading ? (
-        <div className="flex items-center justify-center w-full h-24">
-          <div className="w-8 h-8 border-b-2 rounded-full animate-spin border-primary" />
-        </div>
-      ) : (
-        <DataTable
-          columns={columns}
-          data={partners}
-          searchKey="name"
-        />
-      )}
+      <DataTable
+        columns={columns}
+        data={partners}
+        searchKey="name" // Changed from 'email' to 'name' to match the column definition
+      />
     </>
   );
 };

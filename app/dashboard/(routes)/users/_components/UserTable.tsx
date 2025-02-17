@@ -1,205 +1,275 @@
-'use client';
-
-import { FC, useState } from 'react';
+import { useState } from "react";
+import { AppUser, UserRole, UserStatus } from "@/app/types/user";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
-} from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage
-} from '@/components/ui/avatar';
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Edit, Trash2, UserIcon, Loader2, Key } from "lucide-react";
 import {
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Lock,
-  Unlock,
-  Shield,
-  User as UserIcon,
-} from 'lucide-react';
-import { AppUser, UserRole, UserStatus } from '@/app/types/user';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
+import { CellAction } from "@/components/ui/cell-action";
 
 interface UserTableProps {
   users: AppUser[];
   isLoading: boolean;
-  onDeleteUser: (uid: string) => void;
-  onSetRole: (userId: string, role: UserRole) => void;
-  onResetPassword: (email: string) => void;
+  updatingUserId?: string | null;
+  onDeleteUser: (uid: string) => Promise<void>;
+  onSetRole: (userId: string, role: UserRole) => Promise<void>;
+  onResetPassword: (email: string) => Promise<void>;
+  onEdit: (user: AppUser) => void;
 }
 
-const UserTable: FC<UserTableProps> = ({
+const UserTable = ({
   users,
   isLoading,
+  updatingUserId,
   onDeleteUser,
   onSetRole,
-  onResetPassword
-}) => {
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  onResetPassword,
+  onEdit,
+}: UserTableProps) => {
+  const [userToDelete, setUserToDelete] = useState<AppUser | null>(null);
   const [actionInProgress, setActionInProgress] = useState(false);
 
   const handleAction = async (action: () => Promise<void>) => {
     if (actionInProgress) return;
-
     try {
       setActionInProgress(true);
       await action();
+    } catch (error) {
+      console.error("Action failed:", error);
+      toast({
+        title: "Error",
+        description: "Operation failed. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setActionInProgress(false);
-      setOpenDropdown(null);
     }
   };
 
+  const handleRoleChange = async (user: AppUser, newRole: UserRole) => {
+    if (user.role === newRole) return;
+
+    await handleAction(async () => {
+      try {
+        await onSetRole(user.uid, newRole);
+        toast({
+          title: "Success",
+          description: `User role updated to ${newRole}`,
+        });
+      } catch (error) {
+        throw new Error(`Failed to update role: ${error}`);
+      }
+    });
+  };
+
+  const handlePasswordReset = async (user: AppUser) => {
+    if (!user.email) {
+      toast({
+        title: "Error",
+        description: "User email not found",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await handleAction(async () => {
+      try {
+        await onResetPassword(user.email!);
+        toast({
+          title: "Success",
+          description: "Password reset email sent",
+        });
+      } catch (error) {
+        throw new Error(`Failed to send reset email: ${error}`);
+      }
+    });
+  };
+
+  const handleEdit = (user: AppUser) => {
+    if (!user?.uid) {
+      toast({
+        title: "Error",
+        description: "Invalid user data",
+        variant: "destructive",
+      });
+      return;
+    }
+    onEdit(user);
+  };
+
+  const isUserUpdating = (uid: string) =>
+    updatingUserId === uid || actionInProgress;
+
+  const renderActions = (user: AppUser) => {
+    const actions = [
+      {
+        label: "Edit",
+        icon: <Edit className="w-4 h-4 mr-2" />,
+        onClick: () => handleEdit(user),
+      },
+      {
+        label: "Reset Password",
+        icon: <Key className="w-4 h-4 mr-2" />,
+        onClick: () => handlePasswordReset(user),
+      },
+      {
+        label: "Delete",
+        icon: <Trash2 className="w-4 h-4 mr-2" />,
+        onClick: () => setUserToDelete(user),
+        variant: "destructive" as const,
+      },
+    ];
+
+    return (
+      <CellAction actions={actions} isLoading={isUserUpdating(user.uid)} />
+    );
+  };
+
+  const roleOptions = [
+    { value: UserRole.USER, label: "User" },
+    { value: UserRole.ADMIN, label: "Admin" },
+  ];
+
   return (
-    <div className="border rounded-md">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>User</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {isLoading ? (
-            Array.from({ length: 5 }).map((_, index) => (
-              <TableRow key={index}>
-                <TableCell>
-                  <div className="flex items-center space-x-4">
-                    <Skeleton className="w-12 h-12 rounded-full" />
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-[200px]" />
-                      <Skeleton className="h-4 w-[150px]" />
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                <TableCell><Skeleton className="h-8 w-[100px]" /></TableCell>
-              </TableRow>
-            ))
-          ) : (
-            users.map((user) => (
-              <TableRow key={user.uid}>
-                <TableCell>
-                  <div className="flex items-center space-x-4">
-                    <Avatar>
-                      <AvatarImage src={user.photoURL || ''} />
-                      <AvatarFallback>
-                        {user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">{user.displayName || 'No name'}</div>
-                      <div className="text-sm text-gray-500">{user.email}</div>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={user.role === UserRole.ADMIN ? 'destructive' : 'default'}>
-                    {user.role}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={user.status === UserStatus.ACTIVE ? 'default' : 'secondary'}>
-                    {user.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu open={openDropdown === user.uid} onOpenChange={(open) => {
-                    setOpenDropdown(open ? user.uid : null);
-                  }}>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="w-8 h-8 p-0"
-                        disabled={actionInProgress}
+    <>
+      <div className="border rounded-md">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>User</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading
+              ? Array.from({ length: 5 }).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell>
+                      <div className="flex items-center space-x-4">
+                        <Skeleton className="w-12 h-12 rounded-full" />
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-[200px]" />
+                          <Skeleton className="h-4 w-[150px]" />
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-[100px]" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-[100px]" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-8 w-[50px]" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              : users.map((user) => (
+                  <TableRow key={user.uid}>
+                    <TableCell>
+                      <div className="flex items-center space-x-4">
+                        {user.photoURL ? (
+                          <img
+                            src={user.photoURL}
+                            alt=""
+                            className="w-12 h-12 rounded-full"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center w-12 h-12 bg-gray-200 rounded-full">
+                            <UserIcon className="w-6 h-6 text-gray-500" />
+                          </div>
+                        )}
+                        <div>
+                          <div className="font-medium">
+                            {user.displayName || "No name"}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {user.email}
+                          </div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          user.role === UserRole.ADMIN
+                            ? "destructive"
+                            : "default"
+                        }
                       >
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuSub>
-                        <DropdownMenuSubTrigger>
-                          <Shield className="w-4 h-4 mr-2" />
-                          <span>Change Role</span>
-                        </DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent>
-                          <DropdownMenuItem
-                            onClick={() => handleAction(async () => {
-                              await onSetRole(user.uid, UserRole.USER);
-                            })}
-                          >
-                            <UserIcon className="w-4 h-4 mr-2" />
-                            <span>User</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleAction(async () => {
-                              await onSetRole(user.uid, UserRole.AUTHOR);
-                            })}
-                          >
-                            <Edit className="w-4 h-4 mr-2" />
-                            <span>Author</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleAction(async () => {
-                              await onSetRole(user.uid, UserRole.ADMIN);
-                            })}
-                          >
-                            <Lock className="w-4 h-4 mr-2" />
-                            <span>Admin</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuSubContent>
-                      </DropdownMenuSub>
-                      <DropdownMenuItem
-                        onClick={() => user.email && handleAction(async () => {
-                          await onResetPassword(user.email!);
-                        })}
+                        {user.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          user.status === UserStatus.ACTIVE
+                            ? "default"
+                            : "secondary"
+                        }
                       >
-                        <Unlock className="w-4 h-4 mr-2" />
-                        <span>Reset Password</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleAction(async () => {
-                          await onDeleteUser(user.uid);
-                        })}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        <span>Delete User</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+                        {user.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {renderActions(user)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+          </TableBody>
+        </Table>
+      </div>
+      <AlertDialog
+        open={!!userToDelete}
+        onOpenChange={() => setUserToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              user account and remove their data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (userToDelete) {
+                  handleAction(async () => {
+                    await onDeleteUser(userToDelete.uid);
+                    setUserToDelete(null);
+                  });
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 

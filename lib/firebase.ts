@@ -1,6 +1,13 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
-import { getFirestore, Firestore, enableIndexedDbPersistence, initializeFirestore, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
+import { 
+  getFirestore, 
+  Firestore, 
+  enableIndexedDbPersistence, 
+  initializeFirestore, 
+  CACHE_SIZE_UNLIMITED,
+  enableMultiTabIndexedDbPersistence 
+} from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 
@@ -22,15 +29,19 @@ if (!getApps().length) {
   app = initializeApp(firebaseConfig);
   // Initialize Firestore with settings for better offline support
   db = initializeFirestore(app, {
-    cacheSizeBytes: CACHE_SIZE_UNLIMITED
+    cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+    experimentalAutoDetectLongPolling: true // Remove experimentalForceLongPolling and keep only this one
   });
 
-  // Enable offline persistence only on client side
+  // Enable offline persistence with multi-tab support
   if (typeof window !== 'undefined') {
-    enableIndexedDbPersistence(db).catch((err) => {
+    enableMultiTabIndexedDbPersistence(db).catch((err) => {
       if (err.code === 'failed-precondition') {
+        // Multiple tabs open, persistence can only be enabled in one tab at a time.
         console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+        // Fall back to memory storage
       } else if (err.code === 'unimplemented') {
+        // The current browser doesn't support persistence
         console.warn('The current browser does not support offline persistence');
       }
     });

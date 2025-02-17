@@ -17,7 +17,8 @@ export type AuthErrorCode =
     | 'auth/invalid-verification-id'
     | 'auth/missing-verification-code'
     | 'auth/missing-verification-id'
-    | 'auth/credential-already-in-use';
+    | 'auth/credential-already-in-use'
+    | 'auth/operation-failed';  // Add this new error code
 
 export interface AuthError extends Error {
     code?: string;
@@ -33,10 +34,19 @@ export function handleAuthError(error: unknown): AuthError {
         };
     }
 
-    // Handle non-Firebase errors
+    if (error instanceof Error) {
+        return {
+            message: error.message,
+            name: 'AuthError',
+            code: 'auth/operation-failed'
+        };
+    }
+
+    // Handle non-Firebase errors or unknown error types
     return {
-        message: error instanceof Error ? error.message : 'An unexpected error occurred',
-        name: 'AuthError'
+        message: typeof error === 'string' ? error : 'An unexpected error occurred',
+        name: 'AuthError',
+        code: 'auth/operation-failed'
     };
 }
 
@@ -76,6 +86,8 @@ function getFirebaseErrorMessage(code: string): string {
             return 'Missing verification ID';
         case 'auth/credential-already-in-use':
             return 'This account is already connected to another user';
+        case 'auth/operation-failed':
+            return 'Operation failed. Please try again';
         default:
             return 'An error occurred during authentication';
     }

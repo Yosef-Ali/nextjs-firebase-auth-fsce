@@ -1,19 +1,49 @@
 import { BaseModel } from './base';
 
 export enum UserRole {
-  SUPER_ADMIN = 'SUPER_ADMIN',
-  ADMIN = 'ADMIN',
-  AUTHOR = 'AUTHOR',
-  EDITOR = 'EDITOR',
-  USER = 'USER',
-  GUEST = 'GUEST'
+  ADMIN = "ADMIN",
+  USER = "USER",
+  EDITOR = "EDITOR"
 }
 
 export enum UserStatus {
-  ACTIVE = 'active',
-  PENDING = 'pending',
-  BLOCKED = 'blocked',
-  INACTIVE = 'inactive'
+  ACTIVE = "ACTIVE",
+  PENDING = "PENDING",
+  DELETED = "DELETED",
+  SUSPENDED = "SUSPENDED"
+}
+
+export interface User {
+  id: string;
+  uid: string;
+  email: string;
+  displayName: string;  // Changed from optional to required
+  photoURL: string | null;  // Made nullable but required
+  role: UserRole;
+  status: UserStatus;
+  emailVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+  phoneNumber: string | null;  // Made nullable but required
+  tenantId: string | null;  // Made nullable but required
+  providerData: any[];  // Made required
+  refreshToken: string | null;  // Made nullable but required
+  invitedBy: string | null;  // Made nullable but required
+  invitationToken: string | null;  // Made nullable but required
+  metadata?: {
+    lastLogin: number;
+    createdAt: number;
+    role: UserRole;
+    status: UserStatus;
+  };
+}
+
+export interface AppUser extends User {
+  delete: () => Promise<void>;
+  getIdToken: (forceRefresh?: boolean) => Promise<string>;
+  getIdTokenResult: (forceRefresh?: boolean) => Promise<any>;
+  reload: () => Promise<void>;
+  toJSON: () => object;
 }
 
 export interface UserMetadata {
@@ -30,40 +60,6 @@ export interface UserMetadata {
   refreshToken?: string;
   phoneNumber?: string | null;
   tenantId?: string | null;
-}
-
-export interface User extends BaseModel {
-  uid: string;
-  email: string;
-  displayName: string;
-  photoURL: string | null;
-  emailVerified: boolean;
-  isAnonymous: boolean;
-  role: UserRole;
-  status: UserStatus;
-  metadata: UserMetadata;
-  invitedBy: string | null;
-  invitationToken: string | null;
-  id: string;
-  providerData?: any[];
-  delete?: () => Promise<void>;
-  getIdToken?: (forceRefresh?: boolean) => Promise<string>;
-  getIdTokenResult?: (forceRefresh?: boolean) => Promise<any>;
-  reload?: () => Promise<void>;
-  toJSON?: () => object;
-  refreshToken?: string;
-  tenantId?: string | null;
-  phoneNumber?: string | null;
-}
-
-export interface AppUser extends User {
-  delete: () => Promise<void>;
-  getIdToken: (forceRefresh?: boolean) => Promise<string>;
-  getIdTokenResult: (forceRefresh?: boolean) => Promise<any>;
-  reload: () => Promise<void>;
-  toJSON: () => object;
-  providerData: any[];
-  refreshToken?: string;
 }
 
 export interface UserDataResult {
