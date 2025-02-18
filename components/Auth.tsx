@@ -45,10 +45,10 @@ const Auth: React.FC<AuthProps> = ({ children }) => {
           className="w-full max-w-xs"
         >
           {isSigningIn ? (
-            <>
+            <React.Fragment>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Signing in...
-            </>
+            </React.Fragment>
           ) : (
             "Sign in with Google"
           )}
@@ -57,7 +57,7 @@ const Auth: React.FC<AuthProps> = ({ children }) => {
     );
   }
 
-  return user ? children : null;
+  return user ? <React.Fragment>{children}</React.Fragment> : null;
 };
 
 export default Auth;

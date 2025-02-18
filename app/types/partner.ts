@@ -6,6 +6,7 @@ export interface Partner {
   email: string;
   phone: string;
   order: number;
+  position?: number; // Adding position field as optional to maintain compatibility
   partnerType: 'strategic' | 'membership';
   description?: string;
   createdAt: Date;
