@@ -12,30 +12,52 @@ import { Post } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
 import { toast } from '@/hooks/use-toast';
 
-const categories = [
+interface CategoryItem {
+  id: string;
+  title: string;
+  description: string;
+  count: number;
+  excerpt: string;
+  slug: string;
+  category: string;
+}
+
+const categories: CategoryItem[] = [
   {
     id: 'child-protection',
     title: 'Child Protection',
     description: 'Comprehensive programs to ensure the safety and well-being of children',
-    count: 0
+    excerpt: 'Comprehensive programs to ensure the safety and well-being of children',
+    count: 0,
+    slug: 'child-protection',
+    category: 'Programs'
   },
   {
     id: 'youth-empowerment',
     title: 'Youth Empowerment',
     description: 'Programs and initiatives to empower youth for a better future',
-    count: 0
+    excerpt: 'Programs and initiatives to empower youth for a better future',
+    count: 0,
+    slug: 'youth-empowerment',
+    category: 'Programs'
   },
   {
     id: 'advocacy',
     title: 'Advocacy',
     description: "Speaking up and taking action for children's rights and needs",
-    count: 0
+    excerpt: "Speaking up and taking action for children's rights and needs",
+    count: 0,
+    slug: 'advocacy',
+    category: 'Programs'
   },
   {
     id: 'humanitarian-response',
     title: 'Humanitarian Response',
     description: 'Providing critical support and assistance in times of crisis',
-    count: 0
+    excerpt: 'Providing critical support and assistance in times of crisis',
+    count: 0,
+    slug: 'humanitarian-response',
+    category: 'Programs'
   },
 ];
 
@@ -134,8 +156,10 @@ export default function WhatWeDoPage() {
             key={category.id}
             href={`/what-we-do/${category.id}`}
             title={category.title}
-            description={category.description}
-            count={category.count}
+            excerpt={category.description}
+            slug={category.id}
+            category="Programs"
+            layout="horizontal"
           />
         ))}
       </motion.div>
@@ -145,6 +169,7 @@ export default function WhatWeDoPage() {
         <StickyPostsSection 
           posts={posts.filter(post => post.sticky)}
           title="Featured Programs"
+          basePath="/what-we-do"
         />
       )}
     </div>
