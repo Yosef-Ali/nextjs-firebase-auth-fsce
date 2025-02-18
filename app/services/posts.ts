@@ -20,14 +20,14 @@ import {
 
 // Helper function to create a complete Category object
 function createCategory(id: string, name: string, type: CategoryType = 'post'): Category {
-  const now = Date.now();
   return {
     id,
     name,
-    slug: id.toLowerCase(),
     type,
-    createdAt: now,
-    updatedAt: now
+    featured: false,
+    slug: id.toLowerCase(),
+    createdAt: new Date(),
+    updatedAt: new Date()
   };
 }
 
@@ -48,10 +48,10 @@ export const postsService = {
         return normalizePost(doc.id, data, {
           id: typeof data.category === 'string' ? data.category : data.category?.id,
           name: typeof data.category === 'string' ? data.category.charAt(0).toUpperCase() + data.category.slice(1) : data.category?.name,
-          slug: data.category?.slug,
           type: data.category?.type || 'post',
-          createdAt: data.category?.createdAt || Date.now(),
-          updatedAt: data.category?.updatedAt || Date.now()
+          featured: !!data.category?.featured,
+          createdAt: data.category?.createdAt ? new Date(data.category.createdAt) : new Date(),
+          updatedAt: data.category?.updatedAt ? new Date(data.category.updatedAt) : new Date()
         });
       });
     } catch (error) {
@@ -103,7 +103,7 @@ export const postsService = {
 
   async createPost(data: Omit<Post, 'id' | 'createdAt' | 'updatedAt'>): Promise<Post> {
     try {
-      const now = Date.now();
+      const now = new Date();
       const postData = {
         ...data,
         createdAt: now,
@@ -126,7 +126,7 @@ export const postsService = {
   async updatePost(id: string, post: Partial<Omit<Post, 'category'>> & { category?: string | Category }, userId: string): Promise<boolean> {
     try {
       const postRef = doc(db, COLLECTION_NAME, id);
-      const now = Date.now();
+      const now = new Date();
 
       // Create initial update data without category
       const { category, ...restData } = post;
@@ -283,7 +283,7 @@ export const postsService = {
       );
 
       // Sort by creation date (newest first) and apply limit if specified
-      const sortedPosts = uniquePosts.sort((a, b) => b.createdAt - a.createdAt);
+      const sortedPosts = uniquePosts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
       const result = limit ? sortedPosts.slice(0, limit) : sortedPosts;
       console.log('Service: Returning', result.length, 'posts for category:', category);
@@ -312,8 +312,8 @@ export const postsService = {
         name: typeof data.category === 'string' ? data.category.charAt(0).toUpperCase() + data.category.slice(1) : data.category?.name,
         slug: data.category?.slug,
         type: data.category?.type || 'post',
-        createdAt: data.category?.createdAt || Date.now(),
-        updatedAt: data.category?.updatedAt || Date.now()
+        createdAt: data.category?.createdAt ? new Date(data.category.createdAt) : new Date(),
+        updatedAt: data.category?.updatedAt ? new Date(data.category.updatedAt) : new Date()
       });
     } catch (error) {
       console.error('Error getting post by slug:', error);
@@ -347,11 +347,11 @@ export const postsService = {
             sticky: Boolean(data?.sticky),
             authorId: data?.authorId ?? '',
             authorEmail: data?.authorEmail ?? '',
-            date: data?.date ?? new Date().toISOString(),
-            createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() :
-              typeof data.createdAt === 'number' ? data.createdAt : Date.now(),
-            updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() :
-              typeof data.updatedAt === 'number' ? data.updatedAt : Date.now(),
+            date: data?.date ? new Date(data.date) : new Date(),
+            createdAt: data.createdAt instanceof Timestamp ? new Date(data.createdAt.toMillis()) :
+              typeof data.createdAt === 'number' ? new Date(data.createdAt) : new Date(),
+            updatedAt: data.updatedAt instanceof Timestamp ? new Date(data.updatedAt.toMillis()) :
+              typeof data.updatedAt === 'number' ? new Date(data.updatedAt) : new Date(),
             coverImage: data?.coverImage ?? '',
             images: Array.isArray(data?.images) ? data.images : [],
             featured: Boolean(data?.featured),
@@ -363,7 +363,7 @@ export const postsService = {
           } as Post;
         })
         .filter(post => post.slug !== slug)
-        .sort((a, b) => b.createdAt - a.createdAt)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
         .slice(0, limit);
 
       return posts;
@@ -414,17 +414,17 @@ export const postsService = {
           category: typeof data.category === 'string'
             ? { id: data.category, name: data.category }
             : data.category || { id: '', name: '' },
-          date: data?.date ?? new Date().toISOString(),
+          date: data?.date ? new Date(data.date) : new Date(),
           createdAt: data.createdAt instanceof Timestamp
-            ? data.createdAt.toMillis()
+            ? new Date(data.createdAt.toMillis())
             : typeof data.createdAt === 'number'
-              ? data.createdAt
-              : Date.now(),
+              ? new Date(data.createdAt)
+              : new Date(),
           updatedAt: data.updatedAt instanceof Timestamp
-            ? data.updatedAt.toMillis()
+            ? new Date(data.updatedAt.toMillis())
             : typeof data.updatedAt === 'number'
-              ? data.updatedAt
-              : Date.now(),
+              ? new Date(data.updatedAt)
+              : new Date(),
           coverImage: data?.coverImage ?? '',
           images: Array.isArray(data?.images) ? data.images : [],
           featured: Boolean(data?.featured),
@@ -437,7 +437,7 @@ export const postsService = {
       });
 
       // Sort by creation date (newest first)
-      posts = posts.sort((a, b) => b.createdAt - a.createdAt);
+      posts = posts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
       const result = limitCount ? posts.slice(0, limitCount) : posts;
       console.log('Service: Returning', result.length, 'published posts');
@@ -461,7 +461,7 @@ export const postsService = {
       const posts = querySnapshot.docs.map(doc => {
         const data = doc.data();
         const category = data.category || {};
-        const now = Date.now();
+        const now = new Date();
 
         return {
           id: doc.id,
@@ -474,16 +474,16 @@ export const postsService = {
             name: typeof category === 'string' ? category.charAt(0).toUpperCase() + category.slice(1) : category.name,
             slug: category.slug,
             type: category.type,
-            createdAt: category.createdAt,
-            updatedAt: category.updatedAt
+            createdAt: category.createdAt ? new Date(category.createdAt) : now,
+            updatedAt: category.updatedAt ? new Date(category.updatedAt) : now
           },
           published: Boolean(data?.published),
           sticky: Boolean(data?.sticky),
           authorId: data?.authorId ?? '',
           authorEmail: data?.authorEmail ?? '',
           date: this.normalizeDate(data?.date),
-          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : typeof data.createdAt === 'number' ? data.createdAt : now,
-          updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() : typeof data.updatedAt === 'number' ? data.updatedAt : now,
+          createdAt: data.createdAt instanceof Timestamp ? new Date(data.createdAt.toMillis()) : typeof data.createdAt === 'number' ? new Date(data.createdAt) : now,
+          updatedAt: data.updatedAt instanceof Timestamp ? new Date(data.updatedAt.toMillis()) : typeof data.updatedAt === 'number' ? new Date(data.updatedAt) : now,
           coverImage: data?.coverImage ?? '',
           images: Array.isArray(data?.images) ? data.images : [],
           featured: Boolean(data?.featured),
@@ -495,7 +495,7 @@ export const postsService = {
         } as Post;
       });
 
-      return posts.sort((a, b) => b.createdAt - a.createdAt);
+      return posts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     } catch (error) {
       console.error('Error getting news:', error);
       return [];
@@ -503,25 +503,28 @@ export const postsService = {
   },
 
   // Helper function to normalize post date
-  normalizeDate(date: any): number {
-    if (typeof date === 'number') {
+  normalizeDate(date: any): Date {
+    if (date instanceof Date) {
       return date;
     }
-    if (date instanceof Date) {
-      return date.getTime();
+    if (date instanceof Timestamp) {
+      return new Date(date.toMillis());
+    }
+    if (typeof date === 'number') {
+      return new Date(date);
     }
     if (typeof date === 'string') {
-      const parsed = Date.parse(date);
-      return isNaN(parsed) ? Date.now() : parsed;
+      const parsed = new Date(date);
+      return isNaN(parsed.getTime()) ? new Date() : parsed;
     }
-    return Date.now();
+    return new Date();
   },
 
   // Remove getUpcomingEvents and getAllNews methods as they're no longer needed
 };
 
 function normalizePost(id: string, data: any, category: Category): Post {
-  const now = Date.now();
+  const now = new Date();
   return {
     id,
     title: data?.title ?? '',
@@ -533,16 +536,16 @@ function normalizePost(id: string, data: any, category: Category): Post {
     sticky: Boolean(data?.sticky),
     authorId: data?.authorId ?? '',
     authorEmail: data?.authorEmail ?? '',
-    date: postsService.normalizeDate(data?.date || now),
+    date: data?.date ? new Date(data.date) : now,
     createdAt: data.createdAt instanceof Timestamp ?
-      data.createdAt.toMillis() :
+      new Date(data.createdAt.toMillis()) :
       typeof data.createdAt === 'number' ?
-        data.createdAt :
+        new Date(data.createdAt) :
         now,
     updatedAt: data.updatedAt instanceof Timestamp ?
-      data.updatedAt.toMillis() :
+      new Date(data.updatedAt.toMillis()) :
       typeof data.updatedAt === 'number' ?
-        data.updatedAt :
+        new Date(data.updatedAt) :
         now,
     coverImage: data?.coverImage ?? '',
     images: Array.isArray(data?.images) ? data.images : [],

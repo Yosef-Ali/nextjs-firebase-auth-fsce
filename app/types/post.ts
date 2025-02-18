@@ -22,15 +22,15 @@ export interface Post {
   authorName?: string;
   sticky: boolean;
   section?: string;
-  createdAt: number;
-  updatedAt: number;
+  createdAt: Date;
+  updatedAt: Date;
   coverImage?: string;
   images?: string[];
   tags?: string[];
   time?: string;
   location?: string;
   status?: PostStatus;
-  date?: number;
+  date?: Date;
   author?: Author;
   featured?: boolean;
 }
