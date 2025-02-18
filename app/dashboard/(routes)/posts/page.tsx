@@ -21,7 +21,14 @@ export default function PostsPage() {
       
       try {
         const allPosts = await postsService.getUserPosts(user.uid);
-        setPosts(allPosts);
+        // Convert timestamp numbers to Date objects
+        const postsWithDates = allPosts.map(post => ({
+          ...post,
+          createdAt: new Date(post.createdAt),
+          updatedAt: new Date(post.updatedAt),
+          date: post.date ? new Date(post.date) : undefined
+        }));
+        setPosts(postsWithDates);
       } catch (error) {
         console.error('Error loading posts:', error);
       } finally {

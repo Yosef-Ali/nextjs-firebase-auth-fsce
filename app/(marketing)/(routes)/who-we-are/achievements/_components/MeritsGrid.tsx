@@ -5,6 +5,9 @@ import Image from "next/image";
 import { postsService } from "@/app/services/posts";
 import { Post } from "@/app/types/post";
 import { Merit } from './Merit';
+import { parse } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { formatDate } from '@/app/utils/date';
 
 interface Award {
   title: string;
@@ -114,6 +117,58 @@ const AchievementsGrid: React.FC<AchievementsGridProps> = ({ merits, awards: ini
         </div>
       </div>
     </section>
+  );
+};
+
+interface MeritsGridProps {
+  posts: Post[];
+  className?: string;
+}
+
+const MeritsGrid: React.FC<MeritsGridProps> = ({ posts, className }) => {
+  // Group posts by year
+  const postsByYear = posts.reduce((acc: Record<string, Post[]>, post) => {
+    const year = post.time || new Date(post.createdAt).getFullYear().toString();
+    if (!acc[year]) {
+      acc[year] = [];
+    }
+    acc[year].push(post);
+    return acc;
+  }, {});
+
+  // Sort years in descending order
+  const sortedYears = Object.keys(postsByYear).sort((a, b) => Number(b) - Number(a));
+
+  return (
+    <div className={cn("space-y-12", className)}>
+      {sortedYears.map((year) => (
+        <div key={year} className="space-y-4">
+          <h3 className="text-2xl font-bold">{year}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {postsByYear[year].map((post) => (
+              <div key={post.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                {post.coverImage && (
+                  <img
+                    src={post.coverImage}
+                    alt={post.title}
+                    className="w-full h-48 object-cover"
+                  />
+                )}
+                <div className="p-4">
+                  <h4 className="text-lg font-semibold mb-2">{post.title}</h4>
+                  <p className="text-gray-600 text-sm mb-4">{post.excerpt}</p>
+                  {post.date && (
+                    <p className="text-sm text-gray-500">
+                      {formatDate(post.date)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 };
 

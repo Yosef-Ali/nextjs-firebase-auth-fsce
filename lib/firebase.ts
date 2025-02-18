@@ -1,8 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getFirestore, Firestore, enableIndexedDbPersistence, initializeFirestore, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
-import { getStorage, connectStorageEmulator } from "firebase/storage";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getStorage, connectStorageEmulator, FirebaseStorage } from "firebase/storage";
+import { getAuth, connectAuthEmulator, Auth } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -11,12 +11,15 @@ const firebaseConfig = {
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase
 let app: FirebaseApp;
-let db: any;
+let auth: Auth;
+let db: Firestore;
+let storage: FirebaseStorage;
 
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
@@ -35,13 +38,14 @@ if (!getApps().length) {
       }
     });
   }
+  auth = getAuth(app);
+  storage = getStorage(app);
 } else {
   app = getApps()[0];
   db = getFirestore(app);
+  auth = getAuth(app);
+  storage = getStorage(app);
 }
-
-const auth = getAuth(app);
-const storage = getStorage(app);
 
 // Enable emulators for local development
 if (process.env.NODE_ENV === 'development') {

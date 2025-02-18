@@ -2,6 +2,7 @@ import { adminAuth, adminDb } from "../lib/firebase-admin"
 import { type User, UserRole, UserStatus, UserMetadata } from "../types/user"
 import { emailService } from "./email"
 import { User as FirebaseUser } from "firebase/auth";
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 
 // Helper function to create a user with required fields
 function createUserWithDefaults(data: Partial<User>): User {
@@ -131,7 +132,7 @@ export class UsersService {
     try {
       await this.usersCollection.doc(uid).update({
         role,
-        updatedAt: new Date().toISOString(),
+        updatedAt: Timestamp.fromMillis(Date.now()),
       })
       await adminAuth.setCustomUserClaims(uid, { role })
     } catch (error) {

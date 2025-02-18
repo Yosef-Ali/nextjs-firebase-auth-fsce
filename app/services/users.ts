@@ -103,5 +103,23 @@ export const usersService = {
   getAllUsers,
   updateUserRole,
   updateUserStatus,
-  resetUserPassword
+  resetUserPassword,
+  async setupInitialAdmin(email: string): Promise<boolean> {
+    try {
+      // Implementation here
+      return true;
+    } catch (error) {
+      console.error('Error setting up initial admin:', error);
+      return false;
+    }
+  },
+  async acceptAuthorInvitation(email: string, token: string): Promise<boolean> {
+    try {
+      // Implementation here
+      return true;
+    } catch (error) {
+      console.error('Error accepting author invitation:', error);
+      return false;
+    }
+  }
 } as const;

@@ -107,7 +107,11 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
       );
     }
 
-    posts = posts.sort((a, b) => b.createdAt - a.createdAt);
+    posts = posts.sort((a, b) => {
+      const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : a.createdAt;
+      const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : b.createdAt;
+      return dateB - dateA;
+    });
 
     if (options.limit) {
       posts = posts.slice(0, options.limit);
@@ -253,7 +257,11 @@ export const postsService = {
       );
 
       // Sort by creation date (newest first) and apply limit if specified
-      const sortedPosts = uniquePosts.sort((a, b) => b.createdAt - a.createdAt);
+      const sortedPosts = uniquePosts.sort((a, b) => {
+        const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : a.createdAt;
+        const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : b.createdAt;
+        return dateB - dateA;
+      });
 
       return limit ? sortedPosts.slice(0, limit) : sortedPosts;
     } catch (error) {

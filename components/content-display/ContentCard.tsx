@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, CalendarDays } from "lucide-react";
 import { motion, Variants } from "framer-motion";
-import { formatDate } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { formatDate } from "@/app/utils/date";
+import { Timestamp } from "@/types";
 
 export interface ContentCardProps {
     title: string;
@@ -13,7 +13,7 @@ export interface ContentCardProps {
     image?: string;
     slug: string;
     category: string;
-    createdAt?: number;
+    createdAt?: Timestamp;
     index?: number;
     isFeatured?: boolean;
     showDate?: boolean;
@@ -73,25 +73,29 @@ export function ContentCard({
                             alt={title}
                             fill
                             className="object-cover transition-transform duration-500 group-hover:scale-105"
-                            onError={(e) => {
+                            onError={(e: { target: HTMLImageElement }) => {
                                 const target = e.target as HTMLImageElement;
                                 target.src = "/images/placeholder.svg";
                             }}
                         />
                         {isFeatured && (
                             <div className="absolute top-4 right-4">
-                                <Badge variant="secondary" className="bg-primary text-primary-foreground">
-                                    Featured
-                                </Badge>
+                                <div className="inline-flex">
+                                    <Badge variant="secondary">
+                                        <span>Featured</span>
+                                    </Badge>
+                                </div>
                             </div>
                         )}
                     </div>
                     <div className={`flex flex-col ${layout === 'horizontal' ? 'md:col-span-2 p-6' : ''}`}>
                         <CardHeader className={layout === 'horizontal' ? 'pb-2' : ''}>
                             <div className="flex items-center gap-2 mb-3">
-                                <Badge variant="secondary">
-                                    {category}
-                                </Badge>
+                                <div className="inline-flex">
+                                    <Badge variant="secondary">
+                                        <span>{category}</span>
+                                    </Badge>
+                                </div>
                             </div>
                             <CardTitle className="group-hover:text-primary transition-colors line-clamp-2">
                                 {title}
@@ -99,7 +103,9 @@ export function ContentCard({
                             {(showDate && createdAt) && (
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
                                     <CalendarDays className="h-4 w-4" />
-                                    <time>{formatDate(createdAt)}</time>
+                                    <time dateTime={new Date(createdAt).toISOString()} className="text-sm text-muted-foreground">
+                                        {formatDate(createdAt)}
+                                    </time>
                                 </div>
                             )}
                         </CardHeader>

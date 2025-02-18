@@ -12,6 +12,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { formatPublishDate } from '@/app/utils/date';
 
 // Helper function to format dates
 const formatDate = (date: number | string | Date) => {
@@ -84,6 +85,10 @@ export default function DetailPage() {
       </div>
     );
   }
+
+  const formattedDate = (timestamp: number) => {
+    return formatPublishDate(timestamp);
+  };
 
   return (
     <div className="min-h-screen bg-background">

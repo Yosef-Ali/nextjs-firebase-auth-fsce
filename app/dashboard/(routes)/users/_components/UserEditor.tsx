@@ -27,13 +27,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { User, UserRole } from '@/app/types/user';
+import { User, UserRole, UserStatus } from '@/app/types/user';
 import { useToast } from '@/hooks/use-toast';
 import { editUser } from '@/app/actions/edit-user';
 
 const formSchema = z.object({
   displayName: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   role: z.nativeEnum(UserRole),
+  status: z.nativeEnum(UserStatus),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -53,6 +54,7 @@ export function UserEditor({ user, isOpen, onClose }: UserEditorProps) {
     defaultValues: {
       displayName: user.displayName || '',
       role: user.role,
+      status: user.status,
     },
   });
 
@@ -127,6 +129,34 @@ export function UserEditor({ user, isOpen, onClose }: UserEditorProps) {
                             {role}
                           </SelectItem>
                         ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select
+                    disabled={isLoading}
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.values(UserStatus).map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {status}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />

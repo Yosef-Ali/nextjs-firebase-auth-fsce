@@ -1,15 +1,15 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Post } from '@/app/types/post';
-import { getPostsByCategory, getPosts } from '@/app/actions/posts';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink } from '@/components/ui/pagination';
+import { Post } from '@/types';
+import { getPostsByCategory } from '@/app/actions/posts';
 import { ProgramSearch } from '@/components/program-search';
 import { ContentCard } from '@/components/content-display/ContentCard';
 import { StickyPostsSection } from '@/components/content-display/StickyPostsSection';
-import CarouselSection from '@/components/carousel';
 import FSCESkeleton from '@/components/FSCESkeleton';
 import { motion } from 'framer-motion';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink } from '@/components/ui/pagination';
+import { ensureCategory } from '@/app/utils/category';
 
 export default function NewsPage() {
   const searchResultsRef = useRef<HTMLDivElement>(null);
@@ -18,18 +18,22 @@ export default function NewsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
-  const postsPerPage = 9; // Changed to 9 for better grid layout
+  const postsPerPage = 9;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         const newsData = await getPostsByCategory('news');
+        // Ensure proper category typing
+        const processedData = newsData.map(post => ({
+          ...post,
+          category: typeof post.category === 'string' ? ensureCategory(post.category) : post.category
+        }));
 
-        // Split news into sticky and regular, prioritizing sticky posts
-        const sticky = newsData.filter((post: Post) => post.sticky)
+        const sticky = processedData.filter(post => post.sticky)
           .sort((a, b) => b.createdAt - a.createdAt);
-        const regular = newsData.filter((post: Post) => !post.sticky)
+        const regular = processedData.filter(post => !post.sticky)
           .sort((a, b) => b.createdAt - a.createdAt);
 
         setStickyNews(sticky);
@@ -42,7 +46,6 @@ export default function NewsPage() {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
@@ -55,10 +58,10 @@ export default function NewsPage() {
   };
 
   // Filter news for search
-  const filteredNews = [...stickyNews, ...news].filter((newsItem: Post) =>
+  const filteredNews = [...stickyNews, ...news].filter((item: Post) =>
     searchQuery === '' ||
-    newsItem.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    newsItem.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
+    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredNews.length / postsPerPage);
@@ -73,25 +76,6 @@ export default function NewsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <CarouselSection />
-
-      <section className="py-16 bg-primary/5">
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-6">
-            Latest News & Updates
-          </h2>
-          <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
-            Stay informed about our latest initiatives, success stories, and community impact.
-          </p>
-
-          <ProgramSearch
-            onSearch={handleSearch}
-            placeholder="Search news..."
-            className="max-w-2xl mx-auto mb-12"
-          />
-        </div>
-      </section>
-
       <section ref={searchResultsRef} className="py-16 bg-white scroll-mt-16">
         <div className="container mx-auto px-4 max-w-7xl">
           {searchQuery && (
@@ -105,18 +89,16 @@ export default function NewsPage() {
             </div>
           )}
 
-          {/* Sticky News Section with increased spacing */}
           {!searchQuery && stickyNews.length > 0 && (
             <div className="mb-20">
               <StickyPostsSection
-                posts={stickyNews.slice(0, 2)} // Limit to 2 posts
+                posts={stickyNews.slice(0, 2)}
                 title="Featured News"
                 basePath="/news"
               />
             </div>
           )}
 
-          {/* Regular News Grid */}
           {(searchQuery ? paginatedNews : news).length > 0 && (
             <>
               {!searchQuery && (
@@ -146,7 +128,6 @@ export default function NewsPage() {
             </>
           )}
 
-          {/* Pagination */}
           {totalPages > 1 && searchQuery && (
             <div className="mt-8 flex justify-center">
               <Pagination>

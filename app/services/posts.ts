@@ -17,6 +17,7 @@ import {
   orderBy,
   FieldValue
 } from 'firebase/firestore';
+import { fromFirebaseTimestamp, normalizeFirebaseTimestamps } from '../utils/date';
 
 // Helper function to create a complete Category object
 function createCategory(id: string, name: string, type: CategoryType = 'post'): Category {
@@ -31,7 +32,46 @@ function createCategory(id: string, name: string, type: CategoryType = 'post'): 
   };
 }
 
+// Helper function to convert Date or Timestamp to number
+const toTimestamp = (date: Date | number | any): number => {
+  if (typeof date === 'number') return date;
+  if (date instanceof Date) return date.getTime();
+  if (date?.toDate instanceof Function) return date.toDate().getTime();
+  return Date.now();
+};
+
 const COLLECTION_NAME = 'posts';
+
+function sortByDate(posts: Post[]): Post[] {
+  return [...posts].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+}
+
+function normalizePost(id: string, data: any, category: Category): Post {
+  const now = Date.now();
+  return {
+    id,
+    title: data?.title ?? '',
+    content: data?.content ?? '',
+    excerpt: data?.excerpt ?? '',
+    slug: data?.slug ?? id,
+    category,
+    published: Boolean(data?.published),
+    sticky: Boolean(data?.sticky),
+    authorId: data?.authorId ?? '',
+    authorEmail: data?.authorEmail ?? '',
+    date: toTimestamp(data?.date ?? now),
+    createdAt: toTimestamp(data?.createdAt ?? now),
+    updatedAt: toTimestamp(data?.updatedAt ?? now),
+    coverImage: data?.coverImage ?? '',
+    images: Array.isArray(data?.images) ? data.images : [],
+    featured: Boolean(data?.featured),
+    section: data?.section ?? '',
+    tags: Array.isArray(data?.tags) ? data.tags : [],
+    time: data?.time ?? '',
+    location: data?.location ?? '',
+    status: data?.status
+  };
+}
 
 export const postsService = {
   async getUserPosts(userId: string): Promise<Post[]> {
@@ -45,14 +85,10 @@ export const postsService = {
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => {
         const data = doc.data();
-        return normalizePost(doc.id, data, {
-          id: typeof data.category === 'string' ? data.category : data.category?.id,
-          name: typeof data.category === 'string' ? data.category.charAt(0).toUpperCase() + data.category.slice(1) : data.category?.name,
-          type: data.category?.type || 'post',
-          featured: !!data.category?.featured,
-          createdAt: data.category?.createdAt ? new Date(data.category.createdAt) : new Date(),
-          updatedAt: data.category?.updatedAt ? new Date(data.category.updatedAt) : new Date()
-        });
+        return normalizeFirebaseTimestamps({
+          id: doc.id,
+          ...data
+        }) as Post;
       });
     } catch (error) {
       console.error('Error getting user posts:', error);
@@ -103,7 +139,7 @@ export const postsService = {
 
   async createPost(data: Omit<Post, 'id' | 'createdAt' | 'updatedAt'>): Promise<Post> {
     try {
-      const now = new Date();
+      const now = Date.now();
       const postData = {
         ...data,
         createdAt: now,
@@ -111,8 +147,12 @@ export const postsService = {
         slug: data.slug || this.createSlug(data.title),
       };
 
-      const docRef = await addDoc(collection(db, 'posts'), postData);
-      
+      const docRef = await addDoc(collection(db, 'posts'), {
+        ...postData,
+        createdAt: Timestamp.fromMillis(now),
+        updatedAt: Timestamp.fromMillis(now)
+      });
+
       return {
         id: docRef.id,
         ...postData,
@@ -126,7 +166,7 @@ export const postsService = {
   async updatePost(id: string, post: Partial<Omit<Post, 'category'>> & { category?: string | Category }, userId: string): Promise<boolean> {
     try {
       const postRef = doc(db, COLLECTION_NAME, id);
-      const now = new Date();
+      const now = Date.now();
 
       // Create initial update data without category
       const { category, ...restData } = post;
@@ -142,10 +182,14 @@ export const postsService = {
         const normalizedCategory = await this.getNormalizedCategory(category);
         await updateDoc(postRef, {
           ...baseUpdateData,
-          category: normalizedCategory
+          category: normalizedCategory,
+          updatedAt: Timestamp.fromMillis(now)
         });
       } else {
-        await updateDoc(postRef, baseUpdateData);
+        await updateDoc(postRef, {
+          ...baseUpdateData,
+          updatedAt: Timestamp.fromMillis(now)
+        });
       }
 
       return true;
@@ -307,14 +351,10 @@ export const postsService = {
 
       const doc = querySnapshot.docs[0];
       const data = doc.data();
-      return normalizePost(doc.id, data, {
-        id: typeof data.category === 'string' ? data.category : data.category?.id,
-        name: typeof data.category === 'string' ? data.category.charAt(0).toUpperCase() + data.category.slice(1) : data.category?.name,
-        slug: data.category?.slug,
-        type: data.category?.type || 'post',
-        createdAt: data.category?.createdAt ? new Date(data.category.createdAt) : new Date(),
-        updatedAt: data.category?.updatedAt ? new Date(data.category.updatedAt) : new Date()
-      });
+      return normalizeFirebaseTimestamps({
+        id: doc.id,
+        ...data
+      }) as Post;
     } catch (error) {
       console.error('Error getting post by slug:', error);
       return null;
@@ -502,58 +542,26 @@ export const postsService = {
     }
   },
 
+  async getAllPosts(): Promise<Post[]> {
+    const snapshot = await getDocs(
+      query(
+        collection(db, 'posts'),
+        orderBy('createdAt', 'desc')
+      )
+    );
+
+    const posts = snapshot.docs.map(doc => normalizeFirebaseTimestamps({
+      id: doc.id,
+      ...doc.data()
+    }) as Post);
+
+    return sortByDate(posts);
+  },
+
   // Helper function to normalize post date
-  normalizeDate(date: any): Date {
-    if (date instanceof Date) {
-      return date;
-    }
-    if (date instanceof Timestamp) {
-      return new Date(date.toMillis());
-    }
-    if (typeof date === 'number') {
-      return new Date(date);
-    }
-    if (typeof date === 'string') {
-      const parsed = new Date(date);
-      return isNaN(parsed.getTime()) ? new Date() : parsed;
-    }
-    return new Date();
+  normalizeDate(date: any): number {
+    return toTimestamp(date);
   },
 
   // Remove getUpcomingEvents and getAllNews methods as they're no longer needed
 };
-
-function normalizePost(id: string, data: any, category: Category): Post {
-  const now = new Date();
-  return {
-    id,
-    title: data?.title ?? '',
-    content: data?.content ?? '',
-    excerpt: data?.excerpt ?? '',
-    slug: data?.slug ?? id,
-    category,
-    published: Boolean(data?.published),
-    sticky: Boolean(data?.sticky),
-    authorId: data?.authorId ?? '',
-    authorEmail: data?.authorEmail ?? '',
-    date: data?.date ? new Date(data.date) : now,
-    createdAt: data.createdAt instanceof Timestamp ?
-      new Date(data.createdAt.toMillis()) :
-      typeof data.createdAt === 'number' ?
-        new Date(data.createdAt) :
-        now,
-    updatedAt: data.updatedAt instanceof Timestamp ?
-      new Date(data.updatedAt.toMillis()) :
-      typeof data.updatedAt === 'number' ?
-        new Date(data.updatedAt) :
-        now,
-    coverImage: data?.coverImage ?? '',
-    images: Array.isArray(data?.images) ? data.images : [],
-    featured: Boolean(data?.featured),
-    section: data?.section ?? '',
-    tags: Array.isArray(data?.tags) ? data.tags : [],
-    time: data?.time ?? '',
-    location: data?.location ?? '',
-    status: data?.status
-  } as Post;
-}

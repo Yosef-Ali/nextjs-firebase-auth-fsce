@@ -65,6 +65,11 @@ export function ResourceEditor({ resource, mode = 'create', onSuccess }: Resourc
     },
   });
 
+  const onCancel = () => {
+    form.reset();
+    onSuccess?.();
+  };
+
   const onSubmit = async (data: ResourceFormData) => {
     if (!user) {
       toast.error('You must be logged in to save resources');
@@ -218,7 +223,7 @@ export function ResourceEditor({ resource, mode = 'create', onSuccess }: Resourc
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push('/dashboard/resources')}
+            onClick={onCancel}
           >
             Cancel
           </Button>

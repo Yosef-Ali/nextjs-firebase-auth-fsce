@@ -302,7 +302,7 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
         authorId: currentUser.uid,
         authorEmail: currentUser.email || '',
         slug: data.slug,
-        date: Date.now(),
+        date: new Date(), // Changed from Date.now() to new Date()
         tags: [],
         featured: false,
       } satisfies Omit<Post, 'id' | 'createdAt' | 'updatedAt'>;

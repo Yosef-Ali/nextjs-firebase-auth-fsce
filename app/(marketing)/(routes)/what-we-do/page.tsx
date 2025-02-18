@@ -77,7 +77,7 @@ export default function WhatWeDoPage() {
       setLoading(true);
       const allPosts = await postsService.getPostsByCategory('what-we-do');
       setPosts(allPosts);
-      
+
       // Update category counts
       const updatedCategories = categories.map(category => ({
         ...category,
@@ -126,9 +126,9 @@ export default function WhatWeDoPage() {
         <p className="text-lg text-muted-foreground max-w-3xl">
           Discover our comprehensive programs and initiatives designed to create lasting positive impact in communities.
         </p>
-        
-        <ProgramSearch 
-          onSearch={handleSearch} 
+
+        <ProgramSearch
+          onSearch={handleSearch}
           placeholder="Search programs and initiatives..."
           className="mt-6"
         />
@@ -166,7 +166,7 @@ export default function WhatWeDoPage() {
 
       {/* Featured/Sticky Posts Section */}
       {posts.some(post => post.sticky) && (
-        <StickyPostsSection 
+        <StickyPostsSection
           posts={posts.filter(post => post.sticky)}
           title="Featured Programs"
           basePath="/what-we-do"

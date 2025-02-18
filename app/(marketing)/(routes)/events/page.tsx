@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Post } from '@/app/types/post';
+import { Post } from '@/types';
 import { getPostsByCategory } from '@/app/actions/posts';
 import { ProgramSearch } from '@/components/program-search';
 import { ContentCard } from '@/components/content-display/ContentCard';
@@ -9,6 +9,7 @@ import { StickyPostsSection } from '@/components/content-display/StickyPostsSect
 import FSCESkeleton from '@/components/FSCESkeleton';
 import { motion } from 'framer-motion';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink } from '@/components/ui/pagination';
+import { ensureCategory } from '@/app/utils/category';
 
 export default function EventsPage() {
   const searchResultsRef = useRef<HTMLDivElement>(null);
@@ -24,11 +25,15 @@ export default function EventsPage() {
       try {
         setLoading(true);
         const eventsData = await getPostsByCategory('events');
+        // Ensure proper category typing
+        const processedData = eventsData.map(post => ({
+          ...post,
+          category: typeof post.category === 'string' ? ensureCategory(post.category) : post.category
+        }));
 
-        // Split events into sticky and regular, prioritizing sticky posts
-        const sticky = eventsData.filter((post: Post) => post.sticky)
+        const sticky = processedData.filter(post => post.sticky)
           .sort((a, b) => b.createdAt - a.createdAt);
-        const regular = eventsData.filter((post: Post) => !post.sticky)
+        const regular = processedData.filter(post => !post.sticky)
           .sort((a, b) => b.createdAt - a.createdAt);
 
         setStickyEvents(sticky);
@@ -41,7 +46,6 @@ export default function EventsPage() {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
@@ -102,7 +106,6 @@ export default function EventsPage() {
             </div>
           )}
 
-          {/* Sticky Events Section */}
           {!searchQuery && stickyEvents.length > 0 && (
             <div className="mb-20">
               <StickyPostsSection
@@ -113,7 +116,6 @@ export default function EventsPage() {
             </div>
           )}
 
-          {/* Regular Events Grid */}
           {(searchQuery ? paginatedEvents : events).length > 0 && (
             <>
               {!searchQuery && (
@@ -144,7 +146,6 @@ export default function EventsPage() {
             </>
           )}
 
-          {/* Pagination */}
           {totalPages > 1 && searchQuery && (
             <div className="mt-8 flex justify-center">
               <Pagination>

@@ -2,6 +2,7 @@ import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, query, where, orderBy, Timestamp, addDoc, updateDoc, deleteDoc, limit, setDoc } from 'firebase/firestore';
 import { Post } from '@/app/types/post';
 import { Category } from '@/app/types/category';
+import { normalizeFirebaseTimestamps } from '../utils/date';
 
 // Helper function to generate slug from title
 const generateSlug = (title: string): string => {
@@ -260,4 +261,83 @@ class WhatWeDoService {
   }
 }
 
-export const whatWeDoService = new WhatWeDoService();
+function sortByDate(posts: Post[]): Post[] {
+  return [...posts].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+}
+
+export const whatWeDoService = {
+  getPostsByCategory: async (categoryId: string): Promise<Post[]> => {
+    const snapshot = await getDocs(
+      query(
+        collection(db, 'posts'),
+        where('category.id', '==', categoryId),
+        where('published', '==', true),
+        orderBy('createdAt', 'desc')
+      )
+    );
+
+    const posts = snapshot.docs.map(doc => normalizeFirebaseTimestamps({
+      id: doc.id,
+      ...doc.data()
+    }) as Post);
+
+    return sortByDate(posts);
+  },
+
+  getProgramBySlug: async (slug: string): Promise<Post | null> => {
+    const snapshot = await getDocs(
+      query(
+        collection(db, 'posts'),
+        where('slug', '==', slug),
+        where('published', '==', true),
+        limit(1)
+      )
+    );
+
+    if (snapshot.empty) return null;
+
+    return normalizeFirebaseTimestamps({
+      id: snapshot.docs[0].id,
+      ...snapshot.docs[0].data()
+    }) as Post;
+  },
+
+  getRelatedPrograms: async (categoryId: string, currentProgramId: string): Promise<Post[]> => {
+    const snapshot = await getDocs(
+      query(
+        collection(db, 'posts'),
+        where('category.id', '==', categoryId),
+        where('published', '==', true),
+        orderBy('createdAt', 'desc'),
+        limit(3)
+      )
+    );
+
+    const posts = snapshot.docs
+      .filter(doc => doc.id !== currentProgramId)
+      .map(doc => normalizeFirebaseTimestamps({
+        id: doc.id,
+        ...doc.data()
+      }) as Post);
+
+    return sortByDate(posts);
+  },
+
+  getFeaturedPosts: async (): Promise<Post[]> => {
+    const snapshot = await getDocs(
+      query(
+        collection(db, 'posts'),
+        where('featured', '==', true),
+        where('published', '==', true),
+        orderBy('createdAt', 'desc')
+      )
+    );
+
+    const posts = snapshot.docs.map(doc => normalizeFirebaseTimestamps({
+      id: doc.id,
+      ...doc.data()
+    }) as Post);
+
+    return sortByDate(posts);
+  }
+};

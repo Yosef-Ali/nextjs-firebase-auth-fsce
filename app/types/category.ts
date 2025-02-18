@@ -1,3 +1,5 @@
+import { Timestamp } from '@/types';
+
 export type CategoryType = 'post' | 'resource' | 'award' | 'recognition';
 
 export interface Category {
@@ -5,10 +7,10 @@ export interface Category {
   name: string;
   type: CategoryType;
   featured: boolean;
-  slug?: string;
+  slug: string;  // Make slug required
   description?: string;
   icon?: string;
   itemCount?: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }

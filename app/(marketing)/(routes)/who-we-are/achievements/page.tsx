@@ -1,15 +1,15 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Post } from '@/app/types/post';
+import { Post } from '@/types';
 import { getPostsByCategory } from '@/app/actions/posts';
 import { ProgramSearch } from '@/components/program-search';
 import { ContentCard } from '@/components/content-display/ContentCard';
 import { StickyPostsSection } from '@/components/content-display/StickyPostsSection';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink } from '@/components/ui/pagination';
 import FSCESkeleton from '@/components/FSCESkeleton';
 import { motion } from 'framer-motion';
-import Partners from '@/components/partners';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink } from '@/components/ui/pagination';
+import { ensureCategory } from '@/app/utils/category';
 
 export default function AchievementsPage() {
   const searchResultsRef = useRef<HTMLDivElement>(null);
@@ -25,11 +25,15 @@ export default function AchievementsPage() {
       try {
         setLoading(true);
         const achievementsData = await getPostsByCategory('achievements');
+        // Ensure proper category typing and handle timestamps
+        const processedData = achievementsData.map(post => ({
+          ...post,
+          category: typeof post.category === 'string' ? ensureCategory(post.category) : post.category
+        }));
 
-        // Split achievements into sticky and regular
-        const sticky = achievementsData.filter((post: Post) => post.sticky)
+        const sticky = processedData.filter(post => post.sticky)
           .sort((a, b) => b.createdAt - a.createdAt);
-        const regular = achievementsData.filter((post: Post) => !post.sticky)
+        const regular = processedData.filter(post => !post.sticky)
           .sort((a, b) => b.createdAt - a.createdAt);
 
         setStickyAchievements(sticky);
@@ -42,7 +46,6 @@ export default function AchievementsPage() {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
@@ -54,7 +57,8 @@ export default function AchievementsPage() {
     }, 100);
   };
 
-  const filteredAchievements = [...stickyAchievements, ...achievements].filter((achievement: Post) =>
+  // Filter achievements for search
+  const filteredAchievements = [...stickyAchievements, ...achievements].filter(achievement =>
     searchQuery === '' ||
     achievement.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     achievement.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -102,18 +106,16 @@ export default function AchievementsPage() {
             </div>
           )}
 
-          {/* Sticky Achievements Section */}
           {!searchQuery && stickyAchievements.length > 0 && (
             <div className="mb-20">
               <StickyPostsSection
                 posts={stickyAchievements.slice(0, 2)}
-                title="Major Achievements"
+                title="Featured Achievements"
                 basePath="/who-we-are/achievements"
               />
             </div>
           )}
 
-          {/* Regular Achievements Grid */}
           {(searchQuery ? paginatedAchievements : achievements).length > 0 && (
             <>
               {!searchQuery && (
@@ -127,7 +129,7 @@ export default function AchievementsPage() {
                 transition={{ duration: 0.5 }}
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
               >
-                {(searchQuery ? paginatedAchievements : achievements).map((achievement: Post) => (
+                {(searchQuery ? paginatedAchievements : achievements).map((achievement) => (
                   <ContentCard
                     key={achievement.id}
                     title={achievement.title}
@@ -137,14 +139,12 @@ export default function AchievementsPage() {
                     category="Achievement"
                     createdAt={achievement.createdAt}
                     href={`/who-we-are/achievements/${achievement.slug}`}
-                    showDate={true}
                   />
                 ))}
               </motion.div>
             </>
           )}
 
-          {/* Pagination */}
           {totalPages > 1 && searchQuery && (
             <div className="mt-8 flex justify-center">
               <Pagination>
@@ -165,8 +165,6 @@ export default function AchievementsPage() {
           )}
         </div>
       </section>
-
-      <Partners />
     </div>
   );
 }

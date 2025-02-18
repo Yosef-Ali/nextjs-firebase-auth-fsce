@@ -139,7 +139,15 @@ export default function ResourcesPage() {
           />
         </Card>
 
-        <Dialog open={isEditorOpen} onOpenChange={setIsEditorOpen}>
+        <Dialog 
+          open={isEditorOpen} 
+          onOpenChange={(open) => {
+            if (!open) {
+              handleEditorClose();
+            }
+            setIsEditorOpen(open);
+          }}
+        >
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>

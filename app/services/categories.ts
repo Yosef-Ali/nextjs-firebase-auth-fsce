@@ -12,6 +12,7 @@ import {
   getDoc,
   setDoc
 } from 'firebase/firestore';
+import { normalizeFirebaseTimestamps } from '../utils/date';
 
 const COLLECTION_NAME = 'categories';
 
@@ -27,7 +28,7 @@ class CategoriesService {
   }
 
   async createCategory(data: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>): Promise<Category> {
-    const now = Date.now();
+    const now = new Date();
     const docRef = doc(this.categoriesCollection);
 
     const category: Category = {
@@ -42,21 +43,19 @@ class CategoriesService {
   }
 
   async updateCategory(id: string, data: Partial<Omit<Category, 'id' | 'createdAt'>>): Promise<Category> {
-    const now = Date.now();
+    const now = new Date();
     const updates = {
       ...data,
       updatedAt: now,
     };
 
     const docRef = doc(this.categoriesCollection, id);
-    await updateDoc(docRef, updates);
+    await setDoc(docRef, updates, { merge: true });
 
-    const categoryDoc = await getDoc(docRef);
-    if (!categoryDoc.exists()) {
-      throw new Error('Category not found');
-    }
-
-    return this.mapCategory(categoryDoc);
+    return {
+      id,
+      ...updates
+    } as Category;
   }
 
   async deleteCategory(id: string): Promise<void> {
@@ -133,7 +132,7 @@ class CategoriesService {
 
   private mapCategory(doc: any): Category {
     const data = doc.data();
-    return {
+    return normalizeFirebaseTimestamps({
       id: doc.id,
       name: data.name,
       description: data.description,
@@ -146,7 +145,7 @@ class CategoriesService {
       icon: data.icon || null,
       menuPath: data.menuPath || null,
       parentId: data.parentId || null
-    };
+    });
   }
 }
 

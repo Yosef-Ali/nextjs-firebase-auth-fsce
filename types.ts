@@ -1,5 +1,14 @@
-export interface Partner {
+// Common timestamp type to ensure consistency
+export type Timestamp = number;
+
+// Base interface for common fields
+interface BaseModel {
   id: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface Partner extends BaseModel {
   name: string;
   email: string;
   phone: string;
@@ -9,8 +18,6 @@ export interface Partner {
   position: string;
   partnerType: 'partner' | 'membership';
   order: number;
-  createdAt: Date | number;
-  updatedAt: Date | number;
 }
 
 export enum UserRole {
@@ -30,8 +37,8 @@ export enum UserStatus {
 }
 
 export interface UserMetadata {
-  lastLogin: number;
-  createdAt: number;
+  lastLogin: Timestamp;
+  createdAt: Timestamp;
   role: UserRole;
   status: UserStatus;
   displayName: string;
@@ -45,7 +52,7 @@ export interface UserMetadata {
   tenantId: string | null;
 }
 
-export interface User {
+export interface User extends BaseModel {
   uid: string;
   email: string;
   displayName: string;
@@ -54,9 +61,6 @@ export interface User {
   role: UserRole;
   status: UserStatus;
   isAnonymous: boolean;
-  id: string;
-  createdAt: number;
-  updatedAt: number;
   invitedBy: string | null;
   invitationToken: string | null;
   metadata: UserMetadata;
@@ -65,3 +69,41 @@ export interface User {
   phoneNumber: string | null;
   tenantId: string | null;
 }
+
+export interface Post extends BaseModel {
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  coverImage: string;
+  published: boolean;
+  sticky: boolean;
+  section?: string;
+  images: string[];
+  authorId: string;
+  authorEmail: string;
+  date: Timestamp;
+  category: Category;
+  featured: boolean;
+  status?: PostStatus;
+  author?: Author;
+  tags: string[];
+}
+
+export interface Category extends BaseModel {
+  name: string;
+  slug: string;
+  type: 'post' | 'resource' | 'award' | 'recognition';
+  featured: boolean;
+  description?: string;
+  icon?: string;
+}
+
+export interface Author {
+  id: string;
+  name: string;
+  email: string;
+  image?: string;
+}
+
+export type PostStatus = 'draft' | 'published' | 'archived';

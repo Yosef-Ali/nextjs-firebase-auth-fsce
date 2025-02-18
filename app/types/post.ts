@@ -1,4 +1,5 @@
 import { Category } from './category';
+import { Timestamp } from '@/types';
 
 export interface Author {
   id: string;
@@ -22,17 +23,17 @@ export interface Post {
   authorName?: string;
   sticky: boolean;
   section?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  coverImage?: string;
-  images?: string[];
-  tags?: string[];
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  coverImage: string;
+  images: string[];
+  tags: string[];
   time?: string;
   location?: string;
   status?: PostStatus;
-  date?: Date;
+  date: Timestamp;
   author?: Author;
-  featured?: boolean;
+  featured: boolean;
 }
 
 export type CreatePostInput = Omit<Post, 'id' | 'createdAt' | 'updatedAt'>;

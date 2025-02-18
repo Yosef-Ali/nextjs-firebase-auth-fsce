@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { format } from 'date-fns';
+import { formatDate } from '@/app/utils/date';
 import { Download, Calendar, ArrowRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,7 +51,7 @@ export function ResourceCard({ resource }: ResourceCardProps) {
             <div className="flex items-center text-sm text-muted-foreground space-x-2">
               <Calendar className="h-4 w-4 text-primary" />
               <span>
-                {resource.publishedDate ? format(new Date(resource.publishedDate), 'MMM d, yyyy') : 'No date'}
+                {resource.publishedDate ? formatDate(resource.publishedDate) : 'No date'}
               </span>
             </div>
             <h2 className="text-xl font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors duration-300 line-clamp-2">
