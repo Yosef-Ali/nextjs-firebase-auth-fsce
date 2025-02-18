@@ -3,11 +3,11 @@ import { Card } from "@/components/ui/card";
 import { Award, Shield, Target, Heart, Users, Lightbulb, Scale, Clock, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { postsService } from "@/app/services/posts";
-import { Post } from "@/app/types/post";
+import { Post, isEvent } from "@/app/types/post";
 import { Merit } from './Merit';
 import { parse } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { formatDate } from '@/app/utils/date';
+import { formatDate, compareTimestamps, toDate } from '@/app/utils/date';
 
 interface Award {
   title: string;
@@ -47,7 +47,7 @@ const AchievementsGrid: React.FC<AchievementsGridProps> = ({ merits, awards: ini
           organization: post.section || '',
           description: post.excerpt || '',
           imageUrl: post.coverImage || '',
-          year: post.time || new Date(post.createdAt).getFullYear().toString(),
+          year: isEvent(post) ? post.time : toDate(post.date).getFullYear().toString(),
         }));
         setAwards(transformedAwards);
       } catch (error) {
@@ -120,15 +120,17 @@ const AchievementsGrid: React.FC<AchievementsGridProps> = ({ merits, awards: ini
   );
 };
 
-interface MeritsGridProps {
+interface MeritPost {
+  year: string;
   posts: Post[];
-  className?: string;
 }
 
-const MeritsGrid: React.FC<MeritsGridProps> = ({ posts, className }) => {
-  // Group posts by year
-  const postsByYear = posts.reduce((acc: Record<string, Post[]>, post) => {
-    const year = post.time || new Date(post.createdAt).getFullYear().toString();
+export default function MeritsGrid({ posts }: { posts: Post[] }) {
+  // Group posts by year using numeric timestamps
+  const postsByYear = posts.reduce<Record<string, Post[]>>((acc, post) => {
+    const postYear = post.date instanceof Date ? post.date.getFullYear()
+      : post.date.toDate().getFullYear();
+    const year = isEvent(post) ? post.time : postYear.toString();
     if (!acc[year]) {
       acc[year] = [];
     }
@@ -139,13 +141,19 @@ const MeritsGrid: React.FC<MeritsGridProps> = ({ posts, className }) => {
   // Sort years in descending order
   const sortedYears = Object.keys(postsByYear).sort((a, b) => Number(b) - Number(a));
 
+  // Create final array of year-posts objects
+  const meritPosts: MeritPost[] = sortedYears.map(year => ({
+    year,
+    posts: postsByYear[year].sort((a, b) => compareTimestamps(a.date, b.date))
+  }));
+
   return (
-    <div className={cn("space-y-12", className)}>
-      {sortedYears.map((year) => (
+    <div className="space-y-12">
+      {meritPosts.map(({ year, posts }) => (
         <div key={year} className="space-y-4">
           <h3 className="text-2xl font-bold">{year}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {postsByYear[year].map((post) => (
+            {posts.map((post) => (
               <div key={post.id} className="bg-white rounded-lg shadow-md overflow-hidden">
                 {post.coverImage && (
                   <img
@@ -170,6 +178,4 @@ const MeritsGrid: React.FC<MeritsGridProps> = ({ posts, className }) => {
       ))}
     </div>
   );
-};
-
-export default AchievementsGrid;
+}

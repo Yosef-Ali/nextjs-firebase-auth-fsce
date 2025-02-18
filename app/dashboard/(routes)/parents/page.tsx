@@ -16,10 +16,10 @@ export default function ParentsPage() {
   const [parents, setParents] = useState<ParentClient[]>([]);
 
   useEffect(() => {
-    const fetchParents = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await parentsService.getAllParents();
+        const data = await parentsService.getParents();
         setParents(data);
       } catch (error) {
         console.error('Failed to fetch parents:', error);
@@ -28,7 +28,7 @@ export default function ParentsPage() {
       }
     };
 
-    fetchParents();
+    fetchData();
   }, []);
 
   return (

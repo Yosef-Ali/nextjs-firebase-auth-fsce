@@ -28,6 +28,7 @@ export const PartnersClient = () => {
             order: data.order || 1,
             partnerType: data.partnerType || "membership",
             description: data.description,
+            position: data.position || "",
             createdAt: data.createdAt?.toDate() || new Date(),
             updatedAt: data.updatedAt?.toDate() || new Date()
           } as Partner;

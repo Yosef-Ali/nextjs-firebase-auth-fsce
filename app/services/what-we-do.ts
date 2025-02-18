@@ -1,343 +1,47 @@
 import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, getDocs, query, where, orderBy, Timestamp, addDoc, updateDoc, deleteDoc, limit, setDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc, orderBy } from 'firebase/firestore';
 import { Post } from '@/app/types/post';
-import { Category } from '@/app/types/category';
-import { normalizeFirebaseTimestamps } from '../utils/date';
+import { normalizePost } from '../utils/post';
 
-// Helper function to generate slug from title
-const generateSlug = (title: string): string => {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-};
+const POSTS_COLLECTION = 'posts';
 
 class WhatWeDoService {
-  private collectionName = 'posts';
+    async getProgramBySlug(slug: string): Promise<Post | null> {
+        try {
+            const postsRef = collection(db, POSTS_COLLECTION);
+            const q = query(postsRef, where('slug', '==', slug));
+            const snapshot = await getDocs(q);
 
-  async getAllPrograms(includeUnpublished = false): Promise<Post[]> {
-    try {
-      // Simple query with just the collection
-      const q = query(
-        collection(db, this.collectionName),
-        where('tags', 'array-contains', 'programs')
-      );
+            if (snapshot.empty) return null;
 
-      const querySnapshot = await getDocs(q);
-      const posts = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt instanceof Timestamp
-            ? data.createdAt.toMillis()
-            : Date.now(),
-          updatedAt: data.updatedAt instanceof Timestamp
-            ? data.updatedAt.toMillis()
-            : Date.now(),
-        } as Post;
-      });
-
-      // Filter and sort in memory
-      return posts
-        .filter(post => includeUnpublished || post.published)
-        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    } catch (error) {
-      console.error('Error getting programs:', error);
-      throw error;
-    }
-  }
-
-  async getProgramsByCategory(category: string, includeUnpublished = false): Promise<Post[]> {
-    try {
-      // Simple query with just category filter
-      const q = query(
-        collection(db, this.collectionName),
-        where('category', '==', category)
-      );
-
-      const querySnapshot = await getDocs(q);
-      const posts = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt instanceof Timestamp
-            ? data.createdAt.toMillis()
-            : Date.now(),
-          updatedAt: data.updatedAt instanceof Timestamp
-            ? data.updatedAt.toMillis()
-            : Date.now(),
-        } as Post;
-      });
-
-      // Filter and sort in memory
-      return posts
-        .filter(post =>
-          (includeUnpublished || post.published) &&
-          post.tags?.includes('programs')
-        )
-        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    } catch (error) {
-      console.error('Error getting programs by category:', error);
-      throw error;
-    }
-  }
-
-  async getProgramBySlug(slug: string): Promise<Post | null> {
-    try {
-      const q = query(
-        collection(db, this.collectionName),
-        where('slug', '==', slug),
-        where('tags', 'array-contains', 'programs'),
-        limit(1)
-      );
-
-      const querySnapshot = await getDocs(q);
-
-      if (querySnapshot.empty) {
-        return null;
-      }
-
-      const doc = querySnapshot.docs[0];
-      return {
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt instanceof Timestamp
-          ? doc.data().createdAt.toMillis()
-          : Date.now(),
-        updatedAt: doc.data().updatedAt instanceof Timestamp
-          ? doc.data().updatedAt.toMillis()
-          : Date.now(),
-      } as Post;
-    } catch (error) {
-      console.error('Error getting program by slug:', error);
-      throw error;
-    }
-  }
-
-  // Helper function to generate a unique ID for a program
-  private async generateUniqueId(title: string, category: Category | string): Promise<string> {
-    let baseSlug = '';
-
-    // If category is an object, use its ID
-    if (typeof category !== 'string') {
-      baseSlug = `${category.id}-${title}`;
-    } else {
-      baseSlug = `${category}-${title}`;
-    }
-
-    const slug = baseSlug
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-
-    // Check if the slug exists
-    const q = query(
-      collection(db, this.collectionName),
-      where('slug', '==', slug)
-    );
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-      return slug;
-    }
-
-    // If slug exists, append a number
-    let counter = 1;
-    let newSlug = `${slug}-${counter}`;
-
-    while (true) {
-      const q = query(
-        collection(db, this.collectionName),
-        where('slug', '==', newSlug)
-      );
-      const querySnapshot = await getDocs(q);
-
-      if (querySnapshot.empty) {
-        return newSlug;
-      }
-
-      counter++;
-      newSlug = `${slug}-${counter}`;
-    }
-  }
-
-  async createProgram(data: Omit<Post, 'id'>): Promise<Post> {
-    try {
-      const uniqueId = await this.generateUniqueId(data.title, data.category);
-      const programData = {
-        ...data,
-        id: uniqueId,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        tags: ['programs', ...(data.tags || [])],
-      };
-
-      const docRef = doc(db, this.collectionName, uniqueId);
-      await setDoc(docRef, programData);
-
-      return programData as Post;
-    } catch (error) {
-      console.error('Error creating program:', error);
-      throw error;
-    }
-  }
-
-  async updateProgram(id: string, program: Partial<Post>): Promise<void> {
-    try {
-      const docRef = doc(db, this.collectionName, id);
-
-      // If title is being updated, update slug as well
-      if (program.title) {
-        program.slug = generateSlug(program.title);
-      }
-
-      await updateDoc(docRef, {
-        ...program,
-        updatedAt: Date.now(),
-      });
-    } catch (error) {
-      console.error('Error updating program:', error);
-      throw error;
-    }
-  }
-
-  async deleteProgram(id: string): Promise<void> {
-    try {
-      await deleteDoc(doc(db, this.collectionName, id));
-    } catch (error) {
-      console.error('Error deleting program:', error);
-      throw error;
-    }
-  }
-
-  async getRelatedPosts(currentPost: Post, maxPosts: number = 3): Promise<Post[]> {
-    try {
-      // First, get all posts in the same category
-      const postsRef = collection(db, this.collectionName);
-      const q = query(
-        postsRef,
-        where("category", "==", currentPost.category),
-        limit(maxPosts + 1) // Get one extra to account for the current post
-      );
-
-      const querySnapshot = await getDocs(q);
-      const posts: Post[] = [];
-
-      // Filter out the current post and limit to maxPosts
-      querySnapshot.forEach((doc) => {
-        const post = { id: doc.id, ...doc.data() } as Post;
-        if (post.slug !== currentPost.slug) {
-          posts.push(post);
+            const doc = snapshot.docs[0];
+            return normalizePost(doc.data(), doc.id);
+        } catch (error) {
+            console.error('Error fetching program by slug:', error);
+            return null;
         }
-      });
-
-      return posts.slice(0, maxPosts);
-    } catch (error) {
-      console.error("Error fetching related posts:", error);
-      return [];
     }
-  }
 
-  async getRelatedPrograms(postId: string, category: string): Promise<Post[]> {
-    const q = query(
-      collection(db, this.collectionName),
-      where('category', '==', category),
-      where('id', '!=', postId)
-    );
+    async getRelatedPrograms(currentId: string, category: string, limit = 3): Promise<Post[]> {
+        try {
+            const postsRef = collection(db, POSTS_COLLECTION);
+            const q = query(
+                postsRef,
+                where('category.id', '==', category),
+                where('published', '==', true),
+                orderBy('createdAt', 'desc')
+            );
+            const snapshot = await getDocs(q);
 
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt instanceof Timestamp
-        ? doc.data().createdAt.toMillis()
-        : Date.now(),
-      updatedAt: doc.data().updatedAt instanceof Timestamp
-        ? doc.data().updatedAt.toMillis()
-        : Date.now(),
-    } as Post));
-  }
+            return snapshot.docs
+                .map(doc => normalizePost(doc.data(), doc.id))
+                .filter(post => post.id !== currentId)
+                .slice(0, limit);
+        } catch (error) {
+            console.error('Error fetching related programs:', error);
+            return [];
+        }
+    }
 }
 
-function sortByDate(posts: Post[]): Post[] {
-  return [...posts].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-}
-
-export const whatWeDoService = {
-  getPostsByCategory: async (categoryId: string): Promise<Post[]> => {
-    const snapshot = await getDocs(
-      query(
-        collection(db, 'posts'),
-        where('category.id', '==', categoryId),
-        where('published', '==', true),
-        orderBy('createdAt', 'desc')
-      )
-    );
-
-    const posts = snapshot.docs.map(doc => normalizeFirebaseTimestamps({
-      id: doc.id,
-      ...doc.data()
-    }) as Post);
-
-    return sortByDate(posts);
-  },
-
-  getProgramBySlug: async (slug: string): Promise<Post | null> => {
-    const snapshot = await getDocs(
-      query(
-        collection(db, 'posts'),
-        where('slug', '==', slug),
-        where('published', '==', true),
-        limit(1)
-      )
-    );
-
-    if (snapshot.empty) return null;
-
-    return normalizeFirebaseTimestamps({
-      id: snapshot.docs[0].id,
-      ...snapshot.docs[0].data()
-    }) as Post;
-  },
-
-  getRelatedPrograms: async (categoryId: string, currentProgramId: string): Promise<Post[]> => {
-    const snapshot = await getDocs(
-      query(
-        collection(db, 'posts'),
-        where('category.id', '==', categoryId),
-        where('published', '==', true),
-        orderBy('createdAt', 'desc'),
-        limit(3)
-      )
-    );
-
-    const posts = snapshot.docs
-      .filter(doc => doc.id !== currentProgramId)
-      .map(doc => normalizeFirebaseTimestamps({
-        id: doc.id,
-        ...doc.data()
-      }) as Post);
-
-    return sortByDate(posts);
-  },
-
-  getFeaturedPosts: async (): Promise<Post[]> => {
-    const snapshot = await getDocs(
-      query(
-        collection(db, 'posts'),
-        where('featured', '==', true),
-        where('published', '==', true),
-        orderBy('createdAt', 'desc')
-      )
-    );
-
-    const posts = snapshot.docs.map(doc => normalizeFirebaseTimestamps({
-      id: doc.id,
-      ...doc.data()
-    }) as Post);
-
-    return sortByDate(posts);
-  }
-};
+export const whatWeDoService = new WhatWeDoService();

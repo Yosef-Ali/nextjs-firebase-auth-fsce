@@ -10,6 +10,7 @@ import FSCESkeleton from '@/components/FSCESkeleton';
 import { motion } from 'framer-motion';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink } from '@/components/ui/pagination';
 import { ensureCategory } from '@/app/utils/category';
+import { compareTimestamps } from '@/app/utils/date';
 
 export default function AchievementsPage() {
   const searchResultsRef = useRef<HTMLDivElement>(null);
@@ -24,17 +25,19 @@ export default function AchievementsPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const achievementsData = await getPostsByCategory('achievements');
-        // Ensure proper category typing and handle timestamps
-        const processedData = achievementsData.map(post => ({
+        const allPosts = await getPostsByCategory('achievements');
+        // Ensure posts have proper Category objects
+        const postsWithCategories = allPosts.map(post => ({
           ...post,
-          category: typeof post.category === 'string' ? ensureCategory(post.category) : post.category
+          category: ensureCategory(post.category)
         }));
+        const [sticky, regular] = postsWithCategories.reduce<[Post[], Post[]]>(
+          ([s, r], post: Post) => post.sticky ? [[...s, post], r] : [s, [...r, post]],
+          [[], []]
+        );
 
-        const sticky = processedData.filter(post => post.sticky)
-          .sort((a, b) => b.createdAt - a.createdAt);
-        const regular = processedData.filter(post => !post.sticky)
-          .sort((a, b) => b.createdAt - a.createdAt);
+        sticky.sort((a: Post, b: Post) => compareTimestamps(a.createdAt, b.createdAt));
+        regular.sort((a: Post, b: Post) => compareTimestamps(a.createdAt, b.createdAt));
 
         setStickyAchievements(sticky);
         setAchievements(regular);

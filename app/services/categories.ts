@@ -1,151 +1,139 @@
+import { adminDb } from '@/lib/firebase-admin';
 import { db } from '@/lib/firebase';
-import { Category } from '@/app/types/category';
-import {
-  collection,
-  query,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  where,
-  getDoc,
-  setDoc
-} from 'firebase/firestore';
-import { normalizeFirebaseTimestamps } from '../utils/date';
+import { Category, CategoryType, CreateCategoryInput, UpdateCategoryInput } from '@/app/types/category';
+import { Timestamp } from 'firebase/firestore';
+import { toTimestamp } from '@/app/utils/date';
+import { collection, getDocs, query, where, doc, getDoc, orderBy } from 'firebase/firestore';
 
 const COLLECTION_NAME = 'categories';
 
-class CategoriesService {
-  private categoriesCollection = collection(db, "categories");
+// Helper to create a basic category
+export function createBasicCategory(name: string, type: CategoryType = 'post'): Category {
+  return {
+    id: name.toLowerCase(),
+    name,
+    slug: name.toLowerCase(),
+    type,
+    featured: false,
+    createdAt: toTimestamp(Date.now()),
+    updatedAt: toTimestamp(Date.now())
+  };
+}
 
-  async getCategories(type?: 'post' | 'resource'): Promise<Category[]> {
-    const categoriesRef = collection(db, COLLECTION_NAME);
-    const q = type ? query(categoriesRef, where('type', '==', type)) : query(categoriesRef);
-    const querySnapshot = await getDocs(q);
+// Helper function to normalize category data
+export function normalizeCategory(data: any): Category {
+  const now = Timestamp.now();
+  return {
+    id: data?.id || '',
+    name: data?.name || '',
+    slug: data?.slug || '',
+    type: (data?.type || 'post') as CategoryType,
+    featured: Boolean(data?.featured),
+    description: data?.description || '',
+    icon: data?.icon || '',
+    createdAt: toTimestamp(data?.createdAt || now),
+    updatedAt: toTimestamp(data?.updatedAt || now)
+  };
+}
 
-    return querySnapshot.docs.map(doc => this.mapCategory(doc));
-  }
+export const categoryService = {
+  getCategories: async (): Promise<Category[]> => {
+    const snapshot = await adminDb.collection(COLLECTION_NAME).get();
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Category[];
+  },
 
-  async createCategory(data: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>): Promise<Category> {
-    const now = new Date();
-    const docRef = doc(this.categoriesCollection);
+  getCategoryBySlug: async (slug: string): Promise<Category | null> => {
+    const snapshot = await adminDb.collection(COLLECTION_NAME).where('slug', '==', slug).get();
+    if (snapshot.empty) return null;
+    const doc = snapshot.docs[0];
+    return {
+      id: doc.id,
+      ...doc.data()
+    } as Category;
+  },
 
+  createCategory: async (data: CreateCategoryInput): Promise<Category> => {
+    const docRef = adminDb.collection(COLLECTION_NAME).doc();
+    const now = toTimestamp(Timestamp.now());
     const category: Category = {
-      id: docRef.id,
       ...data,
+      id: docRef.id,
       createdAt: now,
       updatedAt: now,
+      itemCount: 0
     };
 
-    await setDoc(docRef, category);
+    await docRef.set(category);
     return category;
-  }
+  },
 
-  async updateCategory(id: string, data: Partial<Omit<Category, 'id' | 'createdAt'>>): Promise<Category> {
-    const now = new Date();
-    const updates = {
-      ...data,
-      updatedAt: now,
+  updateCategory: async (id: string, updates: UpdateCategoryInput): Promise<Category> => {
+    const docRef = adminDb.collection(COLLECTION_NAME).doc(id);
+    const updateData = {
+      ...updates,
+      updatedAt: Timestamp.now()
     };
 
-    const docRef = doc(this.categoriesCollection, id);
-    await setDoc(docRef, updates, { merge: true });
+    await docRef.update(updateData);
 
     return {
       id,
-      ...updates
+      ...updates,
+      updatedAt: Timestamp.now()
     } as Category;
   }
+};
 
-  async deleteCategory(id: string): Promise<void> {
-    await deleteDoc(doc(db, COLLECTION_NAME, id));
-  }
-
-  createSlug(name: string): string {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-  }
-
-  async getCategoriesWithItemCount(): Promise<Category[]> {
-    const categories = await this.getCategories();
-    const itemsRef = collection(db, 'posts');
-
-    return Promise.all(categories.map(async (category) => {
-      try {
-        const uniquePostIds = new Set<string>();
-
-        // Query for all possible category formats
-        const queries = [
-          query(itemsRef, where('category', '==', category.id)),
-          query(itemsRef, where('category.id', '==', category.id)),
-          query(itemsRef, where('categories', 'array-contains', category.id)),
-          query(itemsRef, where('category.name', '==', category.name))
-        ];
-
-        for (const q of queries) {
-          const snapshot = await getDocs(q);
-          snapshot.docs.forEach(d => uniquePostIds.add(d.id));
-        }
-
-        return {
-          ...category,
-          itemCount: uniquePostIds.size
-        };
-      } catch (error) {
-        console.error(`Error processing category ${category.name}:`, error);
-        return category;
-      }
-    }));
-  }
-
-  async getCategoryById(id: string): Promise<Category | null> {
+class CategoriesService {
+  async getCategory(id: string): Promise<Category | null> {
     try {
-      const categoryDoc = await getDoc(doc(this.categoriesCollection, id));
-      if (!categoryDoc.exists()) {
-        return null;
-      }
+      const docRef = doc(db, COLLECTION_NAME, id);
+      const docSnap = await getDoc(docRef);
 
-      return this.mapCategory(categoryDoc);
+      if (!docSnap.exists()) return null;
+
+      return {
+        id: docSnap.id,
+        ...docSnap.data()
+      } as Category;
     } catch (error) {
-      console.error('Error fetching category:', error);
+      console.error('Error getting category:', error);
       return null;
     }
   }
 
-  async updateCategoryItemCount(id: string): Promise<void> {
+  async getAllCategories(): Promise<Category[]> {
     try {
-      const itemsRef = collection(db, 'posts');
-      const q = query(itemsRef, where('category.id', '==', id));
-      const snapshot = await getDocs(q);
+      const categoriesRef = collection(db, COLLECTION_NAME);
+      const snapshot = await getDocs(categoriesRef);
 
-      await updateDoc(doc(this.categoriesCollection, id), {
-        itemCount: snapshot.size,
-        updatedAt: Date.now()
-      });
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Category));
     } catch (error) {
-      console.error('Error updating category count:', error);
+      console.error('Error getting all categories:', error);
+      return [];
     }
   }
 
-  private mapCategory(doc: any): Category {
-    const data = doc.data();
-    return normalizeFirebaseTimestamps({
-      id: doc.id,
-      name: data.name,
-      description: data.description,
-      type: data.type || 'post',
-      slug: data.slug || this.createSlug(data.name),
-      createdAt: data.createdAt || Date.now(),
-      updatedAt: data.updatedAt || Date.now(),
-      itemCount: data.itemCount || 0,
-      featured: data.featured || false,
-      icon: data.icon || null,
-      menuPath: data.menuPath || null,
-      parentId: data.parentId || null
-    });
+  async getCategoriesByType(type: CategoryType): Promise<Category[]> {
+    try {
+      const categoriesRef = collection(db, COLLECTION_NAME);
+      const q = query(categoriesRef, where('type', '==', type));
+      const snapshot = await getDocs(q);
+
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Category));
+    } catch (error) {
+      console.error('Error getting categories by type:', error);
+      return [];
+    }
   }
 }
 

@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { motion, useAnimation, Variants } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { postsService } from '@/app/services/posts';
-import { categoriesService } from '@/app/services/categories';
+import { categoryService } from '@/app/services/categories';
 import { Post } from '@/app/types/post';
 import { Category } from '@/app/types/category';
 import Link from 'next/link';
 import { ArrowRight, Calendar } from "lucide-react";
 import { ContentCard } from "./content-display/ContentCard";
 import { getCategoryId, getCategoryName } from '@/app/utils/category';
+import { Timestamp } from 'firebase/firestore';
 
 interface TabContentProps {
   posts: Post[];
@@ -29,13 +30,26 @@ export default function FeaturedSection() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const fetchedCategories = await categoryService.getCategories();
+        const postCategories = fetchedCategories.filter(cat => cat.type === 'post');
+        setCategories(postCategories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
         // First get categories to ensure proper mapping
-        const fetchedCategories = await categoriesService.getCategories('post');
+        const fetchedCategories = await categoryService.getCategories();
+        const postCategories = fetchedCategories.filter(cat => cat.type === 'post');
         // Then get posts
         const fetchedPosts = await postsService.getPublishedPosts();
-
         // Map the categories, ensuring Child Protection is correctly identified
-        const mappedCategories = fetchedCategories.map(category => {
+        const mappedCategories = postCategories.map(category => {
           const baseCategory = category.id === 'RMglo9PIj6wNdQNSFcuA' ? {
             ...category,
             id: 'child-protection',
@@ -43,10 +57,8 @@ export default function FeaturedSection() {
             slug: 'child-protection',
             type: 'post' as const,
           } : category;
-
           return baseCategory;
         });
-
         setPosts(fetchedPosts);
         setCategories(mappedCategories);
       } catch (error) {
@@ -55,7 +67,6 @@ export default function FeaturedSection() {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
@@ -147,7 +158,7 @@ export default function FeaturedSection() {
                 image={post.images?.[0] || post.coverImage}
                 slug={post.slug}
                 category={category}
-                createdAt={post.createdAt}
+                createdAt={post.createdAt}  // Pass the Timestamp directly
                 index={index}
                 href={`/${category}/${post.slug}`}
               />

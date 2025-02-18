@@ -5,23 +5,15 @@ import { useParams } from 'next/navigation';
 import { getCategoryName } from '@/app/utils/category';
 import Link from 'next/link';
 import Image from 'next/image';
-import { whatWeDoService } from '@/app/services/what-we-do';
+
 import FSCESkeleton from '@/components/FSCESkeleton';
 import { Post } from '@/app/types/post';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { formatPublishDate } from '@/app/utils/date';
-
-// Helper function to format dates
-const formatDate = (date: number | string | Date) => {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-};
+import { formatPublishDate, formatDate } from '@/app/utils/date';
+import { whatWeDoService } from '@/app/services/what-we-do';
 
 export default function DetailPage() {
   const [post, setPost] = useState<Post | null>(null);
@@ -85,10 +77,6 @@ export default function DetailPage() {
       </div>
     );
   }
-
-  const formattedDate = (timestamp: number) => {
-    return formatPublishDate(timestamp);
-  };
 
   return (
     <div className="min-h-screen bg-background">

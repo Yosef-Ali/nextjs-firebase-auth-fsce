@@ -2,7 +2,6 @@
 import '@firebase/app-types';
 import '@firebase/auth-types';
 import '@firebase/firestore-types';
-import '@firebase/storage-types';
 import '@firebase/functions-types';
 import '@firebase/analytics-types';
 
@@ -10,9 +9,23 @@ import '@firebase/analytics-types';
 export * from '@firebase/app-types';
 export * from '@firebase/auth-types';
 export * from '@firebase/firestore-types';
-export * from '@firebase/storage-types';
 export * from '@firebase/functions-types';
 export * from '@firebase/analytics-types';
+
+// Re-export storage types from firebase/storage instead of @firebase/storage-types
+import type {
+  StorageReference,
+  UploadMetadata,
+  UploadTask,
+  UploadTaskSnapshot
+} from 'firebase/storage';
+
+export {
+  StorageReference,
+  UploadMetadata,
+  UploadTask,
+  UploadTaskSnapshot
+};
 
 // Explicitly declare commonly used types
 declare module 'firebase/app' {

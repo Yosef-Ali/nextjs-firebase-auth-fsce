@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-
 import { UserRole } from '@/app/types/user';
 import { adminAuth } from '@/app/lib/services/admin';
 
@@ -58,7 +57,6 @@ export async function POST(request: Request) {
       };
       console.error('Error setting custom claims:', errorDetails);
       
-      // Handle specific Firebase Admin errors
       if (error.code === 'auth/user-not-found') {
         return NextResponse.json({ error: 'User not found', details: errorDetails }, { status: 404 });
       }

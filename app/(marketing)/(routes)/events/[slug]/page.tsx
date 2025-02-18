@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import FSCESkeleton from '@/components/FSCESkeleton';
-import { Post } from '@/app/types/post';
+import { Post, isEvent } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
 import { formatDate } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -100,13 +100,13 @@ export default function EventDetailPage() {
                   <span>{formatDate(event.date)}</span>
                 </div>
               )}
-              {event.time && (
+              {isEvent(event) && event.time && (
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
                   <span>{event.time}</span>
                 </div>
               )}
-              {event.location && (
+              {isEvent(event) && event.location && (
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
                   <span>{event.location}</span>
@@ -196,8 +196,8 @@ export default function EventDetailPage() {
                               <span>{formatDate(event.date)}</span>
                             </div>
                           )}
-                          {event.location && (
-                            <div className="flex items-center gap-2">
+                          {isEvent(event) && event.location && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <MapPin className="h-4 w-4" />
                               <span className="line-clamp-1">{event.location}</span>
                             </div>

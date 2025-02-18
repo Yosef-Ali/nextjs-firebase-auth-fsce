@@ -36,7 +36,7 @@ import { ensureCategory, getCategoryId } from '@/app/utils/category';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Post } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
-import { categoriesService } from '@/app/services/categories';
+import { categoryService } from '@/app/services/categories';
 import { Category } from '@/app/types/category';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Editor } from '@/components/editor';
@@ -71,7 +71,7 @@ interface PostEditorProps {
   onSuccess?: () => void;
 }
 
-export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
+export default function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
   const router = useRouter();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -107,7 +107,7 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const fetchedCategories = await categoriesService.getCategories();
+        const fetchedCategories = await categoryService.getCategories();
         setCategories(fetchedCategories);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
@@ -302,7 +302,7 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
         authorId: currentUser.uid,
         authorEmail: currentUser.email || '',
         slug: data.slug,
-        date: new Date(), // Changed from Date.now() to new Date()
+        date: Timestamp.now(),
         tags: [],
         featured: false,
       } satisfies Omit<Post, 'id' | 'createdAt' | 'updatedAt'>;

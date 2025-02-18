@@ -12,6 +12,7 @@ import { postsService } from '@/app/services/posts';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
+import { normalizePost } from '@/app/utils/post';
 
 export default function EditPostPage() {
   const { user, loading } = useAuth();
@@ -31,12 +32,10 @@ export default function EditPostPage() {
 
         if (docSnap.exists()) {
           const data = docSnap.data();
-          setPost({
+          setPost(normalizePost({
             id: docSnap.id,
             ...data,
-            createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
-            updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() : Date.now()
-          } as Post);
+          }));
         } else {
           toast({
             title: "Error",

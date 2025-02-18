@@ -1,16 +1,30 @@
-import { Timestamp } from '@/types';
+import { Timestamp, WithTimestamps } from './index';
 
 export type CategoryType = 'post' | 'resource' | 'award' | 'recognition';
 
-export interface Category {
+export interface Category extends WithTimestamps {
   id: string;
   name: string;
+  slug: string;
   type: CategoryType;
   featured: boolean;
-  slug: string;  // Make slug required
   description?: string;
   icon?: string;
   itemCount?: number;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
 }
+
+// Used when creating a new category
+export interface CreateCategoryInput {
+  name: string;
+  slug: string;
+  type: CategoryType;
+  featured: boolean;
+  description?: string;
+  icon?: string;
+}
+
+// Used when updating an existing category
+export type UpdateCategoryInput = Partial<CreateCategoryInput>;
+
+// Helper type for category service functions
+export interface CategoryWithoutTimestamps extends Omit<Category, keyof WithTimestamps> { }

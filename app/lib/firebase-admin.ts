@@ -1,17 +1,19 @@
-import { initializeApp, getApps, cert } from "firebase-admin/app"
-import { getFirestore } from "firebase-admin/firestore"
-import { getAuth } from "firebase-admin/auth"
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 
-const firebaseAdminConfig = {
-  credential: cert({
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-  }),
-}
+// Check if any Firebase Admin apps have been initialized
+const apps = getApps();
 
-export const firebaseAdmin = getApps().length === 0 ? initializeApp(firebaseAdminConfig) : getApps()[0]
+// Initialize Firebase Admin if it hasn't been initialized
+const firebaseAdmin = apps.length === 0 
+  ? initializeApp({
+      credential: cert({
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_ADMIN_PROJECT_ID,
+        clientEmail: process.env.NEXT_PUBLIC_FIREBASE_ADMIN_CLIENT_EMAIL,
+        // Replace newlines in private key
+        privateKey: process.env.NEXT_PUBLIC_FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      }),
+    })
+  : apps[0];
 
-export const adminDb = getFirestore(firebaseAdmin)
-export const adminAuth = getAuth(firebaseAdmin)
-
+export const adminAuth = getAuth(firebaseAdmin);

@@ -104,7 +104,6 @@
     "@portabletext/types": "^2.0.13",
     "@radix-ui/react-accordion": "^1.2.3",
     "@svgr/webpack": "^8.1.0",
-    "@types/firebase": "^3.2.3",
     "@types/lru-cache": "^7.10.10",
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",

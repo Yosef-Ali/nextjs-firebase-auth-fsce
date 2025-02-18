@@ -6,6 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { DataTableRowActions } from '@/components/ui/data-table-row-actions';
+import { createCategory, updateCategory, deleteCategory } from '@/app/actions/categories';
+import { toast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 export const columns: ColumnDef<Category>[] = [
   {
@@ -71,6 +74,31 @@ export const columns: ColumnDef<Category>[] = [
     id: 'actions',
     cell: ({ row }) => {
       const category = row.original;
+      const [loading, setLoading] = useState(false);
+
+      const onDelete = async () => {
+        try {
+          setLoading(true);
+          const result = await deleteCategory(category.id);
+          if (result.success) {
+            toast({
+              title: "Success",
+              description: "Category deleted successfully",
+            });
+          } else {
+            throw new Error(result.error);
+          }
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "Failed to delete category",
+            variant: "destructive",
+          });
+        } finally {
+          setLoading(false);
+        }
+      };
+
       return (
         <DataTableRowActions
           row={row}
@@ -83,9 +111,7 @@ export const columns: ColumnDef<Category>[] = [
             },
             {
               label: 'Delete',
-              onClick: () => {
-                // Handle delete action
-              },
+              onClick: onDelete,
             },
           ]}
         />

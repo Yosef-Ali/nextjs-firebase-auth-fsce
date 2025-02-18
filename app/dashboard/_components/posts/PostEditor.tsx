@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { categoriesService } from '@/app/services/categories';
+import { categoryService } from '@/app/services/categories';
 import { Category } from '@/app/types/category';
 import { Post } from '@/app/types/post';
 import { PostForm } from './PostForm';
@@ -26,7 +26,7 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const fetchedCategories = await categoriesService.getCategories();
+        const fetchedCategories = await categoryService.getCategories();
         setCategories(fetchedCategories);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
@@ -41,7 +41,7 @@ export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
   }, [toast]);
 
   return (
-    <PostForm 
+    <PostForm
       post={post}
       initialData={initialData}
       categories={categories}

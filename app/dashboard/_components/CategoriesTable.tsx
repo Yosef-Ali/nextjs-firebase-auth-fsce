@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { format } from 'date-fns';
 import {
   Table,
   TableBody,
@@ -89,9 +90,9 @@ function CategoriesTable({ categories, onEdit, onDelete, isLoading = false }: Ca
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {category.createdAt 
-                      ? new Date(category.createdAt).toLocaleDateString()
-                      : 'N/A'}
+                  {category.createdAt
+                    ? category.createdAt.toDate().toLocaleDateString()
+                    : 'N/A'}
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
@@ -108,7 +109,7 @@ function CategoriesTable({ categories, onEdit, onDelete, isLoading = false }: Ca
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         className="text-red-600"
                         onClick={() => setCategoryToDelete(category)}
                       >

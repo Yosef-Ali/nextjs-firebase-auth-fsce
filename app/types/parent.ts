@@ -1,29 +1,23 @@
-export interface Parent {
+import { WithTimestamps } from './index';
+
+export interface Child {
+    name: string;
+    age: number;
+    grade?: string;
+}
+
+export interface Parent extends WithTimestamps {
     id: string;
     name: string;
     email: string;
     phone: string;
-    address?: string;
     children: Child[];
-    createdAt: Date;
-    updatedAt: Date;
+    photoURL?: string;
 }
 
-export interface Child {
-    id: string;
-    name: string;
-    dateOfBirth?: Date;
-    gender?: 'male' | 'female' | 'other';
-    schoolName?: string;
-    grade?: string;
-    medicalConditions?: string[];
-    emergencyContact?: {
-        name: string;
-        phone: string;
-        relationship: string;
-    };
-}
+export type CreateParentInput = Omit<Parent, 'id' | 'createdAt' | 'updatedAt'>;
+export type UpdateParentInput = Partial<Omit<Parent, 'id' | 'createdAt' | 'updatedAt'>>;
 
 export interface ParentClient extends Parent {
-  // Add any additional client-specific fields here
+    // Add any additional client-specific fields here
 }

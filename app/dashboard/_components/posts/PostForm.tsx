@@ -11,6 +11,7 @@ import { Category } from '@/app/types/category';
 import { postsService } from '@/app/services/posts';
 import PostFormFields from './PostFormFields';
 import { Button } from '@/components/ui/button';
+import { Timestamp } from 'firebase/firestore';
 
 const formSchema = z.object({
     title: z.string().min(1, 'Title is required'),
@@ -68,12 +69,12 @@ export function PostForm({ post, initialData, categories, onSuccess }: PostFormP
         const newTitle = e.target.value;
         setTitleValue(newTitle);
         form.setValue('title', newTitle);
-        
+
         // Update form values
         if (!post?.slug) {
             const timer = setTimeout(() => {
                 const generatedSlug = postsService.createSlug(newTitle);
-                form.setValue('slug', generatedSlug, { 
+                form.setValue('slug', generatedSlug, {
                     shouldValidate: true,
                     shouldDirty: true,
                 });
@@ -134,7 +135,7 @@ export function PostForm({ post, initialData, categories, onSuccess }: PostFormP
                 authorId: user.uid,
                 authorEmail: user.email || '',
                 slug: data.slug,
-                date: Date.now(),
+                date: Timestamp.now(),
                 tags: [],
                 featured: false,
             };
@@ -169,21 +170,21 @@ export function PostForm({ post, initialData, categories, onSuccess }: PostFormP
 
     return (
         <Form {...form}>
-            <form 
-                onSubmit={form.handleSubmit(onSubmit)} 
+            <form
+                onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-8"
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => e.stopPropagation()}
             >
-                <PostFormFields 
-                    form={form} 
+                <PostFormFields
+                    form={form}
                     categories={categories}
                     onTitleChange={handleTitleChange}
                     titleValue={titleValue}
                 />
                 <div className="flex justify-end gap-4">
-                    <Button 
-                        type="submit" 
+                    <Button
+                        type="submit"
                         disabled={isSaving}
                     >
                         {isSaving ? "Saving..." : "Save"}

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, CalendarDays } from "lucide-react";
 import { motion, Variants } from "framer-motion";
-import { formatDate } from "@/app/utils/date";
+import { formatDate, toDate } from "@/app/utils/date";
 import { Timestamp } from "@/types";
 
 export interface ContentCardProps {
@@ -73,9 +73,11 @@ export function ContentCard({
                             alt={title}
                             fill
                             className="object-cover transition-transform duration-500 group-hover:scale-105"
-                            onError={(e: { target: HTMLImageElement }) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = "/images/placeholder.svg";
+                            onError={(event) => {
+                                const img = event.currentTarget;
+                                if (img) {
+                                    img.src = "/images/placeholder.svg";
+                                }
                             }}
                         />
                         {isFeatured && (
@@ -103,7 +105,7 @@ export function ContentCard({
                             {(showDate && createdAt) && (
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
                                     <CalendarDays className="h-4 w-4" />
-                                    <time dateTime={new Date(createdAt).toISOString()} className="text-sm text-muted-foreground">
+                                    <time dateTime={toDate(createdAt).toISOString()} className="text-sm text-muted-foreground">
                                         {formatDate(createdAt)}
                                     </time>
                                 </div>

@@ -28,7 +28,7 @@ import { useAuth } from '@/lib/hooks/useAuth';
 import { useSearch } from '@/app/context/search-context';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
-import { format } from 'date-fns';
+import { formatDate, compareTimestamps } from '@/app/utils/date';
 import { getCategoryName } from '@/app/utils/category';
 
 interface PostsTableProps {
@@ -123,12 +123,12 @@ function PostsTable({ initialPosts }: PostsTableProps) {
   const isPostInCategory = (post: Post, categoryFilter: string) =>
     getCategoryName(post.category)?.toLowerCase().includes(categoryFilter.toLowerCase());
 
-  // Sort posts with sticky posts first, then by date
-  const sortedPosts = [...posts].sort((a, b) => {
-    if (a.sticky && !b.sticky) return -1;
-    if (!a.sticky && b.sticky) return 1;
-    return (b.updatedAt || 0) - (a.updatedAt || 0);
-  });
+  // Update sorting function
+  const sortUpdatedDate = (a: Post, b: Post) => {
+    return compareTimestamps(b.updatedAt, a.updatedAt);
+  };
+
+  const sortedPosts = posts.sort(sortUpdatedDate);
 
   return (
     <div className="space-y-6">
@@ -208,7 +208,7 @@ function PostsTable({ initialPosts }: PostsTableProps) {
                   </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {format(post.updatedAt, 'MMM d, yyyy')}
+                  {formatDate(post.updatedAt)}
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>

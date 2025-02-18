@@ -1,37 +1,49 @@
-import { Category } from '@/app/types/category';
+import { Category, CategoryType } from '@/app/types/category';
+import { Timestamp } from 'firebase/firestore';
+import { toTimestamp } from '@/app/utils/date';
 
-// Helper function to convert to timestamp
-const toTimestamp = (date: Date | number | any): number => {
-  if (typeof date === 'number') return date;
-  if (date instanceof Date) return date.getTime();
-  if (date?.toDate instanceof Function) return date.toDate().getTime();
-  return Date.now();
-};
-
-export function getCategoryName(category: string | Category | undefined): string {
-  if (!category) return 'Uncategorized';
-  if (typeof category === 'string') return category;
-  return category.name;
+export function getCategoryName(category: Category | string): string {
+  return typeof category === 'string' ? category : category.name;
 }
 
-export function getCategoryId(category: string | Category | undefined): string {
-  if (!category) return '';
-  if (typeof category === 'string') return category;
-  return category.id;
+export function getCategoryId(category: Category | string): string {
+  return typeof category === 'string' ? category : category.id;
 }
 
-export function ensureCategory(category: string | Category): Category {
-  if (typeof category === 'string') {
+export function ensureCategory(input: string | Category | undefined): Category {
+  const now = Timestamp.now();
+
+  if (!input) {
     return {
-      id: category,
-      name: category,
-      slug: category.toLowerCase(),
+      id: 'default',
+      name: 'Uncategorized',
+      slug: 'uncategorized',
       type: 'post',
-      createdAt: Date.now(),
-      updatedAt: Date.now()
+      featured: false,
+      createdAt: now,
+      updatedAt: now
     };
   }
-  return category;
+
+  if (typeof input === 'string') {
+    return {
+      id: input,
+      name: input,
+      slug: input.toLowerCase().replace(/\s+/g, '-'),
+      type: 'post',
+      featured: false,
+      createdAt: now,
+      updatedAt: now
+    };
+  }
+
+  return {
+    ...input,
+    featured: input.featured ?? false,
+    type: input.type || 'post',
+    createdAt: input.createdAt instanceof Timestamp ? input.createdAt : now,
+    updatedAt: input.updatedAt instanceof Timestamp ? input.updatedAt : now
+  };
 }
 
 export function isCategoryEqual(a: string | Category, b: string | Category): boolean {
@@ -40,16 +52,89 @@ export function isCategoryEqual(a: string | Category, b: string | Category): boo
   return idA.toLowerCase() === idB.toLowerCase();
 }
 
-// Helper function to create a complete Category object
-function createCategory(id: string, name: string, type: CategoryType = 'post'): Category {
-  const now = Date.now();
+// Helper function to create a complete category with proper timestamps
+export function createCategory(data: Partial<Category> & { name: string }): Category {
+  const now = Timestamp.now();
+  return {
+    id: data.id || '',
+    name: data.name,
+    slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-'),
+    type: data.type || 'post',
+    featured: data.featured || false,
+    description: data.description,
+    icon: data.icon,
+    createdAt: toTimestamp(data.createdAt || now),
+    updatedAt: toTimestamp(data.updatedAt || now)
+  };
+}
+
+// Helper function to normalize category data
+export function normalizeCategory(category: string | Partial<Category> | undefined): Category {
+  if (!category) {
+    return createBaseCategory('', '');
+  }
+
+  if (typeof category === 'string') {
+    return createBaseCategory(category, category);
+  }
+
+  const now = Timestamp.now();
+  return {
+    id: category.id || '',
+    name: category.name || category.id || '',
+    slug: category.slug || category.id?.toLowerCase() || '',
+    type: category.type || 'post',
+    featured: Boolean(category.featured),
+    createdAt: toTimestamp(category.createdAt || now),
+    updatedAt: toTimestamp(category.updatedAt || now)
+  };
+}
+
+// Helper to create a basic category
+export function createBasicCategory(name: string, type: CategoryType = 'post'): Category {
+  const now = Timestamp.now();
+  return {
+    id: '',
+    name,
+    slug: name.toLowerCase().replace(/\s+/g, '-'),
+    type,
+    featured: false,
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
+export function createBaseCategory(id: string, name: string, type: CategoryType = 'post'): Category {
+  const now = Timestamp.now();
   return {
     id,
     name,
+    slug: id.toLowerCase(),
     type,
     featured: false,
-    slug: id.toLowerCase(),
     createdAt: now,
     updatedAt: now
+  };
+}
+
+export function normalizeCategoryInput(
+  category: string | Partial<Category> | undefined,
+  defaultId: string = ''
+): Category {
+  if (!category) {
+    return createBaseCategory(defaultId, defaultId);
+  }
+
+  const now = Timestamp.now();
+  const base = typeof category === 'string' ?
+    createBaseCategory(category, category) :
+    normalizeCategory(category);
+
+  return {
+    ...base,
+    id: base.id || defaultId,
+    name: base.name || defaultId,
+    createdAt: toTimestamp(base.createdAt || now),
+    updatedAt: toTimestamp(base.updatedAt || now)
   };
 }

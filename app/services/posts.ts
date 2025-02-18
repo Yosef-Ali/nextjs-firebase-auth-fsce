@@ -1,4 +1,4 @@
-import { db } from '@/lib/firebase';
+import { Timestamp } from 'firebase/firestore';
 import { Post, PostStatus } from '@/app/types/post';
 import { Category, CategoryType } from '@/app/types/category';
 import {
@@ -11,43 +11,63 @@ import {
   deleteDoc,
   doc,
   getDoc,
-  Timestamp,
-  serverTimestamp,
-  QueryConstraint,
   orderBy,
-  FieldValue
+  QueryConstraint
 } from 'firebase/firestore';
-import { fromFirebaseTimestamp, normalizeFirebaseTimestamps } from '../utils/date';
+import { db } from '@/lib/firebase';
+import { toTimestamp, compareTimestamps } from '@/app/utils/date';
+import { normalizeCategory } from '@/app/utils/category';
 
-// Helper function to create a complete Category object
-function createCategory(id: string, name: string, type: CategoryType = 'post'): Category {
+// Helper function to normalize timestamps in an object
+function normalizeTimestamps(data: any): any {
+  if (!data) return data;
+
+  const now = Timestamp.now();
+  const result = { ...data };
+
+  // Convert date fields to Timestamps if they exist
+  if (data.createdAt) result.createdAt = toTimestamp(data.createdAt);
+  if (data.updatedAt) result.updatedAt = toTimestamp(data.updatedAt);
+  if (data.date) result.date = toTimestamp(data.date);
+
+  // Set default timestamps if they don't exist
+  if (!result.createdAt) result.createdAt = now;
+  if (!result.updatedAt) result.updatedAt = now;
+  if (!result.date) result.date = now;
+
+  return result;
+}
+
+// Helper function to create a Category object with consistent structure
+function createCategory(id: string, name: string): Category {
+  const now = Timestamp.now();
   return {
     id,
     name,
-    type,
-    featured: false,
     slug: id.toLowerCase(),
-    createdAt: new Date(),
-    updatedAt: new Date()
+    type: 'post' as CategoryType,
+    featured: false, // Add default value for featured property
+    createdAt: now,
+    updatedAt: now
   };
 }
 
-// Helper function to convert Date or Timestamp to number
-const toTimestamp = (date: Date | number | any): number => {
-  if (typeof date === 'number') return date;
-  if (date instanceof Date) return date.getTime();
-  if (date?.toDate instanceof Function) return date.toDate().getTime();
-  return Date.now();
-};
-
-const COLLECTION_NAME = 'posts';
-
+// Sort helper using our timestamp compare function
 function sortByDate(posts: Post[]): Post[] {
-  return [...posts].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  return [...posts].sort((a, b) => {
+    if (a.createdAt instanceof Timestamp && b.createdAt instanceof Timestamp) {
+      return b.createdAt.seconds - a.createdAt.seconds;
+    }
+    // Fallback to comparing milliseconds if we have numbers
+    const aTime = a.createdAt instanceof Timestamp ? a.createdAt.toMillis() : a.createdAt;
+    const bTime = b.createdAt instanceof Timestamp ? b.createdAt.toMillis() : b.createdAt;
+    return bTime - aTime;
+  });
 }
 
+// Normalize post data with proper timestamp handling
 function normalizePost(id: string, data: any, category: Category): Post {
-  const now = Date.now();
+  const now = Timestamp.now();
   return {
     id,
     title: data?.title ?? '',
@@ -73,6 +93,8 @@ function normalizePost(id: string, data: any, category: Category): Post {
   };
 }
 
+const COLLECTION_NAME = 'posts';
+
 export const postsService = {
   async getUserPosts(userId: string): Promise<Post[]> {
     try {
@@ -85,7 +107,7 @@ export const postsService = {
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => {
         const data = doc.data();
-        return normalizeFirebaseTimestamps({
+        return normalizeTimestamps({
           id: doc.id,
           ...data
         }) as Post;
@@ -133,25 +155,22 @@ export const postsService = {
       typeof category.name === 'string' &&
       typeof category.slug === 'string' &&
       typeof category.type === 'string' &&
-      typeof category.createdAt === 'number' &&
-      typeof category.updatedAt === 'number';
+      category.createdAt instanceof Timestamp &&
+      category.updatedAt instanceof Timestamp;
   },
 
   async createPost(data: Omit<Post, 'id' | 'createdAt' | 'updatedAt'>): Promise<Post> {
     try {
-      const now = Date.now();
+      const now = Timestamp.now();
       const postData = {
         ...data,
         createdAt: now,
         updatedAt: now,
+        date: toTimestamp(data.date || now),
         slug: data.slug || this.createSlug(data.title),
       };
 
-      const docRef = await addDoc(collection(db, 'posts'), {
-        ...postData,
-        createdAt: Timestamp.fromMillis(now),
-        updatedAt: Timestamp.fromMillis(now)
-      });
+      const docRef = await addDoc(collection(db, 'posts'), postData);
 
       return {
         id: docRef.id,
@@ -166,7 +185,7 @@ export const postsService = {
   async updatePost(id: string, post: Partial<Omit<Post, 'category'>> & { category?: string | Category }, userId: string): Promise<boolean> {
     try {
       const postRef = doc(db, COLLECTION_NAME, id);
-      const now = Date.now();
+      const now = Timestamp.now();
 
       // Create initial update data without category
       const { category, ...restData } = post;
@@ -174,7 +193,8 @@ export const postsService = {
         ...restData,
         // Only allow sticky posts if they are published
         sticky: restData.sticky && restData.published !== false ? restData.sticky : false,
-        updatedAt: now
+        updatedAt: now,
+        date: toTimestamp(restData.date || now)
       };
 
       // Only add category if it exists
@@ -183,12 +203,12 @@ export const postsService = {
         await updateDoc(postRef, {
           ...baseUpdateData,
           category: normalizedCategory,
-          updatedAt: Timestamp.fromMillis(now)
+          updatedAt: now
         });
       } else {
         await updateDoc(postRef, {
           ...baseUpdateData,
-          updatedAt: Timestamp.fromMillis(now)
+          updatedAt: now
         });
       }
 
@@ -322,12 +342,8 @@ export const postsService = {
       }));
 
       // Remove duplicates by ID
-      const uniquePosts = Array.from(
-        new Map(posts.map(post => [post.id, post])).values()
-      );
-
-      // Sort by creation date (newest first) and apply limit if specified
-      const sortedPosts = uniquePosts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      const uniquePosts = Array.from(new Map(posts.map(post => [post.id, post])).values());
+      const sortedPosts = uniquePosts.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
 
       const result = limit ? sortedPosts.slice(0, limit) : sortedPosts;
       console.log('Service: Returning', result.length, 'posts for category:', category);
@@ -351,7 +367,7 @@ export const postsService = {
 
       const doc = querySnapshot.docs[0];
       const data = doc.data();
-      return normalizeFirebaseTimestamps({
+      return normalizeTimestamps({
         id: doc.id,
         ...data
       }) as Post;
@@ -387,11 +403,9 @@ export const postsService = {
             sticky: Boolean(data?.sticky),
             authorId: data?.authorId ?? '',
             authorEmail: data?.authorEmail ?? '',
-            date: data?.date ? new Date(data.date) : new Date(),
-            createdAt: data.createdAt instanceof Timestamp ? new Date(data.createdAt.toMillis()) :
-              typeof data.createdAt === 'number' ? new Date(data.createdAt) : new Date(),
-            updatedAt: data.updatedAt instanceof Timestamp ? new Date(data.updatedAt.toMillis()) :
-              typeof data.updatedAt === 'number' ? new Date(data.updatedAt) : new Date(),
+            date: data?.date ? toTimestamp(data.date) : Timestamp.now(),
+            createdAt: toTimestamp(data.createdAt),
+            updatedAt: toTimestamp(data.updatedAt),
             coverImage: data?.coverImage ?? '',
             images: Array.isArray(data?.images) ? data.images : [],
             featured: Boolean(data?.featured),
@@ -403,7 +417,7 @@ export const postsService = {
           } as Post;
         })
         .filter(post => post.slug !== slug)
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .sort((a, b) => b.createdAt.seconds - a.createdAt.seconds)
         .slice(0, limit);
 
       return posts;
@@ -454,17 +468,9 @@ export const postsService = {
           category: typeof data.category === 'string'
             ? { id: data.category, name: data.category }
             : data.category || { id: '', name: '' },
-          date: data?.date ? new Date(data.date) : new Date(),
-          createdAt: data.createdAt instanceof Timestamp
-            ? new Date(data.createdAt.toMillis())
-            : typeof data.createdAt === 'number'
-              ? new Date(data.createdAt)
-              : new Date(),
-          updatedAt: data.updatedAt instanceof Timestamp
-            ? new Date(data.updatedAt.toMillis())
-            : typeof data.updatedAt === 'number'
-              ? new Date(data.updatedAt)
-              : new Date(),
+          date: data?.date ? toTimestamp(data.date) : Timestamp.now(),
+          createdAt: toTimestamp(data.createdAt),
+          updatedAt: toTimestamp(data.updatedAt),
           coverImage: data?.coverImage ?? '',
           images: Array.isArray(data?.images) ? data.images : [],
           featured: Boolean(data?.featured),
@@ -477,7 +483,7 @@ export const postsService = {
       });
 
       // Sort by creation date (newest first)
-      posts = posts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      posts = posts.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
 
       const result = limitCount ? posts.slice(0, limitCount) : posts;
       console.log('Service: Returning', result.length, 'published posts');
@@ -501,7 +507,7 @@ export const postsService = {
       const posts = querySnapshot.docs.map(doc => {
         const data = doc.data();
         const category = data.category || {};
-        const now = new Date();
+        const now = Timestamp.now();
 
         return {
           id: doc.id,
@@ -514,16 +520,16 @@ export const postsService = {
             name: typeof category === 'string' ? category.charAt(0).toUpperCase() + category.slice(1) : category.name,
             slug: category.slug,
             type: category.type,
-            createdAt: category.createdAt ? new Date(category.createdAt) : now,
-            updatedAt: category.updatedAt ? new Date(category.updatedAt) : now
+            createdAt: category.createdAt ? toTimestamp(category.createdAt) : now,
+            updatedAt: category.updatedAt ? toTimestamp(category.updatedAt) : now
           },
           published: Boolean(data?.published),
           sticky: Boolean(data?.sticky),
           authorId: data?.authorId ?? '',
           authorEmail: data?.authorEmail ?? '',
-          date: this.normalizeDate(data?.date),
-          createdAt: data.createdAt instanceof Timestamp ? new Date(data.createdAt.toMillis()) : typeof data.createdAt === 'number' ? new Date(data.createdAt) : now,
-          updatedAt: data.updatedAt instanceof Timestamp ? new Date(data.updatedAt.toMillis()) : typeof data.updatedAt === 'number' ? new Date(data.updatedAt) : now,
+          date: toTimestamp(data?.date),
+          createdAt: toTimestamp(data.createdAt),
+          updatedAt: toTimestamp(data.updatedAt),
           coverImage: data?.coverImage ?? '',
           images: Array.isArray(data?.images) ? data.images : [],
           featured: Boolean(data?.featured),
@@ -535,7 +541,7 @@ export const postsService = {
         } as Post;
       });
 
-      return posts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      return posts.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
     } catch (error) {
       console.error('Error getting news:', error);
       return [];
@@ -550,7 +556,7 @@ export const postsService = {
       )
     );
 
-    const posts = snapshot.docs.map(doc => normalizeFirebaseTimestamps({
+    const posts = snapshot.docs.map(doc => normalizeTimestamps({
       id: doc.id,
       ...doc.data()
     }) as Post);
@@ -559,7 +565,7 @@ export const postsService = {
   },
 
   // Helper function to normalize post date
-  normalizeDate(date: any): number {
+  normalizeDate(date: any): Timestamp {
     return toTimestamp(date);
   },
 

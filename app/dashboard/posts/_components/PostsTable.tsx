@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { Post } from '@/app/types/post';
 import { formatDate } from '@/app/utils/date';
 import { getPosts } from '@/app/actions/posts';
+import { Timestamp } from 'firebase/firestore';
 
 export default function PostsTable() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -35,9 +36,8 @@ export default function PostsTable() {
     loadPosts();
   }, []);
 
-  const sortedPosts = [...posts].sort((a, b) => 
-    b.createdAt.getTime() - a.createdAt.getTime()
-  );
+  // Sort by createdAt timestamp (numeric value)
+  const sortedPosts = [...posts].sort((a, b) => compareTimestamps(a.createdAt, b.createdAt));
 
   return (
     <div className="space-y-4">
@@ -52,7 +52,7 @@ export default function PostsTable() {
           </Button>
         </Link>
       </div>
-      
+
       <div className="border rounded-md">
         <Table>
           <TableHeader>
@@ -100,3 +100,8 @@ export default function PostsTable() {
     </div>
   );
 }
+
+function compareTimestamps(a: Timestamp, b: Timestamp): number {
+  return b.seconds - a.seconds;
+}
+

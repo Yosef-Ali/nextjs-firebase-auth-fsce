@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { Post } from '@/types';
-import { getPostsByCategory } from '@/app/actions/posts';
+import { postsService } from '@/app/services/posts';
 import { ProgramSearch } from '@/components/program-search';
 import { ContentCard } from '@/components/content-display/ContentCard';
 import { StickyPostsSection } from '@/components/content-display/StickyPostsSection';
@@ -10,6 +10,7 @@ import FSCESkeleton from '@/components/FSCESkeleton';
 import { motion } from 'framer-motion';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink } from '@/components/ui/pagination';
 import { ensureCategory } from '@/app/utils/category';
+import { compareTimestamps } from '@/app/utils/date';
 
 export default function EventsPage() {
   const searchResultsRef = useRef<HTMLDivElement>(null);
@@ -21,32 +22,32 @@ export default function EventsPage() {
   const postsPerPage = 9;
 
   useEffect(() => {
-    const fetchData = async () => {
+    const loadEvents = async () => {
       try {
         setLoading(true);
-        const eventsData = await getPostsByCategory('events');
-        // Ensure proper category typing
-        const processedData = eventsData.map(post => ({
+        const allPosts = await postsService.getPostsByCategory('events');
+        // Ensure posts have proper Category objects
+        const postsWithCategories = allPosts.map(post => ({
           ...post,
-          category: typeof post.category === 'string' ? ensureCategory(post.category) : post.category
+          category: ensureCategory(post.category)
         }));
+        const [sticky, regular] = postsWithCategories.reduce<[Post[], Post[]]>(
+          ([s, r], post: Post) => post.sticky ? [[...s, post], r] : [s, [...r, post]],
+          [[], []]
+        );
 
-        const sticky = processedData.filter(post => post.sticky)
-          .sort((a, b) => b.createdAt - a.createdAt);
-        const regular = processedData.filter(post => !post.sticky)
-          .sort((a, b) => b.createdAt - a.createdAt);
-
-        setStickyEvents(sticky);
-        setEvents(regular);
+        // Sort using compareTimestamps helper with proper types
+        setStickyEvents([...sticky].sort((a, b) => compareTimestamps(a.createdAt, b.createdAt)));
+        setEvents([...regular].sort((a, b) => compareTimestamps(a.createdAt, b.createdAt)));
       } catch (error) {
-        console.error('Error fetching events:', error);
+        console.error('Error loading events:', error);
         setStickyEvents([]);
         setEvents([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+    loadEvents();
   }, []);
 
   const handleSearch = (query: string) => {

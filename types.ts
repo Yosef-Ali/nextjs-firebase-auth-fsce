@@ -1,5 +1,7 @@
+import { Timestamp as FirebaseTimestamp } from 'firebase/firestore';
+
 // Common timestamp type to ensure consistency
-export type Timestamp = number;
+export type Timestamp = FirebaseTimestamp;
 
 // Base interface for common fields
 interface BaseModel {

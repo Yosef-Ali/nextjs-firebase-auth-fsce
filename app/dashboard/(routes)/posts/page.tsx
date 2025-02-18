@@ -18,15 +18,15 @@ export default function PostsPage() {
   useEffect(() => {
     const loadInitialPosts = async () => {
       if (!user) return;
-      
+
       try {
         const allPosts = await postsService.getUserPosts(user.uid);
-        // Convert timestamp numbers to Date objects
+        // Convert timestamp numbers to Timestamp objects
         const postsWithDates = allPosts.map(post => ({
           ...post,
-          createdAt: new Date(post.createdAt),
-          updatedAt: new Date(post.updatedAt),
-          date: post.date ? new Date(post.date) : undefined
+          createdAt: post.createdAt,
+          updatedAt: post.updatedAt,
+          date: post.date
         }));
         setPosts(postsWithDates);
       } catch (error) {

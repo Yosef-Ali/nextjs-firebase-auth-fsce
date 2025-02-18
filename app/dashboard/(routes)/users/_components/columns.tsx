@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DataTableRowActions } from '@/components/ui/data-table-row-actions';
 import { formatDistanceToNow } from 'date-fns';
+import { Timestamp } from 'firebase/firestore';
 
 export const columns: ColumnDef<User>[] = [
   {
@@ -57,19 +58,14 @@ export const columns: ColumnDef<User>[] = [
     accessorKey: 'createdAt',
     header: 'Joined',
     cell: ({ row }) => {
-      const rawDate = row.original.createdAt;
+      const rawDate = row.original.createdAt as Timestamp | number | string | undefined;
       let date: Date | null = null;
 
-      // Handle Firebase Timestamp
-      if (typeof rawDate === 'object' && rawDate !== null && 'toDate' in rawDate) {
+      if (rawDate instanceof Timestamp) {
         date = rawDate.toDate();
-      }
-      // Handle numeric timestamps
-      else if (typeof rawDate === 'number') {
+      } else if (typeof rawDate === 'number') {
         date = new Date(rawDate);
-      }
-      // Handle ISO strings
-      else if (typeof rawDate === 'string') {
+      } else if (typeof rawDate === 'string') {
         date = new Date(rawDate);
       }
 

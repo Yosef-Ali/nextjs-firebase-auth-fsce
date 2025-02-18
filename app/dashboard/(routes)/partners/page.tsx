@@ -29,8 +29,11 @@ export default function PartnersPage() {
             logo: data.logo,
             website: data.website,
             order: data.order || 1,
-            partnerType: data.partnerType || "REGULAR",
+            partnerType: data.partnerType,
             description: data.description || "",
+            position: data.position || "",
+            createdAt: data.createdAt || Date.now(),
+            updatedAt: data.updatedAt || Date.now(),
           };
         });
         setPartners(partners);
@@ -43,8 +46,8 @@ export default function PartnersPage() {
 
   // Calculate stats
   const totalPartners = partners.length;
-  const premiumPartners = partners.filter(partner => partner.partnerType === 'PREMIUM').length;
-  const regularPartners = partners.filter(partner => partner.partnerType === 'REGULAR').length;
+  const premiumPartners = partners.filter(partner => partner.partnerType === 'partner').length;
+  const regularPartners = partners.filter(partner => partner.partnerType === 'membership').length;
 
   return (
     <div className="container mx-auto py-10">

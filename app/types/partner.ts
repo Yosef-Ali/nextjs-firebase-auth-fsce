@@ -1,14 +1,19 @@
-export interface Partner {
+import { Timestamp, WithTimestamps } from './index';
+
+export type PartnerType = 'membership' | 'strategic';
+
+export interface Partner extends WithTimestamps {
   id: string;
   name: string;
   email: string;
   phone: string;
-  logo: string;
-  website: string;
-  order: number;
-  partnerType: 'PREMIUM' | 'REGULAR';
-  description: string;
+  website?: string;
+  description?: string;
+  logo?: string;
   position: string;
-  createdAt: Date | number;
-  updatedAt: Date | number;
+  partnerType: PartnerType;
+  order: number;
 }
+
+export type CreatePartnerInput = Omit<Partner, 'id' | 'createdAt' | 'updatedAt'>;
+export type UpdatePartnerInput = Partial<Omit<Partner, 'id' | 'createdAt' | 'updatedAt'>>;

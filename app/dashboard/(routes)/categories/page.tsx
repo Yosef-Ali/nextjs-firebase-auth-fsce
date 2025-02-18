@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { categoriesService } from '@/app/services/categories';
+import { categoryService } from '@/app/services/categories';
 import CategoriesContent from './_components/categories-content';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Category } from '@/app/types/category';
@@ -16,23 +16,16 @@ export default function CategoriesPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       try {
-        setIsLoading(true);
-        const fetchedCategories = await categoriesService.getCategoriesWithItemCount();
-        setCategories(fetchedCategories || []);
+        const fetchedCategories = await categoryService.getCategories();
+        // Add itemCount calculation logic here if needed
+        setCategories(fetchedCategories);
       } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch categories. Please try again later.',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
+        console.error('Error fetching categories:', error);
       }
     };
-
-    fetchCategories();
+    fetchData();
   }, []);
 
   if (isLoading) {

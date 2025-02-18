@@ -14,12 +14,18 @@ const COLLECTION_NAME = 'parents';
 export const parentsService = {
     getParents: async (): Promise<Parent[]> => {
         const querySnapshot = await getDocs(collection(db, COLLECTION_NAME));
-        return querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            createdAt: toTimestamp(doc.data().createdAt),
-            updatedAt: toTimestamp(doc.data().updatedAt)
-        })) as Parent[];
+        return querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                name: data.name,
+                email: data.email,
+                phone: data.phone,
+                children: data.children,
+                createdAt: Timestamp.fromMillis(toTimestamp(data.createdAt)),
+                updatedAt: Timestamp.fromMillis(toTimestamp(data.updatedAt))
+            } as Parent;
+        });
     },
 
     getParentById: async (id: string): Promise<Parent | null> => {
@@ -29,9 +35,12 @@ export const parentsService = {
         const data = docSnap.data();
         return {
             id,
-            ...data,
-            createdAt: toTimestamp(data.createdAt),
-            updatedAt: toTimestamp(data.updatedAt)
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            children: data.children,
+            createdAt: Timestamp.fromMillis(toTimestamp(data.createdAt)),
+            updatedAt: Timestamp.fromMillis(toTimestamp(data.updatedAt))
         } as Parent;
     },
 
@@ -47,8 +56,8 @@ export const parentsService = {
         return {
             id: docRef.id,
             ...data,
-            createdAt: now,
-            updatedAt: now
+            createdAt: Timestamp.fromMillis(now),
+            updatedAt: Timestamp.fromMillis(now)
         };
     },
 

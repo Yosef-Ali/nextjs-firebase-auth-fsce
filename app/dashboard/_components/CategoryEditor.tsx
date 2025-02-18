@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Timestamp } from 'firebase/firestore';
 
 const formSchema = z.object({
   name: z.string().min(2),
@@ -58,13 +59,15 @@ export function CategoryEditor({ category, type, onSave, onCancel }: CategoryEdi
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit((data) => {
+          const now = Timestamp.now();
           const categoryData = {
             ...data,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: category?.createdAt || now,
+            updatedAt: now,
             id: category?.id,
             featured: data.featured || false,
             type: data.type || 'post',
+            slug: data.name.toLowerCase().replace(/\s+/g, '-')
           } as Category;
 
           onSave(categoryData);

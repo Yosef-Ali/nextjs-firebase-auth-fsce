@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Partner } from "@/app/types/partner";
+import { Partner, PartnerType } from "@/app/types/partner";
 import { PartnerForm } from "../../_components/partner-form";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
@@ -96,7 +96,7 @@ export default function EditPartnerPage() {
               description: partner.description,
               logo: partner.logo,
               order: partner.order,
-              partnerType: partner.partnerType
+              partnerType: partner.partnerType as PartnerType
             }}
             partnerId={partner.id}
             onSuccess={() => router.push("/dashboard/partners")}

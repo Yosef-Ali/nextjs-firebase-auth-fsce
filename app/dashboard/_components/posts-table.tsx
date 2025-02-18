@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EditIcon, Trash2Icon } from "lucide-react";
 
-import { format } from 'date-fns';
+import { format, toDate } from 'date-fns';
 import { Card, CardContent } from "@/components/ui/card";
 import { Post } from '@/app/types/post';
 import { getCategoryName } from '@/app/utils/category';
@@ -21,6 +21,14 @@ interface PostTableProps {
   isLoading: boolean;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+}
+
+function compareTimestamps(a: number, b: number) {
+  return b - a;
+}
+
+function sortByDate(a: Post, b: Post) {
+  return compareTimestamps(a.updatedAt.seconds, b.updatedAt.seconds);
 }
 
 export default function PostTable({ posts, isLoading, onEdit, onDelete }: PostTableProps) {
@@ -47,9 +55,7 @@ export default function PostTable({ posts, isLoading, onEdit, onDelete }: PostTa
   const categories = [...new Set(posts.map(post => getCategoryName(post.category)))];
 
   // Sort posts by updatedAt in descending order (newest first)
-  const sortedPosts = [...posts].sort((a, b) => {
-    return b.updatedAt - a.updatedAt;
-  });
+  const sortedPosts = [...posts].sort(sortByDate);
 
   return (
     <div className="space-y-6">
@@ -108,7 +114,7 @@ export default function PostTable({ posts, isLoading, onEdit, onDelete }: PostTa
                 </span>
               </TableCell>
               <TableCell className="text-muted-foreground">
-                {format(post.updatedAt, 'MMM d, yyyy')}
+                {format(post.updatedAt.toDate(), 'MMM d, yyyy')}
               </TableCell>
               <TableCell className="text-right space-x-2">
                 <Button

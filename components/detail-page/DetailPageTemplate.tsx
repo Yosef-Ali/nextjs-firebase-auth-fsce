@@ -2,12 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
-
-interface Author {
-  name: string;
-  email?: string;
-  avatar?: string;
-}
+import { Author } from "@/app/types/author";
 
 export interface DetailPageProps {
   title: string;
@@ -175,12 +170,10 @@ export default function DetailPageTemplate({
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Author</h3>
                 <div className="flex items-center gap-4">
-                  {author.avatar && (
+                  {author.image && (
                     <Avatar>
-                      <AvatarImage src={author.avatar} />
-                      <AvatarFallback>
-                        {author.name.charAt(0)}
-                      </AvatarFallback>
+                      <AvatarImage src={author.image} />
+                      <AvatarFallback>{author.name}</AvatarFallback>
                     </Avatar>
                   )}
                   <div>
