@@ -26,7 +26,7 @@ export default function ResourcesContent({
       <DataTable
         columns={tableColumns}
         data={resources}
-        searchKey="title"
+        searchKey="title" // Make sure this matches an accessorKey in your columns definition
       />
     </div>
   );

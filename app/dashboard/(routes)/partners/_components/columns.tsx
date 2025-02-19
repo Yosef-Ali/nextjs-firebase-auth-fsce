@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 import { Partner } from "@/types";
 import { Badge } from "@/components/ui/badge";
+import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 
 const isValidUrl = (urlString: string) => {
   try {
@@ -17,7 +18,9 @@ const isValidUrl = (urlString: string) => {
 export const columns: ColumnDef<Partner>[] = [
   {
     accessorKey: "name",
-    header: "Name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Name" />
+    ),
     cell: ({ row }) => {
       const partner = row.original;
       return (
@@ -29,13 +32,10 @@ export const columns: ColumnDef<Partner>[] = [
               className="h-10 w-10 object-contain rounded-md"
             />
           )}
-          <div>
-            <div className="font-medium">{partner.name}</div>
-            <div className="text-sm text-muted-foreground">{partner.email}</div>
-          </div>
+          <div>{partner.name}</div>
         </div>
       );
-    },
+    }
   },
   {
     accessorKey: "partnerType",

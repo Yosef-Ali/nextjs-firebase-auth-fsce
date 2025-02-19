@@ -17,14 +17,15 @@ const ExampleDialog: React.FC<ExampleDialogProps> = () => {
   return (
     <DialogRoot>
       <DialogTrigger asChild>
-        <Button variant="outline">Open Dialog</Button>
+        <Button>Open Dialog</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Dialog Title Here</DialogTitle>
-          <DialogDescription>Dialog description goes here</DialogDescription>
+          <DialogTitle className="sr-only">
+            Accessible Title
+          </DialogTitle>
+          {/* Your visible content */}
         </DialogHeader>
-        {/* Rest of your dialog content */}
       </DialogContent>
     </DialogRoot>
   )

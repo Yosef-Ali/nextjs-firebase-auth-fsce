@@ -1,7 +1,10 @@
+export type CategoryType = 'post' | 'resource';
+
 export interface Category {
   id: string;
   name: string;
-  type: 'post' | 'resource';
+  description?: string;
+  type: CategoryType;
   featured: boolean;
   itemCount?: number;
   createdAt: Date;

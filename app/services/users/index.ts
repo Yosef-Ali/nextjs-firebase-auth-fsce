@@ -1,9 +1,9 @@
-import { User as FirebaseUser } from "firebase/auth";
-import { User, UserRole, UserStatus } from "@/app/types/user";
-import { userCoreService } from "./core";
-import { userAuthService } from "./auth";
-import { userInvitationService } from "./invitation";
+import { User as FirebaseUser } from 'firebase/auth';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { User, UserRole, UserStatus } from '@/app/types/user';
 
+<<<<<<< HEAD
 // Create functional service methods
 const createUserIfNotExists = async (firebaseUser: FirebaseUser): Promise<User | null> => {
   if (!firebaseUser?.uid) {
@@ -94,3 +94,36 @@ export const usersService = {
   acceptAuthorInvitation: userInvitationService.acceptAuthorInvitation,
   updateUserRoleBasedOnAdminEmails: userInvitationService.updateUserRoleBasedOnAdminEmails
 } as const;
+=======
+class UsersService {
+  async createUserIfNotExists(firebaseUser: FirebaseUser): Promise<User | null> {
+    try {
+      const userRef = doc(db, 'users', firebaseUser.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists()) {
+        return userDoc.data() as User;
+      }
+
+      const newUser: User = {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email || '',
+        displayName: firebaseUser.displayName || '',
+        photoURL: firebaseUser.photoURL || '',
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+
+      await setDoc(userRef, newUser);
+      return newUser;
+    } catch (error) {
+      console.error('Error in createUserIfNotExists:', error);
+      return null;
+    }
+  }
+}
+
+export const usersService = new UsersService();
+>>>>>>> 0ac669c9da1dc61df8e252f524d3c0989853c511
