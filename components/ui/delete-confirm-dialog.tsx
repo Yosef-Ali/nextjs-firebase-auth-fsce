@@ -29,16 +29,21 @@ export function DeleteConfirmDialog({
 }: DeleteConfirmDialogProps) {
     return (
         <Dialog open={open} onOpenChange={isLoading ? undefined : onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>{title}</DialogTitle>
-                    <DialogDescription>{description}</DialogDescription>
+            <DialogContent className="gap-6 p-6">
+                <DialogHeader className="gap-3">
+                    <DialogTitle className="text-xl font-semibold leading-6">
+                        {title}
+                    </DialogTitle>
+                    <DialogDescription className="text-base text-muted-foreground">
+                        {description}
+                    </DialogDescription>
                 </DialogHeader>
-                <DialogFooter>
+                <DialogFooter className="gap-2 sm:gap-0">
                     <Button
                         variant="outline"
                         onClick={() => onOpenChange(false)}
                         disabled={isLoading}
+                        className="mt-2 sm:mt-0"
                     >
                         Cancel
                     </Button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { ColumnDef } from '@/components/ui/data-table';
+import { ColumnDef } from '@tanstack/react-table';
 import { ProgramOffice } from '@/app/types/program-office';
 import { CellAction } from './cell-action';
 

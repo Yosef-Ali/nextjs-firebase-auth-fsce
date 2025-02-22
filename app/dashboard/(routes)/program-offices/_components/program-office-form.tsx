@@ -19,10 +19,10 @@ import {
 } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
 import { Heading } from '@/components/ui/heading';
-import { AlertModal } from '@/components/modals/alert-modal';
 import { ProgramOffice } from '@/app/types/program-office';
 import { programOfficesService } from '@/app/services/program-offices';
 import { Textarea } from '@/components/ui/textarea';
+import { DeleteConfirmDialog } from './delete-confirm-dialog';
 
 const formSchema = z.object({
   region: z.string().min(1),
@@ -92,10 +92,45 @@ export const ProgramOfficeForm: React.FC<ProgramOfficeFormProps> = ({
     }
   };
 
+  const onDelete = async () => {
+    try {
+      setLoading(true);
+      if (initialData) {
+        await programOfficesService.deleteProgramOffice(initialData.id);
+        router.refresh();
+        router.push(`/dashboard/program-offices`);
+        toast.success('Program office deleted.');
+      }
+    } catch (error: any) {
+      toast.error('Something went wrong.');
+    } finally {
+      setLoading(false);
+      setOpen(false);
+    }
+  };
+
   return (
     <>
+      <DeleteConfirmDialog
+        open={open}
+        onOpenChange={setOpen}
+        onConfirm={onDelete}
+        isLoading={loading}
+        title="Delete Program Office"
+        description={`Are you sure you want to delete this program office? This action cannot be undone.`}
+      />
       <div className="flex items-center justify-between">
         <Heading title={title} description={description} />
+        {initialData && (
+          <Button
+            disabled={loading}
+            variant="destructive"
+            size="sm"
+            onClick={() => setOpen(true)}
+          >
+            <Trash className="w-4 h-4" />
+          </Button>
+        )}
       </div>
       <Separator />
       <Form {...form}>
@@ -186,10 +221,10 @@ export const ProgramOfficeForm: React.FC<ProgramOfficeFormProps> = ({
                 <FormItem className="col-span-2">
                   <FormLabel>Programs (one per line)</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      disabled={loading} 
+                    <Textarea
+                      disabled={loading}
                       placeholder="Enter programs (one per line)"
-                      {...field} 
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />

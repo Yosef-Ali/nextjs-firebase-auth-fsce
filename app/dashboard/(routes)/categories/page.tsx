@@ -141,9 +141,7 @@ export default function CategoriesPage() {
           </div>
 
           {/* Categories Table */}
-          <Card>
-            <CategoriesContent initialCategories={categories} />
-          </Card>
+          <CategoriesContent initialCategories={categories} />
         </div>
       </div>
 
