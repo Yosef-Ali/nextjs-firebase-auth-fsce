@@ -8,7 +8,7 @@ import { useCallback, useState, useEffect } from 'react'
 import { Upload, X, ImageIcon } from 'lucide-react'
 import { useDropzone } from 'react-dropzone'
 import { cn } from "@/lib/utils"
-import { useAuth } from "@/app/providers/AuthProvider"
+import { useAuth } from "@/lib/hooks/useAuth"
 import { toast } from "@/components/ui/use-toast"
 
 interface ImageUploadCardProps {
@@ -66,7 +66,7 @@ export default function ImageUploadCard({ type, aspectRatio, onImageUpload, init
       const url = await getDownloadURL(snapshot.ref)
       setPreview(url)
       onImageUpload(url)
-      
+
       toast({
         title: "Success",
         description: "Image uploaded successfully"

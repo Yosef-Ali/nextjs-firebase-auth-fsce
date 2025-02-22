@@ -62,7 +62,7 @@ export const PartnerCellAction: React.FC<PartnerCellActionProps> = ({ data }) =>
       label: "Delete",
       icon: <Trash className="mr-2 h-4 w-4" />,
       onClick: () => setOpen(true),
-      variant: "destructive"
+      variant: "destructive" as const  // Fixed the variant type by adding 'as const'
     }
   ];
 

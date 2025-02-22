@@ -1,25 +1,53 @@
 'use client';
 
-import Auth from '@/components/Auth';
-import AuthRedirectHandler from '@/components/auth/AuthRedirectHandler';
+import { useAuthContext } from '@/app/lib/firebase/context';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { Logo } from '@/components/Logo';
-import { AuthProvider } from '@/app/providers/AuthProvider';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Icons } from '@/components/icons';
+import { LoadingScreen } from '@/components/loading-screen';
 
 export default function LoginPage() {
+  const { user, loading, signInWithGoogle } = useAuthContext();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user) {
+      router.replace('/dashboard');
+    }
+  }, [user, router]);
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   return (
-    <AuthProvider>
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div className="flex flex-col items-center">
-            <Logo className="h-12 w-auto" />
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Sign in to your account
-            </h2>
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="max-w-md w-full">
+        <CardHeader className="space-y-2 flex flex-col items-center">
+          <Logo className="h-12 w-auto" />
+          <CardTitle className="text-2xl font-bold">Sign in to your account</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4">
+            <Button
+              onClick={() => signInWithGoogle()}
+              variant="outline"
+              className="w-full"
+            >
+              <Icons.google className="mr-2 h-4 w-4" />
+              Continue with Google
+            </Button>
           </div>
-          <Auth />
-          <AuthRedirectHandler />
-        </div>
-      </div>
-    </AuthProvider>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

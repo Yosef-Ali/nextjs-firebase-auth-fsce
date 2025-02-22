@@ -163,79 +163,79 @@ const UserTable = ({
           <TableBody>
             {isLoading
               ? Array.from({ length: 5 }).map((_, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <div className="flex items-center space-x-4">
-                        <Skeleton className="w-12 h-12 rounded-full" />
-                        <div className="space-y-2">
-                          <Skeleton className="h-4 w-[200px]" />
-                          <Skeleton className="h-4 w-[150px]" />
-                        </div>
+                <TableRow key={index}>
+                  <TableCell>
+                    <div className="flex items-center space-x-4">
+                      <Skeleton className="w-12 h-12 rounded-full" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-[200px]" />
+                        <Skeleton className="h-4 w-[150px]" />
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-[100px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-[100px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-8 w-[50px]" />
-                    </TableCell>
-                  </TableRow>
-                ))
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-[100px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-[100px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-8 w-[50px]" />
+                  </TableCell>
+                </TableRow>
+              ))
               : users.map((user) => (
-                  <TableRow key={user.uid}>
-                    <TableCell>
-                      <div className="flex items-center space-x-4">
-                        {user.photoURL ? (
-                          <img
-                            src={user.photoURL}
-                            alt=""
-                            className="w-12 h-12 rounded-full"
-                          />
-                        ) : (
-                          <div className="flex items-center justify-center w-12 h-12 bg-gray-200 rounded-full">
-                            <UserIcon className="w-6 h-6 text-gray-500" />
-                          </div>
-                        )}
-                        <div>
-                          <div className="font-medium">
-                            {user.displayName || "No name"}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {user.email}
-                          </div>
+                <TableRow key={user.uid}>
+                  <TableCell>
+                    <div className="flex items-center space-x-4">
+                      {user.photoURL ? (
+                        <img
+                          src={user.photoURL}
+                          alt=""
+                          className="w-12 h-12 rounded-full"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center w-12 h-12 bg-gray-200 rounded-full">
+                          <UserIcon className="w-6 h-6 text-gray-500" />
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-medium">
+                          {user.displayName || "No name"}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {user.email}
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          user.role === UserRole.ADMIN
-                            ? "destructive"
-                            : "default"
-                        }
-                      >
-                        {user.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          user.status === UserStatus.ACTIVE
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {user.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {renderActions(user)}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        user.role === UserRole.ADMIN
+                          ? "destructive"
+                          : "default"
+                      }
+                    >
+                      {user.role}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        user.status === UserStatus.ACTIVE
+                          ? "default"
+                          : "secondary"
+                      }
+                    >
+                      {user.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {renderActions(user)}
+                  </TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </div>

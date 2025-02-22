@@ -3,7 +3,7 @@
 import React from 'react';
 
 
-import { FacebookIcon, TwitterIcon, GithubIcon, InstagramIcon, HomeIcon, EmailIcon, TelephoneIcon, FaxIcon,} from '@/app/icons';
+import { FacebookIcon, TwitterIcon, GithubIcon, InstagramIcon, HomeIcon, EmailIcon, TelephoneIcon, FaxIcon, } from '@/app/icons';
 import { Logo } from './Logo';
 
 
@@ -20,7 +20,7 @@ interface FooterNavSection {
 
 
 
-const Footer: React.FC = () => {
+export function Footer() {
   const footerNavs: FooterNavSection[] = [
     {
       label: "Home",
@@ -209,5 +209,3 @@ const Footer: React.FC = () => {
     </footer>
   )
 }
-
-export default Footer

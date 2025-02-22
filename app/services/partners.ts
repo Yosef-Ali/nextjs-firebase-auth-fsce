@@ -1,5 +1,5 @@
 import { Partner } from '@/app/types/partner';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase/index';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 
 export const partnersService = {

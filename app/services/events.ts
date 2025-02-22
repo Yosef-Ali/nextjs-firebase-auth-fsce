@@ -1,4 +1,4 @@
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase/index';
 import { Post } from '@/app/types/post';
 import {
   collection,

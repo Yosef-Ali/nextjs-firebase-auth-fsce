@@ -5,23 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { doc, setDoc, collection, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/app/lib/firebase';
 import { AboutContent } from '@/app/types/about';
-import { useAuth } from '@/app/providers/AuthProvider';
-import { AppUser } from '@/app/types/user';
+import { useAuthContext } from '@/app/lib/firebase/context';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Authorization } from '@/app/lib/authorization';
 import { UserRole } from '@/app/types/user';
-import { User } from 'firebase/auth';
-import { User as AppUserType } from '@/app/types/user';
-
-// Add this interface to merge AppUser and Firebase User types
-interface MergedUser extends Omit<User, keyof AppUser>, AppUser { }
 
 interface AboutSectionFormProps {
-  initialData?: AboutContent;
-  section: 'vision' | 'mission' | 'values';
+  initialData: AboutContent | null;
+  section: string;
   onSuccess?: () => void;
 }
 
@@ -34,7 +28,7 @@ export default function AboutSectionForm({
   const [authError, setAuthError] = useState<string | null>(null);
   const { toast } = useToast();
   const [content, setContent] = useState(initialData?.content || '');
-  const { user, loading: authLoading } = useAuth() as { user: AppUser | null; loading: boolean };
+  const { user, userData, loading: authLoading } = useAuthContext();
 
   // If authentication is still loading, show a loading indicator
   if (authLoading) {
@@ -45,182 +39,67 @@ export default function AboutSectionForm({
     );
   }
 
-  // Update the authContext creation
-  const authContext = Authorization.createContext(
-    user ? {
-      ...user,
-      uid: user.uid,
-      email: user.email,
-      displayName: user.displayName,
-      photoURL: user.photoURL,
-      emailVerified: user.emailVerified || false,
-      isAnonymous: user.isAnonymous || false,
-      tenantId: null,
-      phoneNumber: null,
-      providerId: 'firebase',
-      metadata: {
-        creationTime: user.createdAt?.toString() || '',
-        lastSignInTime: user.metadata?.lastLogin?.toString() || ''
-      },
-      providerData: user.providerData || [],
-      refreshToken: '',
-      getIdToken: () => Promise.resolve(''),
-      getIdTokenResult: () => Promise.resolve({
-        token: '',
-        signInProvider: null,
-        claims: {},
-        authTime: '',
-        issuedAtTime: '',
-        expirationTime: '',
-      }),
-      reload: () => Promise.resolve(),
-      delete: () => Promise.resolve(),
-      toJSON: () => ({}),
-    } as unknown as User : null,
-    initialData?.authorId
-  );
+  // Create auth context
+  const authContext = Authorization.createContext(user);
 
-  const sectionDetails = {
-    vision: {
-      title: 'Our Vision',
-      placeholder: "Describe your organization's long-term vision and aspirations...",
-      hint: "State your organization's aspirational future and long-term impact."
-    },
-    mission: {
-      title: 'Our Mission',
-      placeholder: "Explain your organization's purpose and how you achieve your goals...",
-      hint: "Define your organization's purpose and how you work to achieve it."
-    },
-    values: {
-      title: 'Our Values',
-      placeholder: "List your organization's core values and principles...",
-      hint: "List the core principles that guide your organization's actions and decisions."
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setAuthError(null);
 
     try {
       // Check authorization
-      if (!Authorization.canAccess(authContext, UserRole.USER)) {
-        throw new Error('Unauthorized: You do not have permission to modify this content.');
+      if (!Authorization.getInstance().hasRole(userData, UserRole.ADMIN)) {
+        throw new Error('Unauthorized: Admin access required');
       }
 
-      const docRef = initialData?.id
-        ? doc(db, 'about', initialData.id)
-        : doc(collection(db, 'about'));
-
-      await setDoc(docRef, {
-        title: sectionDetails[section].title,
+      const aboutRef = doc(collection(db, 'about'), section);
+      await setDoc(aboutRef, {
         content,
-        section,
-        category: 'about',
-        published: true,
-        createdBy: initialData?.authorId || user?.uid,
-        updatedBy: user?.uid,
         updatedAt: Timestamp.now(),
-        ...(initialData ? {} : {
-          createdAt: Timestamp.now(),
-          createdBy: user?.uid
-        })
+        updatedBy: user?.uid
       }, { merge: true });
 
       toast({
         title: 'Success',
-        description: `${sectionDetails[section].title} has been ${initialData ? 'updated' : 'created'} successfully.`,
+        description: 'Content updated successfully',
       });
 
       onSuccess?.();
     } catch (error) {
-      console.error('Error saving content:', error);
-      setAuthError(
-        error instanceof Error
-          ? error.message
-          : 'An error occurred while saving the content. Please try again.'
-      );
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update content';
+      setAuthError(errorMessage);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: errorMessage
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // If not authorized, show a restricted access message
-  if (!Authorization.canAccess(authContext, UserRole.USER)) {
-    return (
-      <div className="space-y-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Access Restricted</AlertTitle>
-          <AlertDescription>
-            {Authorization.isAdmin(user)
-              ? 'Unable to verify admin credentials.'
-              : 'You do not have permission to modify this content. Only administrators or original creators can edit.'}
-          </AlertDescription>
-        </Alert>
-
-        {/* Disable form inputs to prevent any interaction */}
-        <div className="opacity-50 pointer-events-none">
-          <Textarea
-            placeholder={sectionDetails[section].placeholder}
-            value={content}
-            onChange={() => { }}
-            className="min-h-[200px] resize-none"
-            disabled
-          />
-          <p className="text-sm text-muted-foreground mt-2">
-            {sectionDetails[section].hint}
-          </p>
-        </div>
-
-        <Button
-          variant="outline"
-          disabled
-          className="w-full"
-        >
-          Access Denied
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {authError && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Authorization Error</AlertTitle>
+          <AlertTitle>Error</AlertTitle>
           <AlertDescription>{authError}</AlertDescription>
         </Alert>
       )}
 
-      <div className="space-y-2">
-        <Textarea
-          placeholder={sectionDetails[section].placeholder}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          className="min-h-[200px] resize-none"
-          required
-        />
-        <p className="text-sm text-muted-foreground">
-          {sectionDetails[section].hint}
-        </p>
-      </div>
+      <Textarea
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        placeholder="Enter content..."
+        className="min-h-[200px]"
+      />
 
-      <div className="flex justify-end">
-        <Button
-          type="submit"
-          disabled={loading}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (initialData ? 'Update' : 'Create')}
-        </Button>
-      </div>
+      <Button type="submit" disabled={loading}>
+        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        Save Changes
+      </Button>
     </form>
   );
 }

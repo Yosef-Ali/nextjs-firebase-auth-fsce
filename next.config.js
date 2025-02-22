@@ -1,9 +1,33 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Don't bundle server-only modules on client-side
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        os: false,
+        child_process: false,
+        net: false,
+        tls: false,
+        crypto: require.resolve('crypto-browserify'),
+        stream: require.resolve('stream-browserify'),
+        http: require.resolve('stream-http'),
+        https: require.resolve('https-browserify'),
+        zlib: require.resolve('browserify-zlib')
+      };
+    }
+    return config;
+  },
   images: {
     domains: [
+      'uploadthing.com',
+      'utfs.io',
+      'img.clerk.com',
+      'subdomain',
+      'files.stripe.com',
       'firebasestorage.googleapis.com',
       // add other image domains you're using
     ],

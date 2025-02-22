@@ -1,3 +1,6 @@
+import { Navigation } from '@/components/Navigation';
+import { Footer } from '@/components/footer';
+
 export default function MarketingLayout({
   children,
 }: {
@@ -13,6 +16,3 @@ export default function MarketingLayout({
     </div>
   );
 }
-
-import Navigation from '@/components/Navigation';
-import Footer from '@/components/footer';

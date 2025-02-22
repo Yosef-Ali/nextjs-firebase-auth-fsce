@@ -1,10 +1,10 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { CellAction } from "./cell-action";
 import { Partner } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { PartnerCellAction } from "./cell-action";
 
 const isValidUrl = (urlString: string) => {
   try {
@@ -26,9 +26,9 @@ export const columns: ColumnDef<Partner>[] = [
       return (
         <div className="flex items-center gap-2">
           {partner.logo && (
-            <img 
-              src={partner.logo} 
-              alt={partner.name} 
+            <img
+              src={partner.logo}
+              alt={partner.name}
               className="h-10 w-10 object-contain rounded-md"
             />
           )}
@@ -55,11 +55,11 @@ export const columns: ColumnDef<Partner>[] = [
     cell: ({ row }) => {
       const website = row.getValue("website") as string;
       if (!website || !isValidUrl(website)) return null;
-      
+
       try {
         const url = new URL(website);
         return (
-          <a 
+          <a
             href={website}
             target="_blank"
             rel="noopener noreferrer"
@@ -79,6 +79,6 @@ export const columns: ColumnDef<Partner>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => <CellAction data={row.original} />,
+    cell: ({ row }) => <PartnerCellAction data={row.original} />,
   },
 ];

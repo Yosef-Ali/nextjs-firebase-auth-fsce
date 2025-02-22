@@ -2,7 +2,7 @@
 
 import { useRouter, useParams } from 'next/navigation';
 import { PostEditor } from '@/app/dashboard/_components/posts/PostEditor';
-import { useAuth } from '@/app/providers/AuthProvider';
+import { useAuth } from "@/lib/hooks/useAuth";
 import { useEffect, useState } from 'react';
 import { Post } from '@/app/types/post';
 import { doc, getDoc, Timestamp } from 'firebase/firestore';

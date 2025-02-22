@@ -1,46 +1,47 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuthContext } from '@/lib/firebase/context';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ShieldAlert } from 'lucide-react';
+import { UserRole } from '@/app/types/user';
 
 export default function UnauthorizedPage() {
-  const { user, userData } = useAuth();
+  const { user, userData } = useAuthContext();
   const router = useRouter();
 
+  const handleBack = () => {
+    if (user) {
+      router.push('/dashboard');
+    } else {
+      router.push('/sign-in');
+    }
+  };
+
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <div className="w-full max-w-md px-6 py-8 bg-white rounded-lg shadow-md">
-        <div className="flex flex-col items-center space-y-4 text-center">
-          <div className="p-3 bg-red-100 rounded-full">
-            <ShieldAlert className="w-6 h-6 text-red-600" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Access Denied</h1>
-          <p className="text-gray-600">
-            Sorry, you don't have permission to access the dashboard. Only
-            administrators and authors can access this area.
-          </p>
-          <p className="text-sm text-gray-500">
-            Current role: {userData?.role || "No role assigned"}
-          </p>
-          <div className="flex flex-col w-full gap-2">
-            <Button
-              variant="outline"
-              onClick={() => router.push("/")}
-              className="flex items-center justify-center w-full gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Return to Home
-            </Button>
-            {user && (
-              <p className="mt-2 text-sm text-gray-500">
-                If you believe this is a mistake, please contact an
-                administrator.
-              </p>
-            )}
-          </div>
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="text-center space-y-6">
+        <div className="flex justify-center">
+          <ShieldAlert className="h-24 w-24 text-destructive" />
         </div>
+        <h1 className="text-3xl font-bold tracking-tight">Unauthorized Access</h1>
+        <div className="space-y-2">
+          <p className="text-muted-foreground max-w-[400px]">
+            You don&apos;t have permission to access this page.
+          </p>
+          {userData && (
+            <p className="text-sm text-muted-foreground">
+              Your current role: <span className="font-medium">{userData.role}</span>
+            </p>
+          )}
+          <p className="text-sm text-muted-foreground">
+            Please contact an administrator if you believe this is an error.
+          </p>
+        </div>
+        <Button onClick={handleBack} variant="outline">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Go Back to {user ? 'Dashboard' : 'Sign In'}
+        </Button>
       </div>
     </div>
   );

@@ -1,8 +1,6 @@
 # Firebase Authentication Interaction Overview
 
-## Firebase Packages and Versions
-
-### Core Dependencies
+## Core Dependencies
 ```json
 {
   "dependencies": {
@@ -16,107 +14,71 @@
 }
 ```
 
-### Client-Side Firebase Modules
-- `@firebase/app`: Core Firebase functionality
-- `@firebase/auth`: Authentication features
-- `@firebase/firestore`: Firestore database operations
-- `@firebase/storage`: File storage capabilities (optional)
+## Authentication Components
 
-### Server-Side Firebase Modules
-- `firebase-admin`: Admin SDK for privileged access
-- `firebase-functions`: Cloud Functions implementation
-
-### Development Dependencies
-```json
-{
-  "devDependencies": {
-    "firebase-tools": "^12.9.1",
-    "@types/firebase": "^3.2.1"
-  }
-}
-```
-
-## 1. Firebase Initialization
-
-### Server-Side (Admin SDK)
+### 1. Firebase Context (`lib/firebase/context.tsx`)
 ```typescript
-// functions/src/users.ts
-admin.initializeApp();
-const auth = admin.auth();
-const db = admin.firestore();
-```
-
-## 2. User Management Functions
-
-### User Creation
-- Triggered on new user signup
-- Creates Firestore user document
-- Sets default role and timestamps
-
-```typescript
-// functions/src/users.ts
-export const onNewUserCreated = onUserCreated(async (event) => {
-  const user = event.data;
-  const userData = {
-    uid: user.uid,
-    email: user.email,
-    role: 'user',
-    createdAt: admin.firestore.FieldValue.serverTimestamp()
-  };
-  await db.collection('users').doc(user.uid).set(userData);
-});
-```
-
-## 3. User Service Layer
-
-Key functionalities:
-- User data retrieval
-- User creation/updates
-- Role management
-- Profile updates
-
-## 4. Authentication Context
-
-Provides:
-- Current user state
-- Loading state
-- Authentication methods
-- Role-based access control
-
-```typescript
-// app/context/AuthContext.tsx
 interface AuthContextType {
   user: User | null;
+  userData: UserData | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<User | null>;
-  signInWithEmail: (email: string, password: string) => Promise<User | null>;
-  signUpWithEmail: (email: string, password: string) => Promise<User | null>;
-  logout: () => Promise<void>;
+  error: Error | null;
+}
+
+export const useAuthContext = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuthContext must be used within an AuthProvider');
+  }
+  return context;
 }
 ```
 
-## 5. Authentication Flow
+### 2. Protected Routes
+```typescript
+// Using the withAuth HOC
+const ProtectedPage = withAuth(BaseComponent, UserRole.ADMIN);
 
-### Sign-Up Process
-1. User submits registration form
-2. Firebase creates authentication record
-3. Cloud Function triggers user document creation
-4. User receives verification email
+// Direct usage in components
+function ProtectedComponent() {
+  const { user, userData, loading } = useAuthContext();
+  
+  if (loading) return <LoadingScreen />;
+  if (!user) return <UnauthorizedPage />;
+  
+  return <Component />;
+}
+```
 
-### Sign-In Process
-1. User submits credentials
-2. Firebase validates authentication
-3. Application loads user data
-4. Context updates with user state
+## Authentication Flow
 
-### Session Management
-- Persistent sessions using Firebase
-- Automatic token refresh
-- Secure state management
+### 1. Application Initialization
+```typescript
+// Root layout wrapping
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      {children}
+    </AuthProvider>
+  );
+}
+```
 
-## 6. Security Implementation
+### 2. User Authentication
+- Single source of truth via AuthContext
+- Real-time auth state updates
+- Consistent loading states
+- Type-safe user data
 
-### Firestore Rules
+### 3. Route Protection
+- Centralized withAuth HOC
+- Role-based access control
+- Unified unauthorized handling
+- Loading state management
+
+## Security Implementation
+
+### 1. Firestore Rules
 ```javascript
 rules_version = '2';
 service cloud.firestore {
@@ -132,45 +94,99 @@ service cloud.firestore {
 }
 ```
 
-### Protected Routes
+### 2. Role Management
 ```typescript
-// Example protected route component
-'use client';
+const ROLE_HIERARCHY = {
+  [UserRole.SUPER_ADMIN]: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.AUTHOR, UserRole.EDITOR, UserRole.USER],
+  [UserRole.ADMIN]: [UserRole.ADMIN, UserRole.AUTHOR, UserRole.EDITOR, UserRole.USER],
+  [UserRole.AUTHOR]: [UserRole.AUTHOR, UserRole.EDITOR, UserRole.USER],
+  [UserRole.EDITOR]: [UserRole.EDITOR, UserRole.USER],
+  [UserRole.USER]: [UserRole.USER],
+  [UserRole.GUEST]: [UserRole.GUEST]
+};
+```
 
-function ProtectedPage() {
-  const { user, loading } = useAuthContext();
+## Error Handling
 
-  if (loading) return <LoadingScreen />;
-  if (!user) return <UnauthorizedMessage />;
-  
-  return <ProtectedContent />;
+### 1. Authentication Errors
+```typescript
+try {
+  await authOperation();
+} catch (error) {
+  // Typed error handling
+  if (error instanceof AuthError) {
+    handleAuthError(error);
+  }
 }
 ```
 
-## 7. Role-Based Access Control
+### 2. Route Protection Errors
+- Unauthorized access redirects
+- Role-based access denials
+- Loading state handling
 
-### User Roles
-- `admin`: Full system access
-- `author`: Content management access
-- `user`: Basic access rights
+## Best Practices
 
-### Role Assignment
-```typescript
-const isAdmin = email && Authorization.getAdminEmails().includes(email.toLowerCase());
-const role = isAdmin ? 'admin' : 'user';
-```
+### 1. State Management
+- Use useAuthContext hook
+- Handle loading states
+- Type-safe operations
+- Error boundaries
 
-## 8. Email Service Integration
+### 2. Component Structure
+- Clean separation of concerns
+- Consistent loading UI
+- Error handling patterns
+- Type-safe props
 
-Handles:
-- Welcome emails
-- Password reset
-- Email verification
-- Role update notifications
+### 3. Security
+- Role-based access
+- Real-time auth state
+- Secure routes
+- Clean error handling
 
-## 9. Environment Configuration
+## Testing Considerations
 
-Required variables in `.env.local`:
+### 1. Unit Tests
+- Auth context behavior
+- Protected route logic
+- Role management
+- Error scenarios
+
+### 2. Integration Tests
+- Full auth flows
+- Route protection
+- User permissions
+- Loading states
+
+### 3. E2E Testing
+- Authentication flow
+- Protected routes
+- Error handling
+- User experience
+
+## Development Guidelines
+
+### 1. Code Organization
+- Centralized auth logic
+- Clean file structure
+- Clear responsibilities
+- Consistent patterns
+
+### 2. Error Management
+- Proper error types
+- User-friendly messages
+- Error recovery
+- Logging strategy
+
+### 3. Performance
+- Optimized auth checks
+- Efficient role management
+- Clean re-renders
+- State caching
+
+## Environment Setup
+Required in `.env.local`:
 ```
 NEXT_PUBLIC_FIREBASE_API_KEY=
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
@@ -178,46 +194,4 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
-```
-
-## 10. Error Handling
-
-- Authentication errors
-- Permission errors
-- Network issues
-- Invalid tokens
-
-## 11. Best Practices
-
-1. Security
-   - Never expose sensitive credentials
-   - Implement proper role checks
-   - Use secure session management
-
-2. Performance
-   - Optimize authentication state updates
-   - Cache user data appropriately
-   - Minimize database reads
-
-3. User Experience
-   - Clear error messages
-   - Loading states
-   - Proper redirects
-   - Session persistence
-
-## 12. Testing Considerations
-
-1. Unit Tests
-   - Authentication methods
-   - Role checks
-   - Protected routes
-
-2. Integration Tests
-   - Sign-up flow
-   - Sign-in flow
-   - Permission checks
-
-3. E2E Tests
-   - Complete authentication flows
-   - Role-based access scenarios
-   - Error handling
+NEXT_PUBLIC_ADMIN_EMAIL=

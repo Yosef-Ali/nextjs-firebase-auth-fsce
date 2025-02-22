@@ -1,5 +1,5 @@
 import { collection, doc, setDoc, getDocs, query, where } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db } from "@/lib/firebase/index";
 import { User, UserRole, UserStatus } from "../../types/user";
 import { emailService } from "../email";
 import { userCoreService } from "./core";

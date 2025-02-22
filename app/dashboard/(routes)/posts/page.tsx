@@ -8,42 +8,55 @@ import { Post } from '@/app/types/post';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { toast } from '@/hooks/use-toast';
 
 export default function PostsPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadInitialPosts = async () => {
+    const loadPosts = async () => {
       if (!user) return;
-      
+
       try {
-        const allPosts = await postsService.getUserPosts(user.uid);
-        setPosts(allPosts);
+        setLoading(true);
+        setError(null);
+        const fetchedPosts = await postsService.getUserPosts(user.uid);
+        setPosts(fetchedPosts);
       } catch (error) {
         console.error('Error loading posts:', error);
+        setError('Failed to load posts. Please try again.');
+        toast({
+          title: "Error",
+          description: "Failed to load posts",
+          variant: "destructive"
+        });
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
-    loadInitialPosts();
-  }, [user]);
+    if (!authLoading && user) {
+      loadPosts();
+    }
+  }, [user, authLoading]);
 
-  if (!user) {
+  if (loading || authLoading) {
     return (
       <div className="flex justify-center items-center h-[50vh]">
-        <p className="text-muted-foreground">Please log in to view posts</p>
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }
 
-  if (isLoading) {
+  if (error) {
     return (
-      <div className="flex justify-center items-center h-[50vh]">
-        <p className="text-muted-foreground">Loading posts...</p>
+      <div className="flex flex-col items-center justify-center h-[50vh] gap-4">
+        <p className="text-destructive">{error}</p>
+        <Button onClick={() => window.location.reload()}>Try Again</Button>
       </div>
     );
   }

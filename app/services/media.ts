@@ -1,4 +1,4 @@
-import { db, storage } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase/index';
 import { Media, CreateMediaInput, MediaFilter } from '@/app/types/media';
 import {
   collection,

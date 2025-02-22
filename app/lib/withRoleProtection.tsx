@@ -2,32 +2,50 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuthContext } from '@/app/lib/firebase/context';
+import { LoadingScreen } from '@/components/loading-screen';
 import { UserRole } from '@/app/types/user';
-import { Spinner } from '@/components/ui/spinner';
-import { LoadingScreen } from '@/components/loading-screen/LoadingScreen';
+import { Authorization } from './authorization';
 
-export function withRoleProtection(Component: React.ComponentType<any>, requiredRoles: UserRole[]) {
-    return function ProtectedRoute(props: any) {
-        const { userData, loading } = useAuth();
+export function withRoleProtection<P extends object>(
+    Component: React.ComponentType<P>,
+    requiredRoles: UserRole[]
+) {
+    return function ProtectedRoute(props: P) {
+        const { user, userData, loading } = useAuthContext();
         const router = useRouter();
+        const auth = Authorization.getInstance();
 
         useEffect(() => {
-            if (!loading && (!userData || !userData.role || !requiredRoles.includes(userData.role))) {
-                router.replace('/unauthorized');
+            if (!loading) {
+                if (!user || !userData) {
+                    router.replace('/sign-in');
+                    return;
+                }
+
+                // Check if user has any of the required roles
+                const hasRequiredRole = requiredRoles.some(role =>
+                    auth.hasMinimumRole(userData.role, role)
+                );
+
+                if (!hasRequiredRole) {
+                    router.replace('/unauthorized');
+                    return;
+                }
             }
-        }, [userData, loading, router]);
+        }, [user, userData, loading, router, requiredRoles]);
 
         if (loading) {
-            return (
-                <div className="flex items-center justify-center min-h-screen">
-                    <Spinner className="h-32 w-32" />
-                </div>
-            );
+            return <LoadingScreen />;
         }
 
-        if (!userData || !userData.role || !requiredRoles.includes(userData.role)) {
-            return null; // Router will redirect
+        // Check if user has any of the required roles
+        const hasRequiredRole = requiredRoles.some(role =>
+            auth.hasMinimumRole(userData?.role, role)
+        );
+
+        if (!user || !userData || !hasRequiredRole) {
+            return null;
         }
 
         return <Component {...props} />;

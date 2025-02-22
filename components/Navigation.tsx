@@ -1,220 +1,50 @@
 'use client';
 
-import Link from 'next/link';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { Logo } from './Logo';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { Menu, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
-} from '@/components/ui/navigation-menu';
-import { menuItems } from '@/lib/menuItems';
-import { Button } from './ui/button';
+import { useAuthContext } from '@/app/lib/firebase/context';
+import { cn } from "@/lib/utils";
+import { NavigationMenu } from "@/components/ui/navigation-menu";
+import { Button } from "@/components/ui/button";
+import Link from 'next/link';
+import { Logo } from "./Logo";
 
-export default function Navigation() {
-  const { user, signOut } = useAuth();
+export function Navigation() {
   const pathname = usePathname();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
-
-  const isActive = (path: string) => pathname === path;
-  
-  const toggleSubmenu = (title: string) => {
-    setExpandedMenus(prev => 
-      prev.includes(title) 
-        ? prev.filter(item => item !== title)
-        : [...prev, title]
-    );
-  };
-
-  const isSubmenuExpanded = (title: string) => expandedMenus.includes(title);
+  const { user, userData } = useAuthContext();
 
   return (
-    <nav className="fixed top-0 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50 border-b border-border">
-      <div className="container flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 max-w-screen-2xl items-center">
+        <NavigationMenu className="hidden md:flex">
           <Logo />
-        </Link>
-
-        {/* Desktop Navigation */}
-        <div className="hidden md:block">
-          <NavigationMenu>
-            <NavigationMenuList>
-              {menuItems.map((item) => (
-                <NavigationMenuItem key={item.title}>
-                  {item.items ? (
-                    <>
-                      <NavigationMenuTrigger
-                        className={cn(
-                          'text-sm font-medium transition-colors',
-                          isActive(item.href || '') ? 'text-primary' : 'text-foreground/60'
-                        )}
-                      >
-                        {item.title}
-                      </NavigationMenuTrigger>
-                      <NavigationMenuContent>
-                        <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2">
-                          {item.items.map((subItem) => (
-                            <li key={subItem.href}>
-                              <NavigationMenuLink asChild>
-                                <Link
-                                  href={subItem.href}
-                                  className={cn(
-                                    'block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
-                                    isActive(subItem.href) ? 'bg-accent' : ''
-                                  )}
-                                >
-                                  <div className="text-sm font-medium leading-none">
-                                    {subItem.title}
-                                  </div>
-                                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                    {subItem.description}
-                                  </p>
-                                </Link>
-                              </NavigationMenuLink>
-                            </li>
-                          ))}
-                        </ul>
-                      </NavigationMenuContent>
-                    </>
-                  ) : (
-                    <Link
-                      href={item.href || ''}
-                      className={cn(
-                        navigationMenuTriggerStyle(),
-                        'text-sm font-medium transition-colors',
-                        isActive(item.href || '') ? 'text-primary' : 'text-foreground/60'
-                      )}
-                    >
-                      {item.title}
-                    </Link>
-                  )}
-                </NavigationMenuItem>
-              ))}
-            </NavigationMenuList>
-          </NavigationMenu>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          {user ? (
-            <>
-              <Link href="/dashboard/posts" passHref>
+        </NavigationMenu>
+        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+          <div className="w-full flex-1 md:w-auto md:flex-none">
+            {/* Search component can go here */}
+          </div>
+          <nav className="flex items-center space-x-2">
+            {user ? (
+              <Link href="/dashboard">
                 <Button
                   variant="ghost"
-                  className={cn(
-                    'text-sm font-medium hidden md:inline-flex',
-                    isActive('/dashboard/posts') ? 'text-primary' : ''
-                  )}
+                  className="text-foreground/60 hover:text-foreground"
                 >
                   Dashboard
                 </Button>
               </Link>
-              <Button
-                onClick={() => signOut()}
-                variant="ghost"
-                className="text-sm font-medium"
-              >
-                Sign Out
-              </Button>
-            </>
-          ) : (
-            <Link href="/sign-in" passHref>
-              <Button variant="default" size="sm">
-                Sign In
-              </Button>
-            </Link>
-          )}
-          
-          {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1">
-            {menuItems.map((item) => (
-              <div key={item.title} className="space-y-1">
-                {item.items ? (
-                  <>
-                    <button
-                      onClick={() => toggleSubmenu(item.title)}
-                      className={cn(
-                        'w-full flex items-center justify-between px-3 py-2 rounded-md text-base font-medium',
-                        isActive(item.href || '') ? 'bg-accent text-primary' : 'text-foreground/60'
-                      )}
-                    >
-                      <span>{item.title}</span>
-                      <ChevronDown 
-                        className={cn(
-                          'h-4 w-4 transition-transform duration-200',
-                          isSubmenuExpanded(item.title) ? 'transform rotate-180' : ''
-                        )}
-                      />
-                    </button>
-                    {isSubmenuExpanded(item.title) && (
-                      <div className="pl-4 space-y-1">
-                        {item.items.map((subItem) => (
-                          <Link
-                            key={subItem.href}
-                            href={subItem.href}
-                            className={cn(
-                              'block px-3 py-2 rounded-md text-sm font-medium',
-                              isActive(subItem.href) ? 'bg-accent/50 text-primary' : 'text-foreground/60'
-                            )}
-                          >
-                            <div className="font-medium">{subItem.title}</div>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {subItem.description}
-                            </p>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <Link
-                    href={item.href || ''}
-                    className={cn(
-                      'block px-3 py-2 rounded-md text-base font-medium',
-                      isActive(item.href || '') ? 'bg-accent text-primary' : 'text-foreground/60'
-                    )}
-                  >
-                    {item.title}
-                  </Link>
-                )}
-              </div>
-            ))}
-            {user && (
-              <Link
-                href="/dashboard/posts"
-                className={cn(
-                  'block px-3 py-2 rounded-md text-base font-medium',
-                  isActive('/dashboard/posts') ? 'bg-accent text-primary' : 'text-foreground/60'
-                )}
-              >
-                Dashboard
+            ) : (
+              <Link href="/sign-in">
+                <Button
+                  variant="ghost"
+                  className="text-foreground/60 hover:text-foreground"
+                >
+                  Sign In
+                </Button>
               </Link>
             )}
-          </div>
+          </nav>
         </div>
-      )}
-    </nav>
+      </div>
+    </header>
   );
 }

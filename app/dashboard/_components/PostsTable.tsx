@@ -28,23 +28,25 @@ import { useAuth } from '@/lib/hooks/useAuth';
 import { useSearch } from '@/app/context/search-context';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
-import { format } from 'date-fns';
+import { formatDate } from '@/lib/utils';
 import { getCategoryName } from '@/app/utils/category';
 
 interface PostsTableProps {
   initialPosts: Post[];
 }
 
-function PostsTable({ initialPosts }: PostsTableProps) {
+export default function PostsTable({ initialPosts }: PostsTableProps) {
   const { user } = useAuth();
   const router = useRouter();
   const { searchQuery } = useSearch();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [loadingState, setLoadingState] = useState<'idle' | 'loading' | 'error'>('idle');
 
   useEffect(() => {
     if (Array.isArray(initialPosts)) {
       setPosts(initialPosts);
+      setLoadingState('idle');
     }
   }, [initialPosts]);
 
@@ -53,10 +55,10 @@ function PostsTable({ initialPosts }: PostsTableProps) {
 
     try {
       setIsDeleting(true);
-      const deleteResult = await postsService.deletePost(user.uid, postId);
+      const success = await postsService.deletePost(user.uid, postId);
 
-      if (deleteResult) {
-        setPosts(posts.filter(post => post.id !== postId));
+      if (success) {
+        setPosts(currentPosts => currentPosts.filter(post => post.id !== postId));
         toast({
           title: 'Success',
           description: 'Post deleted successfully',
@@ -80,51 +82,64 @@ function PostsTable({ initialPosts }: PostsTableProps) {
     }
   };
 
-  // Filter posts based on search query
   const filteredPosts = useMemo(() => {
     if (!searchQuery) return posts;
 
     const query = searchQuery.toLowerCase();
     return posts.filter((post) => {
+      const categoryName = getCategoryName(post.category)?.toLowerCase() || '';
       return (
         post.title?.toLowerCase().includes(query) ||
         post.excerpt?.toLowerCase().includes(query) ||
         post.content?.toLowerCase().includes(query) ||
-        isPostInCategory(post, query)
+        categoryName.includes(query)
       );
     });
   }, [posts, searchQuery]);
 
+  if (loadingState === 'loading') {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (loadingState === 'error') {
+    return (
+      <div className="text-center py-8 text-destructive">
+        Failed to load posts. Please try again.
+      </div>
+    );
+  }
+
   if (!Array.isArray(posts)) {
-    return <div>Error loading posts</div>;
+    return <div className="text-center py-8 text-destructive">Invalid posts data</div>;
   }
 
   if (filteredPosts.length === 0) {
     if (searchQuery) {
       return (
-        <div className="text-center py-10 text-muted-foreground">
+        <div className="text-center py-8 text-muted-foreground">
           No posts found matching "{searchQuery}"
         </div>
       );
     }
     return (
-      <div className="text-center py-10 text-muted-foreground">
-        No posts found
+      <div className="text-center py-8 text-muted-foreground">
+        No posts found. Create your first post!
       </div>
     );
   }
 
   // Calculate stats
   const totalPosts = posts.length;
-  const publishedPosts = posts.filter(post => post.status === 'published').length;
+  const publishedPosts = posts.filter(post => post.published).length;
   const draftPosts = totalPosts - publishedPosts;
   const uniqueCategories = Array.from(new Set(posts.map(post => getCategoryName(post.category))));
 
-  const isPostInCategory = (post: Post, categoryFilter: string) =>
-    getCategoryName(post.category)?.toLowerCase().includes(categoryFilter.toLowerCase());
-
   // Sort posts with sticky posts first, then by date
-  const sortedPosts = [...posts].sort((a, b) => {
+  const sortedPosts = [...filteredPosts].sort((a, b) => {
     if (a.sticky && !b.sticky) return -1;
     if (!a.sticky && b.sticky) return 1;
     return (b.updatedAt || 0) - (a.updatedAt || 0);
@@ -132,7 +147,6 @@ function PostsTable({ initialPosts }: PostsTableProps) {
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="p-6">
@@ -160,7 +174,6 @@ function PostsTable({ initialPosts }: PostsTableProps) {
         </Card>
       </div>
 
-      {/* Posts Table */}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -208,7 +221,7 @@ function PostsTable({ initialPosts }: PostsTableProps) {
                   </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {format(post.updatedAt, 'MMM d, yyyy')}
+                  {formatDate(post.updatedAt)}
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -229,6 +242,7 @@ function PostsTable({ initialPosts }: PostsTableProps) {
                       <DropdownMenuItem
                         className="text-red-600"
                         onClick={() => handleDelete(post.id)}
+                        disabled={isDeleting}
                       >
                         Delete
                       </DropdownMenuItem>
@@ -243,5 +257,3 @@ function PostsTable({ initialPosts }: PostsTableProps) {
     </div>
   );
 }
-
-export default PostsTable;

@@ -1,107 +1,68 @@
 import { User as FirebaseUser } from "firebase/auth";
-import { User, UserRole, UserStatus } from "@/app/types/user";
+import { UserRole, UserStatus, UserData } from "@/app/types/user";
 import { userCoreService } from "./users/core";
 import { userAuthService } from "./users/auth";
 import { userInvitationService } from "./users/invitation";
 
-// User service methods as pure functions
-const createUserIfNotExists = async (firebaseUser: FirebaseUser) =>
-  userCoreService.createUserIfNotExists(firebaseUser);
+export const usersService = {
+  // Core user operations
+  createUserIfNotExists: (firebaseUser: FirebaseUser) =>
+    userCoreService.createUserIfNotExists(firebaseUser),
 
-const inviteUser = async (adminEmail: string, targetEmail: string, role: UserRole) => {
-  try {
-    const result = await userInvitationService.inviteUser(adminEmail, targetEmail, role);
-    if (result.success) {
-      return { success: true };
-    }
-    if (result.existingUser) {
-      return {
-        success: false,
-        existingUser: {
-          email: result.existingUser.email,
-          role: result.existingUser.role,
-        }
-      };
-    }
-    return { success: false };
-  } catch (error) {
-    console.error("Error inviting user:", error);
-    throw error;
-  }
-};
+  getUser: (uid: string) =>
+    userCoreService.getUser(uid),
 
-const deleteUser = (uid: string) => userCoreService.deleteUser(uid);
+  getCurrentUser: (firebaseUser: FirebaseUser | null) =>
+    userCoreService.getCurrentUser(firebaseUser),
 
-const updateUser = async (uid: string, updates: {
-  displayName?: string;
-  role?: UserRole;
-  status?: UserStatus;
-  photoURL?: string | null;
-}) => {
-  try {
-    // Get current user data
+  getAllUsers: () =>
+    userCoreService.getAllUsers(),
+
+  // User management
+  updateUser: async (uid: string, updates: {
+    displayName?: string;
+    role?: UserRole;
+    status?: UserStatus;
+    photoURL?: string | null;
+  }) => {
     const currentUser = await userCoreService.getUser(uid);
-    if (!currentUser) {
-      throw new Error('User not found');
-    }
+    if (!currentUser) throw new Error('User not found');
 
-    // Prepare update data with timestamps
     const updateData = {
       ...updates,
-      updatedAt: Date.now(),
+      updatedAt: new Date().toISOString(),
       metadata: {
         ...(currentUser.metadata || {}),
-        ...updates,
-        lastUpdated: Date.now()
+        lastUpdated: new Date().toISOString()
       }
     };
 
-    // Update user in Firestore
     await userCoreService.createOrUpdateUser(uid, updateData);
-
-    // If role is being updated, also update it through auth service
-    if (updates.role) {
-      await userAuthService.updateUserRole(uid, updates.role);
-    }
-
-    // If status is being updated, update through core service
-    if (updates.status) {
-      await userCoreService.updateUserStatus(uid, updates.status);
-    }
+    if (updates.role) await userAuthService.updateUserRole(uid, updates.role);
+    if (updates.status) await userCoreService.updateUserStatus(uid, updates.status);
 
     return { success: true };
-  } catch (error) {
-    console.error("Error updating user:", error);
-    throw error;
-  }
-};
+  },
 
-const getUser = (uid: string) => userCoreService.getUser(uid);
+  // Role & status management  
+  updateUserRole: (uid: string, role: UserRole) =>
+    userAuthService.updateUserRole(uid, role),
 
-const getCurrentUser = (firebaseUser: FirebaseUser | null) =>
-  userCoreService.getCurrentUser(firebaseUser);
+  updateUserStatus: (uid: string, status: UserStatus) =>
+    userCoreService.updateUserStatus(uid, status),
 
-const getAllUsers = () => userCoreService.getAllUsers();
+  // User invitation & deletion
+  inviteUser: async (adminEmail: string, targetEmail: string, role: UserRole) => {
+    const result = await userInvitationService.inviteUser(adminEmail, targetEmail, role);
+    return result.existingUser
+      ? { success: false, existingUser: { email: result.existingUser.email, role: result.existingUser.role } }
+      : { success: true };
+  },
 
-const updateUserRole = (uid: string, role: UserRole) =>
-  userAuthService.updateUserRole(uid, role);
+  deleteUser: (uid: string) =>
+    userCoreService.deleteUser(uid),
 
-const updateUserStatus = (uid: string, status: UserStatus) =>
-  userCoreService.updateUserStatus(uid, status);
-
-const resetUserPassword = (email: string) =>
-  userAuthService.resetUserPassword(email);
-
-// Export service as an object with pure functions
-export const usersService = {
-  createUserIfNotExists,
-  inviteUser,
-  deleteUser,
-  updateUser,
-  getUser,
-  getCurrentUser,
-  getAllUsers,
-  updateUserRole,
-  updateUserStatus,
-  resetUserPassword
+  // Auth operations
+  resetUserPassword: (email: string) =>
+    userAuthService.resetUserPassword(email)
 } as const;

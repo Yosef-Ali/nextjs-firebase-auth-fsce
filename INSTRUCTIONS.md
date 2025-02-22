@@ -169,19 +169,19 @@ This consistent structure makes the application:
 
 ```bash
 # Start development server
-bun dev
+pnpm dev
 
 # Build for production
-bun run build
+pnpm run build
 
 # Start production server
-bun start
+pnpm start
 
 # Run type checking
-bun run typecheck
+pnpm run typecheck
 
 # Run linting
-bun run lint
+pnpm run lint
 ```
 
 ## Common Tasks
@@ -204,14 +204,14 @@ bun run lint
 To add new shadcn components, use:
 
 ```bash
-bunx --bun shadcn@latest add [component-name]
+pnpx shadcn-ui@latest add [component-name]
 ```
 
 Common components:
 
-- Button: `bunx --bun shadcn@latest add button`
-- Dialog: `bunx --bun shadcn@latest add dialog`
-- Table: `bunx --bun shadcn@latest add table`
+- Button: `pnpm dlx shadcn-ui@latest add button`
+- Dialog: `pnpm dlx shadcn-ui@latest add dialog`
+- Table: `pnpm dlx shadcn-ui@latest add table`
 
 ## Troubleshooting
 

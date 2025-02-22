@@ -1,4 +1,4 @@
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase/index';
 import { Category } from '@/app/types/category';
 import {
   collection,

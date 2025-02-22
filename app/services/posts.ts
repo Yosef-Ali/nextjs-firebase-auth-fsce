@@ -20,12 +20,12 @@ import {
 
 // Helper function to create a complete Category object
 function createCategory(id: string, name: string, type: CategoryType = 'post'): Category {
-  const now = Date.now();
+  const now = new Date();
   return {
     id,
     name,
-    slug: id.toLowerCase(),
     type,
+    featured: false,
     createdAt: now,
     updatedAt: now
   };
@@ -36,26 +36,34 @@ const COLLECTION_NAME = 'posts';
 export const postsService = {
   async getUserPosts(userId: string): Promise<Post[]> {
     try {
+      console.log('Fetching posts for user:', userId);
       const postsRef = collection(db, COLLECTION_NAME);
       const q = query(
         postsRef,
+        where('authorId', '==', userId),
         orderBy('createdAt', 'desc')
       );
 
       const querySnapshot = await getDocs(q);
+      console.log('Found', querySnapshot.size, 'posts');
       return querySnapshot.docs.map(doc => {
         const data = doc.data();
-        return normalizePost(doc.id, data, {
-          id: typeof data.category === 'string' ? data.category : data.category?.id,
-          name: typeof data.category === 'string' ? data.category.charAt(0).toUpperCase() + data.category.slice(1) : data.category?.name,
-          slug: data.category?.slug,
-          type: data.category?.type || 'post',
-          createdAt: data.category?.createdAt || Date.now(),
-          updatedAt: data.category?.updatedAt || Date.now()
-        });
+        const category = typeof data.category === 'string' ?
+          createCategory(data.category, data.category.charAt(0).toUpperCase() + data.category.slice(1)) :
+          createCategory(
+            data.category?.id || 'uncategorized',
+            data.category?.name || 'Uncategorized',
+            data.category?.type || 'post'
+          );
+        return normalizePost(doc.id, data, category);
       });
     } catch (error) {
       console.error('Error getting user posts:', error);
+      console.error('Error details:', {
+        userId,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined
+      });
       return [];
     }
   },
@@ -112,7 +120,7 @@ export const postsService = {
       };
 
       const docRef = await addDoc(collection(db, 'posts'), postData);
-      
+
       return {
         id: docRef.id,
         ...postData,
@@ -307,14 +315,14 @@ export const postsService = {
 
       const doc = querySnapshot.docs[0];
       const data = doc.data();
-      return normalizePost(doc.id, data, {
-        id: typeof data.category === 'string' ? data.category : data.category?.id,
-        name: typeof data.category === 'string' ? data.category.charAt(0).toUpperCase() + data.category.slice(1) : data.category?.name,
-        slug: data.category?.slug,
-        type: data.category?.type || 'post',
-        createdAt: data.category?.createdAt || Date.now(),
-        updatedAt: data.category?.updatedAt || Date.now()
-      });
+      const category = typeof data.category === 'string' ?
+        createCategory(data.category, data.category.charAt(0).toUpperCase() + data.category.slice(1)) :
+        createCategory(
+          data.category?.id || 'uncategorized',
+          data.category?.name || 'Uncategorized',
+          data.category?.type || 'post'
+        );
+      return normalizePost(doc.id, data, category);
     } catch (error) {
       console.error('Error getting post by slug:', error);
       return null;
@@ -469,14 +477,9 @@ export const postsService = {
           content: data?.content ?? '',
           excerpt: data?.excerpt ?? '',
           slug: data?.slug ?? doc.id,
-          category: {
-            id: typeof category === 'string' ? category : category.id,
-            name: typeof category === 'string' ? category.charAt(0).toUpperCase() + category.slice(1) : category.name,
-            slug: category.slug,
-            type: category.type,
-            createdAt: category.createdAt,
-            updatedAt: category.updatedAt
-          },
+          category: typeof category === 'string' ?
+            createCategory(category, category.charAt(0).toUpperCase() + category.slice(1)) :
+            createCategory(category.id || 'uncategorized', category.name || 'Uncategorized', category.type || 'post'),
           published: Boolean(data?.published),
           sticky: Boolean(data?.sticky),
           authorId: data?.authorId ?? '',

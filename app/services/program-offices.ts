@@ -1,5 +1,5 @@
 import { collection, getDocs, doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase/index';
 import { ProgramOffice, ProgramOfficeCreate, ProgramOfficeUpdate } from '@/app/types/program-office';
 
 export const programOfficesService = {
