@@ -9,10 +9,10 @@ import { Button } from "@/components/ui/button";
 
 export interface ContentCardProps {
     title: string;
-    excerpt: string;
+    excerpt?: string;
     image?: string;
-    slug: string;
-    category: string;
+    slug?: string;
+    category?: string;
     createdAt?: number;
     index?: number;
     isFeatured?: boolean;
@@ -21,6 +21,7 @@ export interface ContentCardProps {
     layout?: "horizontal" | "vertical";
     imageSize?: "small" | "medium" | "large";
     href: string;
+    count?: number;
 }
 
 const cardVariants: Variants = {

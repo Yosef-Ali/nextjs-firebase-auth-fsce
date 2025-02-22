@@ -3,18 +3,19 @@
 import * as React from 'react';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { useAuth } from '@/app/providers/AuthProvider';
+import { useUserContext } from '@/lib/context/UserContext';
+import { UserStatus } from '@/app/types/user';
 import { Button } from './ui/button';
 import { Loader2 } from 'lucide-react';
 
 const googleProvider = new GoogleAuthProvider();
 
 interface AuthProps {
-  children?: React.ReactNode;
+  children: React.ReactNode;
 }
 
 const Auth: React.FC<AuthProps> = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading } = useUserContext();
   const [isSigningIn, setIsSigningIn] = React.useState(false);
 
   const signInWithGoogle = async () => {
@@ -57,7 +58,7 @@ const Auth: React.FC<AuthProps> = ({ children }) => {
     );
   }
 
-  return user ? children : null;
+  return user && user.status === UserStatus.ACTIVE ? children : null;
 };
 
 export default Auth;

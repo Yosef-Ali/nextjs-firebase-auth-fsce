@@ -58,13 +58,15 @@ export function CategoryEditor({ category, type, onSave, onCancel }: CategoryEdi
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit((data) => {
+          const now = new Date();
           onSave({
             ...data,
             id: category?.id || crypto.randomUUID(),
             slug: data.name.toLowerCase().replace(/\s+/g, '-'),
-            createdAt: category?.createdAt || Date.now(),
-            updatedAt: Date.now(),
-          } as Category);
+            createdAt: category?.createdAt || now,
+            updatedAt: now,
+            featured: data.featured || false
+          });
         })}>
           <CardContent className="space-y-4">
             <FormField

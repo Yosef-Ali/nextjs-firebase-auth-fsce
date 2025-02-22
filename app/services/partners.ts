@@ -1,6 +1,23 @@
 import { Partner } from '@/app/types/partner';
 import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+
+const getPartners = async (): Promise<Partner[]> => {
+  try {
+    const partnersRef = collection(db, 'partners');
+    const q = query(partnersRef, orderBy('order', 'asc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      ...doc.data(),
+      id: doc.id,
+      createdAt: doc.data().createdAt.toDate(),
+      updatedAt: doc.data().updatedAt.toDate()
+    })) as Partner[];
+  } catch (error) {
+    console.error('Error fetching partners:', error);
+    return [];
+  }
+};
 
 export const partnersService = {
   async getPartnerById(partnerId: string): Promise<Partner | null> {
@@ -104,4 +121,6 @@ export const partnersService = {
       return false;
     }
   },
+
+  getPartners
 };

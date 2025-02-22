@@ -10,41 +10,25 @@ import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Partner } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { partnersService } from '@/app/services/partners';
 
 export default function PartnersPage() {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(
-      query(collection(db, "partners"), orderBy("order", "asc")),
-      (snapshot) => {
-        const partners = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            name: data.name || "",
-            email: data.email || "",
-            phone: data.phone || "",
-            logo: data.logo,
-            website: data.website,
-            order: data.order || 1,
-            partnerType: data.partnerType || "REGULAR",
-            description: data.description || "",
-          };
-        });
-        setPartners(partners);
-        setLoading(false);
-      }
-    );
+    const fetchPartners = async () => {
+      const partnersData = await partnersService.getPartners();
+      setPartners(partnersData);
+    };
 
-    return () => unsubscribe();
+    fetchPartners();
   }, []);
 
-  // Calculate stats
+  // Update partner type checks to match the Partner interface
   const totalPartners = partners.length;
-  const premiumPartners = partners.filter(partner => partner.partnerType === 'PREMIUM').length;
-  const regularPartners = partners.filter(partner => partner.partnerType === 'REGULAR').length;
+  const strategicPartners = partners.filter(partner => partner.partnerType === 'strategic').length;
+  const membershipPartners = partners.filter(partner => partner.partnerType === 'membership').length;
 
   return (
     <div className="container mx-auto py-10">
@@ -65,12 +49,12 @@ export default function PartnersPage() {
             <p className="text-xs text-muted-foreground">Total Partners</p>
           </Card>
           <Card className="p-6">
-            <div className="text-2xl font-bold">{premiumPartners}</div>
-            <p className="text-xs text-muted-foreground">Premium Partners</p>
+            <div className="text-2xl font-bold">{strategicPartners}</div>
+            <p className="text-xs text-muted-foreground">Strategic Partners</p>
           </Card>
           <Card className="p-6">
-            <div className="text-2xl font-bold">{regularPartners}</div>
-            <p className="text-xs text-muted-foreground">Regular Partners</p>
+            <div className="text-2xl font-bold">{membershipPartners}</div>
+            <p className="text-xs text-muted-foreground">Membership Partners</p>
           </Card>
         </div>
 

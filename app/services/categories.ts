@@ -27,36 +27,39 @@ class CategoriesService {
   }
 
   async createCategory(data: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>): Promise<Category> {
-    const now = Date.now();
-    const docRef = doc(this.categoriesCollection);
-
+    const id = crypto.randomUUID();
+    const now = new Date();
+    
     const category: Category = {
-      id: docRef.id,
-      ...data,
+      id,
       createdAt: now,
       updatedAt: now,
+      ...data
     };
 
-    await setDoc(docRef, category);
+    await setDoc(doc(db, 'categories', id), {
+      ...category,
+      createdAt: now,
+      updatedAt: now,
+    });
+
     return category;
   }
 
-  async updateCategory(id: string, data: Partial<Omit<Category, 'id' | 'createdAt'>>): Promise<Category> {
-    const now = Date.now();
-    const updates = {
+  async updateCategory(id: string, data: Partial<Category>): Promise<Category> {
+    const now = new Date();
+    const updateData = {
       ...data,
-      updatedAt: now,
+      updatedAt: now
     };
 
-    const docRef = doc(this.categoriesCollection, id);
-    await updateDoc(docRef, updates);
-
-    const categoryDoc = await getDoc(docRef);
-    if (!categoryDoc.exists()) {
-      throw new Error('Category not found');
-    }
-
-    return this.mapCategory(categoryDoc);
+    await updateDoc(doc(db, 'categories', id), updateData);
+    
+    return {
+      ...data,
+      id,
+      updatedAt: now
+    } as Category;
   }
 
   async deleteCategory(id: string): Promise<void> {
@@ -136,16 +139,14 @@ class CategoriesService {
     return {
       id: doc.id,
       name: data.name,
-      description: data.description,
       type: data.type || 'post',
       slug: data.slug || this.createSlug(data.name),
-      createdAt: data.createdAt || Date.now(),
-      updatedAt: data.updatedAt || Date.now(),
+      createdAt: data.createdAt?.toDate() || new Date(),
+      updatedAt: data.updatedAt?.toDate() || new Date(),
       itemCount: data.itemCount || 0,
       featured: data.featured || false,
+      description: data.description || '',
       icon: data.icon || null,
-      menuPath: data.menuPath || null,
-      parentId: data.parentId || null
     };
   }
 }
