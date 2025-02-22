@@ -83,7 +83,7 @@ const MenuBar = ({
     // Get the selected text from the editor
     const { from, to } = editor.state.selection;
     const selectedText = editor.state.doc.textBetween(from, to, ' ');
-    
+
     if (!selectedText.trim()) {
       toast({
         title: "No text selected",
@@ -95,7 +95,7 @@ const MenuBar = ({
 
     try {
       let result = '';
-      switch(action) {
+      switch (action) {
         case 'enhance':
           result = await aiService.enhanceContent(selectedText);
           break;
@@ -111,7 +111,7 @@ const MenuBar = ({
         // The result already contains HTML tags for formatting
         // We just need to ensure it's wrapped in a paragraph if it isn't already
         const formattedContent = result.startsWith('<p>') ? result : `<p>${result}</p>`;
-        
+
         // Replace the selected text with the AI-improved version
         editor
           .chain()
@@ -119,14 +119,13 @@ const MenuBar = ({
           .deleteRange({ from, to })
           .insertContent(formattedContent)
           .run();
-        
+
         toast({
           title: "Success",
           description: "Text has been improved with formatting!",
         });
       }
     } catch (error) {
-      console.error('Error processing text:', error);
       toast({
         title: "Error",
         description: "Failed to process the text. Please try again.",
@@ -437,8 +436,8 @@ export function Editor({ value, onChange }: EditorProps) {
       "border border-input bg-background rounded-md transition-all duration-200",
       isFullscreen && "fixed inset-0 z-50 m-0 rounded-none"
     )}>
-      <MenuBar 
-        editor={editor} 
+      <MenuBar
+        editor={editor}
         isFullscreen={isFullscreen}
         isPreview={isPreview}
         onToggleFullscreen={toggleFullscreen}
