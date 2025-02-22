@@ -7,11 +7,12 @@ import { useUserContext } from '@/lib/context/UserContext';
 import { UserStatus } from '@/app/types/user';
 import { Button } from './ui/button';
 import { Loader2 } from 'lucide-react';
+import { ReactNode } from 'react';
 
 const googleProvider = new GoogleAuthProvider();
 
 interface AuthProps {
-  children: React.ReactNode;
+  children?: ReactNode;
 }
 
 const Auth: React.FC<AuthProps> = ({ children }) => {

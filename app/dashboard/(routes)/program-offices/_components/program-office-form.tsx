@@ -19,19 +19,26 @@ import {
 } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
 import { Heading } from '@/components/ui/heading';
-import { ProgramOffice } from '@/app/types/program-office';
+import { ProgramOffice, ProgramOfficeCreate } from '@/app/types/program-office';
 import { programOfficesService } from '@/app/services/program-offices';
 import { Textarea } from '@/components/ui/textarea';
 import { DeleteConfirmDialog } from './delete-confirm-dialog';
 
+// Create an ID from the location name
+const createId = (location: string) => {
+  return location.toLowerCase().replace(/\s+/g, '-');
+};
+
 const formSchema = z.object({
-  region: z.string().min(1),
-  location: z.string().min(1),
-  address: z.string().min(1),
-  contact: z.string().min(1),
-  email: z.string().email(),
-  beneficiaries: z.string().min(1),
-  programs: z.string().min(1),
+  id: z.string().optional(),
+  type: z.string().default("Program"),
+  region: z.string().min(1, 'Region is required'),
+  location: z.string().min(1, 'Location is required'),
+  address: z.string().min(1, 'Address is required'),
+  contact: z.string().min(1, 'Contact is required'),
+  email: z.string().email('Invalid email address'),
+  beneficiaries: z.string().min(1, 'Beneficiaries description is required'),
+  programs: z.array(z.string()).min(1, 'At least one program is required'),
 });
 
 type ProgramOfficeFormValues = z.infer<typeof formSchema>;
@@ -52,36 +59,50 @@ export const ProgramOfficeForm: React.FC<ProgramOfficeFormProps> = ({
   const toastMessage = initialData ? 'Program office updated.' : 'Program office created.';
   const action = initialData ? 'Save changes' : 'Create';
 
+  const defaultPrograms = [
+    'Early Childhood Education',
+    'Youth Empowerment',
+    'Family Support Services',
+    'Community Development'
+  ];
+
   const form = useForm<ProgramOfficeFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
       ...initialData,
-      programs: initialData.programs.join('\n')
+      programs: initialData.programs
     } : {
+      type: 'Program' as const,
       region: '',
       location: '',
       address: '',
       contact: '',
       email: '',
       beneficiaries: '',
-      programs: ''
+      programs: defaultPrograms
     }
   });
 
   const onSubmit = async (data: ProgramOfficeFormValues) => {
     try {
       setLoading(true);
+      const formData: ProgramOfficeCreate = {
+        type: 'Program' as const,
+        region: data.region,
+        location: data.location,
+        address: data.address,
+        contact: data.contact,
+        email: data.email,
+        beneficiaries: data.beneficiaries,
+        programs: data.programs
+      };
+
       if (initialData) {
-        await programOfficesService.updateProgramOffice(initialData.id, {
-          ...data,
-          programs: data.programs.split('\n').filter(p => p.trim())
-        });
+        await programOfficesService.updateProgramOffice(initialData.id, formData);
       } else {
-        await programOfficesService.createProgramOffice({
-          ...data,
-          programs: data.programs.split('\n').filter(p => p.trim())
-        });
+        await programOfficesService.createProgramOffice(formData);
       }
+
       router.refresh();
       router.push(`/dashboard/program-offices`);
       toast.success(toastMessage);
@@ -116,8 +137,6 @@ export const ProgramOfficeForm: React.FC<ProgramOfficeFormProps> = ({
         onOpenChange={setOpen}
         onConfirm={onDelete}
         isLoading={loading}
-        title="Delete Program Office"
-        description={`Are you sure you want to delete this program office? This action cannot be undone.`}
       />
       <div className="flex items-center justify-between">
         <Heading title={title} description={description} />
@@ -128,13 +147,13 @@ export const ProgramOfficeForm: React.FC<ProgramOfficeFormProps> = ({
             size="sm"
             onClick={() => setOpen(true)}
           >
-            <Trash className="w-4 h-4" />
+            <Trash className="h-4 w-4" />
           </Button>
         )}
       </div>
       <Separator />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 w-full">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             <FormField
               control={form.control}
@@ -143,7 +162,11 @@ export const ProgramOfficeForm: React.FC<ProgramOfficeFormProps> = ({
                 <FormItem>
                   <FormLabel>Region</FormLabel>
                   <FormControl>
-                    <Input disabled={loading} placeholder="Region" {...field} />
+                    <Input
+                      disabled={loading}
+                      placeholder="e.g. Addis Ababa"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -156,7 +179,11 @@ export const ProgramOfficeForm: React.FC<ProgramOfficeFormProps> = ({
                 <FormItem>
                   <FormLabel>Location</FormLabel>
                   <FormControl>
-                    <Input disabled={loading} placeholder="Location" {...field} />
+                    <Input
+                      disabled={loading}
+                      placeholder="e.g. Addis Ababa"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -169,7 +196,11 @@ export const ProgramOfficeForm: React.FC<ProgramOfficeFormProps> = ({
                 <FormItem>
                   <FormLabel>Address</FormLabel>
                   <FormControl>
-                    <Input disabled={loading} placeholder="Address" {...field} />
+                    <Input
+                      disabled={loading}
+                      placeholder="e.g. Bole Sub City, Woreda 03, Addis Ababa"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -182,7 +213,11 @@ export const ProgramOfficeForm: React.FC<ProgramOfficeFormProps> = ({
                 <FormItem>
                   <FormLabel>Contact</FormLabel>
                   <FormControl>
-                    <Input disabled={loading} placeholder="Contact" {...field} />
+                    <Input
+                      disabled={loading}
+                      placeholder="e.g. +251 116 393 229"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -195,7 +230,12 @@ export const ProgramOfficeForm: React.FC<ProgramOfficeFormProps> = ({
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input disabled={loading} placeholder="Email" {...field} />
+                    <Input
+                      disabled={loading}
+                      placeholder="e.g. info.addis@example.org"
+                      type="email"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -208,7 +248,11 @@ export const ProgramOfficeForm: React.FC<ProgramOfficeFormProps> = ({
                 <FormItem>
                   <FormLabel>Beneficiaries</FormLabel>
                   <FormControl>
-                    <Input disabled={loading} placeholder="Beneficiaries" {...field} />
+                    <Input
+                      disabled={loading}
+                      placeholder="e.g. Serving over 5,000 children and families"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -219,13 +263,23 @@ export const ProgramOfficeForm: React.FC<ProgramOfficeFormProps> = ({
               name="programs"
               render={({ field }) => (
                 <FormItem className="col-span-2">
-                  <FormLabel>Programs (one per line)</FormLabel>
+                  <FormLabel>Programs</FormLabel>
                   <FormControl>
-                    <Textarea
-                      disabled={loading}
-                      placeholder="Enter programs (one per line)"
-                      {...field}
-                    />
+                    <div className="space-y-2">
+                      {defaultPrograms.map((program, index) => (
+                        <Input
+                          key={index}
+                          disabled={loading}
+                          placeholder={`Program ${index + 1}`}
+                          value={field.value[index] || ''}
+                          onChange={(e) => {
+                            const newPrograms = [...field.value];
+                            newPrograms[index] = e.target.value;
+                            field.onChange(newPrograms);
+                          }}
+                        />
+                      ))}
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -2,15 +2,21 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ProgramOffice, ProgramOfficeCreate } from '@/types/program-office';
+import { ProgramOffice, ProgramOfficeCreate } from '@/app/types/program-office';
 
 interface ProgramOfficeFormProps {
   initialData?: ProgramOffice;
   onSubmit: (data: ProgramOfficeCreate) => Promise<void>;
   onCancel: () => void;
+  isSubmitting?: boolean;
 }
 
-export function ProgramOfficeForm({ initialData, onSubmit, onCancel }: ProgramOfficeFormProps) {
+export function ProgramOfficeForm({ 
+  initialData, 
+  onSubmit, 
+  onCancel,
+  isSubmitting = false 
+}: ProgramOfficeFormProps) {
   const [formData, setFormData] = useState<ProgramOfficeCreate>({
     type: 'Program',
     region: initialData?.region || '',

@@ -34,6 +34,7 @@ export const ProgramOfficesManager = () => {
   const [offices, setOffices] = useState<ProgramOffice[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingOffice, setEditingOffice] = useState<ProgramOffice | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [officeToDelete, setOfficeToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -94,16 +95,18 @@ export const ProgramOfficesManager = () => {
   };
 
   // Update office
-  const handleUpdateOffice = async (
-    id: string,
-    updatedData: Partial<ProgramOffice>
-  ) => {
+  const handleUpdateOffice = async (id: string) => {
+    if (!editingOffice) return;
+
     try {
       const officeRef = doc(db, "programOffices", id);
-      await updateDoc(officeRef, updatedData);
+      // Remove id from the object before updating
+      const { id: _, ...updateData } = editingOffice;
+      await updateDoc(officeRef, updateData);
       toast.success("Program office updated successfully");
       fetchOffices();
       setEditingId(null);
+      setEditingOffice(null);
     } catch (error) {
       console.error("Error updating office:", error);
       toast.error("Failed to update program office");
@@ -208,37 +211,81 @@ export const ProgramOfficesManager = () => {
               {editingId === office.id ? (
                 <div className="space-y-4">
                   <Input
-                    value={office.region}
+                    value={editingOffice?.region || office.region}
                     onChange={(e) =>
-                      handleUpdateOffice(office.id, { region: e.target.value })
+                      setEditingOffice(prev => ({
+                        ...(prev || office),
+                        region: e.target.value
+                      }))
                     }
                   />
                   <Input
-                    value={office.location}
+                    value={editingOffice?.location || office.location}
                     onChange={(e) =>
-                      handleUpdateOffice(office.id, {
-                        location: e.target.value,
-                      })
+                      setEditingOffice(prev => ({
+                        ...(prev || office),
+                        location: e.target.value
+                      }))
+                    }
+                  />
+                  <Input
+                    value={editingOffice?.address || office.address}
+                    onChange={(e) =>
+                      setEditingOffice(prev => ({
+                        ...(prev || office),
+                        address: e.target.value
+                      }))
+                    }
+                  />
+                  <Input
+                    value={editingOffice?.contact || office.contact}
+                    onChange={(e) =>
+                      setEditingOffice(prev => ({
+                        ...(prev || office),
+                        contact: e.target.value
+                      }))
+                    }
+                  />
+                  <Input
+                    value={editingOffice?.email || office.email}
+                    onChange={(e) =>
+                      setEditingOffice(prev => ({
+                        ...(prev || office),
+                        email: e.target.value
+                      }))
+                    }
+                  />
+                  <Input
+                    value={editingOffice?.beneficiaries || office.beneficiaries}
+                    onChange={(e) =>
+                      setEditingOffice(prev => ({
+                        ...(prev || office),
+                        beneficiaries: e.target.value
+                      }))
                     }
                   />
                   <div className="flex justify-end space-x-2">
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setEditingId(null)}
+                      onClick={() => {
+                        setEditingId(null);
+                        setEditingOffice(null);
+                      }}
                     >
                       <X className="w-4 h-4" />
                     </Button>
                     <Button
                       variant="default"
                       size="icon"
-                      onClick={() => handleUpdateOffice(office.id, office)}
+                      onClick={() => handleUpdateOffice(office.id)}
                     >
                       <Save className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
-              ) : (
+              )
+              : (
                 <div className="space-y-2">
                   <p>
                     <strong>Region:</strong> {office.region}
@@ -262,7 +309,10 @@ export const ProgramOfficesManager = () => {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setEditingId(office.id)}
+                      onClick={() => {
+                        setEditingId(office.id);
+                        setEditingOffice(office);  // Initialize editingOffice with current office data
+                      }}
                     >
                       <Pencil className="w-4 h-4" />
                     </Button>

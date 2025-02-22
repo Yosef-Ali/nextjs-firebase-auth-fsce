@@ -45,9 +45,9 @@ export default function EditPostPage() {
           });
           router.push('/dashboard/posts');
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error loading post:', error);
-        if (error.message.includes('Could not reach Cloud Firestore backend')) {
+        if (error instanceof Error && error.message.includes('Could not reach Cloud Firestore backend')) {
           toast({
             title: "Network Error",
             description: "Could not reach Cloud Firestore backend. Please check your internet connection.",

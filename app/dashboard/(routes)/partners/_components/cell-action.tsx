@@ -12,7 +12,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AlertModal } from "@/components/modals/alert-modal";
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { Partner } from "@/types";
 import { deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -55,11 +55,13 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
   return (
     <>
-      <AlertModal
-        isOpen={open}
-        onClose={() => setOpen(false)}
+      <DeleteConfirmDialog
+        open={open}
+        onOpenChange={setOpen}
         onConfirm={onConfirm}
-        loading={loading}
+        isLoading={loading}
+        title="Delete Partner"
+        description={`Are you sure you want to delete this partner? This action cannot be undone.`}
       />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

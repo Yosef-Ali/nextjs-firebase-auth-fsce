@@ -1,87 +1,35 @@
 import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, getDocs, query, setDoc, deleteDoc, where } from 'firebase/firestore';
-import { ProgramOffice, ProgramOfficeCreate, ProgramOfficeUpdate } from '@/types/program-office';
+import { collection, getDocs, doc, deleteDoc, addDoc, setDoc } from 'firebase/firestore';
+import { ProgramOffice, ProgramOfficeCreate } from '@/app/types/program-office';
 
-export const programOfficesService = {
-  collectionName: 'programOffices',
+class ProgramOfficesService {
+  private collection = 'program-offices';
 
-  async getAllProgramOffices(): Promise<ProgramOffice[]> {
-    try {
-      const querySnapshot = await getDocs(collection(db, this.collectionName));
-      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ProgramOffice));
-    } catch (error) {
-      console.error('Error getting program offices:', error);
-      throw error;
-    }
-  },
-
-  async getProgramOfficeById(id: string): Promise<ProgramOffice | null> {
-    try {
-      const docRef = doc(db, this.collectionName, id);
-      const docSnap = await getDoc(docRef);
-      
-      if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as ProgramOffice;
-      }
-      return null;
-    } catch (error) {
-      console.error('Error getting program office:', error);
-      throw error;
-    }
-  },
-
-  async createProgramOffice(data: ProgramOfficeCreate): Promise<string> {
-    try {
-      const docRef = doc(collection(db, this.collectionName));
-      const timestamp = new Date().toISOString();
-      
-      await setDoc(docRef, {
-        ...data,
-        createdAt: timestamp,
-        updatedAt: timestamp
-      });
-      
-      return docRef.id;
-    } catch (error) {
-      console.error('Error creating program office:', error);
-      throw error;
-    }
-  },
-
-  async updateProgramOffice(id: string, data: ProgramOfficeUpdate): Promise<void> {
-    try {
-      const docRef = doc(db, this.collectionName, id);
-      await setDoc(docRef, {
-        ...data,
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
-    } catch (error) {
-      console.error('Error updating program office:', error);
-      throw error;
-    }
-  },
+  async getProgramOffices(): Promise<ProgramOffice[]> {
+    const snapshot = await getDocs(collection(db, this.collection));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ProgramOffice));
+  }
 
   async deleteProgramOffice(id: string): Promise<void> {
-    try {
-      const docRef = doc(db, this.collectionName, id);
-      await deleteDoc(docRef);
-    } catch (error) {
-      console.error('Error deleting program office:', error);
-      throw error;
-    }
-  },
-
-  async getProgramOfficesByRegion(region: string): Promise<ProgramOffice[]> {
-    try {
-      const q = query(
-        collection(db, this.collectionName),
-        where('region', '==', region)
-      );
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ProgramOffice));
-    } catch (error) {
-      console.error('Error getting program offices by region:', error);
-      throw error;
-    }
+    await deleteDoc(doc(db, this.collection, id));
   }
-};
+
+  async createProgramOffice(data: ProgramOfficeCreate): Promise<ProgramOffice> {
+    const docRef = await addDoc(collection(db, this.collection), {
+      ...data,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+    return { ...data, id: docRef.id } as ProgramOffice;
+  }
+
+  async updateProgramOffice(id: string, data: Partial<ProgramOffice>): Promise<void> {
+    const docRef = doc(db, this.collection, id);
+    await setDoc(docRef, {
+      ...data,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+  }
+}
+
+export const programOfficesService = new ProgramOfficesService();

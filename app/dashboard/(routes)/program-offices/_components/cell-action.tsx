@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ProgramOffice } from '@/app/types/program-office';
 import { Copy, Edit, MoreHorizontal, Trash } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -16,7 +17,7 @@ import { DeleteConfirmDialog } from './delete-confirm-dialog';
 import { programOfficesService } from '@/app/services/program-offices';
 
 interface CellActionProps {
-  data: any; // Replace 'any' with your ProgramOffice type
+  data: ProgramOffice;
 }
 
 export const CellAction: React.FC<CellActionProps> = ({ data }) => {

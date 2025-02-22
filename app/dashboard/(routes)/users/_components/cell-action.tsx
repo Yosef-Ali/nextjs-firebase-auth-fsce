@@ -12,7 +12,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { AlertModal } from "@/components/modals/alert-modal";
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { User } from "@/app/types/user";
 import { usersService } from "@/app/services/users";
 
@@ -50,11 +50,11 @@ export const CellAction: React.FC<CellActionProps> = ({
 
   return (
     <>
-      <AlertModal 
-        isOpen={open} 
-        onClose={() => setOpen(false)}
+      <DeleteConfirmDialog 
+        open={open} 
+        onOpenChange={setOpen}
         onConfirm={onDelete}
-        loading={loading}
+        isLoading={loading}
       />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

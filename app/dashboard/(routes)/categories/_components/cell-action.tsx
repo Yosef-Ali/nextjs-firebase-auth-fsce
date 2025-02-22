@@ -30,9 +30,16 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
       setLoading(true);
       await categoriesService.deleteCategory(data.id);
       router.refresh();
-      toast.success('Category deleted successfully');
+      toast({
+        title: "Success",
+        description: "Category deleted successfully"
+      });
     } catch (error) {
-      toast.error('Failed to delete category');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete category"
+      });
     } finally {
       setOpen(false);
       setLoading(false);

@@ -1,6 +1,6 @@
 import { Category } from './category';
 
-export enum PostStatus {
+export enum PostStatusEnum {
   DRAFT = 'draft',
   PUBLISHED = 'published',
   ARCHIVED = 'archived'

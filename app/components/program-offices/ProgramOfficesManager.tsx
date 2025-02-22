@@ -4,18 +4,21 @@ import { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ProgramOffice } from '@/types/program-office';
-import { programOfficesService } from '@/services/program-offices';
-import { ProgramOfficeForm } from './ProgramOfficeForm';
+import { ProgramOffice } from '@/app/types/program-office';
+import { programOfficesService } from '@/app/services/program-offices';
 import { toast } from 'sonner';
+import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
+import { ProgramOfficeForm } from './ProgramOfficeForm';
 import { Loader2 } from 'lucide-react';
 
-export default function ProgramOfficesManager() {
+export function ProgramOfficesManager() {
   const [offices, setOffices] = useState<ProgramOffice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedOffice, setSelectedOffice] = useState<ProgramOffice | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [officeToDelete, setOfficeToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOffices();
@@ -23,8 +26,10 @@ export default function ProgramOfficesManager() {
 
   const fetchOffices = async () => {
     try {
-      const data = await programOfficesService.getAllProgramOffices();
-      setOffices(data.sort((a, b) => a.location.localeCompare(b.location)));
+      const data = await programOfficesService.getProgramOffices();
+      setOffices(data.sort((a: ProgramOffice, b: ProgramOffice) => 
+        a.location.localeCompare(b.location)
+      ));
     } catch (error) {
       toast.error('Failed to fetch program offices');
     } finally {
@@ -32,7 +37,17 @@ export default function ProgramOfficesManager() {
     }
   };
 
-  const handleCreate = async (data: Partial<ProgramOffice>) => {
+  const handleDelete = async (id: string) => {
+    try {
+      await programOfficesService.deleteProgramOffice(id);
+      setOffices(offices.filter(office => office.id !== id));
+      toast.success('Program office deleted successfully');
+    } catch (error) {
+      toast.error('Failed to delete program office');
+    }
+  };
+
+  const handleCreate = async (data: ProgramOfficeCreate) => {
     setIsSubmitting(true);
     try {
       await programOfficesService.createProgramOffice(data);

@@ -1,14 +1,17 @@
-export type CategoryType = 'post' | 'resource' | 'award' | 'recognition';
-
 export interface Category {
   id: string;
   name: string;
-  type: CategoryType;
+  slug: string;
+  type: string;
   featured: boolean;
+  description?: string;
   itemCount?: number;
   createdAt: Date;
   updatedAt: Date;
-  slug?: string;
-  description?: string;
-  icon?: string;
+}
+
+export enum CategoryType {
+  POST = 'post',
+  EVENT = 'event',
+  RESOURCE = 'resource'
 }

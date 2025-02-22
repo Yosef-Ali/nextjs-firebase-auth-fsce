@@ -21,7 +21,7 @@ export function ProgramOfficesProvider({ children }: { children: ReactNode }) {
 
   const refreshOffices = async () => {
     try {
-      const allOffices = await programOfficesService.getAllProgramOffices();
+      const allOffices = await programOfficesService.getProgramOffices();
       setOffices(allOffices);
     } catch (error) {
       console.error('Error loading program offices:', error);
