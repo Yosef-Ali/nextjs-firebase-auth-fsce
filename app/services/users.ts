@@ -1,4 +1,6 @@
 import { User as FirebaseUser } from "firebase/auth";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { User, UserRole, UserStatus } from "@/app/types/user";
 import { userCoreService } from "./users/core";
 import { userAuthService } from "./users/auth";
@@ -92,6 +94,39 @@ const updateUserStatus = (uid: string, status: UserStatus) =>
 const resetUserPassword = (email: string) =>
   userAuthService.resetUserPassword(email);
 
+const setupInitialAdmin = async (email: string) => {
+  try {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('email', '==', email));
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      return false;
+    }
+
+    const userDoc = querySnapshot.docs[0];
+    await updateUser(userDoc.id, {
+      role: 'admin' as UserRole,
+      status: 'active' as UserStatus
+    });
+
+    return true;
+  } catch (error) {
+    console.error('Error setting up initial admin:', error);
+    return false;
+  }
+};
+
+const acceptAuthorInvitation = async (email: string, token: string) => {
+  try {
+    const result = await userInvitationService.acceptInvitation(email, token);
+    return result;
+  } catch (error) {
+    console.error('Error accepting author invitation:', error);
+    return false;
+  }
+};
+
 // Export service as an object with pure functions
 export const usersService = {
   createUserIfNotExists,
@@ -103,5 +138,7 @@ export const usersService = {
   getAllUsers,
   updateUserRole,
   updateUserStatus,
-  resetUserPassword
+  resetUserPassword,
+  setupInitialAdmin,
+  acceptAuthorInvitation
 } as const;

@@ -14,7 +14,7 @@ export default function AdminSetup() {
       const usersRef = collection(db, 'users');
       const q = query(usersRef, where('email', '==', email));
       const querySnapshot = await getDocs(q);
-      
+
       if (querySnapshot.empty) {
         return 'No user found with this email';
       }

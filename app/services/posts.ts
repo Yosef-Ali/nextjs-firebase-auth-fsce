@@ -15,17 +15,19 @@ import {
   serverTimestamp,
   QueryConstraint,
   orderBy,
-  FieldValue
+  FieldValue,
+  setDoc
 } from 'firebase/firestore';
 
 // Helper function to create a complete Category object
 function createCategory(id: string, name: string, type: CategoryType = 'post'): Category {
-  const now = Date.now();
+  const now = new Date();
   return {
     id,
     name,
     slug: id.toLowerCase(),
     type,
+    featured: false, // Required by Category interface
     createdAt: now,
     updatedAt: now
   };
@@ -103,55 +105,37 @@ export const postsService = {
 
   async createPost(data: Omit<Post, 'id' | 'createdAt' | 'updatedAt'>): Promise<Post> {
     try {
-      const now = Date.now();
-      const postData = {
-        ...data,
+      const now = new Date();
+      const id = crypto.randomUUID();
+
+      const post: Post = {
+        id,
         createdAt: now,
         updatedAt: now,
-        slug: data.slug || this.createSlug(data.title),
+        ...data,
       };
 
-      const docRef = await addDoc(collection(db, 'posts'), postData);
-      
-      return {
-        id: docRef.id,
-        ...postData,
-      };
+      await setDoc(doc(db, 'posts', id), post);
+      return post;
     } catch (error) {
       console.error('Error creating post:', error);
       throw error;
     }
   },
 
-  async updatePost(id: string, post: Partial<Omit<Post, 'category'>> & { category?: string | Category }, userId: string): Promise<boolean> {
+  async updatePost(id: string, data: Partial<Post>): Promise<Post> {
     try {
-      const postRef = doc(db, COLLECTION_NAME, id);
-      const now = Date.now();
-
-      // Create initial update data without category
-      const { category, ...restData } = post;
-      const baseUpdateData: Partial<Omit<Post, 'category'>> = {
-        ...restData,
-        // Only allow sticky posts if they are published
-        sticky: restData.sticky && restData.published !== false ? restData.sticky : false,
+      const now = new Date();
+      const updateData = {
+        ...data,
         updatedAt: now
       };
 
-      // Only add category if it exists
-      if (category) {
-        const normalizedCategory = await this.getNormalizedCategory(category);
-        await updateDoc(postRef, {
-          ...baseUpdateData,
-          category: normalizedCategory
-        });
-      } else {
-        await updateDoc(postRef, baseUpdateData);
-      }
-
-      return true;
+      await updateDoc(doc(db, 'posts', id), updateData);
+      return { id, ...data, updatedAt: now } as Post;
     } catch (error) {
       console.error('Error updating post:', error);
-      return false;
+      throw error;
     }
   },
 
@@ -528,7 +512,10 @@ function normalizePost(id: string, data: any, category: Category): Post {
     content: data?.content ?? '',
     excerpt: data?.excerpt ?? '',
     slug: data?.slug ?? id,
-    category,
+    category: {
+      ...category,
+      featured: category.featured ?? false
+    },
     published: Boolean(data?.published),
     sticky: Boolean(data?.sticky),
     authorId: data?.authorId ?? '',
@@ -551,6 +538,6 @@ function normalizePost(id: string, data: any, category: Category): Post {
     tags: Array.isArray(data?.tags) ? data.tags : [],
     time: data?.time ?? '',
     location: data?.location ?? '',
-    status: data?.status
+    status: data?.status ?? PostStatus.DRAFT
   } as Post;
 }
