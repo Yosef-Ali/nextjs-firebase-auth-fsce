@@ -19,3 +19,15 @@
   },
   "private": true
 }
+
+# Install dependencies
+pnpm install
+
+# Build the functions
+pnpm run build
+
+# Build and start emulators
+pnpm run serve
+
+# Deploy functions
+pnpm run deploy

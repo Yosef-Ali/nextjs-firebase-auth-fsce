@@ -115,7 +115,7 @@ nextjs-firebase-auth-app/
 │   │       ├── sign-in/   # Sign in page
 │   │       └── sign-up/   # Sign up page
 │   ├── (dashboard)/       # Protected dashboard routes
-│   │   └── (routes)/
+│   │   ��── (routes)/
 │   │       ├── posts/     # Posts management
 │   │       └── settings/  # User settings
 │   └── (marketing)/       # Public pages
@@ -168,20 +168,17 @@ This consistent structure makes the application:
 ## Available Scripts
 
 ```bash
-# Start development server
-bun dev
+# Install dependencies
+pnpm install
+
+# Run development server
+pnpm dev
 
 # Build for production
-bun run build
+pnpm run build
 
-# Start production server
-bun start
-
-# Run type checking
-bun run typecheck
-
-# Run linting
-bun run lint
+# Test the production build locally
+pnpm start
 ```
 
 ## Common Tasks
