@@ -8,7 +8,9 @@ export interface ProgramOffice {
   email: string;
   beneficiaries: string;
   programs: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
-export type ProgramOfficeCreate = Omit<ProgramOffice, 'id'>;
-export type ProgramOfficeUpdate = Partial<ProgramOffice>;
+export type ProgramOfficeCreate = Omit<ProgramOffice, 'id' | 'createdAt' | 'updatedAt'>;
+export type ProgramOfficeUpdate = Partial<ProgramOfficeCreate>;

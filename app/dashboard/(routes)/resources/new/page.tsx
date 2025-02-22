@@ -62,7 +62,10 @@ export default function NewResourcePage() {
       </div>
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">Create New Resource</h1>
-        <ResourceEditor mode="create" />
+        <ResourceEditor
+          mode="create"
+          onCancel={() => router.push('/dashboard/resources')}
+        />
       </div>
     </div>
   );

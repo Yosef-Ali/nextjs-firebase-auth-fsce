@@ -47,11 +47,19 @@ export default function EditPostPage() {
         }
       } catch (error) {
         console.error('Error loading post:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load post",
-          variant: "destructive"
-        });
+        if (error.message.includes('Could not reach Cloud Firestore backend')) {
+          toast({
+            title: "Network Error",
+            description: "Could not reach Cloud Firestore backend. Please check your internet connection.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to load post",
+            variant: "destructive"
+          });
+        }
         router.push('/dashboard/posts');
       } finally {
         setIsLoading(false);

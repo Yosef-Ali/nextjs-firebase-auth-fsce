@@ -1,13 +1,14 @@
 export interface Partner {
   id: string;
   name: string;
-  logo?: string;  // Making logo explicitly optional since we handle undefined cases
-  website?: string;  // Making website optional to match form schema
+  logo?: string;
+  website?: string;
   email: string;
   phone: string;
+  position: string;
   order: number;
-  partnerType: 'strategic' | 'membership';
+  partnerType: 'partner' | 'membership';
   description?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | number;
+  updatedAt: Date | number;
 }

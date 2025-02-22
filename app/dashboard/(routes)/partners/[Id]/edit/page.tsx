@@ -22,9 +22,9 @@ export default function EditPartnerPage() {
   useEffect(() => {
     const loadPartner = async () => {
       try {
-        if (!params?.Id) return;
+        if (!params?.id) return;
 
-        const docRef = doc(db, "partners", params.Id as string);
+        const docRef = doc(db, "partners", params.id as string);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
@@ -53,7 +53,11 @@ export default function EditPartnerPage() {
     };
 
     loadPartner();
-  }, [params?.Id, router]);
+  }, [params?.id, router]);
+
+  const convertPartnerType = (type: string) => {
+    return type === 'partner' ? 'strategic' : type as 'strategic' | 'membership';
+  };
 
   if (loading) {
     return (
@@ -96,7 +100,7 @@ export default function EditPartnerPage() {
               description: partner.description,
               logo: partner.logo,
               order: partner.order,
-              partnerType: partner.partnerType
+              partnerType: convertPartnerType(partner.partnerType)
             }}
             partnerId={partner.id}
             onSuccess={() => router.push("/dashboard/partners")}

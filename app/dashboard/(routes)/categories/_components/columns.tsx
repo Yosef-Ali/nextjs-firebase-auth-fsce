@@ -7,7 +7,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { DataTableRowActions } from '@/components/ui/data-table-row-actions';
 
-export const columns: ColumnDef<Category>[] = [
+interface CategoryColumnProps {
+  onDelete?: (category: Category) => void;
+}
+
+export const columns = ({ onDelete }: CategoryColumnProps): ColumnDef<Category>[] => [
   {
     id: 'select',
     header: ({ table }) => (
@@ -78,14 +82,13 @@ export const columns: ColumnDef<Category>[] = [
             {
               label: 'Edit',
               onClick: () => {
-                // Handle edit action
+                const event = new CustomEvent('edit-category', { detail: category });
+                window.dispatchEvent(event);
               },
             },
             {
               label: 'Delete',
-              onClick: () => {
-                // Handle delete action
-              },
+              onClick: () => onDelete?.(category),
             },
           ]}
         />

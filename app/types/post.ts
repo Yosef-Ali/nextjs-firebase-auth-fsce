@@ -1,5 +1,11 @@
 import { Category } from './category';
 
+export enum PostStatus {
+  DRAFT = 'draft',
+  PUBLISHED = 'published',
+  ARCHIVED = 'archived'
+}
+
 export interface Author {
   id: string;
   name: string;

@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { DataTable } from '@/components/ui/data-table';
 import { columns } from './columns';
 import { Category } from '@/app/types/category';
@@ -10,13 +9,11 @@ interface CategoriesContentProps {
 }
 
 export default function CategoriesContent({ initialCategories }: CategoriesContentProps) {
-  const [categories] = useState<Category[]>(initialCategories);
-
   return (
-    <div className="p-6">
+    <div>
       <DataTable
         columns={columns}
-        data={categories}
+        data={initialCategories}
         searchKey="name"
       />
     </div>

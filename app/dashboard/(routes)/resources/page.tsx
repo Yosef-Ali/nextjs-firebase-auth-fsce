@@ -150,6 +150,7 @@ export default function ResourcesPage() {
               resource={selectedResource}
               mode={selectedResource ? 'edit' : 'create'}
               onSuccess={handleSaved}
+              onCancel={handleEditorClose}
             />
           </DialogContent>
         </Dialog>

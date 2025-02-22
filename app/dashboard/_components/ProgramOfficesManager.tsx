@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, Save, X } from 'lucide-react';
@@ -22,7 +22,7 @@ interface ProgramOffice {
   programs: string[];
 }
 
-export default function ProgramOfficesManager() {
+export const ProgramOfficesManager = () => {
   const [offices, setOffices] = useState<ProgramOffice[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -254,4 +254,6 @@ export default function ProgramOfficesManager() {
       </div>
     </div>
   );
-}
+};
+
+export default ProgramOfficesManager;

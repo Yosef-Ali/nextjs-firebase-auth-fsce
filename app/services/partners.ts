@@ -10,8 +10,8 @@ const getPartners = async (): Promise<Partner[]> => {
     return snapshot.docs.map(doc => ({
       ...doc.data(),
       id: doc.id,
-      createdAt: doc.data().createdAt.toDate(),
-      updatedAt: doc.data().updatedAt.toDate()
+      createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt,
+      updatedAt: doc.data().updatedAt?.toDate?.() || doc.data().updatedAt
     })) as Partner[];
   } catch (error) {
     console.error('Error fetching partners:', error);
@@ -24,11 +24,11 @@ export const partnersService = {
     try {
       const partnerRef = doc(db, 'partners', partnerId);
       const partnerSnap = await getDoc(partnerRef);
-      
+
       if (partnerSnap.exists()) {
-        return { 
-          id: partnerSnap.id, 
-          ...partnerSnap.data() 
+        return {
+          id: partnerSnap.id,
+          ...partnerSnap.data()
         } as Partner;
       }
       return null;
@@ -42,7 +42,7 @@ export const partnersService = {
     try {
       const partnersCollection = collection(db, 'partners');
       const querySnapshot = await getDocs(partnersCollection);
-      
+
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -57,7 +57,7 @@ export const partnersService = {
     try {
       const partnersCollection = collection(db, 'partners');
       const docRef = await addDoc(partnersCollection, partnerData);
-      
+
       return {
         id: docRef.id,
         ...partnerData
@@ -72,7 +72,7 @@ export const partnersService = {
     try {
       const partnerRef = doc(db, 'partners', partnerId);
       await updateDoc(partnerRef, partnerData);
-      
+
       const updatedPartnerSnap = await getDoc(partnerRef);
       if (updatedPartnerSnap.exists()) {
         return {
@@ -102,18 +102,18 @@ export const partnersService = {
     try {
       const partnerRef = doc(db, 'partners', partnerId);
       const partnerSnap = await getDoc(partnerRef);
-      
+
       if (!partnerSnap.exists()) {
         return false; // Partner doesn't exist
       }
 
       const partnerData = partnerSnap.data();
-      
+
       // Example authorization logic: 
       // 1. If the partner has no specific access restrictions, allow view
       // 2. Check if the user is the owner of the partner
       // 3. Check if the user has a role that allows viewing partners
-      
+
       // You can customize this logic based on your specific requirements
       return true; // Default to allowing view for now
     } catch (error) {

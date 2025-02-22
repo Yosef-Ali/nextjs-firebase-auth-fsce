@@ -1,26 +1,25 @@
-import { collection, getDocs, doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { ProgramOffice, ProgramOfficeCreate, ProgramOfficeUpdate } from '@/app/types/program-office';
+import { collection, doc, getDoc, getDocs, query, setDoc, deleteDoc, where } from 'firebase/firestore';
+import { ProgramOffice, ProgramOfficeCreate, ProgramOfficeUpdate } from '@/types/program-office';
 
 export const programOfficesService = {
+  collectionName: 'programOffices',
+
   async getAllProgramOffices(): Promise<ProgramOffice[]> {
     try {
-      const officesCollection = collection(db, 'programOffices');
-      const officesSnapshot = await getDocs(officesCollection);
-      return officesSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as ProgramOffice[];
+      const querySnapshot = await getDocs(collection(db, this.collectionName));
+      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ProgramOffice));
     } catch (error) {
       console.error('Error getting program offices:', error);
       throw error;
     }
   },
 
-  async getProgramOffice(id: string): Promise<ProgramOffice | null> {
+  async getProgramOfficeById(id: string): Promise<ProgramOffice | null> {
     try {
-      const docRef = doc(db, 'programOffices', id);
+      const docRef = doc(db, this.collectionName, id);
       const docSnap = await getDoc(docRef);
+      
       if (docSnap.exists()) {
         return { id: docSnap.id, ...docSnap.data() } as ProgramOffice;
       }
@@ -33,12 +32,15 @@ export const programOfficesService = {
 
   async createProgramOffice(data: ProgramOfficeCreate): Promise<string> {
     try {
-      const docRef = doc(collection(db, 'programOffices'));
+      const docRef = doc(collection(db, this.collectionName));
+      const timestamp = new Date().toISOString();
+      
       await setDoc(docRef, {
         ...data,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        createdAt: timestamp,
+        updatedAt: timestamp
       });
+      
       return docRef.id;
     } catch (error) {
       console.error('Error creating program office:', error);
@@ -48,7 +50,7 @@ export const programOfficesService = {
 
   async updateProgramOffice(id: string, data: ProgramOfficeUpdate): Promise<void> {
     try {
-      const docRef = doc(db, 'programOffices', id);
+      const docRef = doc(db, this.collectionName, id);
       await setDoc(docRef, {
         ...data,
         updatedAt: new Date().toISOString()
@@ -61,9 +63,24 @@ export const programOfficesService = {
 
   async deleteProgramOffice(id: string): Promise<void> {
     try {
-      await deleteDoc(doc(db, 'programOffices', id));
+      const docRef = doc(db, this.collectionName, id);
+      await deleteDoc(docRef);
     } catch (error) {
       console.error('Error deleting program office:', error);
+      throw error;
+    }
+  },
+
+  async getProgramOfficesByRegion(region: string): Promise<ProgramOffice[]> {
+    try {
+      const q = query(
+        collection(db, this.collectionName),
+        where('region', '==', region)
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ProgramOffice));
+    } catch (error) {
+      console.error('Error getting program offices by region:', error);
       throw error;
     }
   }

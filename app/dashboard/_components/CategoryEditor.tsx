@@ -46,116 +46,102 @@ export function CategoryEditor({ category, type, onSave, onCancel }: CategoryEdi
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{category ? 'Edit Category' : 'New Category'}</CardTitle>
-        <CardDescription>
-          {type === 'award' ? 'Create or edit an award category' :
-            type === 'recognition' ? 'Create or edit a recognition category' :
-              type === 'resource' ? 'Create or edit a resource category' :
-                'Create or edit a post category'}
-        </CardDescription>
-      </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit((data) => {
-          const now = new Date();
-          onSave({
-            ...data,
-            id: category?.id || crypto.randomUUID(),
-            slug: data.name.toLowerCase().replace(/\s+/g, '-'),
-            createdAt: category?.createdAt || now,
-            updatedAt: now,
-            featured: data.featured || false
-          });
-        })}>
-          <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit((data) => {
+        const now = new Date();
+        onSave({
+          ...data,
+          id: category?.id || crypto.randomUUID(),
+          slug: data.name.toLowerCase().replace(/\s+/g, '-'),
+          createdAt: category?.createdAt || now,
+          updatedAt: now,
+          featured: data.featured || false
+        });
+      })} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea {...field} />
+              </FormControl>
+              <FormDescription>
+                Provide a brief description of this category
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {(type === 'award' || type === 'recognition') && (
+          <>
             <FormField
               control={form.control}
-              name="description"
+              name="icon"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Icon</FormLabel>
                   <FormControl>
-                    <Textarea {...field} />
+                    <Input {...field} placeholder="e.g., 🏆 or trophy" />
                   </FormControl>
                   <FormDescription>
-                    Provide a brief description of this category
+                    Enter an emoji or icon name for this {type}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {(type === 'award' || type === 'recognition') && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="icon"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Icon</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="e.g., 🏆 or trophy" />
-                      </FormControl>
-                      <FormDescription>
-                        Enter an emoji or icon name for this {type}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="featured"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          Featured
-                        </FormLabel>
-                        <FormDescription>
-                          Feature this {type} prominently on the website
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
-          </CardContent>
-
-          <CardFooter className="flex justify-between">
-            <Button variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-            <Button type="submit">
-              {category ? 'Update' : 'Create'}
-            </Button>
-          </CardFooter>
-        </form>
-      </Form>
-    </Card>
+            <FormField
+              control={form.control}
+              name="featured"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Featured
+                    </FormLabel>
+                    <FormDescription>
+                      Feature this {type} prominently on the website
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
+          </>
+        )}
+        <div className="flex justify-end space-x-2 pt-4">
+          <Button variant="outline" onClick={onCancel} type="button">
+            Cancel
+          </Button>
+          <Button type="submit">
+            {category ? 'Update' : 'Create'}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }
 

@@ -8,7 +8,7 @@ import { DataTable } from '@/components/ui/data-table';
 import { columns } from './_components/columns';
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Partner } from '@/types';
+import { Partner } from '@/app/types/partner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { partnersService } from '@/app/services/partners';
 
@@ -18,8 +18,15 @@ export default function PartnersPage() {
 
   useEffect(() => {
     const fetchPartners = async () => {
-      const partnersData = await partnersService.getPartners();
-      setPartners(partnersData);
+      try {
+        setLoading(true);
+        const partnersData = await partnersService.getPartners();
+        setPartners(partnersData);
+      } catch (error) {
+        console.error('Error fetching partners:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchPartners();
@@ -27,7 +34,7 @@ export default function PartnersPage() {
 
   // Update partner type checks to match the Partner interface
   const totalPartners = partners.length;
-  const strategicPartners = partners.filter(partner => partner.partnerType === 'strategic').length;
+  const partnerTypePartners = partners.filter(partner => partner.partnerType === 'partner').length;
   const membershipPartners = partners.filter(partner => partner.partnerType === 'membership').length;
 
   return (
@@ -49,8 +56,8 @@ export default function PartnersPage() {
             <p className="text-xs text-muted-foreground">Total Partners</p>
           </Card>
           <Card className="p-6">
-            <div className="text-2xl font-bold">{strategicPartners}</div>
-            <p className="text-xs text-muted-foreground">Strategic Partners</p>
+            <div className="text-2xl font-bold">{partnerTypePartners}</div>
+            <p className="text-xs text-muted-foreground">Partner Organizations</p>
           </Card>
           <Card className="p-6">
             <div className="text-2xl font-bold">{membershipPartners}</div>

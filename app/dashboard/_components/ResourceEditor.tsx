@@ -47,9 +47,10 @@ interface ResourceEditorProps {
   resource?: Resource;
   mode?: 'create' | 'edit';
   onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
-export function ResourceEditor({ resource, mode = 'create', onSuccess }: ResourceEditorProps) {
+export function ResourceEditor({ resource, mode = 'create', onSuccess, onCancel }: ResourceEditorProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
@@ -218,7 +219,7 @@ export function ResourceEditor({ resource, mode = 'create', onSuccess }: Resourc
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push('/dashboard/resources')}
+            onClick={onCancel || (() => router.back())}
           >
             Cancel
           </Button>

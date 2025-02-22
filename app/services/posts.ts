@@ -105,7 +105,7 @@ export const postsService = {
 
   async createPost(data: Omit<Post, 'id' | 'createdAt' | 'updatedAt'>): Promise<Post> {
     try {
-      const now = new Date();
+      const now = Date.now();
       const id = crypto.randomUUID();
 
       const post: Post = {
@@ -125,7 +125,7 @@ export const postsService = {
 
   async updatePost(id: string, data: Partial<Post>): Promise<Post> {
     try {
-      const now = new Date();
+      const now = Date.now();
       const updateData = {
         ...data,
         updatedAt: now
