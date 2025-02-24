@@ -1,121 +1,43 @@
-'use client';
+import { ColumnDef } from "@tanstack/react-table";
+import { CellAction } from "./cell-action";
 
-import { ColumnDef } from '@tanstack/react-table';
-import { Category } from '@/app/types/category';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import { DataTableRowActions } from '@/components/ui/data-table-row-actions';
-import { createCategory, updateCategory, deleteCategory } from '@/app/actions/categories';
-import { toast } from '@/hooks/use-toast';
-import { useState } from 'react';
+export type CategoryColumn = {
+  id: string;
+  name: string;
+  description: string;
+  type: 'post' | 'resource' | 'event';
+  slug: string;
+  count: number;
+  createdAt: Date;
+};
 
-export const columns: ColumnDef<Category>[] = [
+export const columns: ColumnDef<CategoryColumn>[] = [
   {
-    id: 'select',
-    header: ({ table }) => (
-      <Checkbox
-        checked={table.getIsAllPageRowsSelected()}
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
+    accessorKey: "name",
+    header: "Name",
   },
   {
-    accessorKey: 'name',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Name" />
-    ),
+    accessorKey: "description",
+    header: "Description",
   },
   {
-    accessorKey: 'type',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Type" />
-    ),
+    accessorKey: "type",
+    header: "Type",
+  },
+  {
+    accessorKey: "count",
+    header: "Count",
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Created At",
     cell: ({ row }) => {
-      const type = row.getValue('type') as string;
-      return (
-        <Badge variant={type === 'post' ? 'default' : 'secondary'}>
-          {type}
-        </Badge>
-      );
-    },
+      const date = row.original.createdAt;
+      return new Date(date).toLocaleDateString();
+    }
   },
   {
-    accessorKey: 'itemCount',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Items" />
-    ),
-  },
-  {
-    accessorKey: 'featured',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Featured" />
-    ),
-    cell: ({ row }) => {
-      const featured = row.getValue('featured') as boolean;
-      return (
-        <Badge variant={featured ? 'default' : 'secondary'}>
-          {featured ? 'Yes' : 'No'}
-        </Badge>
-      );
-    },
-  },
-  {
-    id: 'actions',
-    cell: ({ row }) => {
-      const category = row.original;
-      const [loading, setLoading] = useState(false);
-
-      const onDelete = async () => {
-        try {
-          setLoading(true);
-          const result = await deleteCategory(category.id);
-          if (result.success) {
-            toast({
-              title: "Success",
-              description: "Category deleted successfully",
-            });
-          } else {
-            throw new Error(result.error);
-          }
-        } catch (error) {
-          toast({
-            title: "Error",
-            description: "Failed to delete category",
-            variant: "destructive",
-          });
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      return (
-        <DataTableRowActions
-          row={row}
-          actions={[
-            {
-              label: 'Edit',
-              onClick: () => {
-                // Handle edit action
-              },
-            },
-            {
-              label: 'Delete',
-              onClick: onDelete,
-            },
-          ]}
-        />
-      );
-    },
-  },
+    id: "actions",
+    cell: ({ row }) => <CellAction data={row.original} />
+  }
 ];

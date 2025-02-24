@@ -32,115 +32,134 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   }, []);
 
   const isFirebaseStorageUrl = (url: string): boolean => {
-    try {
-      const urlObj = new URL(url);
-      return urlObj.hostname === 'firebasestorage.googleapis.com';
-    } catch {
-      return false;
-    }
+    return url.includes('firebasestorage.googleapis.com');
   };
 
   const handleRemove = async (url: string) => {
     try {
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to remove images",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Only attempt to delete from Firebase Storage if it's a Firebase URL
       if (isFirebaseStorageUrl(url)) {
+        console.log('Attempting to remove Firebase image:', url);
         try {
-          // Extract the file path from the URL
-          const urlPath = decodeURIComponent(url.split('/o/')[1].split('?')[0]);
-          const fileRef = ref(storage, urlPath);
-
-          // Delete the file from storage
+          const fileRef = ref(storage, url);
           await deleteObject(fileRef);
+          console.log('Successfully deleted from Firebase:', url);
           toast({
             title: "Success",
             description: "Image removed successfully"
           });
         } catch (error) {
-          console.error('Error deleting from Firebase:', error);
-          // Continue with removal even if Firebase deletion fails
+          console.error('Firebase deletion error:', {
+            error,
+            url,
+            message: error instanceof Error ? error.message : 'Unknown error'
+          });
         }
       }
 
-      // Always remove from form state
       onRemove(url);
     } catch (error) {
-      console.error('Error removing image:', error);
+      console.error('Error in handleRemove:', {
+        error,
+        url,
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
       toast({
         title: "Error",
         description: "Failed to remove image completely, but removed from form",
         variant: "destructive"
       });
-      // Still remove from form even if storage delete fails
       onRemove(url);
     }
   };
 
   const onUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event?.target?.files?.[0]) {
+      return;
+    }
+
     try {
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to upload images",
-          variant: "destructive"
-        });
-        return;
+      // Check if Firebase Storage is initialized
+      if (!storage) {
+        console.error('Firebase Storage is not initialized');
+        throw new Error('Storage service is not available');
       }
 
-      const file = event.target.files?.[0];
-      if (!file) return;
+      const file = event.target.files[0];
 
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: "Error",
-          description: "Please upload an image file",
-          variant: "destructive"
-        });
-        return;
+      // Log the upload attempt
+      console.log('Starting upload process:', {
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        userAuth: !!user,
+        storageInitialized: !!storage
+      });
+
+      // Rest of validation
+      if (!file.type.match(/^image\/(jpeg|png|gif|webp)$/)) {
+        throw new Error('Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
       }
 
-      // Validate file size (5MB)
       if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "Error",
-          description: "Image size should be less than 5MB",
-          variant: "destructive"
-        });
-        return;
+        throw new Error('Image must be smaller than 5MB');
+      }
+
+      if (!user?.uid) {
+        throw new Error('Authentication required for upload');
       }
 
       setUploading(true);
 
-      // Delete existing image if there is one and it's a Firebase Storage URL
-      if (value[0] && isFirebaseStorageUrl(value[0])) {
-        await handleRemove(value[0]);
+      // Clean filename and create path
+      const sanitizedName = file.name.replace(/[^\w.-]/g, '-');
+      const fileName = `partners/${user.uid}-${Date.now()}-${sanitizedName}`;
+
+      console.log('Creating storage reference for:', fileName);
+      const fileRef = ref(storage, fileName);
+
+      // Upload with explicit content type and error handling
+      const metadata = {
+        contentType: file.type,
+        customMetadata: {
+          uploadedBy: user.uid,
+          originalName: file.name
+        }
+      };
+
+      console.log('Starting upload with metadata:', metadata);
+      let uploadResult;
+      try {
+        uploadResult = await uploadBytes(fileRef, file, metadata);
+        console.log('Upload successful:', uploadResult);
+      } catch (uploadError) {
+        console.error('Upload failed:', uploadError);
+        throw uploadError;
       }
 
-      const sanitizedName = file.name.replace(/[^\w.-]/g, '-');
-      const fileName = `${Date.now()}-${sanitizedName}`;
-      const fileRef = ref(storage, `partners/${fileName}`);
-      await uploadBytes(fileRef, file);
-      const downloadUrl = await getDownloadURL(fileRef);
-      onChange(downloadUrl);
+      console.log('Getting download URL');
+      const downloadUrl = await getDownloadURL(uploadResult.ref);
+      console.log('Download URL received:', downloadUrl);
 
+      if (!downloadUrl || typeof downloadUrl !== 'string') {
+        throw new Error('Invalid download URL received from storage');
+      }
+
+      onChange(downloadUrl);
       toast({
         title: "Success",
         description: "Image uploaded successfully"
       });
-    } catch (error) {
-      console.error('Error uploading image:', error);
+
+    } catch (error: unknown) {
+      console.error('Upload error:', {
+        name: error instanceof Error ? error.name : 'UnknownError',
+        message: error instanceof Error ? error.message : 'An unknown error occurred',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+
       toast({
-        title: "Error",
-        description: "Failed to upload image. Please try again.",
+        title: "Upload Error",
+        description: error instanceof Error ? error.message : 'Failed to upload image',
         variant: "destructive"
       });
     } finally {
@@ -156,36 +175,32 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   }
 
   return (
-    <div>
-      <div className="mb-4 flex items-center gap-4">
-        {value.filter(url => url && url.trim() !== '').map((url) => (
-          <div key={url} className="relative w-[200px] h-[200px] rounded-lg overflow-hidden">
+    <div className="space-y-4">
+      <div className="flex items-center gap-4">
+        {value.map((url) => (
+          <div key={url} className="relative w-[200px] h-[200px]">
             <div className="z-10 absolute top-2 right-2">
               <Button
                 type="button"
                 onClick={() => handleRemove(url)}
                 variant="destructive"
-                size="sm"
-                disabled={disabled || uploading}
+                size="icon"
               >
                 <Trash className="h-4 w-4" />
               </Button>
             </div>
             <Image
               fill
-              className="object-cover"
+              className="object-cover rounded-lg"
               alt="Image"
-              src={url as string}  // Type assertion since we know it's a string at this point
-              sizes="(max-width: 200px) 100vw, 200px"
-              onError={(e) => {
-                // Handle image load error
-                console.error(`Failed to load image: ${url}`);
+              src={url}
+              onError={() => {
+                console.error('Image load error:', url);
                 toast({
                   title: "Error",
                   description: "Failed to load image. It may have been deleted.",
                   variant: "destructive"
                 });
-                // Remove the invalid image URL from the form
                 onRemove(url);
               }}
             />
@@ -204,4 +219,4 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       </div>
     </div>
   );
-}
+};

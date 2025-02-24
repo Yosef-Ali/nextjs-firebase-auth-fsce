@@ -1,172 +1,125 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Post } from '@/types';
-import { getPostsByCategory } from '@/app/actions/posts';
-import { ProgramSearch } from '@/components/program-search';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { ContentCard } from '@/components/content-display/ContentCard';
-import { StickyPostsSection } from '@/components/content-display/StickyPostsSection';
 import FSCESkeleton from '@/components/FSCESkeleton';
 import { motion } from 'framer-motion';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink } from '@/components/ui/pagination';
-import { ensureCategory } from '@/app/utils/category';
-import { compareTimestamps } from '@/app/utils/date';
+import { postsService } from '@/app/services/posts';
 
 export default function AchievementsPage() {
-  const searchResultsRef = useRef<HTMLDivElement>(null);
   const [achievements, setAchievements] = useState<Post[]>([]);
   const [stickyAchievements, setStickyAchievements] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [page, setPage] = useState(1);
-  const postsPerPage = 9;
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAchievements = async () => {
       try {
+        console.log('Starting to fetch achievements');
         setLoading(true);
-        const allPosts = await getPostsByCategory('achievements');
-        // Ensure posts have proper Category objects
-        const postsWithCategories = allPosts.map(post => ({
-          ...post,
-          category: ensureCategory(post.category)
-        }));
-        const [sticky, regular] = postsWithCategories.reduce<[Post[], Post[]]>(
-          ([s, r], post: Post) => post.sticky ? [[...s, post], r] : [s, [...r, post]],
-          [[], []]
+
+        // Verify Firebase connection
+        if (!db) {
+          throw new Error('Firebase database connection not available');
+        }
+
+        console.log('Firebase connection verified');
+
+        const achievementsQuery = query(
+          collection(db, 'posts'),
+          where('category.id', '==', 'achievements'),
+          where('published', '==', true),
+          orderBy('createdAt', 'desc')
         );
 
-        sticky.sort((a: Post, b: Post) => compareTimestamps(a.createdAt, b.createdAt));
-        regular.sort((a: Post, b: Post) => compareTimestamps(a.createdAt, b.createdAt));
+        console.log('Executing query for achievements posts');
+
+        const snapshot = await getDocs(achievementsQuery);
+
+        if (snapshot.empty) {
+          console.log('No achievements posts found');
+          setStickyAchievements([]);
+          setAchievements([]);
+          return;
+        }
+
+        console.log(`Found ${snapshot.docs.length} achievement posts`);
+
+        const posts = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Post[];
+
+        console.log('Posts mapping completed');
+
+        const sticky = posts.filter(post => post.sticky);
+        const regular = posts.filter(post => !post.sticky);
+
+        console.log(`Filtered posts: ${sticky.length} sticky, ${regular.length} regular`);
 
         setStickyAchievements(sticky);
         setAchievements(regular);
       } catch (error) {
         console.error('Error fetching achievements:', error);
+        // You might want to set some error state here
         setStickyAchievements([]);
         setAchievements([]);
       } finally {
+        console.log('Fetch achievements operation completed');
         setLoading(false);
       }
     };
-    fetchData();
+
+    fetchAchievements();
   }, []);
-
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    setPage(1);
-    setTimeout(() => {
-      searchResultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
-  };
-
-  // Filter achievements for search
-  const filteredAchievements = [...stickyAchievements, ...achievements].filter(achievement =>
-    searchQuery === '' ||
-    achievement.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    achievement.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const totalPages = Math.ceil(filteredAchievements.length / postsPerPage);
-  const paginatedAchievements = filteredAchievements.slice(
-    (page - 1) * postsPerPage,
-    page * postsPerPage
-  );
 
   if (loading) {
     return <FSCESkeleton />;
   }
 
+  const renderPost = (post: Post, index: number) => (
+    <motion.div
+      key={post.id}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+    >
+      <ContentCard
+        title={post.title}
+        excerpt={post.excerpt}
+        image={post.coverImage}
+        slug={post.slug}
+        category={post.category.name}
+        createdAt={post.createdAt}
+        index={index}
+        isFeatured={post.sticky}
+        href={`/posts/${post.slug}`}
+      />
+    </motion.div>
+  );
+
   return (
-    <div className="min-h-screen bg-background">
-      <section className="py-16 bg-primary/5">
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-6">
-            Our Achievements
-          </h2>
-          <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
-            Discover the milestones we've reached and the impact we've made in our journey.
-          </p>
+    <div className="container mx-auto px-4 py-8">
+      {stickyAchievements.length > 0 && (
+        <section className="mb-12">
+          <h2 className="text-2xl font-bold mb-6">Featured Achievements</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {stickyAchievements.map((achievement, index) => renderPost(achievement, index))}
+          </div>
+        </section>
+      )}
 
-          <ProgramSearch
-            onSearch={handleSearch}
-            placeholder="Search achievements..."
-            className="max-w-2xl mx-auto mb-12"
-          />
-        </div>
-      </section>
-
-      <section ref={searchResultsRef} className="py-16 bg-white scroll-mt-16">
-        <div className="container mx-auto px-4 max-w-7xl">
-          {searchQuery && (
-            <div className="mb-8">
-              <h3 className="text-2xl font-semibold mb-2">
-                Search Results {filteredAchievements.length > 0 ? `(${filteredAchievements.length})` : ''}
-              </h3>
-              {filteredAchievements.length === 0 && (
-                <p className="text-muted-foreground">No achievements found matching "{searchQuery}"</p>
-              )}
-            </div>
-          )}
-
-          {!searchQuery && stickyAchievements.length > 0 && (
-            <div className="mb-20">
-              <StickyPostsSection
-                posts={stickyAchievements.slice(0, 2)}
-                title="Featured Achievements"
-                basePath="/who-we-are/achievements"
-              />
-            </div>
-          )}
-
-          {(searchQuery ? paginatedAchievements : achievements).length > 0 && (
-            <>
-              {!searchQuery && (
-                <div className="mb-8">
-                  <h3 className="text-2xl font-bold">All Achievements</h3>
-                </div>
-              )}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
-              >
-                {(searchQuery ? paginatedAchievements : achievements).map((achievement) => (
-                  <ContentCard
-                    key={achievement.id}
-                    title={achievement.title}
-                    excerpt={achievement.excerpt}
-                    image={achievement.coverImage || "/images/placeholder.svg"}
-                    slug={achievement.slug}
-                    category="Achievement"
-                    createdAt={achievement.createdAt}
-                    href={`/who-we-are/achievements/${achievement.slug}`}
-                  />
-                ))}
-              </motion.div>
-            </>
-          )}
-
-          {totalPages > 1 && searchQuery && (
-            <div className="mt-8 flex justify-center">
-              <Pagination>
-                <PaginationContent>
-                  {[...Array(totalPages)].map((_, i) => (
-                    <PaginationItem key={i + 1}>
-                      <PaginationLink
-                        onClick={() => setPage(i + 1)}
-                        isActive={page === i + 1}
-                      >
-                        {i + 1}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
-        </div>
+      <section>
+        <h2 className="text-2xl font-bold mb-6">All Achievements</h2>
+        {achievements.length === 0 ? (
+          <p className="text-center text-gray-500">No achievements found</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {achievements.map((achievement, index) => renderPost(achievement, index))}
+          </div>
+        )}
       </section>
     </div>
   );

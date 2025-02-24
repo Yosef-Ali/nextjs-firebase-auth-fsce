@@ -7,6 +7,14 @@ service firebase.storage {
       return request.auth != null;
     }
 
+    // Specific rules for partners directory
+    match /partners/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated()
+        && request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
     match /{allPaths=**} {
       // Allow public read access to all files
       allow read: if true;

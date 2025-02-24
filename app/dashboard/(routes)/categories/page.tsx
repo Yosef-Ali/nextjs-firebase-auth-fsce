@@ -2,13 +2,26 @@
 
 import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { categoryService } from '@/app/services/categories';
-import CategoriesContent from './_components/categories-content';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Category } from '@/app/types/category';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { toast } from '@/hooks/use-toast';
+import { columns } from './_components/columns';
+import { DataTable } from '@/components/ui/data-table';
+import { Heading } from '@/components/ui/heading';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CategoryEditor } from './_components/category-editor';
+
+interface Category {
+  id: string;
+  name: string;
+  description: string;
+  type: 'post' | 'resource' | 'event';
+  slug: string;
+  count: number;
+  createdAt: Date;
+}
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -16,78 +29,69 @@ export default function CategoriesPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const fetchedCategories = await categoryService.getCategories();
-        // Add itemCount calculation logic here if needed
-        setCategories(fetchedCategories);
-      } catch (error) {
+    const categoriesQuery = query(
+      collection(db, 'categories'),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(
+      categoriesQuery,
+      (snapshot) => {
+        const categories = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate(),
+        })) as Category[];
+        setCategories(categories);
+        setIsLoading(false);
+      },
+      (error) => {
         console.error('Error fetching categories:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load categories',
+          variant: 'destructive',
+        });
+        setIsLoading(false);
       }
-    };
-    fetchData();
+    );
+
+    return () => unsubscribe();
   }, []);
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-10">
-        <div className="space-y-4">
-          <Skeleton className="h-8 w-[200px]" />
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Skeleton className="h-[120px]" />
-            <Skeleton className="h-[120px]" />
-            <Skeleton className="h-[120px]" />
-            <Skeleton className="h-[120px]" />
-          </div>
-          <Skeleton className="h-[400px]" />
-        </div>
+      <div className="space-y-3 p-8">
+        <Skeleton className="h-8 w-[200px]" />
+        <Skeleton className="h-[400px] w-full" />
       </div>
     );
   }
 
-  // Calculate category stats
-  const totalCategories = categories.length;
-  const postCategories = categories.filter(cat => cat.type === 'post').length;
-  const resourceCategories = categories.filter(cat => cat.type === 'resource').length;
-  const featuredCategories = categories.filter(cat => cat.featured).length;
-
   return (
-    <div className="container mx-auto py-10">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Categories</h1>
+    <>
+      <Dialog open={isEditorOpen} onOpenChange={setIsEditorOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Category</DialogTitle>
+          </DialogHeader>
+          <CategoryEditor onClose={() => setIsEditorOpen(false)} />
+        </DialogContent>
+      </Dialog>
+
+      <div className="space-y-4 p-8">
+        <div className="flex items-center justify-between">
+          <Heading
+            title={`Categories (${categories.length})`}
+            description="Manage your categories"
+          />
           <Button onClick={() => setIsEditorOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Add Category
+            Add New
           </Button>
         </div>
-
-        {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="p-6">
-            <div className="text-2xl font-bold">{totalCategories}</div>
-            <p className="text-xs text-muted-foreground">Total Categories</p>
-          </Card>
-          <Card className="p-6">
-            <div className="text-2xl font-bold">{postCategories}</div>
-            <p className="text-xs text-muted-foreground">Post Categories</p>
-          </Card>
-          <Card className="p-6">
-            <div className="text-2xl font-bold">{resourceCategories}</div>
-            <p className="text-xs text-muted-foreground">Resource Categories</p>
-          </Card>
-          <Card className="p-6">
-            <div className="text-2xl font-bold">{featuredCategories}</div>
-            <p className="text-xs text-muted-foreground">Featured Categories</p>
-          </Card>
-        </div>
-
-        {/* Categories Table */}
-        <Card>
-          <CategoriesContent initialCategories={categories} />
-        </Card>
+        <DataTable columns={columns} data={categories} searchKey="name" />
       </div>
-    </div>
+    </>
   );
 }

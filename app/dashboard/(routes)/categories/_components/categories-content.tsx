@@ -3,14 +3,14 @@
 import { useState } from 'react';
 import { DataTable } from '@/components/ui/data-table';
 import { columns } from './columns';
-import { Category } from '@/app/types/category';
+import type { CategoryColumn } from './columns';
 
 interface CategoriesContentProps {
-  initialCategories: Category[];
+  initialCategories: CategoryColumn[];
 }
 
 export default function CategoriesContent({ initialCategories }: CategoriesContentProps) {
-  const [categories] = useState<Category[]>(initialCategories);
+  const [categories] = useState<CategoryColumn[]>(initialCategories);
 
   return (
     <div className="p-6">

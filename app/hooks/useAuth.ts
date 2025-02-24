@@ -1,7 +1,7 @@
 import { UserRole, UserStatus, UserMetadata, User } from '@/app/types/user';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { usersService } from '@/app/services/users';
 import {
     signInWithEmailAndPassword,
@@ -12,7 +12,8 @@ import {
     signInWithPopup,
     createUserWithEmailAndPassword,
     UserCredential,
-    sendPasswordResetEmail
+    sendPasswordResetEmail,
+    updateProfile
 } from 'firebase/auth';
 import { AuthError, handleAuthError } from '@/app/lib/auth-errors';
 
@@ -27,7 +28,7 @@ export function useAuth() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<AuthError | null>(null);
     const router = useRouter();
-    const unsubscribeRef = useRef<(() => void) | undefined>();
+    const unsubscribeRef = useRef<(() => void) | null>(null);
 
     const createUserMetadata = (
         firebaseUser: FirebaseUser,
@@ -46,18 +47,22 @@ export function useAuth() {
             emailVerified: firebaseUser.emailVerified,
             providerData: firebaseUser.providerData,
             refreshToken: firebaseUser.refreshToken || '',
-            phoneNumber: firebaseUser.phoneNumber,
-            tenantId: firebaseUser.tenantId
+            phoneNumber: firebaseUser.phoneNumber || null,
+            tenantId: firebaseUser.tenantId || null
         };
     };
 
     useEffect(() => {
-        if (typeof window === 'undefined') return;
-
         let mounted = true;
 
-        const setupAuthListener = () => {
+        const setupAuthListener = async () => {
             try {
+                // Clear any existing listener
+                if (unsubscribeRef.current) {
+                    unsubscribeRef.current();
+                    unsubscribeRef.current = null;
+                }
+
                 const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
                     if (!mounted) return;
 
@@ -65,7 +70,6 @@ export function useAuth() {
                         setError(null);
                         if (firebaseUser) {
                             const userData = await usersService.createUserIfNotExists(firebaseUser);
-
                             if (userData && mounted) {
                                 const authUser = {
                                     ...firebaseUser,
@@ -75,15 +79,13 @@ export function useAuth() {
                                 setUser(authUser);
                                 setUserData(createUserMetadata(firebaseUser, userData));
                             }
-                        } else {
-                            if (mounted) {
-                                setUser(null);
-                                setUserData(null);
-                            }
+                        } else if (mounted) {
+                            setUser(null);
+                            setUserData(null);
                         }
                     } catch (error) {
+                        console.error('Auth state change error:', error);
                         if (mounted) {
-                            console.error('Auth state change error:', error);
                             setError(error as AuthError);
                         }
                     } finally {
@@ -94,33 +96,25 @@ export function useAuth() {
                 });
 
                 unsubscribeRef.current = unsubscribe;
-                return unsubscribe;
             } catch (error) {
                 console.error('Auth listener setup error:', error);
                 if (mounted) {
                     setError(error as AuthError);
                     setLoading(false);
                 }
-                return () => { };
             }
         };
 
-        const unsubscribe = setupAuthListener();
+        setupAuthListener();
 
         return () => {
             mounted = false;
-            if (typeof unsubscribe === 'function') {
-                try {
-                    unsubscribe();
-                } catch (error) {
-                    console.warn('Auth cleanup warning:', error);
-                }
-            }
             if (unsubscribeRef.current) {
                 try {
                     unsubscribeRef.current();
+                    unsubscribeRef.current = null;
                 } catch (error) {
-                    console.warn('Ref cleanup warning:', error);
+                    console.warn('Auth cleanup warning:', error);
                 }
             }
         };
@@ -134,27 +128,31 @@ export function useAuth() {
             if (!userData) {
                 throw new Error('Failed to create or fetch user data');
             }
+            // Set user and userData state immediately after successful sign in
+            const authUser = {
+                ...result.user,
+                role: userData.role,
+                status: userData.status
+            } as AuthUser;
+            setUser(authUser);
             const metadata = createUserMetadata(result.user, userData);
+            setUserData(metadata);
             return metadata;
         } catch (error: any) {
-            const authError = handleAuthError(error);
-            setError(authError);
-            throw authError;
+            // Handle specific Firebase auth errors
+            const errorMessage = error.code === 'auth/user-not-found' ? 'No account found with this email' :
+                error.code === 'auth/wrong-password' ? 'Incorrect password' :
+                    'Failed to sign in';
+            setError({ ...error, message: errorMessage } as AuthError);
+            throw error;
         }
     };
 
-    const signUp = async (email: string, password: string, displayName: string): Promise<{ userCredential: UserCredential; userData: UserMetadata }> => {
+    const signOut = async (): Promise<void> => {
         try {
             setError(null);
-            const result = await createUserWithEmailAndPassword(auth, email, password);
-            const userData = await usersService.createUserIfNotExists(result.user);
-            if (!userData) {
-                throw new Error('Failed to create user data');
-            }
-            return {
-                userCredential: result,
-                userData: createUserMetadata(result.user, userData)
-            };
+            await firebaseSignOut(auth);
+            router.replace('/sign-in');
         } catch (error) {
             const authError = handleAuthError(error);
             setError(authError);
@@ -172,11 +170,30 @@ export function useAuth() {
                 throw new Error('Failed to create or fetch user data');
             }
             const metadata = createUserMetadata(result.user, userData);
-            return {
-                userCredential: result,
-                userData: metadata
-            };
-        } catch (error) {
+            setUser(result.user as AuthUser);
+            setUserData(metadata);
+            return { userCredential: result, userData: metadata };
+        } catch (error: any) {
+            const authError = handleAuthError(error);
+            setError(authError);
+            throw authError;
+        }
+    };
+
+    const signUp = async (email: string, password: string, displayName: string): Promise<{ userCredential: UserCredential; userData: UserMetadata }> => {
+        try {
+            setError(null);
+            const result = await createUserWithEmailAndPassword(auth, email, password);
+            await updateProfile(result.user, { displayName });
+            const userData = await usersService.createUserIfNotExists(result.user);
+            if (!userData) {
+                throw new Error('Failed to create or fetch user data');
+            }
+            const metadata = createUserMetadata(result.user, userData);
+            setUser(result.user as AuthUser);
+            setUserData(metadata);
+            return { userCredential: result, userData: metadata };
+        } catch (error: any) {
             const authError = handleAuthError(error);
             setError(authError);
             throw authError;
@@ -187,18 +204,6 @@ export function useAuth() {
         try {
             setError(null);
             await sendPasswordResetEmail(auth, email);
-        } catch (error) {
-            const authError = handleAuthError(error);
-            setError(authError);
-            throw authError;
-        }
-    };
-
-    const signOut = async () => {
-        try {
-            setError(null);
-            await firebaseSignOut(auth);
-            router.replace('/sign-in');
         } catch (error) {
             const authError = handleAuthError(error);
             setError(authError);

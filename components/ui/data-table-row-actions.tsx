@@ -1,7 +1,7 @@
 "use client"
 
-import { DotsHorizontalIcon } from "@radix-ui/react-icons"
 import { Row } from "@tanstack/react-table"
+import { DotsHorizontalIcon } from "@radix-ui/react-icons"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -13,16 +13,18 @@ import {
 
 interface DataTableRowActionsProps<TData> {
     row: Row<TData>
-    actions: {
+    actions?: {
         label: string
-        onClick: () => void
+        onClick: (row: TData) => void
     }[]
 }
 
 export function DataTableRowActions<TData>({
     row,
-    actions,
+    actions = [],
 }: DataTableRowActionsProps<TData>) {
+    if (!actions.length) return null;
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -38,7 +40,7 @@ export function DataTableRowActions<TData>({
                 {actions.map((action) => (
                     <DropdownMenuItem
                         key={action.label}
-                        onClick={action.onClick}
+                        onClick={() => action.onClick(row.original)}
                     >
                         {action.label}
                     </DropdownMenuItem>

@@ -16,6 +16,7 @@ const nextConfig = {
     domains: [
       'firebasestorage.googleapis.com',
       'lh3.googleusercontent.com',
+      'images.unsplash.com'
     ],
   },
   webpack: (config, { isServer }) => {
@@ -33,11 +34,8 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig;
-
 // Add environment variables
 const { NEXT_PUBLIC_FIREBASE_ADMIN_PROJECT_ID, NEXT_PUBLIC_FIREBASE_ADMIN_CLIENT_EMAIL, NEXT_PUBLIC_FIREBASE_ADMIN_PRIVATE_KEY } = process.env;
-
 module.exports = {
   ...nextConfig,
   env: {

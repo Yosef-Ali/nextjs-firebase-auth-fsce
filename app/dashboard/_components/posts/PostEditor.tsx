@@ -1,51 +1,38 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useToast } from "@/hooks/use-toast";
-import { categoryService } from '@/app/services/categories';
+import { useEffect, useState } from 'react';
 import { Category } from '@/app/types/category';
-import { Post } from '@/app/types/post';
-import { PostForm } from './PostForm';
+import { categoryService } from '@/app/services/categories';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/lib/hooks/useAuth';
 
-interface PostEditorProps {
-  post?: Post;
-  initialData?: {
-    title: string;
-    content: string;
-    section?: string;
-    category: string;
-    published: boolean;
-  };
-  onSuccess?: () => void;
-}
-
-export function PostEditor({ post, initialData, onSuccess }: PostEditorProps) {
-  const { toast } = useToast();
+export function PostEditor() {
   const [categories, setCategories] = useState<Category[]>([]);
+  const { user } = useAuth();
+
+  const fetchCategories = async () => {
+    try {
+      const categoriesSnapshot = await getDocs(collection(db, "categories"));
+      const categoriesData = categoriesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setCategories(categoriesData);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load categories",
+        variant: "destructive"
+      });
+    }
+  };
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const fetchedCategories = await categoryService.getCategories();
-        setCategories(fetchedCategories);
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load categories. Please try again.",
-          variant: "destructive",
-        });
-      }
-    };
-    fetchCategories();
-  }, [toast]);
+    if (user) {
+      fetchCategories();
+    }
+  }, [user]); // Dependency array includes user to run fetchCategories when user changes
 
-  return (
-    <PostForm
-      post={post}
-      initialData={initialData}
-      categories={categories}
-      onSuccess={onSuccess}
-    />
-  );
+  // Rest of your component code...
 }

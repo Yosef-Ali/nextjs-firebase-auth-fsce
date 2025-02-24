@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { collection, onSnapshot, orderBy, query, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { BoardMemberClient } from "./_components/client";
@@ -10,45 +10,78 @@ import { FounderForm } from "./_components/founder-form";
 import { Separator } from "@/components/ui/separator";
 
 interface FoundingGroup {
+  id: string;
+  name: string;
+  bio: string;
   image: string;
-  description: string;
 }
 
 const BoardMembersPage = () => {
   const [boardMembers, setBoardMembers] = useState<BoardMember[]>([]);
   const [foundingGroup, setFoundingGroup] = useState<FoundingGroup | null>(null);
   const [loading, setLoading] = useState(true);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    // Fetch board members
-    const unsubscribe = onSnapshot(
-      query(collection(db, "board-members"), orderBy("name")),
-      (snapshot) => {
-        const members = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate(),
-          updatedAt: doc.data().updatedAt?.toDate()
-        })) as BoardMember[];
-        setBoardMembers(members);
-        setLoading(false);
-      }
-    );
+    let mounted = true;
 
-    // Fetch founding group data
-    const fetchFoundingGroup = async () => {
+    const setupListeners = async () => {
       try {
-        const foundingGroupDoc = await getDoc(doc(db, "founding-group", "main"));
-        if (foundingGroupDoc.exists()) {
-          setFoundingGroup(foundingGroupDoc.data() as FoundingGroup);
+        // Clear any existing listener
+        if (unsubscribeRef.current) {
+          unsubscribeRef.current();
+          unsubscribeRef.current = null;
+        }
+
+        // Fetch board members with listener
+        const unsubscribe = onSnapshot(
+          query(collection(db, "board-members"), orderBy("name")),
+          (snapshot) => {
+            if (!mounted) return;
+
+            const members = snapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+              createdAt: doc.data().createdAt?.toDate(),
+              updatedAt: doc.data().updatedAt?.toDate()
+            })) as BoardMember[];
+            setBoardMembers(members);
+            setLoading(false);
+          },
+          (error) => {
+            console.error("Error in board members listener:", error);
+            if (mounted) {
+              setLoading(false);
+            }
+          }
+        );
+
+        unsubscribeRef.current = unsubscribe;
+
+        // Fetch founding group data
+        if (mounted) {
+          const foundingGroupDoc = await getDoc(doc(db, "founding-group", "main"));
+          if (foundingGroupDoc.exists() && mounted) {
+            setFoundingGroup(foundingGroupDoc.data() as FoundingGroup);
+          }
         }
       } catch (error) {
-        console.error("Error fetching founding group:", error);
+        console.error("Error setting up listeners:", error);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchFoundingGroup();
-    return () => unsubscribe();
+    setupListeners();
+
+    return () => {
+      mounted = false;
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
+      }
+    };
   }, []);
 
   if (loading) {
@@ -65,17 +98,17 @@ const BoardMembersPage = () => {
           </p>
         </div>
         <Separator />
-        
+
         <Tabs defaultValue="members" className="space-y-4">
           <TabsList>
             <TabsTrigger value="members">Board Members</TabsTrigger>
             <TabsTrigger value="founding">Founding Group</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="members" className="space-y-4">
             <BoardMemberClient data={boardMembers} />
           </TabsContent>
-          
+
           <TabsContent value="founding" className="space-y-4">
             <div className="max-w-4xl mx-auto">
               <div className="mb-8">
@@ -84,7 +117,7 @@ const BoardMembersPage = () => {
                   Update the founding group section that appears on the board members page.
                 </p>
               </div>
-              <FounderForm 
+              <FounderForm
                 initialData={foundingGroup || undefined}
                 onSuccess={() => {
                   // Optionally refresh the data

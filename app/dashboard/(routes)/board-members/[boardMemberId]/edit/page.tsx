@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -11,39 +11,72 @@ const EditBoardMemberPage = () => {
   const params = useParams();
   const [boardMember, setBoardMember] = useState<BoardMember | null>(null);
   const [loading, setLoading] = useState(true);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    let mounted = true;
     if (!params) return;
-    
-    const unsubscribe = onSnapshot(
-      doc(db, "board-members", params.boardMemberId as string),
-      (doc) => {
-        if (doc.exists()) {
-          setBoardMember({
-            id: doc.id,
-            ...doc.data(),
-            createdAt: doc.data().createdAt?.toDate(),
-            updatedAt: doc.data().updatedAt?.toDate()
-          } as BoardMember);
-        }
-        setLoading(false);
-      }
-    );
 
-    return () => unsubscribe();
-  }, [params?.boardMemberId]);
+    const setupListener = () => {
+      try {
+        // Clear any existing listener
+        if (unsubscribeRef.current) {
+          unsubscribeRef.current();
+          unsubscribeRef.current = null;
+        }
+
+        const unsubscribe = onSnapshot(
+          doc(db, "board-members", params.boardMemberId as string),
+          (doc) => {
+            if (!mounted) return;
+
+            if (doc.exists()) {
+              setBoardMember({
+                id: doc.id,
+                ...doc.data(),
+                createdAt: doc.data().createdAt?.toDate(),
+                updatedAt: doc.data().updatedAt?.toDate()
+              } as BoardMember);
+            }
+            setLoading(false);
+          },
+          (error) => {
+            console.error('Error in board member listener:', error);
+            if (mounted) {
+              setLoading(false);
+            }
+          }
+        );
+
+        unsubscribeRef.current = unsubscribe;
+      } catch (error) {
+        console.error('Error setting up board member listener:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    setupListener();
+
+    return () => {
+      mounted = false;
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
+      }
+    };
+  }, [params]);
 
   if (loading) {
     return <div>Loading...</div>;
   }
 
-  return (
-    <div className="flex-col">
-      <div className="flex-1 space-y-4 p-8 pt-6">
-        <BoardMemberForm initialData={boardMember} />
-      </div>
-    </div>
-  );
-};
+  if (!boardMember) {
+    return <div>Board member not found.</div>;
+  }
+
+  return <BoardMemberForm initialData={boardMember} />;
+}
 
 export default EditBoardMemberPage;
