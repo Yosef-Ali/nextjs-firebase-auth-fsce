@@ -169,8 +169,8 @@ export default function ProgramOfficesManager() {
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {offices.map((office) => (
-          <Card key={office.id}>
+        {offices.map((office, index) => (
+          <Card key={office.id || index}>
             <CardContent className="pt-6">
               {editingId === office.id ? (
                 <div className="space-y-4">

@@ -43,8 +43,8 @@ export function AnimatedOfficeCard({ office }: OfficeCardProps) {
             <div>
               <h4 className="font-semibold mb-1">Programs</h4>
               <ul className="list-disc list-inside text-sm text-gray-600">
-                {office.programs.map((program) => (
-                  <li key={program}>{program}</li>
+                {office.programs.map((program, index) => (
+                  <li key={`${office.city}-${program}-${index}`}>{program}</li>
                 ))}
               </ul>
             </div>

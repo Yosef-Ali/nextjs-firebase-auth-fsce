@@ -39,16 +39,13 @@ export default function UsersPage() {
   const authorUsers = users.filter(user => user.role === UserRole.AUTHOR).length;
 
   useEffect(() => {
-    const handleEditUser = (event: Event) => {
-      const customEvent = event as CustomEvent<string>;
-      setSelectedUserId(customEvent.detail);
+    const handleEditUser = (e: CustomEvent<string>) => {
+      setSelectedUserId(e.detail);
       setIsEditorOpen(true);
     };
 
-    const handleDeleteUser = (event: Event) => {
-      const customEvent = event as CustomEvent<string>;
-      setUserToDelete(customEvent.detail);
-      setIsDeleteDialogOpen(true);
+    const handleDeleteUser = (e: CustomEvent<string>) => {
+      setUserToDelete(e.detail);
     };
 
     document.addEventListener('edit-user', handleEditUser);

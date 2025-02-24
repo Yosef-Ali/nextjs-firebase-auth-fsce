@@ -170,6 +170,36 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     }
   };
 
+  const handleImageError = async (url: string) => {
+    console.error('Image load error:', url);
+    
+    // Check if the URL is from Firebase Storage
+    if (isFirebaseStorageUrl(url)) {
+      try {
+        // Try to verify if the file still exists
+        const fileRef = ref(storage, url);
+        await getDownloadURL(fileRef);
+      } catch (error) {
+        // If we get an error, the file probably doesn't exist anymore
+        console.log('Firebase file verification failed:', error);
+        toast({
+          title: "Image Unavailable",
+          description: "This image is no longer available and will be removed",
+          variant: "destructive"
+        });
+        onRemove(url);
+        return;
+      }
+    }
+    
+    // For non-Firebase URLs or if the file exists but still fails to load
+    toast({
+      title: "Image Load Error",
+      description: "Failed to load image. Please check the image URL",
+      variant: "destructive"
+    });
+  };
+
   if (!isMounted) {
     return null;
   }
@@ -194,15 +224,10 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
               className="object-cover rounded-lg"
               alt="Image"
               src={url}
-              onError={() => {
-                console.error('Image load error:', url);
-                toast({
-                  title: "Error",
-                  description: "Failed to load image. It may have been deleted.",
-                  variant: "destructive"
-                });
-                onRemove(url);
-              }}
+              onError={() => handleImageError(url)}
+              sizes="200px"
+              priority={false}
+              loading="lazy"
             />
           </div>
         ))}

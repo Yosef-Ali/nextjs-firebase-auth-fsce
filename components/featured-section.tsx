@@ -34,9 +34,17 @@ export default function FeaturedSection() {
         (typeof post.category === 'string' && post.category === category.id) ||
         (typeof post.category === 'object' && post.category?.id === category.id)
       );
-      const sortedPosts = [...categoryPosts].sort((a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+      const sortedPosts = [...categoryPosts].sort((a, b) => {
+        if (!a.createdAt || !b.createdAt) return 0;
+        const getTime = (timestamp: any) => {
+          if (typeof timestamp === 'number') return timestamp;
+          if (typeof timestamp === 'string') return new Date(timestamp).getTime();
+          if (typeof timestamp.toDate === 'function') return timestamp.toDate().getTime();
+          if (timestamp instanceof Date) return timestamp.getTime();
+          return 0;
+        };
+        return getTime(b.createdAt) - getTime(a.createdAt);
+      });
       acc[category.id] = sortedPosts.slice(0, 4);
       return acc;
     }, {} as Record<string, Post[]>);
@@ -64,81 +72,65 @@ export default function FeaturedSection() {
     };
   }, []);
 
-  // Data fetching effect
   useEffect(() => {
-    let mounted = true;
-
     const fetchData = async () => {
+      const categoriesRef = collection(db, 'categories');
+      const postsRef = collection(db, 'posts');
+
+      setLoading(true);
+      setError(null);
+
+      // Get categories once
       try {
-        setLoading(true);
-        setError(null);
+        const categoriesSnap = await getDocs(categoriesRef);
+        const categories = categoriesSnap.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Category[];
+        setCategories(categories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        setError(error instanceof Error ? error.message : 'Failed to load categories');
+        setLoading(false);
+        return;
+      }
 
-        if (isOnline) {
-          await enableNetwork(db);
-        }
-
-        // Clear any existing listener
-        if (unsubscribeRef.current) {
-          unsubscribeRef.current();
-          unsubscribeRef.current = null;
-        }
-
-        const categoriesRef = collection(db, 'categories');
-        const categoriesSnapshot = await getDocs(categoriesRef);
-        if (!mounted) return;
-
-        const fetchedCategories = categoriesSnapshot.docs
-          .map(doc => ({
+      // Set up posts listener
+      const unsubscribe = onSnapshot(
+        query(postsRef),
+        (snapshot) => {
+          const posts = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
-          })) as Category[];
-
-        setCategories(fetchedCategories);
-
-        // Set up real-time listener for posts
-        const postsRef = collection(db, 'posts');
-        const unsubscribe = onSnapshot(
-          query(postsRef),
-          (snapshot) => {
-            if (!mounted) return;
-
-            const fetchedPosts = snapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            })) as Post[];
-            setPosts(fetchedPosts);
-            setLoading(false);
-          },
-          (error) => {
-            console.error('Error in posts listener:', error);
-            if (mounted) {
-              setError(error.message);
-              setLoading(false);
-            }
+          })) as Post[];
+          setPosts(posts);
+          setLoading(false);
+        },
+        (error) => {
+          if (error.code === 'already-exists') {
+            return; // Silently ignore this error
           }
-        );
-
-        unsubscribeRef.current = unsubscribe;
-
-      } catch (error) {
-        console.error('Error fetching featured data:', error);
-        if (mounted) {
-          setError(error instanceof Error ? error.message : 'Failed to load content');
+          console.error('Error in posts listener:', error);
+          setError(error.message);
           setLoading(false);
         }
-      }
+      );
+
+      return unsubscribe;
     };
 
-    fetchData();
+    let unsubscribe: (() => void) | undefined;
+
+    fetchData().then(unsub => {
+      unsubscribe = unsub;
+    });
 
     return () => {
-      mounted = false;
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current();
-        unsubscribeRef.current = null;
+      if (unsubscribe) {
+        unsubscribe();
       }
     };
-  }, [isOnline]);
+  }, []);
 
   if (loading) {
     return <FeaturedSectionSkeleton />;

@@ -29,7 +29,7 @@ export default function CategoryPage() {
       }
 
       try {
-        const categoryPosts = await postsService.getPostsByCategory(params.category);
+        const categoryPosts = await postsService.getPublishedPosts(params.category);
         setPosts(categoryPosts);
         setSearchResults(categoryPosts);
       } catch (error) {

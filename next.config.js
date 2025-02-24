@@ -2,14 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   typescript: {
-    // !! WARN !!
-    // Dangerously allow production builds to successfully complete even if
-    // your project has type errors.
-    ignoreBuildErrors: true, // We'll handle type checking in a separate step
+    ignoreBuildErrors: true,
   },
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
   images: {
@@ -21,7 +16,6 @@ const nextConfig = {
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
-      // Don't attempt to load these modules on the client side
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
@@ -32,16 +26,17 @@ const nextConfig = {
     }
     return config;
   },
-}
-
-// Add environment variables
-const { NEXT_PUBLIC_FIREBASE_ADMIN_PROJECT_ID, NEXT_PUBLIC_FIREBASE_ADMIN_CLIENT_EMAIL, NEXT_PUBLIC_FIREBASE_ADMIN_PRIVATE_KEY } = process.env;
-module.exports = {
-  ...nextConfig,
+  // Explicitly enable App Router
+  experimental: {
+    appDir: true
+  },
+  // Environment variables
   env: {
-    NEXT_PUBLIC_FIREBASE_ADMIN_PROJECT_ID,
-    NEXT_PUBLIC_FIREBASE_ADMIN_CLIENT_EMAIL,
-    NEXT_PUBLIC_FIREBASE_ADMIN_PRIVATE_KEY,
+    NEXT_PUBLIC_FIREBASE_ADMIN_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_ADMIN_PROJECT_ID,
+    NEXT_PUBLIC_FIREBASE_ADMIN_CLIENT_EMAIL: process.env.NEXT_PUBLIC_FIREBASE_ADMIN_CLIENT_EMAIL,
+    NEXT_PUBLIC_FIREBASE_ADMIN_PRIVATE_KEY: process.env.NEXT_PUBLIC_FIREBASE_ADMIN_PRIVATE_KEY,
   }
-}
+};
+
+module.exports = nextConfig;
 

@@ -27,8 +27,8 @@ const programOffices = [
     email: 'info.addis@example.org',
     beneficiaries: 'Serving over 5,000 children and families',
     programs: [
-      'Early Childhood Education',
-      'Youth Empowerment',
+      'Early Years Development',
+      'Youth Leadership',
       'Family Support Services',
       'Community Development'
     ]
@@ -43,10 +43,10 @@ const programOffices = [
     email: 'info.bahirdar@example.org',
     beneficiaries: 'Supporting 3,000+ vulnerable children',
     programs: [
-      'Child Protection',
-      'Education Access',
-      'Health & Nutrition',
-      'Vocational Training'
+      'Child Protection Services',
+      'Education Access Initiative',
+      'Health & Nutrition Program',
+      'Vocational Skills Training'
     ]
   },
   {
@@ -59,10 +59,10 @@ const programOffices = [
     email: 'info.hawassa@example.org',
     beneficiaries: 'Reaching 4,000+ children and youth',
     programs: [
-      'Educational Support',
-      'Child Sponsorship',
-      'Community Outreach',
-      'Youth Development'
+      'Educational Empowerment',
+      'Child Sponsorship Program',
+      'Community Outreach Initiative',
+      'Youth Development Program'
     ]
   },
   {
@@ -75,10 +75,42 @@ const programOffices = [
     email: 'info.mekelle@example.org',
     beneficiaries: 'Assisting 2,500+ families and children',
     programs: [
-      'Emergency Response',
-      'Child Education',
-      'Family Strengthening',
-      'Community Resilience'
+      'Emergency Response Unit',
+      'Child Education Center',
+      'Family Support Network',
+      'Community Resilience Building'
+    ]
+  },
+  {
+    id: 'addis-ababa-ece',
+    type: 'Early Childhood Education',
+    region: 'Addis Ababa',
+    location: 'Addis Ababa',
+    address: 'Kirkos Sub City, Woreda 02, Addis Ababa',
+    contact: '+251 115 555 555',
+    email: 'ece.addis@example.org',
+    beneficiaries: 'Focusing on early learning for 300 children',
+    programs: [
+      'Preschool Education',
+      'Early Literacy Program',
+      'Nutritional Support',
+      'Parenting Workshops'
+    ]
+  },
+  {
+    id: 'bahir-dar-ece',
+    type: 'Early Childhood Education',
+    region: 'Amhara',
+    location: 'Bahir Dar',
+    address: ' வேறொரு இடம், Bahir Dar',
+    contact: '+251 582 207 777',
+    email: 'ece.bahirdar@example.org',
+    beneficiaries: 'Providing quality care for 250 young learners',
+    programs: [
+      'Creative Arts Program',
+      'Language Development',
+      'Social Skills Training',
+      'Outdoor Play Activities'
     ]
   }
 ];

@@ -25,8 +25,8 @@ export default function PostFormFields({ form, categories, onTitleChange, titleV
     };
 
     return (
-        <div 
-            className="space-y-8" 
+        <div
+            className="space-y-8"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
         >
@@ -37,8 +37,8 @@ export default function PostFormFields({ form, categories, onTitleChange, titleV
                     <FormItem>
                         <FormLabel>Title</FormLabel>
                         <FormControl>
-                            <Input 
-                                placeholder="Post title" 
+                            <Input
+                                placeholder="Post title"
                                 value={titleValue}
                                 onChange={onTitleChange}
                                 onClick={handleInputInteraction}
@@ -60,9 +60,9 @@ export default function PostFormFields({ form, categories, onTitleChange, titleV
                     <FormItem>
                         <FormLabel>Slug</FormLabel>
                         <FormControl>
-                            <Input 
-                                placeholder="post-url-slug" 
-                                {...field} 
+                            <Input
+                                placeholder="post-url-slug"
+                                {...field}
                                 onClick={handleInputInteraction}
                                 onKeyDown={handleInputInteraction}
                                 onMouseDown={handleInputInteraction}
@@ -81,17 +81,34 @@ export default function PostFormFields({ form, categories, onTitleChange, titleV
                     <FormItem>
                         <FormLabel>Category</FormLabel>
                         <FormControl>
-                            <Select 
-                                value={field.value} 
-                                onValueChange={field.onChange}
+                            <Select
+                                value={field.value}
+                                onValueChange={(value) => {
+                                    // Normalize category ID before setting
+                                    field.onChange(value.toLowerCase().trim());
+                                }}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a category" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {categories.map((category) => (
-                                        <SelectItem 
-                                            key={category.id} 
+                                    {/* Deduplicate categories and normalize IDs */}
+                                    {Array.from(
+                                        new Map(
+                                            categories
+                                                .filter(category => category?.id && category?.name)
+                                                .map(category => {
+                                                    const normalizedId = category.id.toLowerCase().trim();
+                                                    return [normalizedId, {
+                                                        ...category,
+                                                        id: normalizedId,
+                                                        name: category.name.trim()
+                                                    }];
+                                                })
+                                        ).values()
+                                    ).map((category) => (
+                                        <SelectItem
+                                            key={category.id}
                                             value={category.id}
                                         >
                                             {category.name}
@@ -148,7 +165,7 @@ export default function PostFormFields({ form, categories, onTitleChange, titleV
                     <FormItem>
                         <FormLabel>Excerpt</FormLabel>
                         <FormControl>
-                            <Textarea 
+                            <Textarea
                                 placeholder="Brief description of the post"
                                 className="min-h-[100px]"
                                 {...field}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import {
   Table,
   TableBody,
@@ -30,6 +30,8 @@ import { toast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatDate, compareTimestamps } from '@/app/utils/date';
 import { getCategoryName } from '@/app/utils/category';
+import FSCESkeleton from '@/components/FSCESkeleton';
+import { motion } from 'framer-motion';
 
 interface PostsTableProps {
   initialPosts: Post[];
@@ -41,6 +43,13 @@ function PostsTable({ initialPosts }: PostsTableProps) {
   const { searchQuery } = useSearch();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{
+    key: 'category' | 'updatedAt' | 'title';
+    direction: 'asc' | 'desc';
+  }>({ key: 'updatedAt', direction: 'desc' });
+
+  const isPostInCategory = (post: Post, categoryFilter: string) =>
+    getCategoryName(post.category)?.toLowerCase().includes(categoryFilter.toLowerCase());
 
   useEffect(() => {
     if (Array.isArray(initialPosts)) {
@@ -95,11 +104,68 @@ function PostsTable({ initialPosts }: PostsTableProps) {
     });
   }, [posts, searchQuery]);
 
+  // Sort posts
+  const sortedPosts = useMemo(() => {
+    const postsToSort = [...filteredPosts];
+
+    switch (sortConfig.key) {
+      case 'category':
+        postsToSort.sort((a, b) => {
+          const catA = getCategoryName(a.category)?.toLowerCase() || '';
+          const catB = getCategoryName(b.category)?.toLowerCase() || '';
+          return sortConfig.direction === 'asc'
+            ? catA.localeCompare(catB)
+            : catB.localeCompare(catA);
+        });
+        break;
+
+      case 'updatedAt':
+        postsToSort.sort((a, b) => {
+          return sortConfig.direction === 'asc'
+            ? compareTimestamps(a.updatedAt, b.updatedAt)
+            : compareTimestamps(b.updatedAt, a.updatedAt);
+        });
+        break;
+
+      case 'title':
+        postsToSort.sort((a, b) => {
+          return sortConfig.direction === 'asc'
+            ? (a.title || '').localeCompare(b.title || '')
+            : (b.title || '').localeCompare(a.title || '');
+        });
+        break;
+    }
+
+    return postsToSort;
+  }, [filteredPosts, sortConfig]);
+
+  // Calculate stats
+  const stats = useMemo(() => {
+    const totalPosts = posts.length;
+    const publishedPosts = posts.filter(post => post.status === 'published').length;
+    const draftPosts = totalPosts - publishedPosts;
+    const uniqueCategories = Array.from(new Set(posts.map(post => getCategoryName(post.category))));
+
+    return {
+      totalPosts,
+      publishedPosts,
+      draftPosts,
+      categoriesCount: uniqueCategories.length
+    };
+  }, [posts]);
+
+  const handleSort = (key: 'category' | 'updatedAt' | 'title') => {
+    setSortConfig(current => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
   if (!Array.isArray(posts)) {
     return <div>Error loading posts</div>;
   }
 
-  if (filteredPosts.length === 0) {
+  if (sortedPosts.length === 0) {
     if (searchQuery) {
       return (
         <div className="text-center py-10 text-muted-foreground">
@@ -114,47 +180,31 @@ function PostsTable({ initialPosts }: PostsTableProps) {
     );
   }
 
-  // Calculate stats
-  const totalPosts = posts.length;
-  const publishedPosts = posts.filter(post => post.status === 'published').length;
-  const draftPosts = totalPosts - publishedPosts;
-  const uniqueCategories = Array.from(new Set(posts.map(post => getCategoryName(post.category))));
-
-  const isPostInCategory = (post: Post, categoryFilter: string) =>
-    getCategoryName(post.category)?.toLowerCase().includes(categoryFilter.toLowerCase());
-
-  // Update sorting function
-  const sortUpdatedDate = (a: Post, b: Post) => {
-    return compareTimestamps(b.updatedAt, a.updatedAt);
-  };
-
-  const sortedPosts = posts.sort(sortUpdatedDate);
-
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="p-6">
-            <div className="text-2xl font-bold">{totalPosts}</div>
+            <div className="text-2xl font-bold">{stats.totalPosts}</div>
             <p className="text-xs text-muted-foreground">Total Posts</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
-            <div className="text-2xl font-bold">{publishedPosts}</div>
+            <div className="text-2xl font-bold">{stats.publishedPosts}</div>
             <p className="text-xs text-muted-foreground">Published Posts</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
-            <div className="text-2xl font-bold">{draftPosts}</div>
+            <div className="text-2xl font-bold">{stats.draftPosts}</div>
             <p className="text-xs text-muted-foreground">Draft Posts</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
-            <div className="text-2xl font-bold">{uniqueCategories.length}</div>
+            <div className="text-2xl font-bold">{stats.categoriesCount}</div>
             <p className="text-xs text-muted-foreground">Categories</p>
           </CardContent>
         </Card>
@@ -166,15 +216,33 @@ function PostsTable({ initialPosts }: PostsTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[300px]">Title & Excerpt</TableHead>
-              <TableHead>Category</TableHead>
+              <TableHead
+                className="cursor-pointer"
+                onClick={() => handleSort('category')}
+              >
+                Category {sortConfig.key === 'category' && (
+                  <span className="ml-1">
+                    {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
+              </TableHead>
               <TableHead>Author</TableHead>
-              <TableHead>Updated</TableHead>
+              <TableHead
+                className="cursor-pointer"
+                onClick={() => handleSort('updatedAt')}
+              >
+                Updated {sortConfig.key === 'updatedAt' && (
+                  <span className="ml-1">
+                    {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
+              </TableHead>
               <TableHead className="text-right">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedPosts.map((post) => (
-              <TableRow key={`${post.id}-${post.createdAt}`} className={post.sticky ? "bg-muted/50" : ""}>
+              <TableRow key={post.id} className={post.sticky ? "bg-muted/50" : ""}>
                 <TableCell>
                   <div>
                     <h3 className="font-semibold">
@@ -245,3 +313,4 @@ function PostsTable({ initialPosts }: PostsTableProps) {
 }
 
 export default PostsTable;
+
