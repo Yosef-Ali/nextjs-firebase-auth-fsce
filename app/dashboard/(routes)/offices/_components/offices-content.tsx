@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/data-table";
 import { columns } from "./columns";
-import { Office } from "@/app/types/office";
+import { ProgramOffice } from "@/app/types/program-office";
 
 interface OfficesContentProps {
-  initialOffices: Office[];
-  onEdit: (office: Office) => void;
-  onDelete: (office: Office) => void;
+  initialOffices: ProgramOffice[];
+  onEdit: (office: ProgramOffice) => void;
+  onDelete: (office: ProgramOffice) => void;
 }
 
 export default function OfficesContent({
@@ -16,14 +16,17 @@ export default function OfficesContent({
   onEdit,
   onDelete,
 }: OfficesContentProps) {
-  const [offices] = useState<Office[]>(initialOffices);
+  const [offices, setOffices] = useState<ProgramOffice[]>(initialOffices);
 
-  // Create columns array directly
+  useEffect(() => {
+    setOffices(initialOffices);
+  }, [initialOffices]);
+
   const tableColumns = columns(onEdit, onDelete);
 
   return (
     <div className="p-6">
-      <DataTable columns={tableColumns} data={offices} searchKey="name" />
+      <DataTable columns={tableColumns} data={offices} searchKey="location" />
     </div>
   );
 }

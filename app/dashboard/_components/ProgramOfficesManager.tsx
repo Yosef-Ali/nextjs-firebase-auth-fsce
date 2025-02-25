@@ -6,27 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
+import { ProgramOffice, ProgramOfficeCreate } from '@/app/types/program-office';
+import { programOfficesService } from '@/app/services/program-offices';
 
-interface ProgramOffice {
-  id: string;
-  type: 'Program';
-  region: string;
-  location: string;
-  address: string;
-  contact: string;
-  email: string;
-  beneficiaries: string;
-  programs: string[];
-}
+const COLLECTION_NAME = 'programOffices';
 
 export default function ProgramOfficesManager() {
   const [offices, setOffices] = useState<ProgramOffice[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [newOffice, setNewOffice] = useState<Omit<ProgramOffice, 'id'>>({
+  const [newOffice, setNewOffice] = useState<ProgramOfficeCreate>({
     type: 'Program',
     region: '',
     location: '',
@@ -40,12 +30,8 @@ export default function ProgramOfficesManager() {
   // Fetch offices
   const fetchOffices = async () => {
     try {
-      const officesCollection = collection(db, 'programOffices');
-      const officesSnapshot = await getDocs(officesCollection);
-      const officesData = officesSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as ProgramOffice[];
+      setLoading(true);
+      const officesData = await programOfficesService.getAllProgramOffices();
       setOffices(officesData);
     } catch (error) {
       console.error('Error fetching offices:', error);
@@ -62,8 +48,7 @@ export default function ProgramOfficesManager() {
   // Add new office
   const handleAddOffice = async () => {
     try {
-      const officesCollection = collection(db, 'programOffices');
-      await addDoc(officesCollection, newOffice);
+      await programOfficesService.createProgramOffice(newOffice);
       toast.success('Program office added successfully');
       fetchOffices();
       setNewOffice({
@@ -85,8 +70,7 @@ export default function ProgramOfficesManager() {
   // Update office
   const handleUpdateOffice = async (id: string, updatedData: Partial<ProgramOffice>) => {
     try {
-      const officeRef = doc(db, 'programOffices', id);
-      await updateDoc(officeRef, updatedData);
+      await programOfficesService.updateProgramOffice(id, updatedData);
       toast.success('Program office updated successfully');
       fetchOffices();
       setEditingId(null);
@@ -100,8 +84,7 @@ export default function ProgramOfficesManager() {
   const handleDeleteOffice = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this office?')) {
       try {
-        const officeRef = doc(db, 'programOffices', id);
-        await deleteDoc(officeRef);
+        await programOfficesService.deleteProgramOffice(id);
         toast.success('Program office deleted successfully');
         fetchOffices();
       } catch (error) {
@@ -169,8 +152,8 @@ export default function ProgramOfficesManager() {
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {offices.map((office, index) => (
-          <Card key={office.id || index}>
+        {offices.map((office) => (
+          <Card key={office.id}>
             <CardContent className="pt-6">
               {editingId === office.id ? (
                 <div className="space-y-4">

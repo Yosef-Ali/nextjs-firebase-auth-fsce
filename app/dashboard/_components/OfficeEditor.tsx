@@ -18,26 +18,26 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Office } from "@/app/types/office";
-import { officesService } from "@/app/services/offices";
+import { ProgramOffice } from "@/app/types/program-office";
+import { programOfficesService } from "@/app/services/program-offices";
 import { Loader2 } from "lucide-react";
 
 // Define form schema
 const formSchema = z.object({
-  name: z.string().min(1, "Office name is required"),
+  region: z.string().min(1, "Region is required"),
   location: z.string().min(1, "Location is required"),
+  address: z.string().min(1, "Address is required"),
   contact: z.string().min(1, "Contact number is required"),
   email: z.string().email("Valid email is required"),
-  impact: z.string().min(1, "Impact description is required"),
-  impactCount: z.coerce.number().min(1, "Impact count is required"),
-  programs: z.string().min(1, "Programs are required"),
-  active: z.boolean().default(true),
+  beneficiaries: z.string().min(1, "Number of beneficiaries is required"),
+  programs: z.string().min(1, "At least one program is required"),
+  type: z.literal('Program')
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface OfficeEditorProps {
-  office?: Office;
+  office?: ProgramOffice;
   mode: "create" | "edit";
   onSuccess?: () => void;
 }
@@ -48,14 +48,14 @@ export function OfficeEditor({ office, mode, onSuccess }: OfficeEditorProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: office?.name || "",
+      region: office?.region || "",
       location: office?.location || "",
+      address: office?.address || "",
       contact: office?.contact || "",
       email: office?.email || "",
-      impact: office?.impact || "",
-      impactCount: office?.impactCount || 0,
+      beneficiaries: office?.beneficiaries || "",
       programs: office?.programs?.join("\n") || "",
-      active: office?.active ?? true,
+      type: "Program"
     },
   });
 
@@ -75,7 +75,7 @@ export function OfficeEditor({ office, mode, onSuccess }: OfficeEditorProps) {
       };
 
       if (mode === "create") {
-        await officesService.createOffice(officeData);
+        await programOfficesService.createProgramOffice(officeData);
         toast({
           title: "Success",
           description: "Office created successfully",
@@ -84,7 +84,7 @@ export function OfficeEditor({ office, mode, onSuccess }: OfficeEditorProps) {
         if (!office?.id) {
           throw new Error("Office ID is missing");
         }
-        await officesService.updateOffice(office.id, officeData);
+        await programOfficesService.updateProgramOffice(office.id, officeData);
         toast({
           title: "Success",
           description: "Office updated successfully",
@@ -97,9 +97,8 @@ export function OfficeEditor({ office, mode, onSuccess }: OfficeEditorProps) {
     } catch (error) {
       toast({
         title: "Error",
-        description: `Failed to ${
-          mode === "create" ? "create" : "update"
-        } office`,
+        description: `Failed to ${mode === "create" ? "create" : "update"
+          } office`,
         variant: "destructive",
       });
     } finally {
@@ -112,12 +111,12 @@ export function OfficeEditor({ office, mode, onSuccess }: OfficeEditorProps) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
-          name="name"
+          name="region"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Office Name</FormLabel>
+              <FormLabel>Region</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Addis Ababa Office" {...field} />
+                <Input placeholder="e.g., Addis Ababa" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -132,7 +131,24 @@ export function OfficeEditor({ office, mode, onSuccess }: OfficeEditorProps) {
               <FormLabel>Location</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="e.g., Bole Sub City, Woreda 03, Addis Ababa"
+                  placeholder="e.g., Bole Sub City, Woreda 03"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="address"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Address</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="e.g., Building No. 345, Street Name"
                   {...field}
                 />
               </FormControl>
@@ -164,7 +180,7 @@ export function OfficeEditor({ office, mode, onSuccess }: OfficeEditorProps) {
                 <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="e.g., info.addis@example.org"
+                    placeholder="e.g., info.addis@fsce.org"
                     {...field}
                   />
                 </FormControl>
@@ -174,39 +190,23 @@ export function OfficeEditor({ office, mode, onSuccess }: OfficeEditorProps) {
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="impact"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Impact Description</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="e.g., Serving over 5,000 children and families"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="impactCount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Impact Count</FormLabel>
-                <FormControl>
-                  <Input type="number" placeholder="e.g., 5000" {...field} />
-                </FormControl>
-                <FormDescription>Number of beneficiaries</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="beneficiaries"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Beneficiaries</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="e.g., Serving over 5,000 children annually"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>Describe the impact and number of beneficiaries</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
@@ -216,7 +216,11 @@ export function OfficeEditor({ office, mode, onSuccess }: OfficeEditorProps) {
               <FormLabel>Programs</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Enter programs (one per line)"
+                  placeholder="Enter programs (one per line)
+e.g.,
+Child Protection
+Education Support
+Family Strengthening"
                   rows={4}
                   {...field}
                 />
@@ -225,27 +229,6 @@ export function OfficeEditor({ office, mode, onSuccess }: OfficeEditorProps) {
                 Enter each program on a new line
               </FormDescription>
               <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="active"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between p-4 border rounded-lg">
-              <div className="space-y-0.5">
-                <FormLabel className="text-base">Active Status</FormLabel>
-                <FormDescription>
-                  Set whether this office is currently active
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
             </FormItem>
           )}
         />

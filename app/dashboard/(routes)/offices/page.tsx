@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { officesService } from "@/app/services/offices";
+import { programOfficesService } from "@/app/services/program-offices";
 import OfficesContent from "./_components/offices-content";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Office } from "@/app/types/office";
+import { ProgramOffice } from "@/app/types/program-office";
 import { toast } from "@/hooks/use-toast";
 import { OfficeEditor } from "@/app/dashboard/_components/OfficeEditor";
 import {
@@ -18,15 +18,15 @@ import {
 } from "@/components/ui/dialog";
 
 export default function OfficesPage() {
-  const [offices, setOffices] = useState<Office[]>([]);
+  const [offices, setOffices] = useState<ProgramOffice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [selectedOffice, setSelectedOffice] = useState<Office | undefined>();
+  const [selectedOffice, setSelectedOffice] = useState<ProgramOffice | undefined>();
 
   const fetchOffices = async () => {
     try {
       setIsLoading(true);
-      const fetchedOffices = await officesService.getAllOffices();
+      const fetchedOffices = await programOfficesService.getAllProgramOffices();
       setOffices(fetchedOffices || []);
     } catch (error) {
       toast({
@@ -48,14 +48,14 @@ export default function OfficesPage() {
     setIsEditorOpen(true);
   };
 
-  const handleEdit = (office: Office) => {
+  const handleEdit = (office: ProgramOffice) => {
     setSelectedOffice(office);
     setIsEditorOpen(true);
   };
 
-  const handleDelete = async (office: Office) => {
+  const handleDelete = async (office: ProgramOffice) => {
     try {
-      await officesService.deleteOffice(office.id);
+      await programOfficesService.deleteProgramOffice(office.id);
       toast({
         title: "Success",
         description: "Office deleted successfully",
@@ -82,14 +82,9 @@ export default function OfficesPage() {
 
   // Calculate office stats
   const totalOffices = offices.length;
-  const activeOffices = offices.filter((office) => office.active).length;
-  const totalBeneficiaries = offices.reduce(
-    (sum, office) => sum + office.impactCount,
-    0
-  );
-  const totalPrograms = [
-    ...new Set(offices.flatMap((office) => office.programs)),
-  ].length;
+  const activePrograms = offices.reduce((total, office) => total + office.programs.length, 0);
+  const beneficiariesCount = offices.reduce((total, office) => total + (parseInt(office.beneficiaries) || 0), 0);
+  const regions = new Set(offices.map(office => office.region)).size;
 
   if (isLoading) {
     return (
@@ -127,18 +122,16 @@ export default function OfficesPage() {
             <p className="text-xs text-muted-foreground">Total Offices</p>
           </Card>
           <Card className="p-6">
-            <div className="text-2xl font-bold">{activeOffices}</div>
-            <p className="text-xs text-muted-foreground">Active Offices</p>
+            <div className="text-2xl font-bold">{regions}</div>
+            <p className="text-xs text-muted-foreground">Regions</p>
           </Card>
           <Card className="p-6">
-            <div className="text-2xl font-bold">
-              {totalBeneficiaries.toLocaleString()}+
-            </div>
+            <div className="text-2xl font-bold">{beneficiariesCount.toLocaleString()}+</div>
             <p className="text-xs text-muted-foreground">Total Beneficiaries</p>
           </Card>
           <Card className="p-6">
-            <div className="text-2xl font-bold">{totalPrograms}</div>
-            <p className="text-xs text-muted-foreground">Unique Programs</p>
+            <div className="text-2xl font-bold">{activePrograms}</div>
+            <p className="text-xs text-muted-foreground">Active Programs</p>
           </Card>
         </div>
 
