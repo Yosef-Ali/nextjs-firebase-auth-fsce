@@ -47,57 +47,63 @@ const DashboardAside = () => {
 
   const menuItems = [
     {
-      href: '/dashboard',
-      label: 'Overview',
+      href: "/dashboard",
+      label: "Overview",
       icon: LayoutDashboard,
       exact: true,
       roles: [UserRole.AUTHOR, UserRole.ADMIN],
     },
     {
-      href: '/dashboard/posts',
-      label: 'Posts',
+      href: "/dashboard/posts",
+      label: "Posts",
       icon: BookOpenIcon,
       roles: [UserRole.AUTHOR, UserRole.ADMIN],
     },
     {
-      href: '/dashboard/about',
-      label: 'About',
+      href: "/dashboard/about",
+      label: "About",
       icon: FileText,
       roles: [UserRole.AUTHOR, UserRole.ADMIN],
     },
     {
-      href: '/dashboard/categories',
-      label: 'Categories',
+      href: "/dashboard/categories",
+      label: "Categories",
       icon: TagIcon,
       roles: [UserRole.AUTHOR, UserRole.ADMIN],
     },
     {
-      href: '/dashboard/resources',
-      label: 'Resources',
+      href: "/dashboard/resources",
+      label: "Resources",
       icon: Archive,
       roles: [UserRole.AUTHOR, UserRole.ADMIN],
     },
     {
-      href: '/dashboard/media-library',
-      label: 'Media Library',
+      href: "/dashboard/media-library",
+      label: "Media Library",
       icon: Image,
       roles: [UserRole.AUTHOR, UserRole.ADMIN],
     },
     {
-      href: '/dashboard/board-members',
-      label: 'Board Members',
+      href: "/dashboard/board-members",
+      label: "Board Members",
       icon: Users2,
-      roles: [UserRole.ADMIN],
+      roles: [UserRole.AUTHOR, UserRole.ADMIN],
     },
     {
-      href: '/dashboard/partners',
-      label: 'Partners',
+      href: "/dashboard/partners",
+      label: "Partners",
       icon: Users2,
-      roles: [UserRole.ADMIN],
+      roles: [UserRole.AUTHOR, UserRole.ADMIN],
     },
     {
-      href: '/dashboard/users',
-      label: 'Users',
+      href: "/dashboard/offices",
+      label: "Offices",
+      icon: Building2,
+      roles: [UserRole.AUTHOR, UserRole.ADMIN],
+    },
+    {
+      href: "/dashboard/users",
+      label: "Users",
       icon: Users,
       roles: [UserRole.ADMIN],
     },
@@ -154,20 +160,20 @@ const DashboardAside = () => {
         "flex flex-col h-full border-r bg-white transition-all duration-300 fixed inset-y-0 z-20",
         isCollapsed ? "w-[80px]" : "w-72"
       )}>
-        <div className="flex h-16 items-center px-4 border-b">
+        <div className="flex items-center h-16 px-4 border-b">
           <img src="/Logo.svg" alt="Logo" className="h-8 mb-4" />
         </div>
 
-        <div className="flex-1 flex flex-col gap-1 p-4 overflow-y-auto">
+        <div className="flex flex-col flex-1 gap-1 p-4 overflow-y-auto">
           <nav className="space-y-1">
             {filteredMenuItems.map(renderMenuItem)}
           </nav>
 
-          <div className="mt-auto pt-4">
+          <div className="pt-4 mt-auto">
             {!isCollapsed && (
-              <div className="rounded-lg bg-gray-50 p-4">
+              <div className="p-4 rounded-lg bg-gray-50">
                 <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
                     <span className="text-sm font-medium text-primary">
                       {user?.email?.[0]?.toUpperCase()}
                     </span>
