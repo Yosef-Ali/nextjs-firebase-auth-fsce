@@ -11,52 +11,41 @@ export function toTimestamp(date: Date | number | Timestamp | any): Timestamp {
     return Timestamp.now();
 }
 
-// Format a timestamp using a provided format string
-export const formatDate = (timestamp: Timestamp | Date | number): string => {
-    if (timestamp instanceof Timestamp) {
-        return format(timestamp.toDate(), 'MMM d, yyyy');
-    }
-    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-    return format(date, 'MMM d, yyyy');
+// Format a date using a provided format string
+export const formatDate = (date: Date | number): string => {
+    const d = date instanceof Date ? date : new Date(date);
+    return format(d, 'MMM d, yyyy');
 };
 
-// Format a timestamp with time
-export const formatDateTime = (timestamp: Timestamp | Date | number): string => {
-    if (timestamp instanceof Timestamp) {
-        return format(timestamp.toDate(), 'MMM d, yyyy h:mm a');
-    }
-    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-    return format(date, 'MMM d, yyyy h:mm a');
+// Format a date with time
+export const formatDateTime = (date: Date | number): string => {
+    const d = date instanceof Date ? date : new Date(date);
+    return format(d, 'MMM d, yyyy h:mm a');
 };
 
-// Format a timestamp for publishing display
-export const formatPublishDate = (timestamp: Timestamp | Date | number): string => {
-    if (timestamp instanceof Timestamp) {
-        return format(timestamp.toDate(), 'MMMM d, yyyy');
-    }
-    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-    return format(date, 'MMMM d, yyyy');
+// Format a date for publishing display
+export const formatPublishDate = (date: Date | number): string => {
+    const d = date instanceof Date ? date : new Date(date);
+    return format(d, 'MMMM d, yyyy');
 };
 
 // Compare two timestamps for sorting (newer first)
-export const compareTimestamps = (a: Timestamp | number | Date, b: Timestamp | number | Date): number => {
-    const aTime = toTimestamp(a);
-    const bTime = toTimestamp(b);
-    return bTime.seconds - aTime.seconds;
+export const compareTimestamps = (a: Timestamp | Date | number, b: Timestamp | Date | number): number => {
+    const aTime = a instanceof Timestamp ? a.toMillis() : new Date(a).getTime();
+    const bTime = b instanceof Timestamp ? b.toMillis() : new Date(b).getTime();
+    return bTime - aTime;
 };
 
-// Convert Timestamp to Date
-export const toDate = (timestamp: Timestamp | number | Date): Date => {
-    if (timestamp instanceof Timestamp) return timestamp.toDate();
-    if (timestamp instanceof Date) return timestamp;
-    return new Date(timestamp);
+// Convert to Date (just returns the input if it's already a Date)
+export const toDate = (date: Date | number): Date => {
+    return date instanceof Date ? date : new Date(date);
 };
 
 // Normalize Firebase timestamps in an object
 export function normalizeTimestamps<T>(data: T): T {
     if (!data) return data;
     const result = { ...data } as any;
-    const now = Timestamp.now();
+    const now = new Date();
 
     // Convert timestamp fields
     ['createdAt', 'updatedAt', 'date'].forEach(field => {

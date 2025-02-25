@@ -1,4 +1,4 @@
-import { Timestamp, doc, collection, getDocs, query, where, orderBy, updateDoc } from 'firebase/firestore';
+import { doc, collection, getDocs, query, where, orderBy, updateDoc, Timestamp } from 'firebase/firestore';
 import { Category } from '@/app/types/category';
 import { Event, Post } from '@/app/types/post';
 import { db } from '@/lib/firebase';
@@ -56,9 +56,9 @@ export function normalizePost(data: any, id?: string): Post {
     coverImage: data?.coverImage || '',
     images: Array.isArray(data?.images) ? data.images : [],
     tags: Array.isArray(data?.tags) ? data.tags : [],
-    date: toTimestamp(data?.date || now),
-    createdAt: toTimestamp(data?.createdAt || now),
-    updatedAt: toTimestamp(data?.updatedAt || now)
+    date: toTimestamp(data?.date || now) as Timestamp,
+    createdAt: toTimestamp(data?.createdAt || now) as Timestamp,
+    updatedAt: toTimestamp(data?.updatedAt || now) as Timestamp
   };
 
   if ('time' in data || 'location' in data) {
@@ -81,6 +81,7 @@ function normalizeCategory(category: string | Category | undefined): Category {
       slug: '',
       type: 'post',
       featured: false,
+      description: '',
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now()
     };
@@ -93,6 +94,7 @@ function normalizeCategory(category: string | Category | undefined): Category {
       slug: category.toLowerCase(),
       type: 'post',
       featured: false,
+      description: '',
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now()
     };
@@ -248,8 +250,8 @@ export const postsService = {
 
       // Sort by creation date (newest first) and apply limit if specified
       const sortedPosts = uniquePosts.sort((a, b) => {
-        const dateA = typeof a.createdAt === 'number' ? a.createdAt : Date.now();
-        const dateB = typeof b.createdAt === 'number' ? b.createdAt : Date.now();
+        const dateA = typeof a.createdAt === 'number' ? a.createdAt : new Date().getTime();
+        const dateB = typeof b.createdAt === 'number' ? b.createdAt : new Date().getTime();
         return dateB - dateA;
       });
 
