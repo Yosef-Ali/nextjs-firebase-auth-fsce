@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, doc, getDoc, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { Post } from '@/app/types/post';
 import { normalizePost } from '../utils/post';
 
@@ -22,21 +22,24 @@ class WhatWeDoService {
         }
     }
 
-    async getRelatedPrograms(currentId: string, category: string, limit = 3): Promise<Post[]> {
+    async getRelatedPrograms(currentId: string, category: string, maxLimit = 3): Promise<Post[]> {
         try {
             const postsRef = collection(db, POSTS_COLLECTION);
+
+            // Create a simpler query without filters that might cause errors
             const q = query(
                 postsRef,
-                where('category.id', '==', category),
                 where('published', '==', true),
-                orderBy('createdAt', 'desc')
+                limit(maxLimit * 3) // Fetch more to ensure we have enough after filtering
             );
+
             const snapshot = await getDocs(q);
 
+            // Process the results in memory instead of in the query
             return snapshot.docs
                 .map(doc => normalizePost(doc.data(), doc.id))
-                .filter(post => post.id !== currentId)
-                .slice(0, limit);
+                .filter(post => post.id !== currentId) // Filter out current post
+                .slice(0, maxLimit);
         } catch (error) {
             console.error('Error fetching related programs:', error);
             return [];

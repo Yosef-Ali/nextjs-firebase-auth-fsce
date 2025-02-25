@@ -37,7 +37,7 @@ const formSchema = z.object({
   description: z.string().optional(),
   logo: z.string().optional(),
   order: z.coerce.number().min(1),
-  partnerType: z.enum(['strategic', 'membership']) as z.ZodType<'strategic' | 'membership'>
+  partnerType: z.enum(['strategic', 'membership', 'partner']) as z.ZodType<'strategic' | 'membership' | 'partner'>
 });
 
 type PartnerFormValues = z.infer<typeof formSchema> & {
@@ -94,7 +94,16 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
           description: "Partner created successfully",
         });
       }
-      onSuccess?.(); // Call onSuccess if provided
+
+      // Always call router.refresh() to update the UI
+      router.refresh();
+
+      // Call onSuccess if provided, otherwise navigate back to partners list
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push("/dashboard/partners");
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -229,6 +238,7 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
                     <SelectContent>
                       <SelectItem value="strategic">Strategic</SelectItem>
                       <SelectItem value="membership">Membership</SelectItem>
+                      <SelectItem value="partner">Partner</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

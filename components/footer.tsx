@@ -1,16 +1,34 @@
 "use client"
 
 import React from 'react';
+import Link from 'next/link';
 
-
-import { FacebookIcon, TwitterIcon, GithubIcon, InstagramIcon, HomeIcon, EmailIcon, TelephoneIcon, FaxIcon,} from '@/app/icons';
+import { FacebookIcon, TwitterIcon, HomeIcon, EmailIcon, TelephoneIcon, FaxIcon } from '@/app/icons';
 import { Logo } from './Logo';
 
 
+// Custom X icon component
+const XIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    stroke="currentColor"
+    strokeWidth="0"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
+
 interface FooterNavItem {
   name: string;
-  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
-  icon?: (props: React.ComponentProps<'svg'>) => JSX.Element; // Added icon property
+  href?: string;
+  icon?: (props: React.ComponentProps<'svg'>) => JSX.Element;
 }
 
 interface FooterNavSection {
@@ -23,48 +41,48 @@ interface FooterNavSection {
 const Footer: React.FC = () => {
   const footerNavs: FooterNavSection[] = [
     {
-      label: "Home",
+      label: "Quick Links",
       items: [
         {
           name: 'Home',
-          onClick: (e: React.MouseEvent<HTMLAnchorElement>) => e.preventDefault(),
+          href: '/',
         },
         {
-          name: 'Categories',
-          onClick: (e: React.MouseEvent<HTMLAnchorElement>) => e.preventDefault(),
+          name: 'Who We Are',
+          href: '/who-we-are',
         },
         {
-          name: 'About',
-          onClick: (e: React.MouseEvent<HTMLAnchorElement>) => e.preventDefault(),
+          name: 'What We Do',
+          href: '/what-we-do',
         },
         {
-          name: 'Contact',
-          onClick: (e: React.MouseEvent<HTMLAnchorElement>) => e.preventDefault(),
+          name: 'Where We Work',
+          href: '/where-we-work',
+        },
+        {
+          name: 'News & Events',
+          href: '/news',
         },
       ],
     },
     {
-      label: "About",
+      label: "Programs",
       items: [
         {
-          name: 'Adama',
-          onClick: (e: React.MouseEvent<HTMLAnchorElement>) => e.preventDefault(),
+          name: 'Child Protection',
+          href: '/what-we-do/child-protection',
         },
         {
-          name: 'Addis Ababa',
-          onClick: (e: React.MouseEvent<HTMLAnchorElement>) => e.preventDefault(),
+          name: 'Youth Empowerment',
+          href: '/what-we-do/youth-empowerment',
         },
         {
-          name: 'Bahir Dar',
-          onClick: (e: React.MouseEvent<HTMLAnchorElement>) => e.preventDefault(),
+          name: 'Advocacy',
+          href: '/what-we-do/advocacy',
         },
         {
-          name: 'Dessie',
-          onClick: (e: React.MouseEvent<HTMLAnchorElement>) => e.preventDefault(),
-        },
-        {
-          name: 'Dire Dawa',
-          onClick: (e: React.MouseEvent<HTMLAnchorElement>) => e.preventDefault(),
+          name: 'Humanitarian Response',
+          href: '/what-we-do/humanitarian-response',
         },
       ]
     },
@@ -72,24 +90,24 @@ const Footer: React.FC = () => {
       label: "Resources",
       items: [
         {
-          name: 'Child Corner',
-          onClick: (e: React.MouseEvent<HTMLAnchorElement>) => e.preventDefault(),
+          name: 'News Articles',
+          href: '/news',
         },
         {
-          name: 'Partners',
-          onClick: (e: React.MouseEvent<HTMLAnchorElement>) => e.preventDefault(),
+          name: 'Upcoming Events',
+          href: '/events',
         },
         {
-          name: 'Get Involved',
-          onClick: (e: React.MouseEvent<HTMLAnchorElement>) => e.preventDefault(),
+          name: 'Reports & Publications',
+          href: '/resources',
         },
         {
-          name: 'Vacancies and Bids',
-          onClick: (e: React.MouseEvent<HTMLAnchorElement>) => e.preventDefault(),
+          name: 'Partner Organizations',
+          href: '/who-we-are/partners',
         },
         {
-          name: 'Downloads',
-          onClick: (e: React.MouseEvent<HTMLAnchorElement>) => e.preventDefault(),
+          name: 'Board Members',
+          href: '/who-we-are/board-members',
         },
       ],
     },
@@ -151,17 +169,21 @@ const Footer: React.FC = () => {
           <div className="flex-1 mt-6 md:mt-0">
             <form onSubmit={(e) => e.preventDefault()} className="flex items-center gap-x-3 md:justify-end">
               <div className="relative">
-                <svg className="w-6 h-6 text-gray-400 absolute left-3 inset-y-0 my-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <svg className="w-6 h-6 text-gray-400 absolute left-3 inset-y-0 my-auto opacity-50" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
                 </svg>
                 <input
                   type="email"
-                  required
-                  placeholder="Enter your email"
-                  className="w-full pl-12 pr-3 py-2 text-gray-500 bg-white outline-none border focus:border-indigo-600 shadow-sm rounded-lg"
+                  placeholder="Subscription coming soon"
+                  disabled
+                  className="w-full pl-12 pr-3 py-2 text-gray-500 bg-white/90 outline-none border focus:border-indigo-600 shadow-sm rounded-lg cursor-not-allowed opacity-75"
                 />
               </div>
-              <button className="block w-auto py-3 px-4 font-medium text-sm text-center text-white bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 active:shadow-none rounded-lg shadow">
+              <button
+                disabled
+                className="block w-auto py-3 px-4 font-medium text-sm text-center text-white bg-indigo-600/75 rounded-lg shadow cursor-not-allowed opacity-75"
+                title="Coming soon"
+              >
                 Subscribe
               </button>
             </form>
@@ -176,12 +198,18 @@ const Footer: React.FC = () => {
               ) : (
                 item.items.map((el, idx) => (
                   <li key={idx}>
-                    <a
-                      onClick={el.onClick}
-                      className="text-gray-300 duration-150 hover:text-gray-400 cursor-pointer"
-                    >
-                      {el.name}
-                    </a>
+                    {el.href ? (
+                      <Link
+                        href={el.href}
+                        className="text-gray-300 duration-150 hover:text-gray-400 cursor-pointer"
+                      >
+                        {el.name}
+                      </Link>
+                    ) : (
+                      <span className="text-gray-300 duration-150 hover:text-gray-400 cursor-pointer">
+                        {el.name}
+                      </span>
+                    )}
                   </li>
                 ))
               )}
@@ -189,19 +217,13 @@ const Footer: React.FC = () => {
           ))}
         </div>
         <div className="mt-10 py-10 border-t border-gray-700 items-center justify-between sm:flex">
-          <p className="text-gray-300"> 2022 Float UI Inc. All rights reserved.</p>
+          <p className="text-gray-300">© {new Date().getFullYear()} Forum on Sustainable Child Empowerment. All rights reserved.</p>
           <div className="flex items-center gap-x-6 text-gray-400 mt-6 sm:mt-0">
-            <a href="#" onClick={(e) => e.preventDefault()}>
+            <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
               <FacebookIcon />
             </a>
-            <a href="#" onClick={(e) => e.preventDefault()}>
-              <TwitterIcon />
-            </a>
-            <a href="#" onClick={(e) => e.preventDefault()}>
-              <GithubIcon />
-            </a>
-            <a href="#" onClick={(e) => e.preventDefault()}>
-              <InstagramIcon />
+            <a href="https://www.x.com" target="_blank" rel="noopener noreferrer" aria-label="X (formerly Twitter)">
+              <XIcon className="w-5 h-5" />
             </a>
           </div>
         </div>

@@ -13,6 +13,8 @@ export default function ResourcesPage() {
   const [activeTab, setActiveTab] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  // Track downloads in progress to prevent duplicate clicks
+  const [downloadingResource, setDownloadingResource] = useState<string | null>(null);
 
   useEffect(() => {
     loadResources();
@@ -41,9 +43,31 @@ export default function ResourcesPage() {
   };
 
   const handleDownload = async (resource: Resource) => {
+    // Prevent multiple clicks while processing
+    if (downloadingResource === resource.id) return;
+
     try {
+      setDownloadingResource(resource.id);
+
+      // Make sure we wait for the increment to complete
       await resourcesService.incrementDownloadCount(resource.id);
-      window.open(resource.fileUrl, '_blank');
+
+      // Create an anchor element and trigger the download
+      const link = document.createElement('a');
+      link.href = resource.fileUrl;
+      link.setAttribute('download', resource.title || 'resource');
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener noreferrer');
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      document.body.removeChild(link);
+
+      toast({
+        title: 'Success',
+        description: 'Download started',
+      });
     } catch (error) {
       console.error('Error downloading resource:', error);
       toast({
@@ -51,6 +75,8 @@ export default function ResourcesPage() {
         description: 'Failed to download resource',
         variant: 'destructive',
       });
+    } finally {
+      setDownloadingResource(null);
     }
   };
 
@@ -59,11 +85,11 @@ export default function ResourcesPage() {
   };
 
   const filterResources = () => {
-    return resources.filter((resource) => 
-      (searchQuery === '' || 
-        resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (resource.description && resource.description.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
+    return resources.filter((resource) =>
+    (searchQuery === '' ||
+      resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (resource.description && resource.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
     );
   };
 
@@ -75,10 +101,10 @@ export default function ResourcesPage() {
           <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
             Explore our comprehensive collection of reports, research papers, and impact stories that showcase our work and insights.
           </p>
-          
+
           {/* Search Box */}
-          <ProgramSearch 
-            onSearch={handleSearch} 
+          <ProgramSearch
+            onSearch={handleSearch}
             placeholder="Search resources..."
             className="mt-10"
           />
@@ -130,6 +156,6 @@ export default function ResourcesPage() {
           )}
         </TabsContent>
       </Tabs>
-   </div>
+    </div>
   )
 }

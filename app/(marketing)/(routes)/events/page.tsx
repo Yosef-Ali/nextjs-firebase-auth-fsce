@@ -25,7 +25,9 @@ export default function EventsPage() {
     const loadEvents = async () => {
       try {
         setLoading(true);
-        const allPosts = await postsService.getPostsByCategory('events');
+        // Replace getPostsByCategory with getPublishedPosts with category parameter
+        const allPosts = await postsService.getPublishedPosts('events');
+
         // Ensure posts have proper Category objects
         const postsWithCategories = allPosts.map(post => ({
           ...post,

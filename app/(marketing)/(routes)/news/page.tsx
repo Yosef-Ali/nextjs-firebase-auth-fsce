@@ -25,12 +25,15 @@ export default function NewsPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const allPosts = await postsService.getPostsByCategory('news');
+        // Replace getPostsByCategory with getPublishedPosts with category parameter
+        const allPosts = await postsService.getPublishedPosts('news');
+
         // Ensure posts have proper Category objects
         const postsWithCategories = allPosts.map(post => ({
           ...post,
           category: ensureCategory(post.category)
         }));
+
         const [sticky, regular] = postsWithCategories.reduce<[Post[], Post[]]>(
           ([s, r], post: Post) => post.sticky ? [[...s, post], r] : [s, [...r, post]],
           [[], []]
@@ -49,6 +52,7 @@ export default function NewsPage() {
         setLoading(false);
       }
     };
+
     fetchData();
   }, []);
 
@@ -79,6 +83,24 @@ export default function NewsPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Add title and search section that matches the events page */}
+      <section className="py-16 bg-primary/5">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-6">
+            News & Updates
+          </h2>
+          <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
+            Stay informed with the latest news and updates from our organization.
+          </p>
+
+          <ProgramSearch
+            onSearch={handleSearch}
+            placeholder="Search news..."
+            className="max-w-2xl mx-auto mb-12"
+          />
+        </div>
+      </section>
+
       <section ref={searchResultsRef} className="py-16 bg-white scroll-mt-16">
         <div className="container mx-auto px-4 max-w-7xl">
           {searchQuery && (

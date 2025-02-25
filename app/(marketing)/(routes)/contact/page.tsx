@@ -1,28 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
 } from '@/components/ui/card';
 import { MapPin, Mail, Phone, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import React from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 const ContactPage = () => {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     subject: '',
-    message: '',
+    message: ''
   });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Form submitted:', formData);
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -30,6 +25,42 @@ const ContactPage = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      // Construct mailto URL with form data
+      const recipientEmail = 'yosefmdsc@gmail.com';
+      const subject = encodeURIComponent(formData.subject);
+      const body = encodeURIComponent(`Name: ${formData.name}\nEmail: ${formData.email}\n\n${formData.message}`);
+
+      // Open mailto link in new window
+      window.open(`mailto:${recipientEmail}?subject=${subject}&body=${body}`, '_blank');
+
+      toast({
+        title: "Email Client Opened",
+        description: "Your default email client has been opened with your message. Please send the email to complete.",
+        variant: "default",
+      });
+
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        subject: '',
+        message: ''
+      });
+
+    } catch (error: any) {
+      console.error('Error opening email client:', error);
+      toast({
+        title: "Something went wrong",
+        description: "Unable to open email client. Please try again or send email manually.",
+        variant: "destructive",
+      });
+    }
   };
 
   const contactInfo = [
@@ -41,7 +72,7 @@ const ContactPage = () => {
     {
       title: "Email",
       icon: <Mail className="h-6 w-6 text-muted-foreground" />,
-      content: "info@example.com",
+      content: "yosefmdsc@gmail.com",
     },
     {
       title: "Phone",
@@ -59,7 +90,7 @@ const ContactPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,transparent,black)] pointer-events-none" />
-      
+
       <div className="container mx-auto px-4 py-16 relative">
         {/* Page Title */}
         <motion.div
@@ -101,6 +132,7 @@ const ContactPage = () => {
                       onChange={handleChange}
                       className="w-full p-3 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                       required
+                      disabled={isSubmitting}
                     />
                   </div>
                   <div className="space-y-2">
@@ -113,6 +145,7 @@ const ContactPage = () => {
                       onChange={handleChange}
                       className="w-full p-3 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                       required
+                      disabled={isSubmitting}
                     />
                   </div>
                   <div className="space-y-2">
@@ -125,6 +158,7 @@ const ContactPage = () => {
                       onChange={handleChange}
                       className="w-full p-3 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                       required
+                      disabled={isSubmitting}
                     />
                   </div>
                   <div className="space-y-2">
@@ -137,16 +171,23 @@ const ContactPage = () => {
                       rows={4}
                       className="w-full p-3 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                       required
+                      disabled={isSubmitting}
                     />
                   </div>
+
                   <motion.button
                     type="submit"
                     className="w-full bg-primary text-white py-3 px-6 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    disabled={isSubmitting}
                   >
                     Send Message
                   </motion.button>
+
+                  <p className="text-sm text-center text-gray-500 mt-2">
+                    This will open your email client with the message pre-filled
+                  </p>
                 </form>
               </div>
             </Card>

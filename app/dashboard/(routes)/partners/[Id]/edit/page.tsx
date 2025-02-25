@@ -22,9 +22,10 @@ export default function EditPartnerPage() {
   useEffect(() => {
     const loadPartner = async () => {
       try {
-        if (!params?.Id) return;
+        // Fix: Changed from params.Id to params.id to match URL parameter
+        if (!params?.id) return;
 
-        const docRef = doc(db, "partners", params.Id as string);
+        const docRef = doc(db, "partners", params.id as string);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
@@ -53,7 +54,7 @@ export default function EditPartnerPage() {
     };
 
     loadPartner();
-  }, [params?.Id, router]);
+  }, [params?.id, router]);
 
   if (loading) {
     return (

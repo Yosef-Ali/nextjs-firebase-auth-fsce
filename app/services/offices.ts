@@ -1,66 +1,141 @@
+// app/services/offices.ts
+
 import { Office } from '@/app/types/office';
-import { 
-  getProgramOffices, 
-  getProgramOffice, 
-  createProgramOffice, 
-  updateProgramOffice, 
-  deleteProgramOffice 
-} from '@/app/lib/firebase/program-offices-service';
 
-// Convert ProgramOffice to Office type
-const mapToOffice = (programOffice: any): Office => ({
-  id: programOffice.id,
-  name: programOffice.location,
-  location: programOffice.region,
-  contact: programOffice.contact,
-  email: programOffice.email,
-  impact: programOffice.beneficiaries,
-  impactCount: parseInt(programOffice.beneficiaries?.match(/\d+/)?.[0] || '0', 10),
-  programs: programOffice.programs || [],
-  active: true
-});
-
-// Convert Office to ProgramOffice type
-const mapToProgramOffice = (office: Partial<Office>) => ({
-  type: 'Program',
-  region: office.location,
-  location: office.name,
-  address: '',
-  contact: office.contact,
-  email: office.email,
-  beneficiaries: office.impact,
-  programs: office.programs || []
-});
+// Mock data based on your image
+const officesMockData: Office[] = [
+  {
+    id: '1',
+    name: 'Addis Ababa Office',
+    location: 'Bole Sub City, Woreda 03, Addis Ababa',
+    contact: '+251 116 393 229',
+    email: 'info.addis@example.org',
+    impact: 'Serving over 5,000 children and families',
+    impactCount: 5000,
+    programs: [
+      'Early Childhood Education',
+      'Youth Empowerment',
+      'Family Support Services',
+      'Community Development'
+    ],
+    active: true
+  },
+  {
+    id: '2',
+    name: 'Bahir Dar Office',
+    location: 'Belay Zeleke Kebele, Bahir Dar',
+    contact: '+251 582 206 795',
+    email: 'info.bahirdar@example.org',
+    impact: 'Supporting 3,000+ vulnerable children',
+    impactCount: 3000,
+    programs: [
+      'Child Protection',
+      'Education Access',
+      'Health & Nutrition',
+      'Vocational Training'
+    ],
+    active: true
+  },
+  {
+    id: '3',
+    name: 'Hawassa Office',
+    location: 'Tabor Sub City, Hawassa',
+    contact: '+251 462 208 091',
+    email: 'info.hawassa@example.org',
+    impact: 'Reaching 4,000+ children and youth',
+    impactCount: 4000,
+    programs: [
+      'Educational Support',
+      'Child Sponsorship',
+      'Community Outreach',
+      'Youth Development'
+    ],
+    active: true
+  },
+  {
+    id: '4',
+    name: 'Mekelle Office',
+    location: 'Hadnet Sub City, Mekelle',
+    contact: '+251 344 409 284',
+    email: 'info.mekelle@example.org',
+    impact: 'Assisting 2,500+ families and children',
+    impactCount: 2500,
+    programs: [
+      'Emergency Response',
+      'Child Education',
+      'Family Strengthening',
+      'Community Resilience'
+    ],
+    active: true
+  }
+];
 
 class OfficesService {
   async getAllOffices(): Promise<Office[]> {
-    const programOffices = await getProgramOffices();
-    return programOffices.map(mapToOffice);
+    // Simulating API call
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(officesMockData);
+      }, 500);
+    });
   }
 
-  async getOfficeById(id: string): Promise<Office | null> {
-    const programOffice = await getProgramOffice(id);
-    return programOffice ? mapToOffice(programOffice) : null;
+  async getOfficeById(id: string): Promise<Office | undefined> {
+    // Simulating API call
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const office = officesMockData.find(office => office.id === id);
+        resolve(office);
+      }, 300);
+    });
   }
 
   async createOffice(officeData: Omit<Office, 'id'>): Promise<Office> {
-    const programOfficeData = mapToProgramOffice(officeData);
-    const created = await createProgramOffice(programOfficeData);
-    return mapToOffice(created);
+    // Simulating API call
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const newOffice = {
+          ...officeData,
+          id: Math.random().toString(36).substring(2, 9)
+        };
+        resolve(newOffice);
+      }, 500);
+    });
   }
 
   async updateOffice(id: string, officeData: Partial<Office>): Promise<Office> {
-    const programOfficeData = mapToProgramOffice(officeData);
-    await updateProgramOffice(id, programOfficeData);
-    const updated = await getProgramOffice(id);
-    if (!updated) {
-      throw new Error('Failed to retrieve updated office');
-    }
-    return mapToOffice(updated);
+    // Simulating API call
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const officeIndex = officesMockData.findIndex(office => office.id === id);
+        if (officeIndex === -1) {
+          reject(new Error('Office not found'));
+          return;
+        }
+
+        const updatedOffice = {
+          ...officesMockData[officeIndex],
+          ...officeData
+        };
+
+        resolve(updatedOffice);
+      }, 500);
+    });
   }
 
   async deleteOffice(id: string): Promise<void> {
-    return deleteProgramOffice(id);
+    // Simulating API call
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const officeIndex = officesMockData.findIndex(office => office.id === id);
+        if (officeIndex === -1) {
+          reject(new Error('Office not found'));
+          return;
+        }
+
+        resolve();
+      }, 500);
+    });
   }
 }
 

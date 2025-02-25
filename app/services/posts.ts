@@ -55,6 +55,49 @@ class PostsService {
     }
   }
 
+  async getPostBySlug(slug: string): Promise<Post | null> {
+    try {
+      const postsRef = collection(db, COLLECTION_NAME);
+      const q = query(
+        postsRef,
+        where('slug', '==', slug),
+        where('published', '==', true)
+      );
+
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
+        return null;
+      }
+
+      const doc = querySnapshot.docs[0];
+      return normalizePost(doc.data(), doc.id);
+    } catch (error) {
+      console.error('Error getting post by slug:', error);
+      return null;
+    }
+  }
+
+  async getRelatedPosts(currentSlug: string, categoryId: string, limit = 3): Promise<Post[]> {
+    try {
+      // First get current post to exclude it
+      const currentPost = await this.getPostBySlug(currentSlug);
+      if (!currentPost) {
+        return [];
+      }
+
+      // Get posts with the same category
+      const allPosts = await this.getPublishedPosts(categoryId);
+
+      // Filter out the current post and limit the results
+      return allPosts
+        .filter(post => post.id !== currentPost.id)
+        .slice(0, limit);
+    } catch (error) {
+      console.error('Error getting related posts:', error);
+      return [];
+    }
+  }
+
   async getPublishedPosts(categoryId?: string, limitCount?: number): Promise<Post[]> {
     try {
       const postsRef = collection(db, COLLECTION_NAME);

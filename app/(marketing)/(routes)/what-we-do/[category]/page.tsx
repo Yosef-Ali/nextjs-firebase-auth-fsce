@@ -134,7 +134,7 @@ export default function CategoryPage() {
                   <HorizontalPostCard
                     key={post.id}
                     post={post}
-                    href={`/${params.category}/${post.slug}`}
+                    href={`/what-we-do/${params.category}/${post.slug}`}
                   />
                 ))}
               </motion.div>
@@ -163,7 +163,7 @@ export default function CategoryPage() {
                     slug={post.slug}
                     category={categoryName}
                     createdAt={post.createdAt}
-                    href={`/${params.category}/${post.slug}`}
+                    href={`/what-we-do/${params.category}/${post.slug}`}
                   />
                 ))}
               </motion.div>
