@@ -1,6 +1,5 @@
 {
   "buildCommand": "pnpm run build",
   "installCommand": "pnpm install",
-  "framework": "nextjs",
-  "ignoreBuildErrors": true
+  "framework": "nextjs"
 }

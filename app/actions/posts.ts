@@ -2,7 +2,7 @@ import { doc, collection, getDocs, query, where, orderBy, updateDoc, Timestamp }
 import { Category } from '@/app/types/category';
 import { Event, Post } from '@/app/types/post';
 import { db } from '@/lib/firebase';
-import { toTimestamp, compareTimestamps } from '@/app/utils/date';
+import { toTimestamp, compareTimestamps, toDate } from '@/app/utils/date';
 
 const COLLECTION_NAME = 'posts';
 
@@ -34,7 +34,7 @@ interface GetPostsOptions {
 
 // Sort posts by creation date (newest first)
 export function sortPosts(posts: Post[]): Post[] {
-  return [...posts].sort((a, b) => compareTimestamps(a.createdAt, b.createdAt));
+  return [...posts].sort((a, b) => compareTimestamps(toDate(a.createdAt), toDate(b.createdAt)));
 }
 
 // Helper to normalize post data
