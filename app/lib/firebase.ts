@@ -1,6 +1,7 @@
 import { initializeApp, getApp, getApps } from 'firebase/app';
-import { getFirestore, enableIndexedDbPersistence, connectFirestoreEmulator } from 'firebase/firestore';
+import { getFirestore, enableIndexedDbPersistence, connectFirestoreEmulator, Timestamp } from 'firebase/firestore';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -15,6 +16,16 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+export const storage = getStorage(app);
+
+// Helper functions for Timestamp conversion
+export const fromTimestamp = (timestamp: Timestamp | undefined): Date | undefined => {
+  return timestamp ? timestamp.toDate() : undefined;
+};
+
+export const toTimestamp = (date: Date | undefined): Timestamp | undefined => {
+  return date ? Timestamp.fromDate(date) : undefined;
+};
 
 // Enable offline persistence with better error handling
 if (typeof window !== 'undefined') {
