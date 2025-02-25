@@ -59,3 +59,30 @@ export function safeGet<T>(obj: any, path: string, defaultValue: T): T {
   
   return (result === undefined || result === null) ? defaultValue : result as T;
 }
+
+/**
+ * Format a timestamp as a relative time (e.g., "2 hours ago")
+ */
+export function formatRelativeTime(timestamp: Timestamp | Date | undefined | null): string {
+  if (!timestamp) return '';
+  
+  const dateObj = timestamp instanceof Timestamp ? timestamp.toDate() : timestamp;
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - dateObj.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  
+  return formatDate(dateObj, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+/**
+ * Check if a value is a valid Firestore Timestamp
+ */
+export function isValidTimestamp(value: any): boolean {
+  return value instanceof Timestamp && 
+         typeof value.toDate === 'function' && 
+         !isNaN(value.toDate().getTime());
+}

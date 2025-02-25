@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -26,13 +30,15 @@
     },
     "typeRoots": [
       "./node_modules/@types",
+      "./",
       "./app/types"
     ]
   },
   "include": [
-    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
+    "firebase.d.ts",
+    "next-env.d.ts",
     ".next/types/**/*.ts"
   ],
   "exclude": [
