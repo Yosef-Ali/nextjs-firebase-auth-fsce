@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { 
+import {
   User,
   GoogleAuthProvider,
   signInWithPopup,

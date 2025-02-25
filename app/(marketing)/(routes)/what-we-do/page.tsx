@@ -75,14 +75,21 @@ export default function WhatWeDoPage() {
   const loadPosts = async () => {
     try {
       setLoading(true);
-      const allPosts = await postsService.getPostsByCategory('what-we-do');
+      // Replace getPostsByCategory with getPublishedPosts for the 'what-we-do' category
+      const allPosts = await postsService.getPublishedPosts('what-we-do');
       setPosts(allPosts);
 
-      // Update category counts
+      // Update category counts - check both string and object form of category
       const updatedCategories = categories.map(category => ({
         ...category,
-        count: allPosts.filter(post => post.category === category.id).length
+        count: allPosts.filter(post => {
+          const postCategory = typeof post.category === 'string'
+            ? post.category
+            : post.category?.id;
+          return postCategory === category.id;
+        }).length
       }));
+
       setCategoriesWithCount(updatedCategories);
     } catch (error) {
       console.error('Error loading posts:', error);

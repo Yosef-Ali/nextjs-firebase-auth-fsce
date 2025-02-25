@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Post } from '@/types';
+import { Post } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
 import { ProgramSearch } from '@/components/program-search';
 import { ContentCard } from '@/components/content-display/ContentCard';
@@ -33,14 +33,22 @@ export default function EventsPage() {
           ...post,
           category: ensureCategory(post.category)
         }));
-        const [sticky, regular] = postsWithCategories.reduce<[Post[], Post[]]>(
-          ([s, r], post: Post) => post.sticky ? [[...s, post], r] : [s, [...r, post]],
-          [[], []]
-        );
+
+        // Split posts into sticky and regular arrays without using destructuring
+        const stickyPosts: Post[] = [];
+        const regularPosts: Post[] = [];
+
+        postsWithCategories.forEach((post: Post) => {
+          if (post.sticky) {
+            stickyPosts.push(post);
+          } else {
+            regularPosts.push(post);
+          }
+        });
 
         // Sort using compareTimestamps helper with proper types
-        setStickyEvents([...sticky].sort((a, b) => compareTimestamps(a.createdAt, b.createdAt)));
-        setEvents([...regular].sort((a, b) => compareTimestamps(a.createdAt, b.createdAt)));
+        setStickyEvents([...stickyPosts].sort((a, b) => compareTimestamps(a.createdAt, b.createdAt)));
+        setEvents([...regularPosts].sort((a, b) => compareTimestamps(a.createdAt, b.createdAt)));
       } catch (error) {
         console.error('Error loading events:', error);
         setStickyEvents([]);

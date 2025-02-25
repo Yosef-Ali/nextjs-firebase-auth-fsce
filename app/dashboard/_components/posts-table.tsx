@@ -10,8 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EditIcon, Trash2Icon } from "lucide-react";
-
-import { format, toDate } from 'date-fns';
+import { format } from 'date-fns';
 import { Card, CardContent } from "@/components/ui/card";
 import { Post } from '@/app/types/post';
 import { getCategoryName } from '@/app/utils/category';
@@ -23,12 +22,22 @@ interface PostTableProps {
   onDelete: (id: string) => void;
 }
 
-function compareTimestamps(a: number, b: number) {
-  return b - a;
+// Helper function to safely compare timestamps
+function compareTimestamps(a: any, b: any) {
+  // Handle different timestamp formats safely
+  const getTime = (timestamp: any) => {
+    if (!timestamp) return 0;
+    if (typeof timestamp === 'number') return timestamp;
+    if (timestamp.seconds) return timestamp.seconds * 1000;
+    if (timestamp instanceof Date) return timestamp.getTime();
+    return 0;
+  };
+
+  return getTime(b) - getTime(a);
 }
 
 function sortByDate(a: Post, b: Post) {
-  return compareTimestamps(a.updatedAt.seconds, b.updatedAt.seconds);
+  return compareTimestamps(a.updatedAt, b.updatedAt);
 }
 
 export default function PostTable({ posts, isLoading, onEdit, onDelete }: PostTableProps) {
@@ -56,6 +65,24 @@ export default function PostTable({ posts, isLoading, onEdit, onDelete }: PostTa
 
   // Sort posts by updatedAt in descending order (newest first)
   const sortedPosts = [...posts].sort(sortByDate);
+
+  // Helper to safely format a date
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return '';
+    try {
+      if (timestamp instanceof Date) return format(timestamp, 'MMM d, yyyy');
+      if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+        return format(timestamp.toDate(), 'MMM d, yyyy');
+      }
+      if (timestamp.seconds) {
+        return format(new Date(timestamp.seconds * 1000), 'MMM d, yyyy');
+      }
+      return '';
+    } catch (e) {
+      console.error("Error formatting date:", e);
+      return '';
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -114,7 +141,7 @@ export default function PostTable({ posts, isLoading, onEdit, onDelete }: PostTa
                 </span>
               </TableCell>
               <TableCell className="text-muted-foreground">
-                {format(post.updatedAt.toDate(), 'MMM d, yyyy')}
+                {formatDate(post.updatedAt)}
               </TableCell>
               <TableCell className="text-right space-x-2">
                 <Button

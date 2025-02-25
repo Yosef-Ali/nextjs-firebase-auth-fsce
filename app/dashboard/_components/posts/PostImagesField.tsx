@@ -42,9 +42,9 @@ export function PostImagesField({ form }: PostImagesFieldProps) {
                 size: file.size,
                 type: file.type
             });
-            
+
             const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '-')}`;
-            
+
             const mediaData = {
                 name: fileName,
                 description: '',
@@ -57,7 +57,7 @@ export function PostImagesField({ form }: PostImagesFieldProps) {
             };
 
             console.log('Attempting upload with mediaService...');
-            
+
             // Add try-catch specifically for the mediaService call
             try {
                 const result = await mediaService.uploadMedia(file, mediaData);
@@ -105,7 +105,7 @@ export function PostImagesField({ form }: PostImagesFieldProps) {
 
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         event.preventDefault();
-        
+
         const files = Array.from(event.target.files || []);
         if (files.length === 0) return;
 
@@ -113,16 +113,16 @@ export function PostImagesField({ form }: PostImagesFieldProps) {
 
         try {
             const currentImages = form.getValues('images') || [];
-            
+
             for (const file of files) {
                 try {
                     console.log('Starting upload process for:', file.name);
                     const url = await uploadImageToFirebase(file);
-                    
+
                     console.log('Upload successful, updating form with URL:', url);
                     currentImages.push(url);
                     form.setValue('images', [...currentImages], { shouldValidate: true });
-                    
+
                     toast({
                         title: "Success",
                         description: `Uploaded ${file.name}`,
@@ -135,7 +135,7 @@ export function PostImagesField({ form }: PostImagesFieldProps) {
                             stack: error.stack
                         } : 'Unknown error'
                     });
-                    
+
                     toast({
                         title: "Upload Failed",
                         description: error instanceof Error ? error.message : `Failed to upload ${file.name}`,
@@ -150,7 +150,7 @@ export function PostImagesField({ form }: PostImagesFieldProps) {
                     stack: error.stack
                 } : 'Unknown error'
             });
-            
+
             toast({
                 title: "Error",
                 description: "Failed to process image uploads",

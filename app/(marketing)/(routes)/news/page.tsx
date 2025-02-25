@@ -1,7 +1,6 @@
 'use client';
-
 import { useEffect, useState, useRef } from 'react';
-import { Post } from '@/types';
+import { Post } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
 import { ProgramSearch } from '@/components/program-search';
 import { ContentCard } from '@/components/content-display/ContentCard';
@@ -34,16 +33,23 @@ export default function NewsPage() {
           category: ensureCategory(post.category)
         }));
 
-        const [sticky, regular] = postsWithCategories.reduce<[Post[], Post[]]>(
-          ([s, r], post: Post) => post.sticky ? [[...s, post], r] : [s, [...r, post]],
-          [[], []]
-        );
+        // Split posts into sticky and regular arrays without using destructuring
+        const stickyPosts: Post[] = [];
+        const regularPosts: Post[] = [];
 
-        sticky.sort((a: Post, b: Post) => compareTimestamps(a.createdAt, b.createdAt));
-        regular.sort((a: Post, b: Post) => compareTimestamps(a.createdAt, b.createdAt));
+        postsWithCategories.forEach((post: Post) => {
+          if (post.sticky) {
+            stickyPosts.push(post);
+          } else {
+            regularPosts.push(post);
+          }
+        });
 
-        setStickyNews(sticky);
-        setNews(regular);
+        stickyPosts.sort((a: Post, b: Post) => compareTimestamps(a.createdAt, b.createdAt));
+        regularPosts.sort((a: Post, b: Post) => compareTimestamps(a.createdAt, b.createdAt));
+
+        setStickyNews(stickyPosts);
+        setNews(regularPosts);
       } catch (error) {
         console.error('Error fetching news:', error);
         setStickyNews([]);
@@ -92,7 +98,6 @@ export default function NewsPage() {
           <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
             Stay informed with the latest news and updates from our organization.
           </p>
-
           <ProgramSearch
             onSearch={handleSearch}
             placeholder="Search news..."
