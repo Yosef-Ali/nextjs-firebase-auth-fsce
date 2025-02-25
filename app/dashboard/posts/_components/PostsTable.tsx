@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { PlusIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Post } from '@/app/types/post';
-import { formatDate } from '@/app/utils/date';
+import { formatDate, toDate } from '@/app/utils/date';
 import { getPosts } from '@/app/actions/posts';
 import { Timestamp } from 'firebase/firestore';
 

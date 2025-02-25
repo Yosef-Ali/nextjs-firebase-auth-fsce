@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/hooks/useAuth';
 import { useToast } from "@/hooks/use-toast";
 import { mediaService } from '@/app/services/media';
 import Image from 'next/image';
+import { MediaType } from '@/app/types/media';
 
 interface PostImagesFieldProps {
     form: UseFormReturn<PostFormData>;
@@ -48,7 +49,7 @@ export function PostImagesField({ form }: PostImagesFieldProps) {
             const mediaData = {
                 name: fileName,
                 description: '',
-                type: 'image',
+                type: 'image' as MediaType, // Use the proper type
                 tags: [],
                 alt: '',
                 caption: '',

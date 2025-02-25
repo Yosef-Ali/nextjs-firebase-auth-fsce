@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 import { Card, CardContent } from "@/components/ui/card";
 import { Post } from '@/app/types/post';
 import { getCategoryName } from '@/app/utils/category';
+import { toDate } from '@/app/utils/date';
 
 interface PostTableProps {
   posts: Post[];

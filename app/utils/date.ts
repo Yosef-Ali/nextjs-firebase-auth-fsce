@@ -36,10 +36,19 @@ export const compareTimestamps = (a: Timestamp | Date | number, b: Timestamp | D
     return bTime - aTime;
 };
 
-// Convert to Date (just returns the input if it's already a Date)
-export const toDate = (date: Date | number): Date => {
-    return date instanceof Date ? date : new Date(date);
-};
+// Convert to Date (handles Timestamp objects)
+export function toDate(timestamp: Timestamp | Date | number | any): Date {
+    if (timestamp instanceof Timestamp) {
+        return timestamp.toDate();
+    }
+    if (typeof timestamp === 'number') {
+        return new Date(timestamp);
+    }
+    if (timestamp?.toDate instanceof Function) {
+        return timestamp.toDate();
+    }
+    return timestamp instanceof Date ? timestamp : new Date();
+}
 
 // Normalize Firebase timestamps in an object
 export function normalizeTimestamps<T>(data: T): T {

@@ -52,7 +52,13 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
         await categoryService.updateCategory(initialData.id, values);
         toast({ title: 'Category updated successfully' });
       } else {
-        await categoryService.createCategory(values);
+        await categoryService.createCategory({
+          name: values.name,
+          description: values.description,
+          slug: values.slug,
+          type: values.type,
+          featured: false // Add this missing required property
+        });
         toast({ title: 'Category created successfully' });
       }
       onSuccess?.();
@@ -77,7 +83,7 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input {...field} disabled={loading} />
+                <Input {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -91,13 +97,13 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea {...field} disabled={loading} />
+                <Textarea {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-
+        
         <FormField
           control={form.control}
           name="type"
@@ -105,7 +111,6 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
             <FormItem>
               <FormLabel>Type</FormLabel>
               <Select
-                disabled={loading}
                 onValueChange={field.onChange}
                 defaultValue={field.value}
               >
@@ -124,9 +129,23 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
             </FormItem>
           )}
         />
-
+        
+        <FormField
+          control={form.control}
+          name="slug"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Slug</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
         <Button type="submit" disabled={loading}>
-          {isEditing ? 'Update Category' : 'Create Category'}
+          {loading ? 'Saving...' : isEditing ? 'Update Category' : 'Create Category'}
         </Button>
       </form>
     </Form>

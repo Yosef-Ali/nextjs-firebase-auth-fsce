@@ -39,21 +39,24 @@ export default function UsersPage() {
   const authorUsers = users.filter(user => user.role === UserRole.AUTHOR).length;
 
   useEffect(() => {
+    // Define a type-safe event listener
     const handleEditUser = (e: CustomEvent<string>) => {
       setSelectedUserId(e.detail);
       setIsEditorOpen(true);
     };
-
+    
     const handleDeleteUser = (e: CustomEvent<string>) => {
       setUserToDelete(e.detail);
+      setIsDeleteDialogOpen(true);
     };
-
-    document.addEventListener('edit-user', handleEditUser);
-    document.addEventListener('delete-user', handleDeleteUser);
-
+    
+    // Use type assertion when adding the event listener
+    document.addEventListener('edit-user' as any, handleEditUser as EventListener);
+    document.addEventListener('delete-user' as any, handleDeleteUser as EventListener);
+    
     return () => {
-      document.removeEventListener('edit-user', handleEditUser);
-      document.removeEventListener('delete-user', handleDeleteUser);
+      document.removeEventListener('edit-user' as any, handleEditUser as EventListener);
+      document.removeEventListener('delete-user' as any, handleDeleteUser as EventListener);
     };
   }, []);
 
@@ -122,7 +125,7 @@ export default function UsersPage() {
           <Card>
             <div className="p-6">
               <div className="text-2xl font-bold">{adminUsers}</div>
-              <p className="text-xs text-muted-foreground">Admins</p>
+              <p className="text-xs text-muted-foreground">Administrators</p>
             </div>
           </Card>
           <Card>
@@ -137,7 +140,12 @@ export default function UsersPage() {
         <Card>
           <div className="p-6">
             {isLoading ? (
-              <Skeleton className="h-[400px] w-full" />
+              <div className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+              </div>
             ) : (
               <DataTable
                 columns={columns}

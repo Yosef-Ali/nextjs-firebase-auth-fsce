@@ -1,4 +1,4 @@
-export type CategoryType = 'post' | 'resource' | 'event';
+export type CategoryType = 'post' | 'resource' | 'event' | 'award' | 'recognition';
 
 export interface Category {
   id: string;
@@ -6,10 +6,10 @@ export interface Category {
   description: string;
   slug: string;
   type: CategoryType;
-  createdAt: Date;
-  updatedAt: Date;
   featured: boolean;
   icon?: string;
+  createdAt: Date;
+  updatedAt: Date;
   itemCount?: number;
 }
 
