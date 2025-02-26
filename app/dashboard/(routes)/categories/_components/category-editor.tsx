@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
+import { updateCategory } from '@/app/actions/categories'; // Import the server action
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -64,12 +65,17 @@ export function CategoryEditor({ category, onClose }: CategoryEditorProps) {
       };
 
       if (category?.id) {
-        const categoryRef = doc(db, 'categories', category.id);
-        await updateDoc(categoryRef, categoryData);
-        toast({
-          title: 'Success',
-          description: 'Category updated successfully',
-        });
+        // Use the server action for updating
+        const result = await updateCategory(category.id, categoryData);
+        
+        if (result.success) {
+          toast({
+            title: 'Success',
+            description: 'Category updated successfully',
+          });
+        } else {
+          throw new Error(result.error || 'Failed to update category');
+        }
       } else {
         const categoriesRef = collection(db, 'categories');
         await addDoc(categoriesRef, categoryData);
@@ -128,7 +134,10 @@ export function CategoryEditor({ category, onClose }: CategoryEditorProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select 
+                onValueChange={field.onChange} 
+                defaultValue={field.value}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a type" />
