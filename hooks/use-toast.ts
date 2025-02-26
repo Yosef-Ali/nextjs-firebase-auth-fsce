@@ -140,7 +140,9 @@ function dispatch(action: Action) {
   })
 }
 
-type Toast = Omit<ToasterToast, "id">
+type Toast = Omit<ToasterToast, "id"> & {
+  id?: string;  // Make id optional to support both use cases
+}
 
 function toast({ ...props }: Toast) {
   const id = genId()
