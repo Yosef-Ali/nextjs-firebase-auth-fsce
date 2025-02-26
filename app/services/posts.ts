@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase';
-import { adminDb } from '@/lib/firebase-admin';
+// Remove the adminDb import
 import { Post } from '@/app/types/post';
 import type { Category } from '@/app/types/category';
 import {
@@ -16,7 +16,6 @@ import {
   serverTimestamp,
   QueryConstraint,
   orderBy,
-  FieldValue,
   limit as firestoreLimit
 } from 'firebase/firestore';
 import { ensureCategory } from '@/app/utils/category';
@@ -26,8 +25,15 @@ const COLLECTION_NAME = 'posts';
 
 class PostsService {
   async getCategories(): Promise<Category[]> {
-    const snapshot = await adminDb.collection('categories').get();
-    return snapshot.docs.map(doc => doc.data() as Category);
+    // Instead of using adminDb directly, fetch from our API route
+    try {
+      const response = await fetch('/api/categories');
+      const data = await response.json();
+      return data.categories || [];
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      return [];
+    }
   }
 
   createSlug(title: string): string {
