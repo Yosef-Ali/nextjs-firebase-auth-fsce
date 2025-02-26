@@ -196,4 +196,4 @@ function useToast() {
 }
 
 // Export the hooks and functions
-export { useToast, toast }
+export { toast, useToast }

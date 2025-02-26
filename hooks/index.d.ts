@@ -45,7 +45,6 @@ declare module 'hooks/*' {
     }
 
     declare module 'hooks/use-toast' {
-        export const useToast: () => ToastContextValue;
     }
 
     declare module 'hooks/use-user' {
@@ -55,3 +54,5 @@ declare module 'hooks/*' {
         export function usePagination<T>(options: UsePaginationOptions<T>): PaginationResult<T>;
     }
 }
+
+export { useToast } from './use-toast';

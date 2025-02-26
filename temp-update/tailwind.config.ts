@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 import { fontFamily } from "tailwindcss/defaultTheme";
 
-const tempTailwindConfig: Config = {
+const config = {
   darkMode: ["class"],
   content: [
     "./pages/**/*.{ts,tsx}",
@@ -25,6 +25,6 @@ const tempTailwindConfig: Config = {
     require("tailwindcss-animate"),
     require("@tailwindcss/typography"),
   ],
-};
+} satisfies Config;
 
-export default tempTailwindConfig;
+export default config;

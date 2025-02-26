@@ -1,7 +1,7 @@
 import { withSentryConfig } from '@sentry/nextjs';
 
 /** @type {import('next').NextConfig} */
-const tempNextConfig = {
+const config = {
   reactStrictMode: true,
   images: {
     domains: [
@@ -11,7 +11,7 @@ const tempNextConfig = {
       'plus.unsplash.com',
     ],
   },
-  webpack(config) {
+  webpack(config: any) {
     // Support for SVG imports
     config.module.rules.push({
       test: /\.svg$/,
@@ -35,4 +35,4 @@ const tempNextConfig = {
   },
 };
 
-export default tempNextConfig;
+export default config;
