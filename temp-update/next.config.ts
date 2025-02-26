@@ -1,34 +1,38 @@
-import { NextConfig } from 'next';
+import { withSentryConfig } from '@sentry/nextjs';
 
-// Define the configuration
-const config: NextConfig = {
+/** @type {import('next').NextConfig} */
+const tempNextConfig = {
   reactStrictMode: true,
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   images: {
     domains: [
       'firebasestorage.googleapis.com',
       'lh3.googleusercontent.com',
-      'images.unsplash.com'
+      'images.unsplash.com',
+      'plus.unsplash.com',
     ],
   },
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        child_process: false,
-        net: false,
-        tls: false
-      };
-    }
+  webpack(config) {
+    // Support for SVG imports
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: ['@svgr/webpack'],
+    });
+
+    // Support for importing PDF files
+    config.module.rules.push({
+      test: /\.(pdf)$/,
+      use: [
+        {
+          loader: 'file-loader',
+          options: {
+            name: '[name].[ext]',
+          },
+        },
+      ],
+    });
+
     return config;
-  }
+  },
 };
 
-// Export the configuration
-export default config;
+export default tempNextConfig;
