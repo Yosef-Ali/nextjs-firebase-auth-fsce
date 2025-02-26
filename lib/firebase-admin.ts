@@ -8,20 +8,36 @@ import { getStorage } from 'firebase-admin/storage';
 import 'server-only';
 
 function formatPrivateKey(key: string | undefined): string {
+  console.log('Original private key:', key);
   if (!key) return '';
 
-  // Handle the case where the key might have actual newlines
-  if (key.includes('-----BEGIN PRIVATE KEY-----')) {
-    return key.replace(/\\n/g, '\n');
+  // If the key already has the correct format with newlines, return it
+  if (key.includes('-----BEGIN PRIVATE KEY-----') && key.includes('\n')) {
+    console.log('Key already has correct format');
+    return key;
   }
 
-  // Handle the case where the key is a single-line base64 string
-  if (!key.startsWith('-----')) {
-    return `-----BEGIN PRIVATE KEY-----\n${key}\n-----END PRIVATE KEY-----\n`;
+  // If the key has the BEGIN/END markers but no proper newlines
+  if (key.includes('-----BEGIN PRIVATE KEY-----') && !key.includes('\n')) {
+    console.log('Key has BEGIN/END markers but no newlines');
+    const formattedKey = key.replace('-----BEGIN PRIVATE KEY-----', '-----BEGIN PRIVATE KEY-----\n')
+      .replace('-----END PRIVATE KEY-----', '\n-----END PRIVATE KEY-----\n');
+    console.log('Formatted key:', formattedKey);
+    return formattedKey;
+  }
+
+  // If the key is a raw base64 string (no BEGIN/END markers)
+  if (!key.includes('-----BEGIN')) {
+    console.log('Key is a raw base64 string');
+    const formattedKey = `-----BEGIN PRIVATE KEY-----\n${key.replace(/\\n/g, '\n')}\n-----END PRIVATE KEY-----\n`;
+    console.log('Formatted key:', formattedKey);
+    return formattedKey;
   }
 
   // Handle escaped newlines in the private key
-  return key.replace(/\\n/g, '\n');
+  const formattedKey = key.replace(/\\n/g, '\n');
+  console.log('Key has escaped newlines, formatted key:', formattedKey);
+  return formattedKey;
 }
 
 // Function to initialize Firebase Admin
@@ -45,6 +61,14 @@ function initializeFirebaseAdmin() {
 
   if (getApps().length === 0) {
     try {
+      // Additional debugging in non-production environments
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Initializing Firebase Admin with project:', projectId);
+        // Log first few chars of private key format to debug without exposing it
+        const keyPreview = privateKey.substring(0, 60) + '...';
+        console.log('Private key format:', keyPreview);
+      }
+
       return initializeApp({
         credential: cert({
           projectId,
