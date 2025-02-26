@@ -1,14 +1,16 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
+import { Timestamp } from "firebase/firestore";
+import { CategoryType } from "@/app/types/category";
 
 export type CategoryColumn = {
   id: string;
   name: string;
   description: string;
-  type: 'post' | 'resource' | 'event';
+  type: CategoryType;
   slug: string;
   count: number;
-  createdAt: Date;
+  createdAt: Timestamp;
 };
 
 export const columns: ColumnDef<CategoryColumn>[] = [
@@ -26,14 +28,14 @@ export const columns: ColumnDef<CategoryColumn>[] = [
   },
   {
     accessorKey: "count",
-    header: "Count",
+    header: "Items",
   },
   {
     accessorKey: "createdAt",
     header: "Created At",
     cell: ({ row }) => {
       const date = row.original.createdAt;
-      return new Date(date).toLocaleDateString();
+      return date.toDate().toLocaleDateString();
     }
   },
   {

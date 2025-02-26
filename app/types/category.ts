@@ -2,8 +2,6 @@ import { Timestamp } from 'firebase/firestore';
 
 export type CategoryType = 'post' | 'resource' | 'event' | 'award' | 'recognition';
 
-import { FirebaseTimestamp } from '@/lib/timestamp';
-
 export interface Category {
   id: string;
   name: string;
@@ -12,8 +10,8 @@ export interface Category {
   type: CategoryType;
   featured: boolean;
   icon?: string;
-  createdAt: FirebaseTimestamp;
-  updatedAt: FirebaseTimestamp;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
   itemCount?: number;
 }
 

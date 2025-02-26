@@ -20,23 +20,28 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { updateCategory } from '@/app/actions/categories'; // Import the server action
+import { CategoryType } from '@/app/types/category';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().min(1, 'Description is required'),
-  type: z.enum(['post', 'resource', 'event']),
+  type: z.enum(['post', 'resource', 'event', 'award', 'recognition']),
   slug: z.string().min(1, 'Slug is required')
 });
 
 type CategoryFormData = z.infer<typeof formSchema>;
+
+import { Timestamp } from 'firebase/firestore';
 
 interface CategoryEditorProps {
   category?: {
     id: string;
     name: string;
     description: string;
-    type: 'post' | 'resource' | 'event';
+    type: CategoryType;
     slug: string;
+    createdAt?: Timestamp;
+    updatedAt?: Timestamp;
   };
   onClose?: () => void;
 }
@@ -59,15 +64,13 @@ export function CategoryEditor({ category, onClose }: CategoryEditorProps) {
       setIsSaving(true);
       const categoryData = {
         ...data,
-        updatedAt: serverTimestamp(),
-        createdAt: category?.id ? undefined : serverTimestamp(),
         count: 0
       };
 
       if (category?.id) {
         // Use the server action for updating
         const result = await updateCategory(category.id, categoryData);
-        
+
         if (result.success) {
           toast({
             title: 'Success',
@@ -134,8 +137,8 @@ export function CategoryEditor({ category, onClose }: CategoryEditorProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Type</FormLabel>
-              <Select 
-                onValueChange={field.onChange} 
+              <Select
+                onValueChange={field.onChange}
                 defaultValue={field.value}
               >
                 <FormControl>
@@ -147,6 +150,8 @@ export function CategoryEditor({ category, onClose }: CategoryEditorProps) {
                   <SelectItem value="post">Post</SelectItem>
                   <SelectItem value="resource">Resource</SelectItem>
                   <SelectItem value="event">Event</SelectItem>
+                  <SelectItem value="award">Award</SelectItem>
+                  <SelectItem value="recognition">Recognition</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

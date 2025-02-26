@@ -11,20 +11,22 @@ import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CategoryType } from "@/app/types/category";
 import { CategoryEditor } from './_components/category-editor';
+import { Timestamp } from 'firebase/firestore';
 
-interface Category {
+interface CategoryColumn {
   id: string;
   name: string;
   description: string;
-  type: 'post' | 'resource' | 'event';
+  type: CategoryType;
   slug: string;
   count: number;
-  createdAt: Date;
+  createdAt: Timestamp;
 }
 
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<CategoryColumn[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
 
@@ -37,11 +39,18 @@ export default function CategoriesPage() {
     const unsubscribe = onSnapshot(
       categoriesQuery,
       (snapshot) => {
-        const categories = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate(),
-        })) as Category[];
+        const categories = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name,
+            description: data.description || "",
+            type: data.type,
+            slug: data.slug,
+            count: data.itemCount || 0,
+            createdAt: data.createdAt,
+          }
+        }) as CategoryColumn[];
         setCategories(categories);
         setIsLoading(false);
       },
@@ -90,7 +99,15 @@ export default function CategoriesPage() {
             Add New
           </Button>
         </div>
-        <DataTable columns={columns} data={categories} searchKey="name" />
+        <DataTable columns={columns} data={categories.map(category => ({
+          id: category.id,
+          name: category.name,
+          description: category.description,
+          type: category.type,
+          slug: category.slug,
+          count: category.count || 0,
+          createdAt: category.createdAt,
+        }))} searchKey="name" />
       </div>
     </>
   );

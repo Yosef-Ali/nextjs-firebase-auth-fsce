@@ -1,14 +1,16 @@
 import { Timestamp } from 'firebase/firestore';
 
-export type FirebaseTimestamp = Timestamp | Date | number;
 export type ClientTimestamp = Date;
 
 // Convert Firebase Timestamp to JS Date
-export function toClientDate(timestamp: FirebaseTimestamp): ClientTimestamp {
+export function toClientDate(timestamp: Timestamp | Date | number): ClientTimestamp {
+    if (timestamp instanceof Timestamp) {
+        return timestamp.toDate();
+    }
     if (typeof timestamp === 'number') {
         return new Date(timestamp);
     }
-    return timestamp instanceof Timestamp ? timestamp.toDate() : timestamp;
+    return timestamp;
 }
 
 // Convert JS Date to Firebase Timestamp

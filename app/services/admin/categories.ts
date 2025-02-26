@@ -12,12 +12,11 @@ export const adminCategoriesService = {
     },
 
     async createCategory(data: CreateCategoryInput): Promise<Category> {
-        const docRef = adminDb.collection(COLLECTION_NAME).doc();
         const now = Timestamp.now();
 
         const category: Category = {
             ...data,
-            id: docRef.id,
+            id: adminDb.collection(COLLECTION_NAME).doc().id,
             description: data.description ?? '',
             createdAt: now,
             updatedAt: now,
@@ -25,7 +24,7 @@ export const adminCategoriesService = {
             featured: data.featured ?? false
         };
 
-        await docRef.set(category);
+        await adminDb.collection(COLLECTION_NAME).doc(category.id).set(category);
         return category;
     },
 
@@ -33,7 +32,7 @@ export const adminCategoriesService = {
         const docRef = adminDb.collection(COLLECTION_NAME).doc(id);
         const updateData = {
             ...data,
-            updatedAt: Timestamp.now().toDate()
+            updatedAt: Timestamp.now()
         };
         await docRef.update(updateData);
     },

@@ -63,8 +63,8 @@ export function createCategory(data: Partial<Category> & { name: string }): Cate
     featured: data.featured || false,
     description: data.description,
     icon: data.icon,
-    createdAt: toDate(data.createdAt || now),
-    updatedAt: toDate(data.updatedAt || now)
+    createdAt: data.createdAt || now,
+    updatedAt: data.updatedAt || now
   };
 }
 
@@ -85,8 +85,8 @@ export function normalizeCategory(category: string | Partial<Category> | undefin
     slug: category.slug || category.id?.toLowerCase() || '',
     type: category.type || 'post',
     featured: Boolean(category.featured),
-    createdAt: toDate(category.createdAt || now),
-    updatedAt: toDate(category.updatedAt || now)
+    createdAt: category.createdAt || now,
+    updatedAt: category.updatedAt || now
   };
 }
 
@@ -134,7 +134,7 @@ export function normalizeCategoryInput(
     ...base,
     id: base.id || defaultId,
     name: base.name || defaultId,
-    createdAt: toDate(base.createdAt || now),
-    updatedAt: toDate(base.updatedAt || now)
+    createdAt: base.createdAt || now,
+    updatedAt: base.updatedAt || now
   };
 }
