@@ -41,27 +41,20 @@ const toastVariants = cva(
   }
 )
 
-interface ToastProps extends React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> {
-  id?: string;
-  className?: string;
-  variant?: "default" | "destructive";
-  // other existing properties...
-}
-
 const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
-  ToastProps
->(({ className, variant, id, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
+  VariantProps<typeof toastVariants>
+>(({ className, variant, ...props }, ref) => {
   return (
     <ToastPrimitives.Root
       ref={ref}
-      id={id}
       className={cn(toastVariants({ variant }), className)}
       {...props}
     />
-  );
-});
-Toast.displayName = "Toast";
+  )
+})
+Toast.displayName = ToastPrimitives.Root.displayName
 
 const ToastAction = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Action>,
@@ -120,11 +113,16 @@ const ToastDescription = React.forwardRef<
 ))
 ToastDescription.displayName = ToastPrimitives.Description.displayName
 
-type ToastActionElement = React.ReactElement<typeof ToastAction>
+type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>
+
+export type ToastActionElement = {
+  onClick?: () => void;
+  label?: string;
+  altText?: string;
+}
 
 export {
   type ToastProps,
-  type ToastActionElement,
   ToastProvider,
   ToastViewport,
   Toast,
