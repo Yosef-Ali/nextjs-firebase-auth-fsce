@@ -15,7 +15,7 @@ import { normalizePost } from '@/app/utils/post';
 import { Category } from '@/app/types/category';
 
 export default function EditPostPage() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
@@ -29,8 +29,14 @@ export default function EditPostPage() {
         const categoriesSnapshot = await getDocs(collection(db, "categories"));
         const categoriesData = categoriesSnapshot.docs.map(doc => ({
           id: doc.id,
-          ...doc.data()
-        }));
+          name: doc.data().name,
+          slug: doc.data().slug,
+          type: doc.data().type,
+          featured: doc.data().featured || false,
+          description: doc.data().description || '',
+          createdAt: doc.data().createdAt,
+          updatedAt: doc.data().updatedAt || doc.data().createdAt
+        } as Category));
         setCategories(categoriesData);
       } catch (error) {
         console.error("Error fetching categories:", error);
@@ -48,11 +54,11 @@ export default function EditPostPage() {
   useEffect(() => {
     const fetchPost = async () => {
       if (!id) return;
-      
+
       try {
         const docRef = doc(db, "posts", id);
         const docSnap = await getDoc(docRef);
-        
+
         if (docSnap.exists()) {
           setPost(normalizePost({ id: docSnap.id, ...docSnap.data() }));
         } else {
@@ -96,7 +102,7 @@ export default function EditPostPage() {
         </Button>
       </div>
       {post && (
-        <PostForm 
+        <PostForm
           post={post}
           categories={categories}
           onSuccess={() => router.push('/dashboard/posts')}

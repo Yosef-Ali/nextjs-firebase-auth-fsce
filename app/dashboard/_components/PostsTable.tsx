@@ -276,7 +276,7 @@ function PostsTable({ initialPosts }: PostsTableProps) {
                   </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {formatDate(post.updatedAt)}
+                  {formatDate(post.updatedAt.toDate())}
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -313,4 +313,3 @@ function PostsTable({ initialPosts }: PostsTableProps) {
 }
 
 export default PostsTable;
-

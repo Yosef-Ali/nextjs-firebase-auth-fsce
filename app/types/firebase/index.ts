@@ -10,7 +10,7 @@ import '@firebase/analytics-types';
 export * from '@firebase/app-types';
 export * from '@firebase/auth-types';
 export * from '@firebase/firestore-types';
-export * from '@firebase/storage-types';
+export type { TaskState } from '@firebase/storage-types';
 export * from '@firebase/functions-types';
 export * from '@firebase/analytics-types';
 
@@ -85,4 +85,13 @@ export interface Post extends BaseDocument {
   published?: boolean;
   sticky?: boolean;
   featured?: boolean;
+}
+
+export interface FoundingGroup extends BaseDocument {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }

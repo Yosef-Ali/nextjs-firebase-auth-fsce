@@ -5,7 +5,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/lib/hooks/useAuth';
-import PostForm from './PostForm';
+import { PostForm } from './PostForm';
 import { Post } from '@/app/types/post';
 
 interface PostEditorProps {

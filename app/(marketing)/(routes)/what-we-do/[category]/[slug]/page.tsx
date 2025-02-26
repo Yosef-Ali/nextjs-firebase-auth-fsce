@@ -104,7 +104,7 @@ export default function DetailPage() {
             <h1 className="text-4xl md:text-5xl font-bold mb-6">{post.title}</h1>
             {post.createdAt && (
               <p className="text-muted-foreground">
-                Published on {formatDate(post.createdAt)}
+                Published on {formatDate(post.createdAt.toDate())}
               </p>
             )}
           </div>

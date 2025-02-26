@@ -6,7 +6,10 @@ import { adminCategoriesService } from '@/app/services/admin/categories';
 
 export async function createCategory(data: Omit<Category, 'id'>) {
     try {
-        const category = await adminCategoriesService.createCategory(data);
+        const category = await adminCategoriesService.createCategory({
+            ...data,
+            description: data.description || '' // Ensure string fallback
+        });
         revalidatePath('/dashboard/categories');
         return { success: true, data: category };
     } catch (error) {

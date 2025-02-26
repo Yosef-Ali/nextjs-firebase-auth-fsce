@@ -62,7 +62,7 @@ export default function PostTable({ posts, isLoading, onEdit, onDelete }: PostTa
   const totalPosts = posts.length;
   const publishedPosts = posts.filter(post => post.status === 'published').length;
   const draftPosts = totalPosts - publishedPosts;
-  const categories = [...new Set(posts.map(post => getCategoryName(post.category)))];
+  const categories = Array.from(new Set(posts.map(post => getCategoryName(post.category))));
 
   // Sort posts by updatedAt in descending order (newest first)
   const sortedPosts = [...posts].sort(sortByDate);

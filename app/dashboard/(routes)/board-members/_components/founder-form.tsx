@@ -24,17 +24,18 @@ import { Separator } from "@/components/ui/separator";
 
 const formSchema = z.object({
   image: z.string().min(1, "Image is required"),
-  description: z.string().min(1, "Description is required").max(1000, "Description should be less than 1000 characters"),
+  bio: z.string().min(1, "Bio is required").max(1000, "Bio should be less than 1000 characters"),
 });
 
 type FounderFormValues = z.infer<typeof formSchema>;
+
 
 interface FounderFormProps {
   initialData?: FounderFormValues;
   onSuccess?: () => void;
 }
 
-export const FounderForm: React.FC<FounderFormProps> = ({ 
+export const FounderForm: React.FC<FounderFormProps> = ({
   initialData,
   onSuccess
 }) => {
@@ -44,7 +45,7 @@ export const FounderForm: React.FC<FounderFormProps> = ({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
       image: "",
-      description: "",
+      bio: "",
     },
   });
 
@@ -52,23 +53,23 @@ export const FounderForm: React.FC<FounderFormProps> = ({
     try {
       setLoading(true);
       const docRef = doc(db, "founding-group", "main");
-      
+
       // First get existing data
       const docSnap = await getDoc(docRef);
       const existingData = docSnap.exists() ? docSnap.data() : {};
-      
+
       // Merge with new data
       await setDoc(
         docRef,
         {
           ...existingData,
           image: data.image,
-          description: data.description,
+          bio: data.bio,
           updatedAt: serverTimestamp(),
         },
         { merge: true }
       );
-      
+
       toast({
         title: "Success",
         description: "Founding group information updated successfully.",
@@ -122,19 +123,19 @@ export const FounderForm: React.FC<FounderFormProps> = ({
           {/* Description */}
           <FormField
             control={form.control}
-            name="description"
+            name="bio"
             render={({ field }) => (
               <FormItem>
                 <div>
-                  <FormLabel className="text-lg font-semibold">About the Founding Group</FormLabel>
+                  <FormLabel className="text-lg font-semibold">Founding Group Bio</FormLabel>
                   <FormDescription>
-                    Describe the founding group's vision, mission, and key achievements in establishing FSCE.
+                    Highlight the group's vision, mission, and key achievements in establishing FSCE.
                   </FormDescription>
                 </div>
                 <FormControl>
                   <Textarea
                     disabled={loading}
-                    placeholder="Enter a description of the founding group and their mission..."
+                    placeholder="Write a detailed bio for the founding group..."
                     className="resize-none min-h-[250px]"
                     {...field}
                   />

@@ -11,9 +11,9 @@ export async function POST(request: Request) {
       status: 'active'
     });
 
-    return NextResponse.json({ 
-      success: true, 
-      user: userRecord 
+    return NextResponse.json({
+      success: true,
+      user: userRecord
     });
   } catch (error: any) {
     return NextResponse.json(

@@ -7,10 +7,13 @@ let adminApp: admin.app.App;
 try {
     adminApp = admin.app();
 } catch {
-    const serviceAccount = require('../../../fsce-2024-firebase-adminsdk-hvhpp-4f942b32f6.json');
-
+    // Use environment variables instead of a JSON file
     adminApp = admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
+        credential: admin.credential.cert({
+            projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+            privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        }),
     });
 }
 
@@ -20,12 +23,20 @@ export const adminDb = admin.firestore(adminApp);
 export const adminStorage = admin.storage(adminApp);
 
 // Admin user creation service
-export const createAdminUser = async (email: string, password: string, displayName: string) => {
+export const createAdminUser = async (
+    email: string,
+    password: string,
+    additionalData: {
+        role: string;
+        status: string;
+        displayName?: string
+    }
+) => {
     try {
         const userRecord = await adminAuth.createUser({
             email,
             password,
-            displayName,
+            displayName: additionalData.displayName || 'Admin User',
             emailVerified: true,
         });
 
@@ -39,7 +50,7 @@ export const createAdminUser = async (email: string, password: string, displayNa
         await adminDb.collection('users').doc(userRecord.uid).set({
             uid: userRecord.uid,
             email,
-            displayName,
+            displayName: additionalData.displayName || 'Admin User',
             role: 'admin',
             status: 'active',
             emailVerified: true,

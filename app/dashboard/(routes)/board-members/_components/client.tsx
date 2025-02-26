@@ -30,6 +30,7 @@ interface BoardMemberClientProps {
 interface Founder {
   description: string;
   image: string;
+  bio: string;
 }
 
 export const BoardMemberClient: React.FC<BoardMemberClientProps> = ({ data }) => {
@@ -104,7 +105,7 @@ export const BoardMemberClient: React.FC<BoardMemberClientProps> = ({ data }) =>
               </DialogHeader>
               <div className="py-6">
                 <FounderForm
-                  initialData={founder || undefined}
+                  initialData={founder ? { image: founder.image, bio: founder.bio } : undefined}
                   onSuccess={handleSuccess}
                 />
               </div>

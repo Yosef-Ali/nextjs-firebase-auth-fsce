@@ -36,7 +36,7 @@ import { ensureCategory, getCategoryId } from '@/app/utils/category';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Post } from '@/app/types/post';
 import { postsService } from '@/app/services/posts';
-import { categoryService } from '@/app/services/categories';
+import { adminCategoriesService } from '@/app/services/admin/categories';
 import { Category } from '@/app/types/category';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Editor } from '@/components/editor';
@@ -107,7 +107,7 @@ export default function PostEditor({ post, initialData, onSuccess }: PostEditorP
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const fetchedCategories = await categoryService.getCategories();
+        const fetchedCategories = await adminCategoriesService.listCategories();
         setCategories(fetchedCategories);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
@@ -308,7 +308,7 @@ export default function PostEditor({ post, initialData, onSuccess }: PostEditorP
       } satisfies Omit<Post, 'id' | 'createdAt' | 'updatedAt'>;
 
       if (post?.id) {
-        const success = await postsService.updatePost(post.id, postData, currentUser.uid);
+        const success = await postsService.updatePost(post.id, postData);
         if (success) {
           toast({
             title: "Success",

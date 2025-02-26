@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { formatDate } from '@/app/utils/formatDate';
 import {
   Table,
   TableBody,
@@ -90,9 +90,7 @@ function CategoriesTable({ categories, onEdit, onDelete, isLoading = false }: Ca
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {category.createdAt
-                    ? category.createdAt.toDate().toLocaleDateString()
-                    : 'N/A'}
+                  {formatDate(category.createdAt)}
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>

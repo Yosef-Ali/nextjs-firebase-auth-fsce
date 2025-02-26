@@ -102,8 +102,9 @@ export function PostForm({ post, initialData, categories, onSuccess }: PostFormP
     const onSubmit = async (data: PostFormData) => {
         if (!user) {
             toast({
-                title: "Error",
-                description: "You must be logged in to create a post",
+                id: 'validation-error',
+                title: "Validation Error",
+                description: "Please fill in all required fields",
                 variant: "destructive",
             });
             return;
@@ -115,6 +116,7 @@ export function PostForm({ post, initialData, categories, onSuccess }: PostFormP
 
             if (!selectedCategory) {
                 toast({
+                    id: 'invalid-category',
                     title: "Error",
                     description: "Please select a valid category",
                     variant: "destructive",
@@ -141,14 +143,16 @@ export function PostForm({ post, initialData, categories, onSuccess }: PostFormP
             };
 
             if (post?.id) {
-                await postsService.updatePost(post.id, postData, user.uid);
+                await postsService.updatePost(post.id, postData);
                 toast({
+                    id: 'post-update-success',
                     title: "Success",
                     description: "Post updated successfully",
                 });
             } else {
                 await postsService.createPost(postData);
                 toast({
+                    id: 'post-create-success',
                     title: "Success",
                     description: "Post created successfully",
                 });
@@ -159,6 +163,7 @@ export function PostForm({ post, initialData, categories, onSuccess }: PostFormP
         } catch (error) {
             console.error('Error saving post:', error);
             toast({
+                id: 'save-post-error',
                 title: "Error",
                 description: error instanceof Error ? error.message : "An error occurred while saving the post",
                 variant: "destructive",

@@ -106,7 +106,7 @@ export function ContentCard({
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
                                     <CalendarDays className="h-4 w-4" />
                                     <time dateTime={toDate(createdAt).toISOString()} className="text-sm text-muted-foreground">
-                                        {formatDate(createdAt)}
+                                        {formatDate(createdAt.toDate())}
                                     </time>
                                 </div>
                             )}

@@ -82,8 +82,8 @@ export default function PostsTable() {
                 <TableRow key={post.id}>
                   <TableCell>{post.title}</TableCell>
                   <TableCell>{post.published ? 'Published' : 'Draft'}</TableCell>
-                  <TableCell>{formatDate(post.createdAt)}</TableCell>
-                  <TableCell>{formatDate(post.updatedAt)}</TableCell>
+                  <TableCell>{formatDate(post.createdAt.toDate())}</TableCell>
+                  <TableCell>{formatDate(post.updatedAt.toDate())}</TableCell>
                   <TableCell>
                     <Link href={`/dashboard/posts/${post.id}/edit`}>
                       <Button variant="outline" size="sm">
@@ -104,4 +104,3 @@ export default function PostsTable() {
 function compareTimestamps(a: Timestamp, b: Timestamp): number {
   return b.seconds - a.seconds;
 }
-

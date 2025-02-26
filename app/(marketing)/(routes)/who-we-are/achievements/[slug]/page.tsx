@@ -100,14 +100,14 @@ export default function AchievementDetailPage() {
                             <Badge variant="secondary">Achievement</Badge>
                             {post.category && (
                                 <Badge variant="outline" className="text-primary">
-                                    {typeof post.category === 'string' ? post.category : post.category.title}
+                                    {typeof post.category === 'string' ? post.category : post.category.name}
                                 </Badge>
                             )}
                         </div>
                         <h1 className="text-4xl md:text-5xl font-bold mb-6">{post.title}</h1>
                         {post.createdAt && (
                             <p className="text-muted-foreground">
-                                Published on {formatDate(post.createdAt)}
+                                Published on {formatDate(post.createdAt.toDate())}
                             </p>
                         )}
                     </div>

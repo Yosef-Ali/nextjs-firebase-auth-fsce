@@ -23,7 +23,7 @@ import { Timestamp } from 'firebase/firestore';
 const formSchema = z.object({
   name: z.string().min(2),
   description: z.string().optional(),
-  type: z.enum(['post', 'resource', 'award', 'recognition'] as const satisfies readonly CategoryType[]),
+  type: z.enum(['post', 'resource', 'award', 'recognition', 'event'] as const satisfies readonly CategoryType[]),
   icon: z.string().optional(),
   featured: z.boolean().optional()
 });

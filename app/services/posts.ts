@@ -1,5 +1,7 @@
 import { db } from '@/lib/firebase';
+import { adminDb } from '@/lib/firebase-admin';
 import { Post } from '@/app/types/post';
+import type { Category } from '@/app/types/category';
 import {
   collection,
   query,
@@ -23,6 +25,18 @@ import { normalizePost } from '@/app/utils/post';
 const COLLECTION_NAME = 'posts';
 
 class PostsService {
+  async getCategories(): Promise<Category[]> {
+    const snapshot = await adminDb.collection('categories').get();
+    return snapshot.docs.map(doc => doc.data() as Category);
+  }
+
+  createSlug(title: string): string {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '');
+  }
+
   async getUserPosts(userId: string): Promise<Post[]> {
     try {
       const postsRef = collection(db, COLLECTION_NAME);
@@ -206,9 +220,16 @@ class PostsService {
     }
   }
 
-  async deletePost(id: string): Promise<boolean> {
+  async deletePost(userId: string, id: string): Promise<boolean> {
     try {
-      await deleteDoc(doc(db, COLLECTION_NAME, id));
+      const postRef = doc(db, COLLECTION_NAME, id);
+      const postDoc = await getDoc(postRef);
+
+      if (postDoc.data()?.authorId !== userId) {
+        throw new Error('Unauthorized deletion attempt');
+      }
+
+      await deleteDoc(postRef);
       return true;
     } catch (error) {
       console.error('Error deleting post:', error);

@@ -24,7 +24,14 @@ export function Toaster() {
                 <ToastDescription>{description}</ToastDescription>
               )}
             </div>
-            {action}
+            {action && (
+              <button
+                onClick={action.onClick}
+                className="toaster-action-button"
+              >
+                {action.label}
+              </button>
+            )}
             <ToastClose />
           </Toast>
         )

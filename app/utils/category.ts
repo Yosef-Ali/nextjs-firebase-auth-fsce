@@ -1,6 +1,6 @@
 import { Category, CategoryType } from '@/app/types/category';
 import { Timestamp } from 'firebase/firestore';
-import { toTimestamp } from '@/app/utils/date';
+import { toDate } from '../lib/timestamp';
 
 export function getCategoryName(category: Category | string): string {
   return typeof category === 'string' ? category : category.name;
@@ -63,8 +63,8 @@ export function createCategory(data: Partial<Category> & { name: string }): Cate
     featured: data.featured || false,
     description: data.description,
     icon: data.icon,
-    createdAt: toTimestamp(data.createdAt || now),
-    updatedAt: toTimestamp(data.updatedAt || now)
+    createdAt: toDate(data.createdAt || now),
+    updatedAt: toDate(data.updatedAt || now)
   };
 }
 
@@ -85,8 +85,8 @@ export function normalizeCategory(category: string | Partial<Category> | undefin
     slug: category.slug || category.id?.toLowerCase() || '',
     type: category.type || 'post',
     featured: Boolean(category.featured),
-    createdAt: toTimestamp(category.createdAt || now),
-    updatedAt: toTimestamp(category.updatedAt || now)
+    createdAt: toDate(category.createdAt || now),
+    updatedAt: toDate(category.updatedAt || now)
   };
 }
 
@@ -134,7 +134,7 @@ export function normalizeCategoryInput(
     ...base,
     id: base.id || defaultId,
     name: base.name || defaultId,
-    createdAt: toTimestamp(base.createdAt || now),
-    updatedAt: toTimestamp(base.updatedAt || now)
+    createdAt: toDate(base.createdAt || now),
+    updatedAt: toDate(base.updatedAt || now)
   };
 }

@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 interface FoundingGroup {
   id: string;
   name: string;
-  bio: string;
+  description: string;
   image: string;
 }
 
@@ -62,7 +62,13 @@ const BoardMembersPage = () => {
         if (mounted) {
           const foundingGroupDoc = await getDoc(doc(db, "founding-group", "main"));
           if (foundingGroupDoc.exists() && mounted) {
-            setFoundingGroup(foundingGroupDoc.data() as FoundingGroup);
+            const data = foundingGroupDoc.data();
+            setFoundingGroup({
+              id: foundingGroupDoc.id,
+              name: data.name,
+              description: data.bio,  // Map Firestore 'bio' field to 'description'
+              image: data.image
+            });
           }
         }
       } catch (error) {
@@ -118,7 +124,10 @@ const BoardMembersPage = () => {
                 </p>
               </div>
               <FounderForm
-                initialData={foundingGroup || undefined}
+                initialData={{
+                  image: foundingGroup?.image || '',
+                  bio: foundingGroup?.description || ''
+                }}
                 onSuccess={() => {
                   // Optionally refresh the data
                 }}

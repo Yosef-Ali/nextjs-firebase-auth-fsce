@@ -167,7 +167,7 @@ export default function MeritsGrid({ posts }: { posts: Post[] }) {
                   <p className="text-gray-600 text-sm mb-4">{post.excerpt}</p>
                   {post.date && (
                     <p className="text-sm text-gray-500">
-                      {formatDate(post.date)}
+                      {formatDate(post.date.toDate())}
                     </p>
                   )}
                 </div>
