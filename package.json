@@ -106,6 +106,7 @@
     "@firebase/storage-types": "^0.8.3",
     "@portabletext/types": "^2.0.13",
     "@radix-ui/react-accordion": "^1.2.3",
+    "@sentry/nextjs": "^9.2.0",
     "@svgr/webpack": "^8.1.0",
     "@types/lru-cache": "^7.10.10",
     "@types/node": "^20.0.0",
