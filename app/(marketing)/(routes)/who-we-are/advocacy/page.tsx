@@ -1,12 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Post } from '@/types';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { ContentCard } from '@/components/content-display/ContentCard';
-import FSCESkeleton from '@/components/FSCESkeleton';
-import { motion } from 'framer-motion';
+import { useEffect, useState } from "react";
+import { Post } from "@/types";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { optimizedQuery } from "@/app/utils/query-helpers";
+import { ContentCard } from "@/components/content-display/ContentCard";
+import FSCESkeleton from "@/components/FSCESkeleton";
+import { motion } from "framer-motion";
 
 export default function AdvocacyPage() {
   const [advocacyPosts, setAdvocacyPosts] = useState<Post[]>([]);
@@ -16,22 +17,18 @@ export default function AdvocacyPage() {
     const fetchAdvocacy = async () => {
       try {
         setLoading(true);
-        const advocacyQuery = query(
-          collection(db, 'posts'),
-          where('category', '==', 'advocacy'),
-          where('published', '==', true),
-          orderBy('createdAt', 'desc')
-        );
 
-        const snapshot = await getDocs(advocacyQuery);
-        const posts = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Post[];
+        // Use optimized query to avoid complex indexes
+        const results = await optimizedQuery("posts", {
+          published: true,
+          category: "advocacy",
+          sortBy: "createdAt",
+          sortDirection: "desc",
+        });
 
-        setAdvocacyPosts(posts);
+        setAdvocacyPosts(results as Post[]);
       } catch (error) {
-        console.error('Error fetching advocacy posts:', error);
+        console.error("Error fetching advocacy posts:", error);
       } finally {
         setLoading(false);
       }
@@ -47,7 +44,7 @@ export default function AdvocacyPage() {
   return (
     <div className="container px-4 py-8 mx-auto">
       <h1 className="mb-8 text-3xl font-bold">Our Advocacy</h1>
-      
+
       {advocacyPosts.length === 0 ? (
         <p className="text-center text-gray-500">No advocacy posts found</p>
       ) : (
@@ -64,7 +61,11 @@ export default function AdvocacyPage() {
                 excerpt={post.excerpt}
                 image={post.coverImage}
                 slug={post.slug}
-                category={typeof post.category === 'string' ? post.category : post.category.name}
+                category={
+                  typeof post.category === "string"
+                    ? post.category
+                    : post.category.name
+                }
                 createdAt={post.createdAt}
                 index={index}
                 href={`/posts/${post.slug}`}

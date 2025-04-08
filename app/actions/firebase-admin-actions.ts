@@ -19,20 +19,30 @@ export async function getCategories(): Promise<Category[]> {
 
 export async function getPublishedPosts(): Promise<Post[]> {
   try {
+    // Use a simpler query to avoid complex indexes
     const snapshot = await adminDb
       .collection('posts')
-      .where('status', 'in', ['published', true]) // Check for both status and published field
-      .orderBy('createdAt', 'desc')
+      .where('published', '==', true) // Use only one condition
       .get();
-    
+
+    // Process and sort in memory
     const posts = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
       // Ensure category is properly structured
-      category: typeof doc.data().category === 'string' 
+      category: typeof doc.data().category === 'string'
         ? { id: doc.data().category, name: doc.data().category }
         : doc.data().category
     } as Post));
+
+    // Sort in memory instead of using orderBy in the query
+    posts.sort((a, b) => {
+      const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() :
+                  a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() :
+                  b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return dateB - dateA; // Sort by descending order
+    });
 
     console.log('Fetched posts:', posts.length); // Debug log
     return posts;

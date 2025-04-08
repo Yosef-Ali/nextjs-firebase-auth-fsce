@@ -1,27 +1,29 @@
 import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, getDocs, query, where, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { Location, LocationType } from '@/app/types/location';
+import { optimizedQuery } from '@/app/utils/query-helpers';
 
 class LocationsService {
   private collectionName = 'locations';
 
   async getAllLocations(): Promise<Location[]> {
     try {
-      const q = query(
-        collection(db, this.collectionName),
-        where('published', '==', true),
-        orderBy('createdAt', 'desc')
-      );
+      // Use optimized query to avoid complex indexes
+      const results = await optimizedQuery(this.collectionName, {
+        published: true,
+        sortBy: 'createdAt',
+        sortDirection: 'desc'
+      });
 
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
+      // Process timestamps
+      return results.map(doc => ({
         id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt instanceof Timestamp 
-          ? doc.data().createdAt.toMillis() 
+        ...doc,
+        createdAt: doc.createdAt instanceof Timestamp
+          ? doc.createdAt.toMillis()
           : Date.now(),
-        updatedAt: doc.data().updatedAt instanceof Timestamp 
-          ? doc.data().updatedAt.toMillis() 
+        updatedAt: doc.updatedAt instanceof Timestamp
+          ? doc.updatedAt.toMillis()
           : Date.now(),
       })) as Location[];
     } catch (error) {
@@ -32,22 +34,36 @@ class LocationsService {
 
   async getLocationsByType(type: LocationType): Promise<Location[]> {
     try {
+      // First get locations by type (single where clause)
       const q = query(
         collection(db, this.collectionName),
-        where('type', '==', type),
-        where('published', '==', true),
-        orderBy('createdAt', 'desc')
+        where('type', '==', type)
       );
 
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
+      const allResults = querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt instanceof Timestamp 
-          ? doc.data().createdAt.toMillis() 
+        ...doc.data()
+      }));
+
+      // Then filter and sort in memory
+      const filteredResults = allResults
+        .filter(doc => doc.published === true)
+        .sort((a, b) => {
+          const timeA = a.createdAt instanceof Timestamp ? a.createdAt.toMillis() : 0;
+          const timeB = b.createdAt instanceof Timestamp ? b.createdAt.toMillis() : 0;
+          return timeB - timeA; // Descending order
+        });
+
+      // Process timestamps
+      return filteredResults.map(doc => ({
+        id: doc.id,
+        ...doc,
+        createdAt: doc.createdAt instanceof Timestamp
+          ? doc.createdAt.toMillis()
           : Date.now(),
-        updatedAt: doc.data().updatedAt instanceof Timestamp 
-          ? doc.data().updatedAt.toMillis() 
+        updatedAt: doc.updatedAt instanceof Timestamp
+          ? doc.updatedAt.toMillis()
           : Date.now(),
       })) as Location[];
     } catch (error) {
@@ -69,11 +85,11 @@ class LocationsService {
       return {
         id: docSnap.id,
         ...data,
-        createdAt: data.createdAt instanceof Timestamp 
-          ? data.createdAt.toMillis() 
+        createdAt: data.createdAt instanceof Timestamp
+          ? data.createdAt.toMillis()
           : Date.now(),
-        updatedAt: data.updatedAt instanceof Timestamp 
-          ? data.updatedAt.toMillis() 
+        updatedAt: data.updatedAt instanceof Timestamp
+          ? data.updatedAt.toMillis()
           : Date.now(),
       } as Location;
     } catch (error) {

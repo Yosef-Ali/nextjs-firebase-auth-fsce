@@ -230,8 +230,21 @@ class PostsService {
     try {
       const postRef = doc(db, COLLECTION_NAME, id);
       const postDoc = await getDoc(postRef);
+      const postData = postDoc.data();
 
-      if (postDoc.data()?.authorId !== userId) {
+      // Check if post exists
+      if (!postDoc.exists() || !postData) {
+        throw new Error('Post not found');
+      }
+
+      // Allow deletion if:
+      // 1. User is the author of the post
+      // 2. Post has no authorId (system-created)
+      // 3. Post's authorId is 'system'
+      const postAuthorId = postData.authorId;
+      const isSystemPost = !postAuthorId || postAuthorId === 'system';
+
+      if (!isSystemPost && postAuthorId !== userId) {
         throw new Error('Unauthorized deletion attempt');
       }
 

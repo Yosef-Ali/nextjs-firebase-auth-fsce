@@ -1,8 +1,9 @@
-import { doc, collection, getDocs, query, where, orderBy, updateDoc, Timestamp } from 'firebase/firestore';
+import { doc, collection, getDocs, query, where, updateDoc, Timestamp } from 'firebase/firestore';
 import { Category } from '@/app/types/category';
 import { Event, Post } from '@/app/types/post';
 import { db } from '@/lib/firebase';
 import { toTimestamp, compareTimestamps, toDate } from '@/app/utils/date';
+import { optimizedQuery } from '@/app/utils/query-helpers';
 
 const COLLECTION_NAME = 'posts';
 
@@ -177,15 +178,20 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
 
 // Get published posts
 export async function getPublishedPosts(): Promise<Post[]> {
-  const postsRef = collection(db, 'posts');
-  const q = query(
-    postsRef,
-    where('published', '==', true),
-    orderBy('createdAt', 'desc')
-  );
+  try {
+    // Use the optimized query helper to avoid complex indexes
+    const results = await optimizedQuery('posts', {
+      published: true,
+      sortBy: 'createdAt',
+      sortDirection: 'desc'
+    });
 
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => normalizePost(doc.data(), doc.id));
+    // Normalize the results
+    return results.map(doc => normalizePost(doc));
+  } catch (error) {
+    console.error('Error getting published posts:', error);
+    return [];
+  }
 }
 
 export async function getRecentPosts(count: number = 3): Promise<Post[]> {
@@ -231,13 +237,14 @@ export const postsService = {
 
       // Special cases for specific categories
       if (category.toLowerCase() === 'child-protection') {
-        const specialQuery = query(
-          postsRef,
-          where('published', '==', true),
-          where('category.id', '==', 'RMglo9PIj6wNdQNSFcuA')
-        );
-        const specialSnapshot = await getDocs(specialQuery);
-        posts = posts.concat(specialSnapshot.docs.map(doc => normalizePost(doc.data(), doc.id)));
+        // Use optimized query to avoid complex indexes
+        const results = await optimizedQuery(COLLECTION_NAME, {
+          published: true,
+          categoryId: 'RMglo9PIj6wNdQNSFcuA',
+          sortBy: 'createdAt',
+          sortDirection: 'desc'
+        });
+        posts = posts.concat(results.map(doc => normalizePost(doc)));
       }
 
       // Remove duplicates by ID

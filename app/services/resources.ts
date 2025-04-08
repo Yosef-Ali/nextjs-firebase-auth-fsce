@@ -11,7 +11,10 @@ import {
   deleteDoc,
   addDoc,
   setDoc,
+  query,
+  where,
 } from 'firebase/firestore';
+import { optimizedQuery, getPublishedResources } from '@/app/utils/query-helpers';
 
 class ResourcesService {
   private collectionName = 'resources';
@@ -35,7 +38,7 @@ class ResourcesService {
     try {
       // Create a new document reference with auto-generated ID
       const docRef = doc(collection(db, this.collectionName));
-      
+
       // Use the document ID as the slug if not provided
       const resourceData = {
         ...data,
@@ -59,27 +62,25 @@ class ResourcesService {
 
   async getAllResources(category?: string): Promise<Resource[]> {
     try {
-      const querySnapshot = await getDocs(collection(db, this.collectionName));
-      
-      return querySnapshot.docs
-        .map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            ...data,
-            createdAt: this.convertTimestampToMillis(data.createdAt),
-            updatedAt: this.convertTimestampToMillis(data.updatedAt),
-            publishedDate: this.convertTimestampToMillis(data.publishedDate),
-            slug: data.slug || doc.id,
-          } as Resource;
-        })
-        .filter(resource => {
-          if (category && category !== 'all') {
-            return resource.type === category;
-          }
-          return true;
-        })
-        .sort((a, b) => b.createdAt - a.createdAt); // Sort by createdAt in descending order (newest first)
+      // Use the specialized helper function for resources
+      const results = await getPublishedResources(this.collectionName);
+
+      // Process the results
+      let resources = results.map(doc => ({
+        id: doc.id,
+        ...doc,
+        createdAt: this.convertTimestampToMillis(doc.createdAt),
+        updatedAt: this.convertTimestampToMillis(doc.updatedAt),
+        publishedDate: this.convertTimestampToMillis(doc.publishedDate),
+        slug: doc.slug || doc.id,
+      } as Resource));
+
+      // Filter by category in memory if needed
+      if (category && category !== 'all') {
+        resources = resources.filter(resource => resource.type === category);
+      }
+
+      return resources;
     } catch (error) {
       console.error('Error getting resources:', error);
       return [];
@@ -101,9 +102,9 @@ class ResourcesService {
     try {
       const resourceRef = doc(db, this.collectionName, id);
       const docSnap = await getDoc(resourceRef);
-      
+
       if (!docSnap.exists()) return null;
-      
+
       const data = docSnap.data();
       return {
         id: docSnap.id,
