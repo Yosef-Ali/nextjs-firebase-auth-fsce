@@ -183,7 +183,24 @@ export default function WhatWeDoPage() {
       {/* Featured/Sticky Posts Section */}
       {posts.some((post) => post.sticky) && (
         <StickyPostsSection
-          posts={posts.filter((post) => post.sticky)}
+          posts={posts
+            .filter((post) => post.sticky)
+            .sort((a, b) => {
+              // Sort by createdAt timestamp (newest first)
+              const aTime =
+                typeof a.createdAt === "number"
+                  ? a.createdAt
+                  : a.createdAt?.toMillis
+                  ? a.createdAt.toMillis()
+                  : new Date(a.createdAt as any).getTime();
+              const bTime =
+                typeof b.createdAt === "number"
+                  ? b.createdAt
+                  : b.createdAt?.toMillis
+                  ? b.createdAt.toMillis()
+                  : new Date(b.createdAt as any).getTime();
+              return bTime - aTime; // Newest first
+            })}
           title="Featured Programs"
           basePath="/what-we-do"
           useCategory={true}

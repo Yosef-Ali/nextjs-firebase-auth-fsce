@@ -1,22 +1,27 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { ProgramSearch } from '@/components/program-search';
-import { Post } from '@/app/types/post';
-import { postsService } from '@/app/services/posts';
-import { formatDate } from '@/app/utils/date';
-import Image from 'next/image';
-import { PinIcon } from 'lucide-react';
-import { ContentCard } from '@/components/content-display/ContentCard';
-import { HorizontalPostCard } from '@/components/content-display/HorizontalPostCard';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink } from '@/components/ui/pagination';
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { ProgramSearch } from "@/components/program-search";
+import { Post } from "@/app/types/post";
+import { postsService } from "@/app/services/posts";
+import { formatDate } from "@/app/utils/date";
+import Image from "next/image";
+import { PinIcon } from "lucide-react";
+import { ContentCard } from "@/components/content-display/ContentCard";
+import { HorizontalPostCard } from "@/components/content-display/HorizontalPostCard";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+} from "@/components/ui/pagination";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function AchievementsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Post[]>([]);
   const [page, setPage] = useState(1);
   const postsPerPage = 12;
@@ -26,14 +31,17 @@ export default function AchievementsPage() {
     const fetchPosts = async () => {
       try {
         setLoading(true);
-        const fetchedPosts = await postsService.getPublishedPosts('achievements');
+        const fetchedPosts = await postsService.getPublishedPosts(
+          "achievements"
+        );
         setPosts(fetchedPosts);
         setSearchResults(fetchedPosts);
       } catch (error) {
-        console.error('Error fetching achievements:', error);
+        console.error("Error fetching achievements:", error);
         toast({
           title: "Error",
-          description: "Failed to load achievements. Please try refreshing the page.",
+          description:
+            "Failed to load achievements. Please try refreshing the page.",
           variant: "destructive",
         });
       } finally {
@@ -47,26 +55,47 @@ export default function AchievementsPage() {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setPage(1);
-    const filtered = posts.filter(post =>
-      post.title.toLowerCase().includes(query.toLowerCase()) ||
-      post.excerpt?.toLowerCase().includes(query.toLowerCase())
+    const filtered = posts.filter(
+      (post) =>
+        post.title.toLowerCase().includes(query.toLowerCase()) ||
+        post.excerpt?.toLowerCase().includes(query.toLowerCase())
     );
     setSearchResults(filtered);
   };
 
-  const stickyPosts = searchResults.filter(post => post.sticky);
-  const regularPosts = searchResults.filter(post => !post.sticky);
+  const stickyPosts = searchResults
+    .filter((post) => post.sticky)
+    .sort((a, b) => {
+      // Sort by createdAt timestamp (newest first)
+      const aTime =
+        typeof a.createdAt === "number"
+          ? a.createdAt
+          : a.createdAt?.toMillis
+          ? a.createdAt.toMillis()
+          : new Date(a.createdAt as any).getTime();
+      const bTime =
+        typeof b.createdAt === "number"
+          ? b.createdAt
+          : b.createdAt?.toMillis
+          ? b.createdAt.toMillis()
+          : new Date(b.createdAt as any).getTime();
+      return bTime - aTime; // Newest first
+    });
+  const regularPosts = searchResults.filter((post) => !post.sticky);
   const totalPages = Math.ceil(regularPosts.length / postsPerPage);
-  const paginatedPosts = regularPosts.slice((page - 1) * postsPerPage, page * postsPerPage);
+  const paginatedPosts = regularPosts.slice(
+    (page - 1) * postsPerPage,
+    page * postsPerPage
+  );
 
   const container = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
-      }
-    }
+        staggerChildren: 0.1,
+      },
+    },
   };
 
   return (
@@ -78,7 +107,8 @@ export default function AchievementsPage() {
             Our Achievements
           </h1>
           <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
-            Discover our milestones and the impact we've made in empowering children and communities.
+            Discover our milestones and the impact we've made in empowering
+            children and communities.
           </p>
           <ProgramSearch
             onSearch={handleSearch}
@@ -93,10 +123,13 @@ export default function AchievementsPage() {
           {searchQuery && (
             <div className="mb-8">
               <h3 className="text-2xl font-semibold mb-2">
-                Search Results {searchResults.length > 0 ? `(${searchResults.length})` : ''}
+                Search Results{" "}
+                {searchResults.length > 0 ? `(${searchResults.length})` : ""}
               </h3>
               {searchResults.length === 0 && (
-                <p className="text-muted-foreground">No achievements found matching "{searchQuery}"</p>
+                <p className="text-muted-foreground">
+                  No achievements found matching "{searchQuery}"
+                </p>
               )}
             </div>
           )}
