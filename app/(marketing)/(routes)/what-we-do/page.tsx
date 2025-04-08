@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { ProgramSearch } from '@/components/program-search';
-import { ContentCard } from '@/components/content-display/ContentCard';
-import { StickyPostsSection } from '@/components/content-display/StickyPostsSection';
-import FSCESkeleton from '@/components/FSCESkeleton';
-import { motion } from 'framer-motion';
-import { Post } from '@/app/types/post';
-import { postsService } from '@/app/services/posts';
-import { toast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { Plus } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { ProgramSearch } from "@/components/program-search";
+import { ContentCard } from "@/components/content-display/ContentCard";
+import { StickyPostsSection } from "@/components/content-display/StickyPostsSection";
+import FSCESkeleton from "@/components/FSCESkeleton";
+import { motion } from "framer-motion";
+import { Post } from "@/app/types/post";
+import { postsService } from "@/app/services/posts";
+import { toast } from "@/hooks/use-toast";
 
 interface CategoryItem {
   id: string;
@@ -24,47 +24,51 @@ interface CategoryItem {
 
 const categories: CategoryItem[] = [
   {
-    id: 'child-protection',
-    title: 'Child Protection',
-    description: 'Comprehensive programs to ensure the safety and well-being of children',
-    excerpt: 'Comprehensive programs to ensure the safety and well-being of children',
+    id: "child-protection",
+    title: "Child Protection",
+    description:
+      "Comprehensive programs to ensure the safety and well-being of children",
+    excerpt:
+      "Comprehensive programs to ensure the safety and well-being of children",
     count: 0,
-    slug: 'child-protection',
-    category: 'Programs'
+    slug: "child-protection",
+    category: "Programs",
   },
   {
-    id: 'youth-empowerment',
-    title: 'Youth Empowerment',
-    description: 'Programs and initiatives to empower youth for a better future',
-    excerpt: 'Programs and initiatives to empower youth for a better future',
+    id: "youth-empowerment",
+    title: "Youth Empowerment",
+    description:
+      "Programs and initiatives to empower youth for a better future",
+    excerpt: "Programs and initiatives to empower youth for a better future",
     count: 0,
-    slug: 'youth-empowerment',
-    category: 'Programs'
+    slug: "youth-empowerment",
+    category: "Programs",
   },
   {
-    id: 'advocacy',
-    title: 'Advocacy',
-    description: "Speaking up and taking action for children's rights and needs",
+    id: "advocacy",
+    title: "Advocacy",
+    description:
+      "Speaking up and taking action for children's rights and needs",
     excerpt: "Speaking up and taking action for children's rights and needs",
     count: 0,
-    slug: 'advocacy',
-    category: 'Programs'
+    slug: "advocacy",
+    category: "Programs",
   },
   {
-    id: 'humanitarian-response',
-    title: 'Humanitarian Response',
-    description: 'Providing critical support and assistance in times of crisis',
-    excerpt: 'Providing critical support and assistance in times of crisis',
+    id: "humanitarian-response",
+    title: "Humanitarian Response",
+    description: "Providing critical support and assistance in times of crisis",
+    excerpt: "Providing critical support and assistance in times of crisis",
     count: 0,
-    slug: 'humanitarian-response',
-    category: 'Programs'
+    slug: "humanitarian-response",
+    category: "Programs",
   },
 ];
 
 export default function WhatWeDoPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Post[]>([]);
   const [categoriesWithCount, setCategoriesWithCount] = useState(categories);
 
@@ -75,28 +79,31 @@ export default function WhatWeDoPage() {
   const loadPosts = async () => {
     try {
       setLoading(true);
-      // Replace getPostsByCategory with getPublishedPosts for the 'what-we-do' category
-      const allPosts = await postsService.getPublishedPosts('what-we-do');
+
+      // Fetch posts for each category
+      const categoryPromises = categories.map((category) =>
+        postsService.getPublishedPosts(category.id)
+      );
+
+      const categoryResults = await Promise.all(categoryPromises);
+
+      // Combine all posts from all categories
+      const allPosts = categoryResults.flat();
       setPosts(allPosts);
 
-      // Update category counts - check both string and object form of category
-      const updatedCategories = categories.map(category => ({
+      // Update category counts
+      const updatedCategories = categories.map((category, index) => ({
         ...category,
-        count: allPosts.filter(post => {
-          const postCategory = typeof post.category === 'string'
-            ? post.category
-            : post.category?.id;
-          return postCategory === category.id;
-        }).length
+        count: categoryResults[index].length,
       }));
 
       setCategoriesWithCount(updatedCategories);
     } catch (error) {
-      console.error('Error loading posts:', error);
+      console.error("Error loading posts:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to load content',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to load content",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -105,9 +112,10 @@ export default function WhatWeDoPage() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    const filtered = posts.filter(post =>
-      post.title.toLowerCase().includes(query.toLowerCase()) ||
-      post.excerpt?.toLowerCase().includes(query.toLowerCase())
+    const filtered = posts.filter(
+      (post) =>
+        post.title.toLowerCase().includes(query.toLowerCase()) ||
+        post.excerpt?.toLowerCase().includes(query.toLowerCase())
     );
     setSearchResults(filtered);
   };
@@ -121,17 +129,18 @@ export default function WhatWeDoPage() {
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
-      }
-    }
+        staggerChildren: 0.1,
+      },
+    },
   };
 
   return (
-    <div className="container mx-auto py-24 space-y-8">
+    <div className="container py-24 mx-auto space-y-8">
       <div className="space-y-4">
         <h1 className="text-4xl font-bold">What We Do</h1>
-        <p className="text-lg text-muted-foreground max-w-3xl">
-          Discover our comprehensive programs and initiatives designed to create lasting positive impact in communities.
+        <p className="max-w-3xl text-lg text-muted-foreground">
+          Discover our comprehensive programs and initiatives designed to create
+          lasting positive impact in communities.
         </p>
 
         <ProgramSearch
@@ -156,7 +165,7 @@ export default function WhatWeDoPage() {
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        className="grid grid-cols-1 gap-6 md:grid-cols-2"
       >
         {categoriesWithCount.map((category) => (
           <ContentCard
@@ -172,11 +181,12 @@ export default function WhatWeDoPage() {
       </motion.div>
 
       {/* Featured/Sticky Posts Section */}
-      {posts.some(post => post.sticky) && (
+      {posts.some((post) => post.sticky) && (
         <StickyPostsSection
-          posts={posts.filter(post => post.sticky)}
+          posts={posts.filter((post) => post.sticky)}
           title="Featured Programs"
           basePath="/what-we-do"
+          useCategory={true}
         />
       )}
     </div>
