@@ -1,22 +1,27 @@
-'use client';
-import { useEffect, useState, useRef } from 'react';
-import { Post } from '@/app/types/post';
-import { postsService } from '@/app/services/posts';
-import { ProgramSearch } from '@/components/program-search';
-import { ContentCard } from '@/components/content-display/ContentCard';
-import { StickyPostsSection } from '@/components/content-display/StickyPostsSection';
-import FSCESkeleton from '@/components/FSCESkeleton';
-import { motion } from 'framer-motion';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink } from '@/components/ui/pagination';
-import { ensureCategory } from '@/app/utils/category';
-import { compareTimestamps } from '@/app/utils/date';
+"use client";
+import { useEffect, useState, useRef } from "react";
+import { Post } from "@/app/types/post";
+import { postsService } from "@/app/services/posts";
+import { ProgramSearch } from "@/components/program-search";
+import { ContentCard } from "@/components/content-display/ContentCard";
+import { StickyPostsSection } from "@/components/content-display/StickyPostsSection";
+import FSCESkeleton from "@/components/FSCESkeleton";
+import { motion } from "framer-motion";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+} from "@/components/ui/pagination";
+import { ensureCategory } from "@/app/utils/category";
+import { compareTimestamps } from "@/app/utils/date";
 
 export default function NewsPage() {
   const searchResultsRef = useRef<HTMLDivElement>(null);
   const [news, setNews] = useState<Post[]>([]);
   const [stickyNews, setStickyNews] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const postsPerPage = 9;
 
@@ -25,12 +30,12 @@ export default function NewsPage() {
       try {
         setLoading(true);
         // Replace getPostsByCategory with getPublishedPosts with category parameter
-        const allPosts = await postsService.getPublishedPosts('news');
+        const allPosts = await postsService.getPublishedPosts("news");
 
         // Ensure posts have proper Category objects
-        const postsWithCategories = allPosts.map(post => ({
+        const postsWithCategories = allPosts.map((post) => ({
           ...post,
-          category: ensureCategory(post.category)
+          category: ensureCategory(post.category),
         }));
 
         // Split posts into sticky and regular arrays without using destructuring
@@ -45,13 +50,19 @@ export default function NewsPage() {
           }
         });
 
-        stickyPosts.sort((a: Post, b: Post) => compareTimestamps(a.createdAt, b.createdAt));
-        regularPosts.sort((a: Post, b: Post) => compareTimestamps(a.createdAt, b.createdAt));
+        // Sort using compareTimestamps helper - newest first
+        // compareTimestamps already sorts newest first (b - a)
+        stickyPosts.sort((a: Post, b: Post) =>
+          compareTimestamps(a.createdAt, b.createdAt)
+        );
+        regularPosts.sort((a: Post, b: Post) =>
+          compareTimestamps(a.createdAt, b.createdAt)
+        );
 
         setStickyNews(stickyPosts);
         setNews(regularPosts);
       } catch (error) {
-        console.error('Error fetching news:', error);
+        console.error("Error fetching news:", error);
         setStickyNews([]);
         setNews([]);
       } finally {
@@ -66,15 +77,19 @@ export default function NewsPage() {
     setSearchQuery(query);
     setPage(1);
     setTimeout(() => {
-      searchResultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      searchResultsRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }, 100);
   };
 
   // Filter news for search
-  const filteredNews = [...stickyNews, ...news].filter((item: Post) =>
-    searchQuery === '' ||
-    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredNews = [...stickyNews, ...news].filter(
+    (item: Post) =>
+      searchQuery === "" ||
+      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredNews.length / postsPerPage);
@@ -91,12 +106,13 @@ export default function NewsPage() {
     <div className="min-h-screen bg-background">
       {/* Add title and search section that matches the events page */}
       <section className="py-16 bg-primary/5">
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-6">
+        <div className="container px-4 mx-auto">
+          <h2 className="mb-6 text-4xl font-bold text-center md:text-5xl">
             News & Updates
           </h2>
-          <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
-            Stay informed with the latest news and updates from our organization.
+          <p className="max-w-2xl mx-auto mb-8 text-lg text-center text-muted-foreground">
+            Stay informed with the latest news and updates from our
+            organization.
           </p>
           <ProgramSearch
             onSearch={handleSearch}
@@ -107,14 +123,17 @@ export default function NewsPage() {
       </section>
 
       <section ref={searchResultsRef} className="py-16 bg-white scroll-mt-16">
-        <div className="container mx-auto px-4 max-w-7xl">
+        <div className="container px-4 mx-auto max-w-7xl">
           {searchQuery && (
             <div className="mb-8">
-              <h3 className="text-2xl font-semibold mb-2">
-                Search Results {filteredNews.length > 0 ? `(${filteredNews.length})` : ''}
+              <h3 className="mb-2 text-2xl font-semibold">
+                Search Results{" "}
+                {filteredNews.length > 0 ? `(${filteredNews.length})` : ""}
               </h3>
               {filteredNews.length === 0 && (
-                <p className="text-muted-foreground">No news found matching "{searchQuery}"</p>
+                <p className="text-muted-foreground">
+                  No news found matching "{searchQuery}"
+                </p>
               )}
             </div>
           )}
@@ -140,7 +159,7 @@ export default function NewsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
+                className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8"
               >
                 {(searchQuery ? paginatedNews : news).map((post: Post) => (
                   <ContentCard
@@ -159,7 +178,7 @@ export default function NewsPage() {
           )}
 
           {totalPages > 1 && searchQuery && (
-            <div className="mt-8 flex justify-center">
+            <div className="flex justify-center mt-8">
               <Pagination>
                 <PaginationContent>
                   {[...Array(totalPages)].map((_, i) => (

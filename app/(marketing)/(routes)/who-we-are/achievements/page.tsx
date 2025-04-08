@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { ProgramSearch } from "@/components/program-search";
 import { Post } from "@/app/types/post";
 import { postsService } from "@/app/services/posts";
-import { formatDate } from "@/app/utils/date";
+import { formatDate, compareTimestamps } from "@/app/utils/date";
 import Image from "next/image";
 import { PinIcon } from "lucide-react";
 import { ContentCard } from "@/components/content-display/ContentCard";
@@ -63,25 +63,15 @@ export default function AchievementsPage() {
     setSearchResults(filtered);
   };
 
+  // Filter and sort sticky posts - newest first
+  // compareTimestamps already sorts newest first (b - a)
   const stickyPosts = searchResults
     .filter((post) => post.sticky)
-    .sort((a, b) => {
-      // Sort by createdAt timestamp (newest first)
-      const aTime =
-        typeof a.createdAt === "number"
-          ? a.createdAt
-          : a.createdAt?.toMillis
-          ? a.createdAt.toMillis()
-          : new Date(a.createdAt as any).getTime();
-      const bTime =
-        typeof b.createdAt === "number"
-          ? b.createdAt
-          : b.createdAt?.toMillis
-          ? b.createdAt.toMillis()
-          : new Date(b.createdAt as any).getTime();
-      return bTime - aTime; // Newest first
-    });
-  const regularPosts = searchResults.filter((post) => !post.sticky);
+    .sort((a, b) => compareTimestamps(a.createdAt, b.createdAt));
+  // Filter and sort regular posts - newest first
+  const regularPosts = searchResults
+    .filter((post) => !post.sticky)
+    .sort((a, b) => compareTimestamps(a.createdAt, b.createdAt));
   const totalPages = Math.ceil(regularPosts.length / postsPerPage);
   const paginatedPosts = regularPosts.slice(
     (page - 1) * postsPerPage,

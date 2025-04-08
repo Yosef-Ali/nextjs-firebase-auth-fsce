@@ -1,23 +1,28 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useRef } from 'react';
-import { Post } from '@/app/types/post';
-import { postsService } from '@/app/services/posts';
-import { ProgramSearch } from '@/components/program-search';
-import { ContentCard } from '@/components/content-display/ContentCard';
-import { StickyPostsSection } from '@/components/content-display/StickyPostsSection';
-import FSCESkeleton from '@/components/FSCESkeleton';
-import { motion } from 'framer-motion';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink } from '@/components/ui/pagination';
-import { ensureCategory } from '@/app/utils/category';
-import { compareTimestamps } from '@/app/utils/date';
+import { useEffect, useState, useRef } from "react";
+import { Post } from "@/app/types/post";
+import { postsService } from "@/app/services/posts";
+import { ProgramSearch } from "@/components/program-search";
+import { ContentCard } from "@/components/content-display/ContentCard";
+import { StickyPostsSection } from "@/components/content-display/StickyPostsSection";
+import FSCESkeleton from "@/components/FSCESkeleton";
+import { motion } from "framer-motion";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+} from "@/components/ui/pagination";
+import { ensureCategory } from "@/app/utils/category";
+import { compareTimestamps } from "@/app/utils/date";
 
 export default function EventsPage() {
   const searchResultsRef = useRef<HTMLDivElement>(null);
   const [events, setEvents] = useState<Post[]>([]);
   const [stickyEvents, setStickyEvents] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const postsPerPage = 9;
 
@@ -26,12 +31,12 @@ export default function EventsPage() {
       try {
         setLoading(true);
         // Replace getPostsByCategory with getPublishedPosts with category parameter
-        const allPosts = await postsService.getPublishedPosts('events');
+        const allPosts = await postsService.getPublishedPosts("events");
 
         // Ensure posts have proper Category objects
-        const postsWithCategories = allPosts.map(post => ({
+        const postsWithCategories = allPosts.map((post) => ({
           ...post,
-          category: ensureCategory(post.category)
+          category: ensureCategory(post.category),
         }));
 
         // Split posts into sticky and regular arrays without using destructuring
@@ -46,11 +51,20 @@ export default function EventsPage() {
           }
         });
 
-        // Sort using compareTimestamps helper with proper types
-        setStickyEvents([...stickyPosts].sort((a, b) => compareTimestamps(a.createdAt, b.createdAt)));
-        setEvents([...regularPosts].sort((a, b) => compareTimestamps(a.createdAt, b.createdAt)));
+        // Sort using compareTimestamps helper with proper types - newest first
+        // compareTimestamps already sorts newest first (b - a)
+        setStickyEvents(
+          [...stickyPosts].sort((a, b) =>
+            compareTimestamps(a.createdAt, b.createdAt)
+          )
+        );
+        setEvents(
+          [...regularPosts].sort((a, b) =>
+            compareTimestamps(a.createdAt, b.createdAt)
+          )
+        );
       } catch (error) {
-        console.error('Error loading events:', error);
+        console.error("Error loading events:", error);
         setStickyEvents([]);
         setEvents([]);
       } finally {
@@ -64,15 +78,19 @@ export default function EventsPage() {
     setSearchQuery(query);
     setPage(1);
     setTimeout(() => {
-      searchResultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      searchResultsRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }, 100);
   };
 
   // Filter events for search
-  const filteredEvents = [...stickyEvents, ...events].filter((event: Post) =>
-    searchQuery === '' ||
-    event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    event.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredEvents = [...stickyEvents, ...events].filter(
+    (event: Post) =>
+      searchQuery === "" ||
+      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredEvents.length / postsPerPage);
@@ -93,7 +111,8 @@ export default function EventsPage() {
             Events & Activities
           </h2>
           <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-8">
-            Join us in making a difference through our various events and activities.
+            Join us in making a difference through our various events and
+            activities.
           </p>
 
           <ProgramSearch
@@ -109,10 +128,13 @@ export default function EventsPage() {
           {searchQuery && (
             <div className="mb-8">
               <h3 className="text-2xl font-semibold mb-2">
-                Search Results {filteredEvents.length > 0 ? `(${filteredEvents.length})` : ''}
+                Search Results{" "}
+                {filteredEvents.length > 0 ? `(${filteredEvents.length})` : ""}
               </h3>
               {filteredEvents.length === 0 && (
-                <p className="text-muted-foreground">No events found matching "{searchQuery}"</p>
+                <p className="text-muted-foreground">
+                  No events found matching "{searchQuery}"
+                </p>
               )}
             </div>
           )}
