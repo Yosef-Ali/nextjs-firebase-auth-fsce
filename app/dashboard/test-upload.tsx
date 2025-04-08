@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { storage } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import Image from 'next/image';
+import { useState } from "react";
+import { storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 export default function TestUpload() {
   const { user } = useAuth();
@@ -25,32 +25,36 @@ export default function TestUpload() {
       fileSize: file.size,
       fileType: file.type,
       userAuthenticated: !!user,
-      userDetails: user ? {
-        uid: user.uid,
-        email: user.email,
-        isAnonymous: user.isAnonymous,
-      } : null
+      userDetails: user
+        ? {
+            uid: user.uid,
+            email: user.email,
+            isAnonymous: user.isAnonymous,
+          }
+        : null,
     });
 
     try {
       // Validate file
-      if (!file.type.startsWith('image/')) {
-        throw new Error('Please upload an image file');
+      if (!file.type.startsWith("image/")) {
+        throw new Error("Please upload an image file");
       }
 
       if (file.size > 5 * 1024 * 1024) {
-        throw new Error('File size must be less than 5MB');
+        throw new Error("File size must be less than 5MB");
       }
 
       if (!user) {
-        throw new Error('You must be logged in to upload images');
+        throw new Error("You must be logged in to upload images");
       }
 
       // Create a unique file path
       const timestamp = Date.now();
-      const fileName = `test-uploads/${user.uid}-${timestamp}-${file.name.replace(/[^\w.-]/g, '-')}`;
-      
-      console.log('Creating storage reference for:', fileName);
+      const fileName = `test-uploads/${
+        user.uid
+      }-${timestamp}-${file.name.replace(/[^\w.-]/g, "-")}`;
+
+      console.log("Creating storage reference for:", fileName);
       const storageRef = ref(storage, fileName);
 
       // Upload with metadata
@@ -58,31 +62,34 @@ export default function TestUpload() {
         contentType: file.type,
         customMetadata: {
           uploadedBy: user.uid,
-          originalName: file.name
-        }
+          originalName: file.name,
+        },
       };
 
-      console.log('Starting upload with metadata:', metadata);
+      console.log("Starting upload with metadata:", metadata);
       const uploadResult = await uploadBytes(storageRef, file, metadata);
-      console.log('Upload successful:', uploadResult);
+      console.log("Upload successful:", uploadResult);
 
       // Get download URL
       const url = await getDownloadURL(uploadResult.ref);
-      console.log('Download URL:', url);
-      
+      console.log("Download URL:", url);
+
       setImageUrl(url);
-      setUploadDetails(prev => ({
+      setUploadDetails((prev: any) => ({
         ...prev,
         success: true,
-        downloadUrl: url
+        downloadUrl: url,
       }));
     } catch (error) {
-      console.error('Upload error:', error);
-      setError(error instanceof Error ? error.message : 'An unknown error occurred');
-      setUploadDetails(prev => ({
+      console.error("Upload error:", error);
+      setError(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
+      setUploadDetails((prev: any) => ({
         ...prev,
         success: false,
-        error: error instanceof Error ? error.message : 'An unknown error occurred'
+        error:
+          error instanceof Error ? error.message : "An unknown error occurred",
       }));
     } finally {
       setUploading(false);
@@ -92,7 +99,7 @@ export default function TestUpload() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Test Image Upload</h1>
-      
+
       <div className="mb-6">
         <h2 className="text-lg font-semibold mb-2">Authentication Status</h2>
         {user ? (

@@ -1,23 +1,23 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { storage } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { useUploadThing } from '@/app/utils/uploadthing';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Image from 'next/image';
-import { mediaService } from '@/app/services/media';
+import { useState } from "react";
+import { storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { useUploadThing } from "@/app/utils/uploadthing";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Image from "next/image";
+import { mediaService } from "@/app/services/media";
 
 export default function ImageUploadDiagnostic() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('firebase');
-  
+  const [activeTab, setActiveTab] = useState("firebase");
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Image Upload Diagnostic</h1>
-      
+
       <div className="mb-6">
         <h2 className="text-lg font-semibold mb-2">Authentication Status</h2>
         {user ? (
@@ -39,15 +39,15 @@ export default function ImageUploadDiagnostic() {
           <TabsTrigger value="uploadthing">UploadThing</TabsTrigger>
           <TabsTrigger value="mediaservice">Media Service</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="firebase">
           <FirebaseUploadTest user={user} />
         </TabsContent>
-        
+
         <TabsContent value="uploadthing">
           <UploadThingTest user={user} />
         </TabsContent>
-        
+
         <TabsContent value="mediaservice">
           <MediaServiceTest user={user} />
         </TabsContent>
@@ -73,31 +73,35 @@ function FirebaseUploadTest({ user }: { user: any }) {
       fileSize: file.size,
       fileType: file.type,
       userAuthenticated: !!user,
-      userDetails: user ? {
-        uid: user.uid,
-        email: user.email,
-      } : null
+      userDetails: user
+        ? {
+            uid: user.uid,
+            email: user.email,
+          }
+        : null,
     });
 
     try {
       // Validate file
-      if (!file.type.startsWith('image/')) {
-        throw new Error('Please upload an image file');
+      if (!file.type.startsWith("image/")) {
+        throw new Error("Please upload an image file");
       }
 
       if (file.size > 5 * 1024 * 1024) {
-        throw new Error('File size must be less than 5MB');
+        throw new Error("File size must be less than 5MB");
       }
 
       if (!user) {
-        throw new Error('You must be logged in to upload images');
+        throw new Error("You must be logged in to upload images");
       }
 
       // Create a unique file path
       const timestamp = Date.now();
-      const fileName = `test-uploads/${user.uid}-${timestamp}-${file.name.replace(/[^\w.-]/g, '-')}`;
-      
-      console.log('Creating storage reference for:', fileName);
+      const fileName = `test-uploads/${
+        user.uid
+      }-${timestamp}-${file.name.replace(/[^\w.-]/g, "-")}`;
+
+      console.log("Creating storage reference for:", fileName);
       const storageRef = ref(storage, fileName);
 
       // Upload with metadata
@@ -105,31 +109,34 @@ function FirebaseUploadTest({ user }: { user: any }) {
         contentType: file.type,
         customMetadata: {
           uploadedBy: user.uid,
-          originalName: file.name
-        }
+          originalName: file.name,
+        },
       };
 
-      console.log('Starting upload with metadata:', metadata);
+      console.log("Starting upload with metadata:", metadata);
       const uploadResult = await uploadBytes(storageRef, file, metadata);
-      console.log('Upload successful:', uploadResult);
+      console.log("Upload successful:", uploadResult);
 
       // Get download URL
       const url = await getDownloadURL(uploadResult.ref);
-      console.log('Download URL:', url);
-      
+      console.log("Download URL:", url);
+
       setImageUrl(url);
-      setUploadDetails(prev => ({
+      setUploadDetails((prev: any) => ({
         ...prev,
         success: true,
-        downloadUrl: url
+        downloadUrl: url,
       }));
     } catch (error) {
-      console.error('Upload error:', error);
-      setError(error instanceof Error ? error.message : 'An unknown error occurred');
-      setUploadDetails(prev => ({
+      console.error("Upload error:", error);
+      setError(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
+      setUploadDetails((prev: any) => ({
         ...prev,
         success: false,
-        error: error instanceof Error ? error.message : 'An unknown error occurred'
+        error:
+          error instanceof Error ? error.message : "An unknown error occurred",
       }));
     } finally {
       setUploading(false);
@@ -138,8 +145,10 @@ function FirebaseUploadTest({ user }: { user: any }) {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Firebase Storage Direct Upload</h2>
-      
+      <h2 className="text-xl font-semibold mb-4">
+        Firebase Storage Direct Upload
+      </h2>
+
       <div className="mb-6">
         <div className="flex items-center gap-4">
           <input
@@ -194,20 +203,20 @@ function UploadThingTest({ user }: { user: any }) {
   const { startUpload, isUploading } = useUploadThing("imageUploader", {
     onClientUploadComplete: (res) => {
       if (res && res.length > 0) {
-        console.log('Upload completed:', res);
+        console.log("Upload completed:", res);
         setImageUrl(res[0].url);
         setUploadDetails({
           success: true,
-          response: res[0]
+          response: res[0],
         });
       }
     },
     onUploadError: (error) => {
-      console.error('Upload error:', error);
+      console.error("Upload error:", error);
       setError(error.message);
       setUploadDetails({
         success: false,
-        error: error.message
+        error: error.message,
       });
     },
   });
@@ -222,28 +231,32 @@ function UploadThingTest({ user }: { user: any }) {
       fileSize: files[0].size,
       fileType: files[0].type,
       userAuthenticated: !!user,
-      userDetails: user ? {
-        uid: user.uid,
-        email: user.email,
-      } : null
+      userDetails: user
+        ? {
+            uid: user.uid,
+            email: user.email,
+          }
+        : null,
     });
 
     try {
       if (!user) {
-        throw new Error('You must be logged in to upload images');
+        throw new Error("You must be logged in to upload images");
       }
 
       await startUpload(Array.from(files));
     } catch (error) {
-      console.error('Upload preparation error:', error);
-      setError(error instanceof Error ? error.message : 'An unknown error occurred');
+      console.error("Upload preparation error:", error);
+      setError(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
     }
   };
 
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4">UploadThing Upload</h2>
-      
+
       <div className="mb-6">
         <div className="flex items-center gap-4">
           <input
@@ -307,55 +320,60 @@ function MediaServiceTest({ user }: { user: any }) {
       fileSize: file.size,
       fileType: file.type,
       userAuthenticated: !!user,
-      userDetails: user ? {
-        uid: user.uid,
-        email: user.email,
-      } : null
+      userDetails: user
+        ? {
+            uid: user.uid,
+            email: user.email,
+          }
+        : null,
     });
 
     try {
       // Validate file
-      if (!file.type.startsWith('image/')) {
-        throw new Error('Please upload an image file');
+      if (!file.type.startsWith("image/")) {
+        throw new Error("Please upload an image file");
       }
 
       if (file.size > 5 * 1024 * 1024) {
-        throw new Error('File size must be less than 5MB');
+        throw new Error("File size must be less than 5MB");
       }
 
       if (!user) {
-        throw new Error('You must be logged in to upload images');
+        throw new Error("You must be logged in to upload images");
       }
 
       // Use the media service to upload
       const mediaData = {
         name: file.name,
-        description: 'Test upload',
-        type: 'image',
-        tags: ['test'],
-        alt: 'Test image',
-        caption: 'Test caption',
+        description: "Test upload",
+        type: "image" as const,
+        tags: ["test"],
+        alt: "Test image",
+        caption: "Test caption",
         uploadedBy: user.uid,
-        uploadedByEmail: user.email || '',
+        uploadedByEmail: user.email || "",
       };
 
-      console.log('Starting upload with mediaService...');
+      console.log("Starting upload with mediaService...");
       const result = await mediaService.uploadMedia(file, mediaData);
-      console.log('Upload successful:', result);
-      
+      console.log("Upload successful:", result);
+
       setImageUrl(result.url);
-      setUploadDetails(prev => ({
+      setUploadDetails((prev: any) => ({
         ...prev,
         success: true,
-        result
+        result,
       }));
     } catch (error) {
-      console.error('Upload error:', error);
-      setError(error instanceof Error ? error.message : 'An unknown error occurred');
-      setUploadDetails(prev => ({
+      console.error("Upload error:", error);
+      setError(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
+      setUploadDetails((prev: any) => ({
         ...prev,
         success: false,
-        error: error instanceof Error ? error.message : 'An unknown error occurred'
+        error:
+          error instanceof Error ? error.message : "An unknown error occurred",
       }));
     } finally {
       setUploading(false);
@@ -365,7 +383,7 @@ function MediaServiceTest({ user }: { user: any }) {
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4">Media Service Upload</h2>
-      
+
       <div className="mb-6">
         <div className="flex items-center gap-4">
           <input
