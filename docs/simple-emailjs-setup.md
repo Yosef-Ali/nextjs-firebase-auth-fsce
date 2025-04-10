@@ -12,7 +12,7 @@ Follow these steps to set up EmailJS for your contact form:
 1. In the EmailJS dashboard, go to "Email Services"
 2. Click "Add New Service"
 3. Choose Gmail as your email provider
-4. Connect your Gmail account (meazi2008@gmail.com)
+4. Connect your email account (meaza@fsc-e.org)
 5. Name your service "service_7vfe7yh" (already created)
 
 ## 3. Create an Email Template

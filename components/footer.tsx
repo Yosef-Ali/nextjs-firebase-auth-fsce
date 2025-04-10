@@ -123,7 +123,7 @@ const Footer: React.FC = () => {
           icon: HomeIcon as (props: React.ComponentProps<"svg">) => JSX.Element,
         },
         {
-          name: "meazi2008@gmail.com",
+          name: "meaza@fsc-e.org",
           icon: EmailIcon as (
             props: React.ComponentProps<"svg">
           ) => JSX.Element,

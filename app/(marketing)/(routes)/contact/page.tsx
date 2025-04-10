@@ -49,7 +49,7 @@ const ContactPage = () => {
         from_email: formData.email,
         subject: formData.subject,
         message: formData.message,
-        to_email: "meazi2008@gmail.com", // Admin email
+        to_email: "meaza@fsc-e.org", // Admin email
       };
 
       // Send email using EmailJS with direct values
@@ -96,49 +96,49 @@ const ContactPage = () => {
   const contactInfo = [
     {
       title: "Address",
-      icon: <MapPin className="h-6 w-6 text-muted-foreground" />,
+      icon: <MapPin className="w-6 h-6 text-muted-foreground" />,
       content: "Addis Ababa, Ethiopia",
     },
     {
       title: "Email",
-      icon: <Mail className="h-6 w-6 text-muted-foreground" />,
-      content: "meazi2008@gmail.com",
+      icon: <Mail className="w-6 h-6 text-muted-foreground" />,
+      content: "meaza@fsc-e.org",
     },
     {
       title: "Phone",
-      icon: <Phone className="h-6 w-6 text-muted-foreground" />,
+      icon: <Phone className="w-6 h-6 text-muted-foreground" />,
       content: "Tel. 251-111705024\n     251-118333927\nFax +251 111705234",
     },
     {
       title: "Website",
-      icon: <Clock className="h-6 w-6 text-muted-foreground" />,
+      icon: <Clock className="w-6 h-6 text-muted-foreground" />,
       content: "www.fsc-e.org",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 relative overflow-hidden">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,transparent,black)] pointer-events-none" />
 
-      <div className="container mx-auto px-4 py-16 relative">
+      <div className="container relative px-4 py-16 mx-auto">
         {/* Page Title */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-12"
+          className="mb-12 text-center"
         >
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="mb-4 text-4xl font-bold text-gray-900">
             Get in Touch
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="max-w-2xl mx-auto text-lg text-gray-600">
             Have questions? We'd love to hear from you. Send us a message and
             we'll respond as soon as possible.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid max-w-6xl grid-cols-1 gap-8 mx-auto lg:grid-cols-3">
           {/* Contact Form Card */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -146,10 +146,10 @@ const ContactPage = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="lg:col-span-2"
           >
-            <Card className="p-6 h-full flex flex-col">
+            <Card className="flex flex-col h-full p-6">
               <div className="flex items-center gap-4 mb-4">
                 <div className="p-2 rounded-lg bg-primary/10">
-                  <Mail className="h-6 w-6 text-primary" />
+                  <Mail className="w-6 h-6 text-primary" />
                 </div>
                 <h3 className="text-xl font-semibold">Send us a Message</h3>
               </div>
@@ -168,7 +168,7 @@ const ContactPage = () => {
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      className="w-full p-3 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      className="w-full p-3 transition-all border border-gray-200 rounded-lg bg-white/50 focus:ring-2 focus:ring-primary focus:border-transparent"
                       required
                       disabled={isSubmitting}
                     />
@@ -186,7 +186,7 @@ const ContactPage = () => {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      className="w-full p-3 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      className="w-full p-3 transition-all border border-gray-200 rounded-lg bg-white/50 focus:ring-2 focus:ring-primary focus:border-transparent"
                       required
                       disabled={isSubmitting}
                     />
@@ -204,7 +204,7 @@ const ContactPage = () => {
                       name="subject"
                       value={formData.subject}
                       onChange={handleChange}
-                      className="w-full p-3 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      className="w-full p-3 transition-all border border-gray-200 rounded-lg bg-white/50 focus:ring-2 focus:ring-primary focus:border-transparent"
                       required
                       disabled={isSubmitting}
                     />
@@ -222,7 +222,7 @@ const ContactPage = () => {
                       value={formData.message}
                       onChange={handleChange}
                       rows={4}
-                      className="w-full p-3 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      className="w-full p-3 transition-all border border-gray-200 rounded-lg bg-white/50 focus:ring-2 focus:ring-primary focus:border-transparent"
                       required
                       disabled={isSubmitting}
                     />
@@ -237,7 +237,7 @@ const ContactPage = () => {
                   >
                     {isSubmitting ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Sending...
                       </>
                     ) : (
@@ -245,7 +245,7 @@ const ContactPage = () => {
                     )}
                   </motion.button>
 
-                  <p className="text-sm text-center text-gray-500 mt-2">
+                  <p className="mt-2 text-sm text-center text-gray-500">
                     We'll get back to you as soon as possible
                   </p>
                 </form>
@@ -259,10 +259,10 @@ const ContactPage = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <Card className="p-6 h-full flex flex-col">
+            <Card className="flex flex-col h-full p-6">
               <div className="flex items-center gap-4 mb-4">
                 <div className="p-2 rounded-lg bg-primary/10">
-                  <Phone className="h-6 w-6 text-primary" />
+                  <Phone className="w-6 h-6 text-primary" />
                 </div>
                 <h3 className="text-xl font-semibold">Contact Information</h3>
               </div>
@@ -284,7 +284,7 @@ const ContactPage = () => {
                       <h3 className="font-medium text-gray-900">
                         {info.title}
                       </h3>
-                      <p className="text-muted-foreground whitespace-pre-line mt-1">
+                      <p className="mt-1 whitespace-pre-line text-muted-foreground">
                         {info.content}
                       </p>
                     </div>

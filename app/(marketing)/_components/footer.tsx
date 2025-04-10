@@ -51,8 +51,8 @@ const Footer: React.FC = () => {
           icon: Home,
         },
         {
-          name: "meazi2008@gmail.com",
-          href: "mailto:meazi2008@gmail.com",
+          name: "meaza@fsc-e.org",
+          href: "mailto:meaza@fsc-e.org",
           icon: Mail,
         },
         {
