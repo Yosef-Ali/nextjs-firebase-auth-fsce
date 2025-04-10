@@ -195,6 +195,8 @@ export async function getPostsByStatus(
  * Helper function to get published resources with minimal index requirements
  * This function is specifically designed for the resources collection
  * and sorts by publishedDate by default
+ *
+ * This version uses a simpler query approach to avoid complex indexes
  */
 export async function getPublishedResources(
   collectionName: string = 'resources',
@@ -205,9 +207,40 @@ export async function getPublishedResources(
     sortDirection?: 'asc' | 'desc';
   } = {}
 ): Promise<DocumentData[]> {
-  return optimizedQuery(collectionName, {
-    published: true,
-    usePublishedDate: true, // Use publishedDate for sorting by default
-    ...options
-  });
+  try {
+    // Use a simple collection query without any filters to avoid index issues
+    const collectionRef = collection(db, collectionName);
+    const querySnapshot = await getDocs(collectionRef);
+
+    // Process results in memory
+    let results = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    // Filter for published items in memory
+    results = results.filter(item => item.published === true);
+
+    // Apply category filter if needed
+    if (options.category) {
+      results = results.filter(item => item.type === options.category);
+    }
+
+    // Sort by publishedDate by default
+    results.sort((a, b) => {
+      const timeA = normalizeTimestamp(a.publishedDate);
+      const timeB = normalizeTimestamp(b.publishedDate);
+      return timeB - timeA; // Descending order
+    });
+
+    // Apply limit if specified
+    if (options.limitCount && options.limitCount > 0) {
+      results = results.slice(0, options.limitCount);
+    }
+
+    return results;
+  } catch (error) {
+    console.error('Error in getPublishedResources:', error);
+    return [];
+  }
 }

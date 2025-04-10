@@ -1,17 +1,18 @@
-'use client';
+"use client";
 
 import type { Metadata } from "next";
-import './globals.css'
-import { Inter } from 'next/font/google'
-import { AuthProvider } from '@/app/providers/AuthProvider';
-import { Toaster } from "@/components/ui/toaster"
-import AuthRedirectHandler from '@/components/auth/AuthRedirectHandler';
-import { useEffect } from 'react';
-import { getRedirectResult } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { useToast } from '@/hooks/use-toast';
+import "./globals.css";
+import { Inter } from "next/font/google";
+import { AuthProvider } from "@/app/providers/AuthProvider";
+import { Toaster } from "@/components/ui/toaster";
+import AuthRedirectHandler from "@/components/auth/AuthRedirectHandler";
+import { useEffect } from "react";
+import { getRedirectResult } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { useToast } from "@/hooks/use-toast";
+import { NetworkStatus } from "@/components/NetworkStatus";
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ["latin"] });
 
 // Remove metadata export as this is a client component.
 // export const metadata: Metadata = {
@@ -22,7 +23,7 @@ const inter = Inter({ subsets: ['latin'] })
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
@@ -31,8 +32,9 @@ export default function RootLayout({
           {children}
           <Toaster />
           <AuthRedirectHandler />
+          <NetworkStatus />
         </AuthProvider>
       </body>
     </html>
-  )
+  );
 }

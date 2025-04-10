@@ -1,5 +1,5 @@
 import { initializeApp, getApp, getApps } from 'firebase/app';
-import { getFirestore, enableIndexedDbPersistence, connectFirestoreEmulator, Timestamp } from 'firebase/firestore';
+import { getFirestore, enableIndexedDbPersistence, connectFirestoreEmulator, Timestamp, disableNetwork, enableNetwork } from 'firebase/firestore';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 
@@ -29,6 +29,10 @@ export const toTimestamp = (date: Date | undefined): Timestamp | undefined => {
 
 // Enable offline persistence with better error handling
 if (typeof window !== 'undefined') {
+  // Check network status first
+  const isOnline = navigator.onLine;
+
+  // Configure persistence
   enableIndexedDbPersistence(db, {
     forceOwnership: false
   }).catch((err) => {
@@ -40,6 +44,23 @@ if (typeof window !== 'undefined') {
       console.error('Persistence error:', err);
     }
   });
+
+  // Set up network status listeners
+  window.addEventListener('online', () => {
+    console.log('App is online. Enabling Firestore network');
+    enableNetwork(db).catch(err => console.error('Error enabling network:', err));
+  });
+
+  window.addEventListener('offline', () => {
+    console.log('App is offline. Disabling Firestore network');
+    disableNetwork(db).catch(err => console.error('Error disabling network:', err));
+  });
+
+  // If offline at startup, disable network to prevent connection attempts
+  if (!isOnline) {
+    console.log('App started offline. Disabling Firestore network');
+    disableNetwork(db).catch(err => console.error('Error disabling network at startup:', err));
+  }
 }
 
 // Use emulator in development
