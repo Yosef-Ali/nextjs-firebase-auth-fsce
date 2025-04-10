@@ -65,7 +65,12 @@ export function NetworkStatus() {
     <div className="fixed z-50 px-4 py-3 text-yellow-700 bg-yellow-100 border border-yellow-400 rounded-md shadow-lg bottom-4 right-4">
       <p className="font-medium">You&apos;re offline</p>
       <p className="text-sm">
-        Some features may be limited until connection is restored
+        Working in offline mode. Some features may be limited until connection
+        is restored.
+      </p>
+      <p className="text-xs mt-1 text-yellow-600">
+        Firebase is using cached data. New changes will sync when you&apos;re
+        back online.
       </p>
     </div>
   );

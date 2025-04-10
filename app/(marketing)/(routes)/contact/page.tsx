@@ -31,9 +31,11 @@ const ContactPage = () => {
 
   // Initialize EmailJS
   useEffect(() => {
-    // Initialize EmailJS with your public key
+    // Initialize EmailJS with your public key from environment variables
     if (typeof window !== "undefined") {
-      emailjs.init("WTD9ae7biKLQejiOc");
+      const publicKey =
+        process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || "WTD9ae7biKLQejiOc";
+      emailjs.init(publicKey);
     }
   }, []);
 
@@ -52,13 +54,20 @@ const ContactPage = () => {
         to_email: "meaza@fsc-e.org", // Admin email
       };
 
-      // Send email using EmailJS with direct values
+      // Send email using EmailJS with environment variables
+      const serviceId =
+        process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "service_7vfe7yh";
+      const templateId =
+        process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "template_fhbuhcq";
+      const publicKey =
+        process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || "WTD9ae7biKLQejiOc";
+
       const response = await emailjs.send(
-        "service_7vfe7yh",
-        "template_fhbuhcq",
+        serviceId,
+        templateId,
         templateParams,
         {
-          publicKey: "WTD9ae7biKLQejiOc",
+          publicKey: publicKey,
         }
       );
 

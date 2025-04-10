@@ -14,7 +14,7 @@ import {
   query,
   where,
 } from 'firebase/firestore';
-import { optimizedQuery, getPublishedResources } from '@/app/utils/query-helpers';
+import { fetchAllDocuments, filterDocumentsByProperty, sortDocumentsByProperty } from '@/app/utils/firebase-helpers';
 
 class ResourcesService {
   private collectionName = 'resources';
@@ -62,11 +62,17 @@ class ResourcesService {
 
   async getAllResources(category?: string): Promise<Resource[]> {
     try {
-      // Use the specialized helper function for resources
-      const results = await getPublishedResources(this.collectionName);
+      // Fetch all documents from the collection (no filters to avoid index requirements)
+      const allDocuments = await fetchAllDocuments(this.collectionName);
+
+      // Filter for published resources in memory
+      let resources = filterDocumentsByProperty(allDocuments, 'published', true);
+
+      // Sort by publishedDate in memory
+      resources = sortDocumentsByProperty(resources, 'publishedDate');
 
       // Process the results
-      let resources = results.map(doc => ({
+      let processedResources = resources.map(doc => ({
         id: doc.id,
         ...doc,
         createdAt: this.convertTimestampToMillis(doc.createdAt),
@@ -77,10 +83,10 @@ class ResourcesService {
 
       // Filter by category in memory if needed
       if (category && category !== 'all') {
-        resources = resources.filter(resource => resource.type === category);
+        processedResources = processedResources.filter(resource => resource.type === category);
       }
 
-      return resources;
+      return processedResources;
     } catch (error) {
       console.error('Error getting resources:', error);
       return [];

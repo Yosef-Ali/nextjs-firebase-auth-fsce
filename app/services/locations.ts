@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, getDocs, query, where, Timestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where, Timestamp, DocumentData } from 'firebase/firestore';
 import { Location, LocationType } from '@/app/types/location';
 import { optimizedQuery } from '@/app/utils/query-helpers';
 
@@ -44,7 +44,7 @@ class LocationsService {
       const allResults = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      } as DocumentData));
 
       // Then filter and sort in memory
       const filteredResults = allResults

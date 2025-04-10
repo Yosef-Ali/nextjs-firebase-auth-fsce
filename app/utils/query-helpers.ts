@@ -35,39 +35,31 @@ export async function optimizedQuery(
     usePublishedDate?: boolean; // Flag to use publishedDate for sorting
   } = {}
 ): Promise<DocumentData[]> {
-  const { published, status, limitCount } = options;
+  // Use a simple collection query without any filters to avoid index issues
   const collectionRef = collection(db, collectionName);
 
-  // Start with an empty constraints array
-  const constraints: QueryConstraint[] = [];
-
-  // Add only ONE where clause to minimize index requirements
-  // Choose the most selective filter to use in the query
-  if (published !== undefined) {
-    constraints.push(where('published', '==', published));
-  } else if (status !== undefined) {
-    constraints.push(where('status', '==', status));
-  }
-
-  // We'll do sorting in memory to avoid composite indexes
-  // No orderBy in the actual query
-
-  // Add limit if specified (optional)
-  if (limitCount) {
-    constraints.push(limit(limitCount));
-  }
-
-  // Create and execute the query
-  const q = query(collectionRef, ...constraints);
+  // Create a simple query with no constraints to avoid index requirements
+  const q = query(collectionRef);
   const querySnapshot = await getDocs(q);
 
   // Convert to array of documents
   let results = querySnapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data()
-  }));
+  } as DocumentData));
 
-  // Apply additional filters in memory
+  // Apply all filters in memory
+  // Filter by published status if specified
+  if (options.published !== undefined) {
+    results = results.filter(doc => doc.published === options.published);
+  }
+
+  // Filter by status if specified
+  if (options.status !== undefined) {
+    results = results.filter(doc => doc.status === options.status);
+  }
+
+  // Apply category filter if specified
   if (options.category) {
     results = results.filter(doc => {
       // Handle both string categories and category objects
@@ -216,7 +208,7 @@ export async function getPublishedResources(
     let results = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    } as DocumentData));
 
     // Filter for published items in memory
     results = results.filter(item => item.published === true);
