@@ -14,7 +14,7 @@ import {
   query,
   where,
 } from 'firebase/firestore';
-import { fetchAllDocuments, filterDocumentsByProperty, sortDocumentsByProperty } from '@/app/utils/firebase-helpers';
+import { safeQuery, getPublishedDocuments, getDocumentById } from '@/app/utils/firestore-utils';
 
 class ResourcesService {
   private collectionName = 'resources';
@@ -62,17 +62,15 @@ class ResourcesService {
 
   async getAllResources(category?: string): Promise<Resource[]> {
     try {
-      // Fetch all documents from the collection (no filters to avoid index requirements)
-      const allDocuments = await fetchAllDocuments(this.collectionName);
-
-      // Filter for published resources in memory
-      let resources = filterDocumentsByProperty(allDocuments, 'published', true);
-
-      // Sort by publishedDate in memory
-      resources = sortDocumentsByProperty(resources, 'publishedDate');
+      // Use our safe query utility to get published resources
+      const results = await getPublishedDocuments(this.collectionName, {
+        sortBy: 'publishedDate',
+        sortDirection: 'desc',
+        category: category !== 'all' ? category : undefined
+      });
 
       // Process the results
-      let processedResources = resources.map(doc => ({
+      const resources = results.map(doc => ({
         id: doc.id,
         ...doc,
         createdAt: this.convertTimestampToMillis(doc.createdAt),
@@ -81,12 +79,7 @@ class ResourcesService {
         slug: doc.slug || doc.id,
       } as Resource));
 
-      // Filter by category in memory if needed
-      if (category && category !== 'all') {
-        processedResources = processedResources.filter(resource => resource.type === category);
-      }
-
-      return processedResources;
+      return resources;
     } catch (error) {
       console.error('Error getting resources:', error);
       return [];
@@ -106,20 +99,22 @@ class ResourcesService {
 
   async getResourceById(id: string): Promise<Resource | null> {
     try {
-      const resourceRef = doc(db, this.collectionName, id);
-      const docSnap = await getDoc(resourceRef);
+      // Use our safe query utility to get a document by ID
+      const result = await getDocumentById(this.collectionName, id);
 
-      if (!docSnap.exists()) return null;
-
-      const data = docSnap.data();
-      return {
-        id: docSnap.id,
-        ...data,
-        createdAt: this.convertTimestampToMillis(data.createdAt),
-        updatedAt: this.convertTimestampToMillis(data.updatedAt),
-      } as Resource;
+      if (result) {
+        return {
+          id: result.id,
+          ...result,
+          createdAt: this.convertTimestampToMillis(result.createdAt),
+          updatedAt: this.convertTimestampToMillis(result.updatedAt),
+          publishedDate: this.convertTimestampToMillis(result.publishedDate),
+          slug: result.slug || result.id,
+        } as Resource;
+      }
+      return null;
     } catch (error) {
-      console.error('Error getting resource:', error);
+      console.error(`Error getting resource with ID ${id}:`, error);
       return null;
     }
   }

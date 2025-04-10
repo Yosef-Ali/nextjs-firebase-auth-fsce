@@ -89,8 +89,32 @@ export function isValidTimestamp(value: any): boolean {
 }
 
 /**
+ * Function to fetch published documents from a collection
+ * This uses a simple query with a single filter to avoid complex indexes
+ *
+ * @param collectionName The name of the collection to fetch
+ * @returns Array of published documents
+ */
+export async function fetchPublishedDocuments(collectionName: string): Promise<DocumentData[]> {
+  try {
+    // Create a query with a single filter for published=true
+    const q = query(collection(db, collectionName), where('published', '==', true));
+    const querySnapshot = await getDocs(q);
+
+    // Convert to array of documents
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as DocumentData));
+  } catch (error) {
+    console.error(`Error fetching published documents from ${collectionName}:`, error);
+    return [];
+  }
+}
+
+/**
  * Simple function to fetch all documents from a collection without any filters
- * This avoids using complex queries that require indexes
+ * Use this only for small collections or admin functions
  *
  * @param collectionName The name of the collection to fetch
  * @returns Array of documents

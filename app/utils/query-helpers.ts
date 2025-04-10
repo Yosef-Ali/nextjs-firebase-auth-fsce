@@ -35,11 +35,22 @@ export async function optimizedQuery(
     usePublishedDate?: boolean; // Flag to use publishedDate for sorting
   } = {}
 ): Promise<DocumentData[]> {
-  // Use a simple collection query without any filters to avoid index issues
+  // Use a collection query with at most one filter to avoid complex index requirements
   const collectionRef = collection(db, collectionName);
 
-  // Create a simple query with no constraints to avoid index requirements
-  const q = query(collectionRef);
+  // Start with an empty constraints array
+  const constraints: QueryConstraint[] = [];
+
+  // Add only ONE where clause to minimize index requirements
+  // Choose the most selective filter to use in the query
+  if (options.published !== undefined) {
+    constraints.push(where('published', '==', options.published));
+  } else if (options.status !== undefined) {
+    constraints.push(where('status', '==', options.status));
+  }
+
+  // Create and execute the query
+  const q = query(collectionRef, ...constraints);
   const querySnapshot = await getDocs(q);
 
   // Convert to array of documents
@@ -200,18 +211,16 @@ export async function getPublishedResources(
   } = {}
 ): Promise<DocumentData[]> {
   try {
-    // Use a simple collection query without any filters to avoid index issues
+    // Use a query with a single filter for published=true
     const collectionRef = collection(db, collectionName);
-    const querySnapshot = await getDocs(collectionRef);
+    const q = query(collectionRef, where('published', '==', true));
+    const querySnapshot = await getDocs(q);
 
     // Process results in memory
     let results = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     } as DocumentData));
-
-    // Filter for published items in memory
-    results = results.filter(item => item.published === true);
 
     // Apply category filter if needed
     if (options.category) {

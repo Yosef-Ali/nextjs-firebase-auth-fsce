@@ -1,14 +1,15 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useMemo, useRef } from 'react';
-import { collection, getDocs, query, where, enableNetwork, disableNetwork, orderBy, limit, onSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { Category } from '@/app/types/category';
-import { Post } from '@/app/types/post';
+import { useEffect, useState, useMemo, useRef } from "react";
+import { enableNetwork, disableNetwork } from "firebase/firestore";
+import { safeQuery, getPublishedDocuments } from "@/app/utils/firestore-utils";
+import { db } from "@/lib/firebase";
+import { Category } from "@/app/types/category";
+import { Post } from "@/app/types/post";
 import { Alert } from "@/components/ui/alert";
-import { motion, useAnimation } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
-import { ContentCard } from '@/components/content-display/ContentCard';
+import { motion, useAnimation } from "framer-motion";
+import { useInView } from "react-intersection-observer";
+import { ContentCard } from "@/components/content-display/ContentCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { FeaturedSectionSkeleton } from "./featured-section-skeleton";
@@ -30,16 +31,21 @@ export default function FeaturedSection() {
   // Memoize sorted posts by category
   const postsByCategory = useMemo(() => {
     return categories.reduce((acc, category) => {
-      const categoryPosts = posts.filter(post =>
-        (typeof post.category === 'string' && post.category === category.id) ||
-        (typeof post.category === 'object' && post.category?.id === category.id)
+      const categoryPosts = posts.filter(
+        (post) =>
+          (typeof post.category === "string" &&
+            post.category === category.id) ||
+          (typeof post.category === "object" &&
+            post.category?.id === category.id)
       );
       const sortedPosts = [...categoryPosts].sort((a, b) => {
         if (!a.createdAt || !b.createdAt) return 0;
         const getTime = (timestamp: any) => {
-          if (typeof timestamp === 'number') return timestamp;
-          if (typeof timestamp === 'string') return new Date(timestamp).getTime();
-          if (typeof timestamp.toDate === 'function') return timestamp.toDate().getTime();
+          if (typeof timestamp === "number") return timestamp;
+          if (typeof timestamp === "string")
+            return new Date(timestamp).getTime();
+          if (typeof timestamp.toDate === "function")
+            return timestamp.toDate().getTime();
           if (timestamp instanceof Date) return timestamp.getTime();
           return 0;
         };
@@ -62,74 +68,43 @@ export default function FeaturedSection() {
       disableNetwork(db).catch(console.error);
     };
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
     setIsOnline(navigator.onLine);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 
   useEffect(() => {
     const fetchData = async () => {
-      const categoriesRef = collection(db, 'categories');
-      const postsRef = collection(db, 'posts');
-
       setLoading(true);
       setError(null);
 
-      // Get categories once
       try {
-        const categoriesSnap = await getDocs(categoriesRef);
-        const categories = categoriesSnap.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Category[];
-        setCategories(categories);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        setError(error instanceof Error ? error.message : 'Failed to load categories');
+        // Get categories using safe query
+        const categoriesResults = await safeQuery("categories");
+        setCategories(categoriesResults as Category[]);
+
+        // Get published posts using our utility
+        const postsResults = await getPublishedDocuments("posts");
+        setPosts(postsResults as Post[]);
+
         setLoading(false);
-        return;
-      }
-
-      // Set up posts listener
-      const unsubscribe = onSnapshot(
-        query(postsRef),
-        (snapshot) => {
-          const posts = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })) as Post[];
-          setPosts(posts);
-          setLoading(false);
-        },
-        (error) => {
-          if (error.code === 'already-exists') {
-            return; // Silently ignore this error
-          }
-          console.error('Error in posts listener:', error);
-          setError(error.message);
-          setLoading(false);
-        }
-      );
-
-      return unsubscribe;
-    };
-
-    let unsubscribe: (() => void) | undefined;
-
-    fetchData().then(unsub => {
-      unsubscribe = unsub;
-    });
-
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setError(
+          error instanceof Error ? error.message : "Failed to load content"
+        );
+        setLoading(false);
       }
     };
+
+    fetchData();
+
+    // No cleanup needed since we're not using listeners
   }, []);
 
   if (loading) {
@@ -137,24 +112,30 @@ export default function FeaturedSection() {
   }
 
   if (error) {
-    return <Alert variant="destructive">
-      <p>{error}</p>
-      {!isOnline && (
-        <p>You are currently offline. Some content may not be available.</p>
-      )}
-    </Alert>;
+    return (
+      <Alert variant="destructive">
+        <p>{error}</p>
+        {!isOnline && (
+          <p>You are currently offline. Some content may not be available.</p>
+        )}
+      </Alert>
+    );
   }
 
-  const TabContent: React.FC<TabContentProps> = ({ posts, category, emptyMessage }) => {
+  const TabContent: React.FC<TabContentProps> = ({
+    posts,
+    category,
+    emptyMessage,
+  }) => {
     const controls = useAnimation();
     const [ref, inView] = useInView({
       triggerOnce: false,
-      threshold: 0.1
+      threshold: 0.1,
     });
 
     useEffect(() => {
       if (inView) {
-        controls.start('visible');
+        controls.start("visible");
       }
     }, [inView, controls]);
 
@@ -167,12 +148,12 @@ export default function FeaturedSection() {
           visible: {
             opacity: 1,
             transition: {
-              staggerChildren: 0.1
-            }
+              staggerChildren: 0.1,
+            },
           },
           hidden: {
-            opacity: 0
-          }
+            opacity: 0,
+          },
         }}
       >
         {posts.length > 0 ? (
@@ -181,8 +162,12 @@ export default function FeaturedSection() {
               <ContentCard
                 key={post.id}
                 title={post.title}
-                excerpt={post.excerpt || post.content?.slice(0, 100) || ''}
-                image={post.coverImage || post.images?.[0] || '/images/placeholder.svg'}
+                excerpt={post.excerpt || post.content?.slice(0, 100) || ""}
+                image={
+                  post.coverImage ||
+                  post.images?.[0] ||
+                  "/images/placeholder.svg"
+                }
                 slug={post.slug}
                 category={category}
                 createdAt={post.createdAt}
@@ -220,7 +205,8 @@ export default function FeaturedSection() {
           <div className="overflow-x-auto scrollbar-hide mb-8">
             <TabsList className="inline-flex w-full justify-start gap-2 h-auto p-1 bg-muted/30">
               {categories.map((category) => {
-                const hasContent = (postsByCategory[category.id] || []).length > 0;
+                const hasContent =
+                  (postsByCategory[category.id] || []).length > 0;
                 return (
                   <TabsTrigger
                     key={category.id}
@@ -242,7 +228,11 @@ export default function FeaturedSection() {
           </div>
 
           {categories.map((category) => (
-            <TabsContent key={category.id} value={category.id} className="focus-visible:outline-none">
+            <TabsContent
+              key={category.id}
+              value={category.id}
+              className="focus-visible:outline-none"
+            >
               <TabContent
                 posts={postsByCategory[category.id] || []}
                 category={category.id}

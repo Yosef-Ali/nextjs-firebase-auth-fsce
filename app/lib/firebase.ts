@@ -1,5 +1,15 @@
 import { initializeApp, getApp, getApps } from 'firebase/app';
-import { getFirestore, enableIndexedDbPersistence, connectFirestoreEmulator, Timestamp, disableNetwork, enableNetwork } from 'firebase/firestore';
+import {
+  getFirestore,
+  enableIndexedDbPersistence,
+  connectFirestoreEmulator,
+  Timestamp,
+  disableNetwork,
+  enableNetwork,
+  setLogLevel,
+  CACHE_SIZE_UNLIMITED,
+  initializeFirestore
+} from 'firebase/firestore';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 
@@ -14,7 +24,19 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-export const db = getFirestore(app);
+
+// Set Firestore log level to reduce noise
+if (process.env.NODE_ENV !== 'production') {
+  setLogLevel('error'); // Only show errors, not warnings
+}
+
+// Initialize Firestore with settings to prevent duplicate listener issues
+export const db = initializeFirestore(app, {
+  cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+  experimentalForceLongPolling: true, // Use long polling instead of WebSockets
+  ignoreUndefinedProperties: true // Ignore undefined fields
+});
+
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 
@@ -27,14 +49,17 @@ export const toTimestamp = (date: Date | undefined): Timestamp | undefined => {
   return date ? Timestamp.fromDate(date) : undefined;
 };
 
+// Global variable to track if we've already set up listeners
+let networkListenersInitialized = false;
+
 // Enable offline persistence with better error handling
 if (typeof window !== 'undefined') {
   // Check network status first
   const isOnline = navigator.onLine;
 
-  // Configure persistence
+  // Configure persistence - only once
   enableIndexedDbPersistence(db, {
-    forceOwnership: false
+    forceOwnership: true // Force ownership to prevent multiple tab issues
   }).catch((err) => {
     if (err.code === 'failed-precondition') {
       console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
@@ -45,22 +70,49 @@ if (typeof window !== 'undefined') {
     }
   });
 
-  // Set up network status listeners
-  window.addEventListener('online', () => {
-    console.log('App is online. Enabling Firestore network');
-    enableNetwork(db).catch(err => console.error('Error enabling network:', err));
-  });
+  // Set up network status listeners - only once
+  if (!networkListenersInitialized) {
+    networkListenersInitialized = true;
 
-  window.addEventListener('offline', () => {
-    console.log('App is offline. Disabling Firestore network');
-    disableNetwork(db).catch(err => console.error('Error disabling network:', err));
-  });
+    // Handle online status
+    window.addEventListener('online', () => {
+      console.log('App is online. Enabling Firestore network');
+      enableNetwork(db).catch(err => console.error('Error enabling network:', err));
 
-  // If offline at startup, disable network to prevent connection attempts
-  if (!isOnline) {
-    console.log('App started offline. Disabling Firestore network');
-    disableNetwork(db).catch(err => console.error('Error disabling network at startup:', err));
+      // Reload the page to reset all listeners
+      window.location.reload();
+    });
+
+    // Handle offline status
+    window.addEventListener('offline', () => {
+      console.log('App is offline. Disabling Firestore network');
+      disableNetwork(db).catch(err => console.error('Error disabling network:', err));
+    });
+
+    // If offline at startup, disable network to prevent connection attempts
+    if (!isOnline) {
+      console.log('App started offline. Disabling Firestore network');
+      disableNetwork(db).catch(err => console.error('Error disabling network at startup:', err));
+    }
   }
+
+  // Set up global error handler for Firestore errors
+  window.addEventListener('error', (event) => {
+    const errorMessage = event.message || '';
+
+    // Check if this is a Firestore 'already-exists' error
+    if (errorMessage.includes('already-exists') || errorMessage.includes('Target ID already exists')) {
+      console.warn('Detected Firestore listener conflict. Reloading page to reset listeners.');
+
+      // Prevent the error from showing in the console
+      event.preventDefault();
+
+      // Reload the page to reset all listeners
+      window.location.reload();
+
+      return false;
+    }
+  });
 }
 
 // Use emulator in development
