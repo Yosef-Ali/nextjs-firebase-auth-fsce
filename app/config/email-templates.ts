@@ -1,6 +1,6 @@
 export const emailTemplates = {
   actionUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-  
+
   // Template IDs for Firebase Email Templates
   templates: {
     userInvite: 'fsce-user-invitation',
@@ -41,7 +41,7 @@ export const emailTemplates = {
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
           <p style="color: #9ca3af; font-size: 12px; text-align: center;">
             FSCE.org Blog Administration Team<br>
-            <a href="https://fsce.org" style="color: #2563eb; text-decoration: none;">www.fsce.org</a>
+            <a href="https://www.fsc-e.org" style="color: #2563eb; text-decoration: none;">www.fsc-e.org</a>
           </p>
         </div>
       `
@@ -78,7 +78,7 @@ export const emailTemplates = {
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
           <p style="color: #9ca3af; font-size: 12px; text-align: center;">
             FSCE.org Blog Administration Team<br>
-            <a href="https://fsce.org" style="color: #2563eb; text-decoration: none;">www.fsce.org</a>
+            <a href="https://www.fsc-e.org" style="color: #2563eb; text-decoration: none;">www.fsc-e.org</a>
           </p>
         </div>
       `
@@ -121,13 +121,13 @@ export const emailTemplates = {
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
           <p style="color: #9ca3af; font-size: 12px; text-align: center;">
             FSCE.org Blog Administration Team<br>
-            <a href="https://fsce.org" style="color: #2563eb; text-decoration: none;">www.fsce.org</a>
+            <a href="https://www.fsc-e.org" style="color: #2563eb; text-decoration: none;">www.fsc-e.org</a>
           </p>
         </div>
       `
     }
   },
-  
+
   // Dynamic link settings
   dynamicLinks: {
     domainUriPrefix: process.env.NEXT_PUBLIC_FIREBASE_DYNAMIC_LINKS_PREFIX,

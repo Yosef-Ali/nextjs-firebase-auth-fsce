@@ -1,11 +1,17 @@
-"use client"
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
+import React from "react";
+import Link from "next/link";
 
-import { FacebookIcon, TwitterIcon, HomeIcon, EmailIcon, TelephoneIcon, FaxIcon } from '@/app/icons';
-import { Logo } from './Logo';
-
+import {
+  FacebookIcon,
+  TwitterIcon,
+  HomeIcon,
+  EmailIcon,
+  TelephoneIcon,
+  FaxIcon,
+} from "@/app/icons";
+import { Logo } from "./Logo";
 
 // Custom X icon component
 const XIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -28,7 +34,7 @@ const XIcon = (props: React.SVGProps<SVGSVGElement>) => (
 interface FooterNavItem {
   name: string;
   href?: string;
-  icon?: (props: React.ComponentProps<'svg'>) => JSX.Element;
+  icon?: (props: React.ComponentProps<"svg">) => JSX.Element;
 }
 
 interface FooterNavSection {
@@ -36,32 +42,30 @@ interface FooterNavSection {
   items: FooterNavItem[];
 }
 
-
-
 const Footer: React.FC = () => {
   const footerNavs: FooterNavSection[] = [
     {
       label: "Quick Links",
       items: [
         {
-          name: 'Home',
-          href: '/',
+          name: "Home",
+          href: "/",
         },
         {
-          name: 'Who We Are',
-          href: '/who-we-are',
+          name: "Who We Are",
+          href: "/who-we-are",
         },
         {
-          name: 'What We Do',
-          href: '/what-we-do',
+          name: "What We Do",
+          href: "/what-we-do",
         },
         {
-          name: 'Where We Work',
-          href: '/where-we-work',
+          name: "Where We Work",
+          href: "/where-we-work",
         },
         {
-          name: 'News & Events',
-          href: '/news',
+          name: "News & Events",
+          href: "/news",
         },
       ],
     },
@@ -69,45 +73,45 @@ const Footer: React.FC = () => {
       label: "Programs",
       items: [
         {
-          name: 'Child Protection',
-          href: '/what-we-do/child-protection',
+          name: "Child Protection",
+          href: "/what-we-do/child-protection",
         },
         {
-          name: 'Youth Empowerment',
-          href: '/what-we-do/youth-empowerment',
+          name: "Youth Empowerment",
+          href: "/what-we-do/youth-empowerment",
         },
         {
-          name: 'Advocacy',
-          href: '/what-we-do/advocacy',
+          name: "Advocacy",
+          href: "/what-we-do/advocacy",
         },
         {
-          name: 'Humanitarian Response',
-          href: '/what-we-do/humanitarian-response',
+          name: "Humanitarian Response",
+          href: "/what-we-do/humanitarian-response",
         },
-      ]
+      ],
     },
     {
       label: "Resources",
       items: [
         {
-          name: 'News Articles',
-          href: '/news',
+          name: "News Articles",
+          href: "/news",
         },
         {
-          name: 'Upcoming Events',
-          href: '/events',
+          name: "Upcoming Events",
+          href: "/events",
         },
         {
-          name: 'Reports & Publications',
-          href: '/resources',
+          name: "Reports & Publications",
+          href: "/resources",
         },
         {
-          name: 'Partner Organizations',
-          href: '/who-we-are/partners',
+          name: "Partner Organizations",
+          href: "/who-we-are/partners",
         },
         {
-          name: 'Board Members',
-          href: '/who-we-are/board-members',
+          name: "Board Members",
+          href: "/who-we-are/board-members",
         },
       ],
     },
@@ -115,31 +119,45 @@ const Footer: React.FC = () => {
       label: "Contact",
       items: [
         {
-          name: 'Addis Ababa, Ethiopia',
-          icon: HomeIcon as (props: React.ComponentProps<'svg'>) => JSX.Element,
+          name: "Addis Ababa, Ethiopia",
+          icon: HomeIcon as (props: React.ComponentProps<"svg">) => JSX.Element,
         },
         {
-          name: 'info@fsc-e.org',
-          icon: EmailIcon as (props: React.ComponentProps<'svg'>) => JSX.Element,
+          name: "meazi2008@gmail.com",
+          icon: EmailIcon as (
+            props: React.ComponentProps<"svg">
+          ) => JSX.Element,
         },
         {
-          name: '+ 251 115 534 722',
-          icon: TelephoneIcon as (props: React.ComponentProps<'svg'>) => JSX.Element,
+          name: "Tel: 251-111705024",
+          icon: TelephoneIcon as (
+            props: React.ComponentProps<"svg">
+          ) => JSX.Element,
         },
         {
-          name: '+ 251 115 534 469',
-          icon: FaxIcon as (props: React.ComponentProps<'svg'>) => JSX.Element,
+          name: "Tel: 251-118333927",
+          icon: TelephoneIcon as (
+            props: React.ComponentProps<"svg">
+          ) => JSX.Element,
         },
         {
-          name: '9562',
-          icon: EmailIcon as (props: React.ComponentProps<'svg'>) => JSX.Element,
+          name: "Fax: +251 111705234",
+          icon: FaxIcon as (props: React.ComponentProps<"svg">) => JSX.Element,
+        },
+        {
+          name: "www.fsc-e.org",
+          icon: EmailIcon as (
+            props: React.ComponentProps<"svg">
+          ) => JSX.Element,
         },
       ],
-    }
+    },
   ];
 
   const ContactSection = () => {
-    const { label, items } = footerNavs.find(section => section.label === 'Contact') || { label: '', items: [] };
+    const { label, items } = footerNavs.find(
+      (section) => section.label === "Contact"
+    ) || { label: "", items: [] };
     return (
       <div className="space-y-4">
         {items.map((item, index) => (
@@ -149,7 +167,9 @@ const Footer: React.FC = () => {
                 <item.icon />
               </span>
             )}
-            <span className="duration-150 hover:text-gray-400">{item.name}</span>
+            <span className="duration-150 hover:text-gray-400">
+              {item.name}
+            </span>
           </li>
         ))}
       </div>
@@ -167,10 +187,24 @@ const Footer: React.FC = () => {
             </h3>
           </div>
           <div className="flex-1 mt-6 md:mt-0">
-            <form onSubmit={(e) => e.preventDefault()} className="flex items-center gap-x-3 md:justify-end">
+            <form
+              onSubmit={(e) => e.preventDefault()}
+              className="flex items-center gap-x-3 md:justify-end"
+            >
               <div className="relative">
-                <svg className="w-6 h-6 text-gray-400 absolute left-3 inset-y-0 my-auto opacity-50" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                <svg
+                  className="w-6 h-6 text-gray-400 absolute left-3 inset-y-0 my-auto opacity-50"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
+                  />
                 </svg>
                 <input
                   type="email"
@@ -193,7 +227,7 @@ const Footer: React.FC = () => {
           {footerNavs.map((item, idx) => (
             <ul className="space-y-4" key={idx}>
               <h4 className="text-gray-200 font-semibold">{item.label}</h4>
-              {item.label === 'Contact' ? (
+              {item.label === "Contact" ? (
                 <ContactSection />
               ) : (
                 item.items.map((el, idx) => (
@@ -217,19 +251,32 @@ const Footer: React.FC = () => {
           ))}
         </div>
         <div className="mt-10 py-10 border-t border-gray-700 items-center justify-between sm:flex">
-          <p className="text-gray-300">© {new Date().getFullYear()} Forum on Sustainable Child Empowerment. All rights reserved.</p>
+          <p className="text-gray-300">
+            © {new Date().getFullYear()} Forum on Sustainable Child Empowerment.
+            All rights reserved.
+          </p>
           <div className="flex items-center gap-x-6 text-gray-400 mt-6 sm:mt-0">
-            <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+            <a
+              href="https://www.facebook.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Facebook"
+            >
               <FacebookIcon />
             </a>
-            <a href="https://www.x.com" target="_blank" rel="noopener noreferrer" aria-label="X (formerly Twitter)">
+            <a
+              href="https://www.x.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="X (formerly Twitter)"
+            >
               <XIcon className="w-5 h-5" />
             </a>
           </div>
         </div>
       </div>
     </footer>
-  )
-}
+  );
+};
 
-export default Footer
+export default Footer;

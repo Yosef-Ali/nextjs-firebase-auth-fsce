@@ -11,6 +11,7 @@ A modern web application built with Next.js 13+, Firebase, and TypeScript, featu
 - 🖼️ Media Library
 - 📱 Responsive Design
 - 🎨 Modern UI with shadcn/ui
+- 📧 Contact Form with EmailJS
 
 ## Getting Started
 
@@ -38,7 +39,7 @@ A modern web application built with Next.js 13+, Firebase, and TypeScript, featu
    cp .env.example .env.local
    ```
 
-4. Update the `.env.local` with your Firebase configuration.
+4. Update the `.env.local` with your Firebase configuration and email credentials (see [Node.js Email Setup](docs/nodejs-email-setup.md) for details).
 
 5. Run the development server:
    ```bash

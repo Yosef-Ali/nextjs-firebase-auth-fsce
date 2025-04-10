@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { Home, Mail, Phone, Instagram } from 'lucide-react';
-import Logo from '@/components/Logo';
-import MetaIcon from '@/components/icons/MetaIcon';
-import XIcon from '@/components/icons/XIcon';
+import React from "react";
+import Link from "next/link";
+import { Home, Mail, Phone, Instagram } from "lucide-react";
+import Logo from "@/components/Logo";
+import MetaIcon from "@/components/icons/MetaIcon";
+import XIcon from "@/components/icons/XIcon";
 
 interface FooterNavItem {
   name: string;
@@ -23,39 +23,57 @@ const Footer: React.FC = () => {
     {
       label: "Quick Links",
       items: [
-        { name: 'Home', href: '/' },
-        { name: 'Who We Are', href: '/who-we-are' },
-        { name: 'What We Do', href: '/what-we-do' },
-        { name: 'News', href: '/news' },
-        { name: 'Contact', href: '/contact' },
+        { name: "Home", href: "/" },
+        { name: "Who We Are", href: "/who-we-are" },
+        { name: "What We Do", href: "/what-we-do" },
+        { name: "News", href: "/news" },
+        { name: "Contact", href: "/contact" },
       ],
     },
     {
       label: "Programs",
       items: [
-        { name: 'Prevention & Promotion', href: '/what-we-do#prevention-promotion' },
-        { name: 'Protection', href: '/what-we-do#protection' },
-        { name: 'Rehabilitation', href: '/what-we-do#rehabilitation' },
-        { name: 'Resource Center', href: '/what-we-do#resource-center' },
+        {
+          name: "Prevention & Promotion",
+          href: "/what-we-do#prevention-promotion",
+        },
+        { name: "Protection", href: "/what-we-do#protection" },
+        { name: "Rehabilitation", href: "/what-we-do#rehabilitation" },
+        { name: "Resource Center", href: "/what-we-do#resource-center" },
       ],
     },
     {
       label: "Contact",
       items: [
         {
-          name: 'Addis Ababa, Ethiopia',
-          href: '#',
-          icon: Home
+          name: "Addis Ababa, Ethiopia",
+          href: "#",
+          icon: Home,
         },
         {
-          name: 'info@fsce.org',
-          href: 'mailto:info@fsce.org',
-          icon: Mail
+          name: "meazi2008@gmail.com",
+          href: "mailto:meazi2008@gmail.com",
+          icon: Mail,
         },
         {
-          name: '+251 11 551 2696',
-          href: 'tel:+251115512696',
-          icon: Phone
+          name: "Tel: 251-111705024",
+          href: "tel:+251111705024",
+          icon: Phone,
+        },
+        {
+          name: "Tel: 251-118333927",
+          href: "tel:+251118333927",
+          icon: Phone,
+        },
+        {
+          name: "Fax: +251 111705234",
+          href: "#",
+          icon: Phone,
+        },
+        {
+          name: "www.fsc-e.org",
+          href: "https://www.fsc-e.org",
+          icon: Mail,
         },
       ],
     },
@@ -85,7 +103,6 @@ const Footer: React.FC = () => {
               >
                 <XIcon className="h-5 w-5" />
               </Link>
-
             </div>
           </div>
           {footerNavs.map((section, idx) => (

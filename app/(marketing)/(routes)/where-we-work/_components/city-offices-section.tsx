@@ -1,20 +1,26 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AnimatedOfficeCard } from './animated-office-card';
+import React from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { AnimatedOfficeCard } from "./animated-office-card";
 
 const cityOffices = [
   {
     region: "Addis Ababa",
     city: "Addis Ababa",
     address: "Bole Sub-City, Woreda 03, Building No. 345",
-    contact: "+251 11 551 2696",
+    contact: "Tel: 251-111705024, 251-118333927\nFax: +251 111705234",
     beneficiaries: "Supporting over 5,000 children annually",
     programs: [
       "Child Protection",
       "Education Support",
       "Family Strengthening",
-      "Youth Empowerment"
-    ]
+      "Youth Empowerment",
+    ],
   },
   {
     region: "SNNPR",
@@ -26,9 +32,9 @@ const cityOffices = [
       "Youth Development",
       "Community Outreach",
       "Child Welfare",
-      "Education Programs"
-    ]
-  }
+      "Education Programs",
+    ],
+  },
 ];
 
 export default function CityOfficesSection() {
@@ -40,8 +46,9 @@ export default function CityOfficesSection() {
             City Offices
           </h1>
           <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto">
-            Our city offices are at the heart of Ethiopia's urban centers, providing crucial
-            support and services to children and families in metropolitan areas.
+            Our city offices are at the heart of Ethiopia's urban centers,
+            providing crucial support and services to children and families in
+            metropolitan areas.
           </p>
         </div>
       </section>
@@ -53,17 +60,25 @@ export default function CityOfficesSection() {
               <Card className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <CardTitle>Our Presence</CardTitle>
-                  <CardDescription>Key statistics about our city offices</CardDescription>
+                  <CardDescription>
+                    Key statistics about our city offices
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 rounded-lg bg-primary/5">
-                      <h3 className="text-3xl font-bold text-primary mb-2">3+</h3>
+                      <h3 className="text-3xl font-bold text-primary mb-2">
+                        3+
+                      </h3>
                       <p className="text-muted-foreground">City Offices</p>
                     </div>
                     <div className="p-4 rounded-lg bg-primary/5">
-                      <h3 className="text-3xl font-bold text-primary mb-2">9,500+</h3>
-                      <p className="text-muted-foreground">Children Supported</p>
+                      <h3 className="text-3xl font-bold text-primary mb-2">
+                        9,500+
+                      </h3>
+                      <p className="text-muted-foreground">
+                        Children Supported
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -72,7 +87,9 @@ export default function CityOfficesSection() {
           </div>
 
           <div className="mt-12">
-            <h2 className="text-3xl font-bold text-center mb-8">Our Office Locations</h2>
+            <h2 className="text-3xl font-bold text-center mb-8">
+              Our Office Locations
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {cityOffices.map((office) => (
                 <AnimatedOfficeCard key={office.city} office={office} />
