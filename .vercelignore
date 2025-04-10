@@ -1,0 +1,2 @@
+# Ignore scripts directory for TypeScript checking
+scripts/
