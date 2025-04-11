@@ -150,7 +150,7 @@ class PostsService {
 
           if (!isAchievement) return;
 
-          // Create a minimal post object with only the essential fields
+          // Create a minimal post object with all required fields
           const post: Post = {
             id: doc.id,
             title: data.title || 'Untitled',
@@ -160,8 +160,15 @@ class PostsService {
             coverImage: data.coverImage || '',
             published: true,
             sticky: Boolean(data.sticky),
-            createdAt: new Date(),
-            updatedAt: new Date()
+            images: data.images || [],
+            authorId: data.authorId || 'system',
+            authorEmail: data.authorEmail || 'system@fsce.org',
+            date: data.date || Timestamp.now(),
+            category: data.category || 'achievements',
+            featured: data.featured || false,
+            tags: data.tags || [],
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now()
           };
 
           // Add to results
@@ -207,10 +214,20 @@ class PostsService {
             title: doc.data().title || 'Untitled',
             slug: doc.data().slug || doc.id,
             content: doc.data().content || '',
+            excerpt: doc.data().excerpt || '',
+            coverImage: doc.data().coverImage || '',
+            sticky: doc.data().sticky || false,
             published: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          } as Post;
+            images: doc.data().images || [],
+            authorId: doc.data().authorId || 'system',
+            authorEmail: doc.data().authorEmail || 'system@fsce.org',
+            date: doc.data().date || Timestamp.now(),
+            category: doc.data().category || 'uncategorized',
+            featured: doc.data().featured || false,
+            tags: doc.data().tags || [],
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now()
+          };
         }
       });
 
@@ -291,6 +308,29 @@ class PostsService {
   async updatePost(id: string, post: Partial<Post>): Promise<boolean> {
     try {
       const postRef = doc(db, COLLECTION_NAME, id);
+      const postDoc = await getDoc(postRef);
+      const postData = postDoc.data();
+
+      // Check if post exists
+      if (!postDoc.exists() || !postData) {
+        throw new Error('Post not found');
+      }
+
+      // Check authorization - this was missing and causing the issue
+      // Allow editing if:
+      // 1. The current user is the post author
+      // 2. Post has no authorId (system-created)
+      // 3. Post's authorId is 'system'
+      const currentUserId = post.authorId;
+      const postAuthorId = postData.authorId;
+      const isSystemPost = !postAuthorId || postAuthorId === 'system';
+
+      // If it's not a system post and the current user is not the author, deny access
+      if (!isSystemPost && postAuthorId && currentUserId && postAuthorId !== currentUserId) {
+        console.error('Unauthorized edit attempt: current user', currentUserId, 'trying to edit post by', postAuthorId);
+        throw new Error('You do not have permission to edit this post');
+      }
+
       await updateDoc(postRef, {
         ...post,
         updatedAt: serverTimestamp()
