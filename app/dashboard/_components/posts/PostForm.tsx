@@ -168,10 +168,21 @@ export function PostForm({ post, initialData, categories, onSuccess }: PostFormP
                     if (updateError.message?.includes('Unauthorized') ||
                         updateError.message?.includes('permission') ||
                         updateError.message?.includes('trying to edit post by')) {
+
+                        // Extract specific information from the error for a more detailed message
+                        const errorMsg = updateError.message || '';
+                        let description = "You don't have permission to edit this post. Only the author or an admin can edit it.";
+
+                        // Check if the error contains specific user IDs
+                        if (errorMsg.includes('trying to edit post by')) {
+                            const ownerType = errorMsg.includes('admin') ? 'an admin' : 'another user';
+                            description = `Unauthorized edit attempt: You cannot edit content created by ${ownerType}. Please contact an administrator if you need changes to this post.`;
+                        }
+
                         toast({
                             id: 'unauthorized-edit',
-                            title: "Unauthorized",
-                            description: "You don't have permission to edit this post. Only the author or an admin can edit it.",
+                            title: "Access Denied",
+                            description: description,
                             variant: "destructive",
                         });
                     } else {
