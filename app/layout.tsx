@@ -10,7 +10,6 @@ import { useEffect, useState } from "react";
 import { getRedirectResult } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { NetworkStatus } from "@/components/NetworkStatus";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -74,7 +73,6 @@ export default function RootLayout({
           {children}
           <Toaster />
           <AuthRedirectHandler />
-          <NetworkStatus />
         </AuthProvider>
       </body>
     </html>
