@@ -1,10 +1,10 @@
-import { 
-  collection, 
-  getDocs, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
   DocumentData,
   QueryConstraint,
   WhereFilterOp,
@@ -27,10 +27,10 @@ export async function safeQuery(
   try {
     // Create a query with the provided constraints
     const q = query(collection(db, collectionName), ...constraints);
-    
+
     // Execute the query once (no listeners)
     const querySnapshot = await getDocs(q);
-    
+
     // Convert to array of documents
     return querySnapshot.docs.map(doc => ({
       id: doc.id,
@@ -58,33 +58,64 @@ export async function getPublishedDocuments(
     sortDirection?: 'asc' | 'desc';
   } = {}
 ): Promise<DocumentData[]> {
-  const constraints: QueryConstraint[] = [
-    where('published', '==', true)
-  ];
-  
-  // Add sorting if specified
-  if (options.sortBy) {
-    constraints.push(orderBy(options.sortBy, options.sortDirection || 'desc'));
+  // For free users: Use only a simple query without indexes
+  // Just get all documents and filter in memory
+
+  try {
+    // Import firestoreManager to prevent connection issues
+    const { firestoreManager } = await import('@/lib/firestore-manager');
+
+    // Reset connection to avoid Target ID conflicts
+    await firestoreManager.resetConnection();
+
+    // Simple query - no complex constraints that require indexes
+    const querySnapshot = await getDocs(collection(db, collectionName));
+
+    // Filter in memory instead of using complex where/orderBy queries
+    let results = querySnapshot.docs
+      .map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as DocumentData))
+      // Filter published items in memory
+      .filter(doc => doc.published === true);
+
+    // Filter by category in memory if needed
+    if (options.category) {
+      results = results.filter(doc => {
+        // Type assertion to avoid TypeScript errors
+        const typedDoc = doc as DocumentData;
+        return (
+          typedDoc.type === options.category ||
+          typedDoc.category === options.category ||
+          (typedDoc.category && typedDoc.category.id === options.category)
+        );
+      });
+    }
+
+    // Sort in memory
+    if (options.sortBy && options.sortBy.trim() !== '') {
+      results.sort((a, b) => {
+        // Type assertion to avoid TypeScript errors
+        const sortField = options.sortBy as string;
+        if (options.sortDirection === 'asc') {
+          return a[sortField] > b[sortField] ? 1 : -1;
+        } else {
+          return a[sortField] < b[sortField] ? 1 : -1;
+        }
+      });
+    }
+
+    // Apply limit in memory
+    if (options.limitCount && options.limitCount > 0) {
+      results = results.slice(0, options.limitCount);
+    }
+
+    return results;
+  } catch (error) {
+    console.error(`Error getting published documents from ${collectionName}:`, error);
+    return [];
   }
-  
-  // Add limit if specified
-  if (options.limitCount && options.limitCount > 0) {
-    constraints.push(limit(options.limitCount));
-  }
-  
-  // Execute the query
-  const results = await safeQuery(collectionName, constraints);
-  
-  // Filter by category in memory if needed
-  if (options.category) {
-    return results.filter(doc => 
-      doc.type === options.category || 
-      doc.category === options.category ||
-      (doc.category && doc.category.id === options.category)
-    );
-  }
-  
-  return results;
 }
 
 /**
@@ -102,7 +133,7 @@ export async function getDocumentById(
     const results = await safeQuery(collectionName, [
       where('__name__', '==', id)
     ]);
-    
+
     return results.length > 0 ? results[0] : null;
   } catch (error) {
     console.error(`Error getting document ${id} from ${collectionName}:`, error);
