@@ -143,12 +143,41 @@ export function PostForm({ post, initialData, categories, onSuccess }: PostFormP
             };
 
             if (post?.id) {
-                await postsService.updatePost(post.id, postData);
-                toast({
-                    id: 'post-update-success',
-                    title: "Success",
-                    description: "Post updated successfully",
-                });
+                // Check if current user is the author or admin
+                if (post.authorId && post.authorId !== user.uid && user.role?.toLowerCase() !== 'admin') {
+                    toast({
+                        id: 'unauthorized-edit',
+                        title: "Unauthorized",
+                        description: "You don't have permission to edit this post. Only the author or an admin can edit it.",
+                        variant: "destructive",
+                    });
+                    return;
+                }
+
+                try {
+                    const result = await postsService.updatePost(post.id, postData);
+                    toast({
+                        id: 'post-update-success',
+                        title: "Success",
+                        description: "Post updated successfully",
+                    });
+                    onSuccess?.();
+                    router.push('/dashboard/posts');
+                } catch (updateError: any) {
+                    // Check if it's an authorization error
+                    if (updateError.message?.includes('Unauthorized') ||
+                        updateError.message?.includes('permission') ||
+                        updateError.message?.includes('trying to edit post by')) {
+                        toast({
+                            id: 'unauthorized-edit',
+                            title: "Unauthorized",
+                            description: "You don't have permission to edit this post. Only the author or an admin can edit it.",
+                            variant: "destructive",
+                        });
+                    } else {
+                        throw updateError; // Re-throw to be caught by the outer catch
+                    }
+                }
             } else {
                 await postsService.createPost(postData);
                 toast({
@@ -156,10 +185,9 @@ export function PostForm({ post, initialData, categories, onSuccess }: PostFormP
                     title: "Success",
                     description: "Post created successfully",
                 });
+                onSuccess?.();
+                router.push('/dashboard/posts');
             }
-
-            onSuccess?.();
-            router.push('/dashboard/posts');
         } catch (error) {
             console.error('Error saving post:', error);
             toast({
