@@ -10,40 +10,74 @@ export function getCategoryId(category: Category | string): string {
   return typeof category === 'string' ? category : category.id;
 }
 
-export function ensureCategory(input: string | Category | undefined): Category {
+export function ensureCategory(input: string | Category | undefined | null): Category {
   const now = Timestamp.now();
 
-  if (!input) {
+  try {
+    // Handle null, undefined, or empty string
+    if (!input) {
+      return {
+        id: 'default',
+        name: 'Uncategorized',
+        slug: 'uncategorized',
+        type: 'post' as CategoryType,
+        featured: false,
+        createdAt: now,
+        updatedAt: now
+      };
+    }
+
+    // Handle string input
+    if (typeof input === 'string') {
+      return {
+        id: input || 'default',
+        name: input || 'Uncategorized',
+        slug: input ? input.toLowerCase().replace(/\s+/g, '-') : 'uncategorized',
+        type: 'post' as CategoryType,
+        featured: false,
+        createdAt: now,
+        updatedAt: now
+      };
+    }
+
+    // Validate that input is an object
+    if (typeof input !== 'object') {
+      console.warn('Invalid category input type:', typeof input);
+      return {
+        id: 'default',
+        name: 'Uncategorized',
+        slug: 'uncategorized',
+        type: 'post' as CategoryType,
+        featured: false,
+        createdAt: now,
+        updatedAt: now
+      };
+    }
+
+    // Handle case where input might be an object but not have all required properties
+    return {
+      id: input.id || 'default',
+      name: input.name || 'Uncategorized',
+      slug: input.slug || (input.name ? input.name.toLowerCase().replace(/\s+/g, '-') : 'uncategorized'),
+      type: input.type || 'post' as CategoryType,
+      featured: input.featured ?? false,
+      description: input.description || '',
+      createdAt: input.createdAt instanceof Timestamp ? input.createdAt : now,
+      updatedAt: input.updatedAt instanceof Timestamp ? input.updatedAt : now
+    };
+  } catch (error) {
+    console.error('Error in ensureCategory:', error, input);
+    // Return a default category in case of any error
     return {
       id: 'default',
       name: 'Uncategorized',
       slug: 'uncategorized',
-      type: 'post',
+      type: 'post' as CategoryType,
       featured: false,
       createdAt: now,
       updatedAt: now
     };
   }
-
-  if (typeof input === 'string') {
-    return {
-      id: input,
-      name: input,
-      slug: input.toLowerCase().replace(/\s+/g, '-'),
-      type: 'post',
-      featured: false,
-      createdAt: now,
-      updatedAt: now
-    };
-  }
-
-  return {
-    ...input,
-    featured: input.featured ?? false,
-    type: input.type || 'post',
-    createdAt: input.createdAt instanceof Timestamp ? input.createdAt : now,
-    updatedAt: input.updatedAt instanceof Timestamp ? input.updatedAt : now
-  };
 }
 
 export function isCategoryEqual(a: string | Category, b: string | Category): boolean {

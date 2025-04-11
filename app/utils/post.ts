@@ -5,7 +5,23 @@ import { ensureCategory } from './category';
 
 export function normalizePost(data: any, id?: string): Post {
     try {
+        if (!data) {
+            console.warn('Normalizing null or undefined post data');
+            throw new Error('Post data is null or undefined');
+        }
+
         const now = Timestamp.now();
+        let categoryValue;
+
+        try {
+            // Handle category field with extra care
+            categoryValue = data.category ? ensureCategory(data.category) : ensureCategory('uncategorized');
+        } catch (categoryError) {
+            console.error('Error processing category:', categoryError, data.category);
+            // Fallback to a string if object processing fails
+            categoryValue = typeof data.category === 'string' ? data.category : 'uncategorized';
+        }
+
         return {
             id: id || data?.id || '',
             title: data?.title || '',
@@ -20,7 +36,7 @@ export function normalizePost(data: any, id?: string): Post {
             authorId: data?.authorId || '',
             authorEmail: data?.authorEmail || '',
             date: toTimestamp(data?.date || now),
-            category: ensureCategory(data?.category),
+            category: categoryValue,
             featured: Boolean(data?.featured),
             status: data?.status || 'draft',
             tags: Array.isArray(data?.tags) ? data.tags : [],
@@ -45,7 +61,7 @@ export function normalizePost(data: any, id?: string): Post {
             authorId: data?.authorId || 'system',
             authorEmail: data?.authorEmail || 'system@example.com',
             date: now,
-            category: typeof data?.category === 'string' ? data.category : (data?.category?.id || 'uncategorized'),
+            category: 'uncategorized', // Simplify fallback to just a string
             featured: Boolean(data?.featured) || false,
             tags: Array.isArray(data?.tags) ? data.tags : [],
             status: data?.status || 'draft',
