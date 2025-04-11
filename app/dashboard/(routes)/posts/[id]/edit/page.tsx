@@ -33,7 +33,7 @@ export default function EditPostPage() {
   // Single effect to load both post and categories
   useEffect(() => {
     const loadData = async () => {
-      if (!id) return;
+      if (!id || !user) return;
 
       try {
         // Load both post and categories concurrently for better performance
@@ -69,6 +69,27 @@ export default function EditPostPage() {
               post.category = category;
             }
           }
+
+          // Check authorization based on post ownership and user role
+          // Users can edit their own posts
+          // Users with admin role can edit any post (full privileges)
+          const isPostOwner = post.authorId === user.uid;
+          const isAdmin = user.role?.toLowerCase() === "admin";
+
+          if (!isPostOwner && !isAdmin) {
+            safeToast(toast, {
+              title: "Unauthorized",
+              description: `You don't have permission to edit this post. Only the author or an admin can edit it.`,
+              variant: "destructive",
+            });
+
+            // Redirect to posts page after showing the message
+            setTimeout(() => {
+              router.push('/dashboard/posts');
+            }, 2000);
+
+            return;
+          }
         }
 
         setData({ post, categories });
@@ -87,10 +108,18 @@ export default function EditPostPage() {
     };
 
     // Only load data if user authentication is completed
-    if (!authLoading) {
+    if (!authLoading && user) {
       loadData();
+    } else if (!authLoading && !user) {
+      // Handle case where authentication is complete but no user is logged in
+      safeToast(toast, {
+        title: "Authentication Required",
+        description: "Please sign in to edit posts.",
+        variant: "destructive",
+      });
+      router.push('/sign-in');
     }
-  }, [id, toast, authLoading]);
+  }, [id, toast, authLoading, user, router]);
 
 
   if (isLoading) {
