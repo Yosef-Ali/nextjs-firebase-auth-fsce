@@ -1,4 +1,5 @@
 import { db } from "@/lib/firebase";
+import { firestoreManager } from "@/lib/firestore-manager";
 import { User, UserRole, UserStatus, UserMetadata } from "../../types/user";
 import { convertToAppUser } from "../../utils/user-utils";
 import {
@@ -346,6 +347,9 @@ class UserCoreService {
     }
 
     try {
+      // Reset Firestore connection to clear any existing target IDs before making queries
+      await firestoreManager.resetConnection();
+
       const userRef = this.getUserRef(firebaseUser.uid);
       const userDoc = await getDoc(userRef);
       const now = Date.now();

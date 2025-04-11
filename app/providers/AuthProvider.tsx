@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, onSnapshot, getDoc } from "firebase/firestore";
+import { listenerManager } from "@/app/utils/listener-manager";
 import {
   GoogleAuthProvider,
   signInWithEmailAndPassword,
@@ -69,6 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    // Register the auth state listener with our listener manager
     const unsubAuth = onAuthStateChanged(auth, (user) => {
       setUser(user);
       if (!user) {
@@ -77,17 +79,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    return () => unsubAuth();
+    // Register with listener manager
+    const managedUnsubscribe = listenerManager.registerListener(
+      "auth_state_listener",
+      unsubAuth
+    );
+
+    return () => managedUnsubscribe();
   }, []);
 
   useEffect(() => {
-    let unsubDoc: any;
     let isMounted = true;
 
     const fetchUserData = async () => {
       if (!user?.uid) return;
 
       try {
+        // Import firestoreManager at the top of the file
+        const { firestoreManager } = await import('@/lib/firestore-manager');
+
+        // Reset Firestore connection to clear any existing target IDs
+        await firestoreManager.resetConnection();
+
         // Use getDoc instead of onSnapshot to avoid listener issues
         const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
@@ -111,9 +124,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       isMounted = false;
-      if (unsubDoc) {
-        unsubDoc();
-      }
     };
   }, [user]);
 

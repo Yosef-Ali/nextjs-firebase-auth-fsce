@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false, // Temporarily disable for testing Firebase issues
   typescript: {
     ignoreBuildErrors: true,
   },

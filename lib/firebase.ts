@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore'; // Revert imports
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -15,8 +15,8 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-// Initialize Firestore without persistence
-const db = getFirestore(app);
+// Initialize Firestore (reverting to default persistence)
+const db = getFirestore(app); // Revert to standard initialization
 const auth = getAuth(app);
 const storage = getStorage(app);
 

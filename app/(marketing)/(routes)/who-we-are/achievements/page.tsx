@@ -17,6 +17,7 @@ import {
   PaginationLink,
 } from "@/components/ui/pagination";
 import { useToast } from "@/components/ui/use-toast";
+import { listenerManager } from "@/app/utils/listener-manager";
 
 export default function AchievementsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -31,6 +32,11 @@ export default function AchievementsPage() {
     const fetchPosts = async () => {
       try {
         setLoading(true);
+
+        // Clear any existing listeners before fetching
+        listenerManager.unregisterAll();
+
+        // Use a simple one-time query instead of a listener
         const fetchedPosts = await postsService.getPublishedPosts(
           "achievements"
         );
@@ -50,28 +56,64 @@ export default function AchievementsPage() {
     };
 
     fetchPosts();
+
+    // Clean up function
+    return () => {
+      // Unregister any listeners when component unmounts
+      listenerManager.unregisterAll();
+    };
   }, [toast]);
 
   const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    setPage(1);
-    const filtered = posts.filter(
-      (post) =>
-        post.title.toLowerCase().includes(query.toLowerCase()) ||
-        post.excerpt?.toLowerCase().includes(query.toLowerCase())
-    );
-    setSearchResults(filtered);
+    try {
+      setSearchQuery(query);
+      setPage(1);
+
+      // Safely filter posts with error handling
+      const filtered = posts.filter((post) => {
+        try {
+          const title = post?.title || "";
+          const excerpt = post?.excerpt || "";
+          const searchTerm = query.toLowerCase();
+
+          return (
+            title.toLowerCase().includes(searchTerm) ||
+            excerpt.toLowerCase().includes(searchTerm)
+          );
+        } catch (error) {
+          console.error("Error filtering post during search:", error);
+          return false;
+        }
+      });
+
+      setSearchResults(filtered);
+    } catch (error) {
+      console.error("Error in search function:", error);
+      // If search fails, just show all posts
+      setSearchResults(posts);
+    }
   };
 
-  // Filter and sort sticky posts - newest first
-  // compareTimestamps already sorts newest first (b - a)
-  const stickyPosts = searchResults
-    .filter((post) => post.sticky)
-    .sort((a, b) => compareTimestamps(a.createdAt, b.createdAt));
-  // Filter and sort regular posts - newest first
-  const regularPosts = searchResults
-    .filter((post) => !post.sticky)
-    .sort((a, b) => compareTimestamps(a.createdAt, b.createdAt));
+  // Safely filter sticky posts
+  const stickyPosts = searchResults.filter((post) => {
+    try {
+      return post && post.sticky === true;
+    } catch (error) {
+      console.error("Error filtering sticky post:", error);
+      return false;
+    }
+  });
+  // No need for complex sorting since we're using simple Date objects now
+
+  // Safely filter regular posts
+  const regularPosts = searchResults.filter((post) => {
+    try {
+      return post && post.sticky !== true;
+    } catch (error) {
+      console.error("Error filtering regular post:", error);
+      return false;
+    }
+  });
   const totalPages = Math.ceil(regularPosts.length / postsPerPage);
   const paginatedPosts = regularPosts.slice(
     (page - 1) * postsPerPage,

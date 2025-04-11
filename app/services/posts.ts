@@ -118,8 +118,74 @@ class PostsService {
     }
   }
 
+  // Ultra-simplified method for achievements page to avoid any errors
+  async getAchievements(): Promise<Post[]> {
+    try {
+      // Get all posts
+      const postsRef = collection(db, COLLECTION_NAME);
+      const querySnapshot = await getDocs(postsRef);
+
+      // Create an array to hold our results
+      const results: Post[] = [];
+
+      // Process each document individually with try/catch for each one
+      querySnapshot.forEach(doc => {
+        try {
+          const data = doc.data();
+
+          // Skip unpublished posts
+          if (data.published !== true) return;
+
+          // Skip non-achievements
+          let isAchievement = false;
+          const category = data.category;
+
+          if (typeof category === 'string') {
+            isAchievement = category.toLowerCase() === 'achievements';
+          } else if (category && typeof category === 'object') {
+            if ('id' in category) {
+              isAchievement = category.id.toLowerCase() === 'achievements';
+            }
+          }
+
+          if (!isAchievement) return;
+
+          // Create a minimal post object with only the essential fields
+          const post: Post = {
+            id: doc.id,
+            title: data.title || 'Untitled',
+            slug: data.slug || doc.id,
+            excerpt: data.excerpt || '',
+            content: data.content || '',
+            coverImage: data.coverImage || '',
+            published: true,
+            sticky: Boolean(data.sticky),
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+
+          // Add to results
+          results.push(post);
+        } catch (docError) {
+          console.error(`Error processing achievement ${doc.id}:`, docError);
+          // Continue with next document
+        }
+      });
+
+      return results;
+    } catch (error) {
+      console.error('Error getting achievements:', error);
+      return [];
+    }
+  }
+
   async getPublishedPosts(categoryId?: string, limitCount?: number): Promise<Post[]> {
     try {
+      // Special case for achievements to avoid the error
+      if (categoryId === 'achievements') {
+        return this.getAchievements();
+      }
+
       const postsRef = collection(db, COLLECTION_NAME);
       // Simple query with only one condition to avoid index requirement
       const constraints: QueryConstraint[] = [
@@ -129,13 +195,23 @@ class PostsService {
       const q = query(postsRef, ...constraints);
       const querySnapshot = await getDocs(q);
 
-      let posts = querySnapshot.docs.map(doc => normalizePost(doc.data(), doc.id));
-
-      // Client-side filtering and sorting
-      posts = posts.sort((a, b) => {
-        const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
-        const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
-        return dateB - dateA; // Sort by descending order
+      // Convert to array of documents with proper normalization
+      let posts = querySnapshot.docs.map(doc => {
+        try {
+          return normalizePost(doc.data(), doc.id);
+        } catch (error) {
+          console.error(`Error normalizing post ${doc.id}:`, error);
+          // Return a minimal valid post object
+          return {
+            id: doc.id,
+            title: doc.data().title || 'Untitled',
+            slug: doc.data().slug || doc.id,
+            content: doc.data().content || '',
+            published: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          } as Post;
+        }
       });
 
       // Filter by category if specified

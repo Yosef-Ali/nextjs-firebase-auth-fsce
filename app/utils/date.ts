@@ -3,12 +3,23 @@ import { format } from 'date-fns';
 
 // Convert any date-like value to a Firebase Timestamp
 export function toTimestamp(date: Date | number | Timestamp | any): Timestamp {
-    if (!date) return Timestamp.now();
-    if (date instanceof Timestamp) return date;
-    if (typeof date === 'number') return Timestamp.fromMillis(date);
-    if (date instanceof Date) return Timestamp.fromDate(date);
-    if (date?.toDate instanceof Function) return Timestamp.fromDate(date.toDate());
-    return Timestamp.now();
+    try {
+        if (!date) return Timestamp.now();
+        if (date instanceof Timestamp) return date;
+        if (typeof date === 'number') return Timestamp.fromMillis(date);
+        if (date instanceof Date) return Timestamp.fromDate(date);
+        if (date?.toDate instanceof Function) return Timestamp.fromDate(date.toDate());
+        if (typeof date === 'string') {
+            const parsedDate = new Date(date);
+            if (!isNaN(parsedDate.getTime())) {
+                return Timestamp.fromDate(parsedDate);
+            }
+        }
+        return Timestamp.now();
+    } catch (error) {
+        console.error('Error converting to timestamp:', error, date);
+        return Timestamp.now();
+    }
 }
 
 // Format a date using a provided format string
@@ -30,10 +41,23 @@ export const formatPublishDate = (date: Date | number): string => {
 };
 
 // Compare two timestamps for sorting (newer first)
-export const compareTimestamps = (a: Timestamp | Date | number, b: Timestamp | Date | number): number => {
-    const aTime = a instanceof Timestamp ? a.toMillis() : new Date(a).getTime();
-    const bTime = b instanceof Timestamp ? b.toMillis() : new Date(b).getTime();
-    return bTime - aTime;
+export const compareTimestamps = (a: Timestamp | Date | number | any, b: Timestamp | Date | number | any): number => {
+    try {
+        // Convert timestamps to milliseconds for comparison
+        const getTimeValue = (timestamp: any): number => {
+            if (!timestamp) return 0;
+            if (timestamp instanceof Timestamp) return timestamp.toMillis();
+            if (timestamp instanceof Date) return timestamp.getTime();
+            if (timestamp && typeof timestamp.toDate === 'function') return timestamp.toDate().getTime();
+            if (typeof timestamp === 'number') return timestamp;
+            return 0;
+        };
+
+        return getTimeValue(b) - getTimeValue(a); // Sort by descending order (newer first)
+    } catch (error) {
+        console.error('Error comparing timestamps:', error);
+        return 0;
+    }
 };
 
 // Convert to Date (handles Timestamp objects)
