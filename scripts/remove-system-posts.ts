@@ -6,27 +6,39 @@ import * as dotenv from 'dotenv';
 // Load environment variables from .env.local file
 dotenv.config({ path: '.env.local' });
 
-// Initialize Firebase Admin using environment variables
+// Initialize Firebase Admin using service account file
 try {
   if (!admin.apps.length) {
-    // Check if required environment variables are set
-    const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-    const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    // First try to use service account file
+    try {
+      // Using the service account file path directly
+      const serviceAccount = require('../fsce-2024-firebase-adminsdk-hvhpp-4f942b32f6.json');
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+      });
+      console.log('Successfully initialized Firebase Admin with service account file');
+    } catch (fileError) {
+      console.log('Could not load service account file, falling back to environment variables...');
 
-    if (!projectId || !clientEmail || !privateKey) {
-      console.error('Missing Firebase Admin environment variables.');
-      console.log('Make sure FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL, and FIREBASE_ADMIN_PRIVATE_KEY are set in .env.local');
-      process.exit(1);
+      // Fallback to environment variables
+      const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
+      const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
+      const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+      if (!projectId || !clientEmail || !privateKey) {
+        console.error('Missing Firebase Admin environment variables.');
+        console.log('Make sure FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL, and FIREBASE_ADMIN_PRIVATE_KEY are set in .env.local');
+        process.exit(1);
+      }
+
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId,
+          clientEmail,
+          privateKey
+        })
+      });
     }
-
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId,
-        clientEmail,
-        privateKey
-      })
-    });
   }
 } catch (error) {
   console.error('Error initializing Firebase Admin:', error);
