@@ -34,7 +34,7 @@ try {
 }
 
 const db = getFirestore();
-const EMAIL_TO_FIND = 'dev.yosefali@gmail.com';
+const EMAIL_TO_FIND = 'admin@fsce.org';
 
 // Create readline interface for user input
 const rl = readline.createInterface({
@@ -116,9 +116,9 @@ async function findSystemPosts() {
           ...doc.data()
         }));
 
-        // Filter for posts without authorEmail
+        // Filter for posts with admin@fsce.org email
         const filteredPosts = batchPosts.filter(post => {
-          return !post.authorEmail || post.authorEmail === '' || post.authorEmail === null || post.authorEmail === undefined;
+          return post.authorEmail === EMAIL_TO_FIND;
         });
 
         allPosts = [...allPosts, ...filteredPosts];
