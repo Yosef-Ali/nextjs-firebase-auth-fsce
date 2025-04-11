@@ -60,7 +60,20 @@ export default function EditPostPage() {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          setPost(normalizePost({ id: docSnap.id, ...docSnap.data() }));
+          try {
+            const postData = docSnap.data();
+            // Handle field normalization safely to prevent missing field errors
+            const normalizedPost = normalizePost(postData, docSnap.id);
+            setPost(normalizedPost);
+          } catch (normalizeError) {
+            console.error("Error normalizing post data:", normalizeError);
+            toast({
+              title: "Error",
+              description: "Error processing post data",
+              variant: "destructive"
+            });
+            router.push('/dashboard/posts');
+          }
         } else {
           toast({
             title: "Error",
