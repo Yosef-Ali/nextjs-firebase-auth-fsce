@@ -1,6 +1,8 @@
+import { User } from 'firebase/auth'; // Import User type
+import { authorization } from '@/lib/authorization';
 import { doc, collection, getDocs, query, where, updateDoc, Timestamp } from 'firebase/firestore';
 import { Category } from '@/app/types/category';
-import { Event, Post } from '@/app/types/post';
+import { Event, Post, BasePost, NewsPost } from '@/app/types/post';
 import { db } from '@/lib/firebase';
 import { toTimestamp, compareTimestamps, toDate } from '@/app/utils/date';
 import { optimizedQuery } from '@/app/utils/query-helpers';
@@ -41,13 +43,16 @@ export function sortPosts(posts: Post[]): Post[] {
 // Helper to normalize post data
 export function normalizePost(data: any, id?: string): Post {
   const now = Timestamp.now();
-  const post = {
+  // Ensure category is always normalized to a Category object
+  const normalizedCategory = normalizeCategory(data?.category);
+
+  const post: BasePost = {
     id: id || data.id || '',
     title: data?.title || '',
     slug: data?.slug || '',
     excerpt: data?.excerpt || '',
     content: data?.content || '',
-    category: normalizeCategory(data?.category),
+    category: normalizedCategory, // Always assign the Category object
     published: Boolean(data?.published),
     authorId: data?.authorId || '',
     authorEmail: data?.authorEmail || '',
@@ -68,6 +73,15 @@ export function normalizePost(data: any, id?: string): Post {
       time: data?.time || '',
       location: data?.location || ''
     } as Event;
+  }
+
+  // Add check for NewsPost properties if they exist
+  if ('source' in data || 'sourceUrl' in data) {
+    return {
+      ...post,
+      source: data?.source || '',
+      sourceUrl: data?.sourceUrl || ''
+    } as NewsPost;
   }
 
   return post;
@@ -108,37 +122,45 @@ function normalizeCategory(category: string | Category | undefined): Category {
   };
 }
 
-export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
+export async function getPosts(
+  options: GetPostsOptions = {},
+  currentUser: User | null = null // Accept currentUser as argument
+): Promise<Post[]> {
   try {
-    console.log('Getting posts with options:', options);
+    const isAdmin = await authorization.isAdmin(currentUser); // Add await
+
+    console.log('Getting posts with options:', options, 'Is Admin:', isAdmin);
     const postsRef = collection(db, 'posts');
 
-    // Get all posts first
     const querySnapshot = await getDocs(postsRef);
-    console.log('Total documents:', querySnapshot.size);
+    console.log('Total documents fetched:', querySnapshot.size);
 
-    // Then filter in memory
     let posts = querySnapshot.docs.map(doc => normalizePost(doc.data(), doc.id));
 
-    // Apply filters in memory
-    if (options.published !== undefined) {
-      posts = posts.filter(post => post.published === options.published);
+    // Only filter by 'published' if the user is NOT an admin OR if the 'published' option is explicitly provided
+    if (!isAdmin || options.published !== undefined) {
+      const filterPublished = options.published === undefined ? true : options.published; // Default to published=true for non-admins
+      posts = posts.filter(post => post.published === filterPublished);
+      console.log(`Filtered by published: ${filterPublished}. Posts remaining: ${posts.length}`);
+    } else {
+      console.log('Admin user detected, skipping published filter unless explicitly requested.');
     }
 
     if (options.category) {
       posts = posts.filter(post => {
         const searchCategory = options.category?.toLowerCase();
-        const categoryId = typeof post.category === 'string'
-          ? post.category.toLowerCase()
-          : post.category.id.toLowerCase();
+        // Access id safely from the Category object (which is guaranteed by normalizePost)
+        const categoryId = (post.category as Category)?.id?.toLowerCase() || '';
         return categoryId === searchCategory;
       });
+      console.log(`Filtered by category: ${options.category}. Posts remaining: ${posts.length}`);
     }
 
     if (options.tag) {
       posts = posts.filter(post =>
         post.tags?.some(tag => tag.toLowerCase() === options.tag?.toLowerCase())
       );
+      console.log(`Filtered by tag: ${options.tag}. Posts remaining: ${posts.length}`);
     }
 
     posts = sortPosts(posts);
@@ -176,7 +198,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
   }
 }
 
-// Get published posts
+// Get published posts (no change needed, already filters by published: true)
 export async function getPublishedPosts(): Promise<Post[]> {
   try {
     // Use the optimized query helper to avoid complex indexes
@@ -194,75 +216,59 @@ export async function getPublishedPosts(): Promise<Post[]> {
   }
 }
 
-export async function getRecentPosts(count: number = 3): Promise<Post[]> {
+export async function getRecentPosts(count: number = 3, currentUser: User | null = null): Promise<Post[]> {
   console.log('Getting recent posts, count:', count);
-  const posts = await getPosts({
-    limit: count,
-    published: true
-  });
+  // Pass currentUser to getPosts
+  const posts = await getPosts({ limit: count, published: true }, currentUser);
   console.log('Recent posts retrieved:', posts.length);
   return posts;
 }
 
-export async function getPostsByCategory(category: string): Promise<Post[]> {
+export async function getPostsByCategory(category: string, currentUser: User | null = null): Promise<Post[]> {
   console.log('Getting posts by category:', category);
-  const posts = await getPosts({
-    category,
-    published: true
-  });
+  // Pass currentUser to getPosts
+  const posts = await getPosts({ category, published: true }, currentUser);
   console.log(`Retrieved ${posts.length} posts for category:`, category);
   return posts;
 }
 
-export async function getPostsByTag(tag: string): Promise<Post[]> {
+export async function getPostsByTag(tag: string, currentUser: User | null = null): Promise<Post[]> {
   console.log('Getting posts by tag:', tag);
-  return getPosts({ tag, published: true });
+  // Pass currentUser to getPosts
+  return getPosts({ tag, published: true }, currentUser);
 }
 
 // Update post sticky status
-export async function updatePostSticky(postId: string, sticky: boolean): Promise<void> {
+export async function updatePostSticky(
+  postId: string,
+  sticky: boolean,
+  currentUser: User | null // Accept currentUser as argument
+): Promise<void> {
+
+  // Authorization Check: Only admins/editors should update sticky status
+  // Add await to the authorization check
+  if (!(await authorization.canEditPost(currentUser))) {
+    console.error(`User ${currentUser?.uid} unauthorized to update sticky status for post ${postId}`);
+    throw new Error('Unauthorized: You do not have permission to update sticky status.');
+  }
+
   const postRef = doc(db, 'posts', postId);
   await updateDoc(postRef, {
     sticky,
     updatedAt: Timestamp.now()
   });
+  console.log(`Post ${postId} sticky status updated to ${sticky} by user ${currentUser?.uid}`);
 }
 
 export const postsService = {
-  async getPostsByCategory(category: string, limit?: number): Promise<Post[]> {
+  async getPostsByCategory(category: string, limit?: number, currentUser: User | null = null): Promise<Post[]> {
     try {
       console.log('Service: Getting posts by category:', category);
-      const postsRef = collection(db, COLLECTION_NAME);
-      let posts: Post[] = [];
+      // Assuming getPosts is the primary fetch mechanism
+      let posts = await getPosts({ category, published: true }, currentUser); // Pass currentUser
 
-      // Special cases for specific categories
-      if (category.toLowerCase() === 'child-protection') {
-        // Use optimized query to avoid complex indexes
-        const results = await optimizedQuery(COLLECTION_NAME, {
-          published: true,
-          categoryId: 'RMglo9PIj6wNdQNSFcuA',
-          sortBy: 'createdAt',
-          sortDirection: 'desc'
-        });
-        posts = posts.concat(results.map(doc => normalizePost(doc)));
-      }
-
-      // Remove duplicates by ID
-      const uniquePosts = Array.from(
-        new Map(posts.map(post => [post.id, {
-          ...post,
-          category: normalizeCategory(post.category)
-        }])).values()
-      );
-
-      // Sort by creation date (newest first) and apply limit if specified
-      const sortedPosts = uniquePosts.sort((a, b) => {
-        const dateA = typeof a.createdAt === 'number' ? a.createdAt : new Date().getTime();
-        const dateB = typeof b.createdAt === 'number' ? b.createdAt : new Date().getTime();
-        return dateB - dateA;
-      });
-
-      return limit ? sortedPosts.slice(0, limit) : sortedPosts;
+      // Apply limit after fetching (if needed, or adjust getPosts call)
+      return limit ? posts.slice(0, limit) : posts;
     } catch (error) {
       console.error('Error getting posts by category:', error);
       return [];
@@ -271,10 +277,9 @@ export const postsService = {
 
   filterPostsByCategory(posts: Post[], searchCategory: string): Post[] {
     return posts.filter(post => {
-      const categoryId = typeof post.category === 'string'
-        ? post.category
-        : post.category.id;
-      return categoryId.toLowerCase() === searchCategory.toLowerCase();
+      // Access id safely from the Category object (guaranteed by normalizePost)
+      const categoryId = (post.category as Category)?.id?.toLowerCase() || '';
+      return categoryId === searchCategory.toLowerCase();
     });
   }
 }

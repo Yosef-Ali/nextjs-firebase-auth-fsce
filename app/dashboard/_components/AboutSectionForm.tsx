@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
@@ -11,8 +11,8 @@ import { useAuth } from '@/app/providers/AuthProvider';
 import { AppUser } from '@/app/types/user';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
-import { Authorization } from '@/app/lib/authorization';
-import { UserRole } from '@/app/types/user';
+import { Authorization, authorization } from '@/lib/authorization'; // Import both class and instance
+import { UserRole } from '@/lib/authorization';
 import { User } from 'firebase/auth';
 import { User as AppUserType } from '@/app/types/user';
 
@@ -36,49 +36,55 @@ export default function AboutSectionForm({
   const [content, setContent] = useState(initialData?.content || '');
   const { user, loading: authLoading } = useAuth() as { user: AppUser | null; loading: boolean };
 
-  // If authentication is still loading, show a loading indicator
-  if (authLoading) {
+  // State for authorization results
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [isAdminUser, setIsAdminUser] = useState<boolean | null>(null);
+
+  // Perform authorization check asynchronously
+  useEffect(() => {
+    const checkAuthorization = async () => {
+      if (!authLoading) {
+        // Construct the Firebase User object expected by the Authorization class
+        // This might need adjustment based on your actual AppUser structure
+        const firebaseUser = user ? {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          // Add other required fields from firebase.auth.User, possibly with defaults
+          emailVerified: user.emailVerified || false,
+          isAnonymous: user.isAnonymous || false,
+          metadata: { creationTime: user.createdAt?.toString(), lastSignInTime: user.metadata?.lastLogin?.toString() },
+          providerData: user.providerData || [],
+          // Mock or provide necessary methods if Authorization class uses them
+          getIdToken: async () => user.getIdToken ? await user.getIdToken() : '',
+          // ... other methods/properties if needed
+        } as User : null;
+
+        // Use the singleton instance (lowercase 'a')
+        const context = authorization.createContext(firebaseUser, initialData?.authorId);
+
+        // Check access permission using the instance
+        const canAccess = await authorization.canAccess(context, UserRole.USER);
+        setIsAuthorized(canAccess);
+
+        // Check if admin using the instance
+        const isAdmin = await authorization.isAdmin(firebaseUser);
+        setIsAdminUser(isAdmin);
+      }
+    };
+
+    checkAuthorization();
+  }, [user, authLoading, initialData?.authorId]);
+
+  // Show loading indicator while checking auth or initial loading
+  if (authLoading || isAuthorized === null) { // Check if isAuthorized is still null
     return (
       <div className="flex justify-center items-center h-full">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
-
-  // Update the authContext creation
-  const authContext = Authorization.createContext(
-    user ? {
-      ...user,
-      uid: user.uid,
-      email: user.email,
-      displayName: user.displayName,
-      photoURL: user.photoURL,
-      emailVerified: user.emailVerified || false,
-      isAnonymous: user.isAnonymous || false,
-      tenantId: null,
-      phoneNumber: null,
-      providerId: 'firebase',
-      metadata: {
-        creationTime: user.createdAt?.toString() || '',
-        lastSignInTime: user.metadata?.lastLogin?.toString() || ''
-      },
-      providerData: user.providerData || [],
-      refreshToken: '',
-      getIdToken: () => Promise.resolve(''),
-      getIdTokenResult: () => Promise.resolve({
-        token: '',
-        signInProvider: null,
-        claims: {},
-        authTime: '',
-        issuedAtTime: '',
-        expirationTime: '',
-      }),
-      reload: () => Promise.resolve(),
-      delete: () => Promise.resolve(),
-      toJSON: () => ({}),
-    } as unknown as User : null,
-    initialData?.authorId
-  );
 
   const sectionDetails = {
     vision: {
@@ -103,9 +109,24 @@ export default function AboutSectionForm({
     setLoading(true);
     setAuthError(null);
 
+    // Re-check authorization at the time of submission
+    const firebaseUser = user ? {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      photoURL: user.photoURL,
+      emailVerified: user.emailVerified || false,
+      isAnonymous: user.isAnonymous || false,
+      metadata: { creationTime: user.createdAt?.toString(), lastSignInTime: user.metadata?.lastLogin?.toString() },
+      providerData: user.providerData || [],
+      getIdToken: async () => user.getIdToken ? await user.getIdToken() : '',
+    } as User : null;
+    // Use the singleton instance (lowercase 'a')
+    const context = authorization.createContext(firebaseUser, initialData?.authorId);
+
     try {
-      // Check authorization
-      if (!Authorization.canAccess(authContext, UserRole.USER)) {
+      // Use the singleton instance (lowercase 'a')
+      if (!(await authorization.canAccess(context, UserRole.USER))) {
         throw new Error('Unauthorized: You do not have permission to modify this content.');
       }
 
@@ -146,15 +167,16 @@ export default function AboutSectionForm({
     }
   };
 
-  // If not authorized, show a restricted access message
-  if (!Authorization.canAccess(authContext, UserRole.USER)) {
+  // Use the state variable for conditional rendering
+  if (!isAuthorized) {
     return (
       <div className="space-y-6">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Access Restricted</AlertTitle>
           <AlertDescription>
-            {Authorization.isAdmin(user)
+            {/* Use the isAdminUser state variable */}
+            {isAdminUser
               ? 'Unable to verify admin credentials.'
               : 'You do not have permission to modify this content. Only administrators or original creators can edit.'}
           </AlertDescription>
@@ -185,6 +207,7 @@ export default function AboutSectionForm({
     );
   }
 
+  // Render the form if authorized
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {authError && (
@@ -201,26 +224,17 @@ export default function AboutSectionForm({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           className="min-h-[200px] resize-none"
-          required
+          disabled={loading}
         />
         <p className="text-sm text-muted-foreground">
           {sectionDetails[section].hint}
         </p>
       </div>
 
-      <div className="flex justify-end">
-        <Button
-          type="submit"
-          disabled={loading}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (initialData ? 'Update' : 'Create')}
-        </Button>
-      </div>
+      <Button type="submit" disabled={loading} className="w-full">
+        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+        {initialData ? 'Update' : 'Create'} {sectionDetails[section].title}
+      </Button>
     </form>
   );
 }

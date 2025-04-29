@@ -35,6 +35,10 @@ try {
 
 const db = getFirestore();
 const EMAIL_TO_FIND = 'admin@fsce.org';
+// Define the target date range - REMOVED AGAIN
+// const TARGET_DATE_START = new Date('2024-11-19T00:00:00Z');
+// const TARGET_DATE_END = new Date('2024-11-19T23:59:59.999Z');
+
 
 // Create readline interface for user input
 const rl = readline.createInterface({
@@ -68,9 +72,9 @@ async function retryOperation(operation: () => Promise<any>, maxRetries = 5, ini
 
 async function findSystemPosts() {
   try {
-    console.log(`Searching for posts with no authorEmail...`);
+    console.log(`Searching for posts by authorEmail: ${EMAIL_TO_FIND}...`); // Updated log message
 
-    // Query posts collection for documents with the specified email
+    // Query posts collection
     const postsRef = db.collection('posts');
 
     // Use pagination to avoid quota limits
@@ -86,7 +90,9 @@ async function findSystemPosts() {
 
       try {
         // Build query with pagination - get all posts and filter for those without authorEmail
-        let query = postsRef.limit(BATCH_SIZE);
+        // Note: Firestore doesn't allow filtering by '!=' or 'not-in' on one field and range/equality on another directly in the query.
+        // We fetch all posts in batches and filter locally.
+        let query = postsRef.orderBy(admin.firestore.FieldPath.documentId()).limit(BATCH_SIZE); // Order by document ID for consistent pagination
 
         // If we have a last document, start after it
         if (lastDoc) {
@@ -116,18 +122,30 @@ async function findSystemPosts() {
           ...doc.data()
         }));
 
-        // Filter for posts with admin@fsce.org email
+        // Filter for posts with admin@fsce.org email - REMOVED DATE FILTER AGAIN
         const filteredPosts = batchPosts.filter(post => {
-          return post.authorEmail === EMAIL_TO_FIND;
+          const isTargetEmail = post.authorEmail === EMAIL_TO_FIND;
+          // let isTargetDate = false; // Removed date check
+
+          // if (post.createdAt && post.createdAt.toDate && typeof post.createdAt.toDate === 'function') {
+          //   const postDate = post.createdAt.toDate(); // Convert Firestore Timestamp to JS Date
+          //   isTargetDate = postDate >= TARGET_DATE_START && postDate <= TARGET_DATE_END;
+          // } else {
+          //   // Handle cases where createdAt might be missing or not a Timestamp
+          //   // console.warn(`Post ID ${post.id} has missing or invalid createdAt field.`);
+          // }
+
+          return isTargetEmail; // Only filter by email now
         });
 
         allPosts = [...allPosts, ...filteredPosts];
 
-        console.log(`Retrieved batch of ${batchPosts.length} posts, filtered ${filteredPosts.length} with no email. Total so far: ${allPosts.length}`);
+        console.log(`Retrieved batch of ${batchPosts.length} posts, filtered ${filteredPosts.length} matching criteria. Total so far: ${allPosts.length}`);
 
-        // If we got fewer results than the batch size, we're done
+        // If we got fewer results than the batch size, we might be done (though filtering could make it seem so)
+        // A safer check is if the query itself returned fewer than BATCH_SIZE
         if (querySnapshot.docs.length < BATCH_SIZE) {
-          console.log('Reached end of results.');
+          console.log('Reached end of results based on query size.');
           hasMore = false;
         }
 
@@ -148,12 +166,12 @@ async function findSystemPosts() {
     }
 
     if (allPosts.length === 0) {
-      console.log('No posts found with the specified email.');
-      rl.close();
+      console.log(`No posts found with email ${EMAIL_TO_FIND}.`); // Updated log message
+      // rl.close(); // Don't close here if deleteSystemPosts needs rl
       return [];
     }
 
-    console.log(`Found ${allPosts.length} posts with authorEmail: ${EMAIL_TO_FIND}`);
+    console.log(`Found ${allPosts.length} posts with authorEmail: ${EMAIL_TO_FIND}`); // Updated log message
     console.log('\nPosts found:');
 
     // Only show first 20 posts to avoid console overflow
@@ -205,60 +223,51 @@ async function deleteSystemPosts(posts: any[]) {
       return;
     }
 
+    // RESTORED QUESTION and DELETION LOGIC
     rl.question('\nDo you want to delete these posts? (yes/no): ', async (answer) => {
       if (answer.toLowerCase() === 'yes' || answer.toLowerCase() === 'y') {
         console.log('\nDeleting posts...');
+        const BATCH_DELETE_SIZE = 100; // Firestore batch limit is 500, but smaller batches might be safer
+        let deletedCount = 0;
+        let chunkNumber = 0;
 
-        // Process in smaller batches to avoid quota issues
-        const MAX_BATCH_SIZE = 20; // Very small batch size to avoid quota issues
-        let totalDeleted = 0;
+        for (let i = 0; i < posts.length; i += BATCH_DELETE_SIZE) {
+          chunkNumber++;
+          const chunk = posts.slice(i, i + BATCH_DELETE_SIZE);
+          console.log(`Processing chunk ${chunkNumber} of ${Math.ceil(posts.length / BATCH_DELETE_SIZE)} (${chunk.length} posts)`);
 
-        // Process posts in chunks
-        for (let i = 0; i < posts.length; i += MAX_BATCH_SIZE) {
-          const chunk = posts.slice(i, i + MAX_BATCH_SIZE);
-          console.log(`Processing chunk ${Math.floor(i / MAX_BATCH_SIZE) + 1} of ${Math.ceil(posts.length / MAX_BATCH_SIZE)} (${chunk.length} posts)`);
-
-          // Create a new batch for each chunk
           const batch = db.batch();
+          const batchIds: string[] = []; // Keep track of IDs in this batch
 
-          // Add delete operations to batch
-          for (const post of chunk) {
-            const docRef = db.collection('posts').doc(post.id);
-            batch.delete(docRef);
-          }
+          chunk.forEach(post => {
+            const postRef = db.collection('posts').doc(post.id);
+            batch.delete(postRef);
+            batchIds.push(post.id); // Add ID to list for logging
+          });
 
-          // Commit the batch with retry logic
           try {
-            await retryOperation(
-              async () => await batch.commit(),
-              3, // Max retries
-              3000 // Initial delay in ms
-            );
-
-            totalDeleted += chunk.length;
-            console.log(`Deleted ${chunk.length} posts. Total: ${totalDeleted}/${posts.length}`);
-
-            // Add a small delay to avoid rate limits
-            if (i + MAX_BATCH_SIZE < posts.length) {
-              console.log('Pausing briefly to avoid rate limits...');
-              await sleep(5000); // Longer pause between batches
-            }
+            console.log(`Attempting to delete batch ${chunkNumber} with IDs: ${batchIds.join(', ')}`); // Log IDs being deleted
+            await retryOperation(async () => await batch.commit(), 3, 1500); // Use retry for commit
+            deletedCount += chunk.length;
+            console.log(`Successfully deleted batch ${chunkNumber}. Total deleted so far: ${deletedCount}/${posts.length}`); // Log batch success
           } catch (error) {
-            console.error(`Error deleting batch after retries: ${error}`);
-            console.log('Continuing with next batch...');
-
-            // Longer pause after an error
-            await sleep(10000);
+            console.error(`Error deleting batch ${chunkNumber} (IDs: ${batchIds.join(', ')}):`, error); // Log batch error
+            // Decide if you want to stop or continue on error
+            // For now, we'll log and continue to the next batch
           }
+          await sleep(1000); // Small delay between batches
         }
 
-        console.log(`Successfully deleted ${totalDeleted}/${posts.length} posts.`);
+        console.log(`\nSuccessfully deleted ${deletedCount}/${posts.length} posts.`);
+
       } else {
         console.log('Operation cancelled. No posts were deleted.');
       }
-
       resolve();
     });
+
+    // console.log("\nSkipping deletion step for verification."); // REMOVED LOG
+    // resolve(); // REMOVED immediate resolve
   });
 }
 

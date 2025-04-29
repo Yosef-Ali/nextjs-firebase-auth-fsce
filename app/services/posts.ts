@@ -1,5 +1,6 @@
+import { User } from 'firebase/auth';
+import { Authorization, authorization } from '@/lib/authorization';
 import { db } from '@/lib/firebase';
-// Remove the adminDb import
 import { Post } from '@/app/types/post';
 import type { Category } from '@/app/types/category';
 import {
@@ -14,18 +15,20 @@ import {
   getDoc,
   Timestamp,
   serverTimestamp,
+  FieldValue,
   QueryConstraint,
   orderBy,
-  limit as firestoreLimit
+  limit as firestoreLimit,
+  DocumentData // Import DocumentData
 } from 'firebase/firestore';
 import { ensureCategory } from '@/app/utils/category';
 import { normalizePost } from '@/app/utils/post';
+import { optimizedQuery } from '@/app/utils/query-helpers'; // Import optimizedQuery
 
 const COLLECTION_NAME = 'posts';
 
 class PostsService {
   async getCategories(): Promise<Category[]> {
-    // Instead of using adminDb directly, fetch from our API route
     try {
       const response = await fetch('/api/categories');
       const data = await response.json();
@@ -52,22 +55,17 @@ class PostsService {
       );
 
       try {
-        // First try to get posts with filters
         const querySnapshot = await getDocs(q);
         return querySnapshot.docs.map(doc => normalizePost(doc.data(), doc.id));
       } catch (innerError: any) {
-        // Check if it's a connectivity issue
         if (innerError.code === 'unavailable' ||
           innerError.message?.includes('network') ||
           innerError.message?.includes('offline')) {
           console.warn('Firebase is offline, attempting to use cached data');
 
-          // Attempt to get cached data without filters
-          // Firebase will return cached data in offline mode if available
           const fallbackSnapshot = await getDocs(collection(db, COLLECTION_NAME));
           const posts = fallbackSnapshot.docs.map(doc => normalizePost(doc.data(), doc.id));
 
-          // Sort manually since we can't use orderBy when offline
           return posts.sort((a, b) => {
             const getTime = (timestamp: any) => {
               if (!timestamp) return 0;
@@ -79,7 +77,6 @@ class PostsService {
           });
         }
 
-        // Re-throw if it's not a connectivity issue
         throw innerError;
       }
     } catch (error) {
@@ -101,13 +98,11 @@ class PostsService {
 
         return normalizePost(docSnap.data(), docSnap.id);
       } catch (innerError: any) {
-        // Handle offline mode
         if (innerError.code === 'unavailable' ||
           innerError.message?.includes('network') ||
           innerError.message?.includes('offline')) {
           console.warn('Firebase is offline while getting post, attempting to use cached data');
 
-          // Try again - Firebase will use cached data in offline mode if available
           const docSnap = await getDoc(docRef);
           if (docSnap.exists() && docSnap.metadata.fromCache) {
             console.log('Retrieved post from cache');
@@ -115,7 +110,6 @@ class PostsService {
           }
         }
 
-        // Re-throw if not a connectivity issue or no cached data
         throw innerError;
       }
     } catch (error) {
@@ -127,37 +121,40 @@ class PostsService {
   async getPostBySlug(slug: string): Promise<Post | null> {
     try {
       const postsRef = collection(db, COLLECTION_NAME);
-      const q = query(
-        postsRef,
-        where('slug', '==', slug),
-        where('published', '==', true)
-      );
+      // Query only by slug to avoid composite index
+      const q = query(postsRef, where('slug', '==', slug));
 
       const querySnapshot = await getDocs(q);
       if (querySnapshot.empty) {
         return null;
       }
 
-      const doc = querySnapshot.docs[0];
-      return normalizePost(doc.data(), doc.id);
+      // Find the first published post matching the slug
+      for (const doc of querySnapshot.docs) {
+        const postData = doc.data();
+        if (postData.published === true) {
+          return normalizePost(postData, doc.id);
+        }
+      }
+
+      // If no published post found with that slug
+      return null;
     } catch (error) {
       console.error('Error getting post by slug:', error);
+      // Consider offline handling if necessary, similar to getPostById
       return null;
     }
   }
 
   async getRelatedPosts(currentSlug: string, categoryId: string, limit = 3): Promise<Post[]> {
     try {
-      // First get current post to exclude it
       const currentPost = await this.getPostBySlug(currentSlug);
       if (!currentPost) {
         return [];
       }
 
-      // Get posts with the same category
       const allPosts = await this.getPublishedPosts(categoryId);
 
-      // Filter out the current post and limit the results
       return allPosts
         .filter(post => post.id !== currentPost.id)
         .slice(0, limit);
@@ -167,25 +164,19 @@ class PostsService {
     }
   }
 
-  // Ultra-simplified method for achievements page to avoid any errors
   async getAchievements(): Promise<Post[]> {
     try {
-      // Get all posts
       const postsRef = collection(db, COLLECTION_NAME);
       const querySnapshot = await getDocs(postsRef);
 
-      // Create an array to hold our results
       const results: Post[] = [];
 
-      // Process each document individually with try/catch for each one
       querySnapshot.forEach(doc => {
         try {
           const data = doc.data();
 
-          // Skip unpublished posts
           if (data.published !== true) return;
 
-          // Skip non-achievements
           let isAchievement = false;
           const category = data.category;
 
@@ -199,7 +190,6 @@ class PostsService {
 
           if (!isAchievement) return;
 
-          // Create a minimal post object with all required fields
           const post: Post = {
             id: doc.id,
             title: data.title || 'Untitled',
@@ -220,11 +210,9 @@ class PostsService {
             updatedAt: Timestamp.now()
           };
 
-          // Add to results
           results.push(post);
         } catch (docError) {
           console.error(`Error processing achievement ${doc.id}:`, docError);
-          // Continue with next document
         }
       });
 
@@ -237,13 +225,11 @@ class PostsService {
 
   async getPublishedPosts(categoryId?: string, limitCount?: number): Promise<Post[]> {
     try {
-      // Special case for achievements to avoid the error
       if (categoryId === 'achievements') {
         return this.getAchievements();
       }
 
       const postsRef = collection(db, COLLECTION_NAME);
-      // Simple query with only one condition to avoid index requirement
       const constraints: QueryConstraint[] = [
         where('published', '==', true)
       ];
@@ -255,29 +241,24 @@ class PostsService {
         const q = query(postsRef, ...constraints);
         querySnapshot = await getDocs(q);
       } catch (innerError: any) {
-        // Handle offline mode
         if (innerError.code === 'unavailable' ||
           innerError.message?.includes('network') ||
           innerError.message?.includes('offline')) {
           console.warn('Firebase is offline, attempting to use cached data for published posts');
 
-          // In offline mode, get all documents and filter locally
           querySnapshot = await getDocs(collection(db, COLLECTION_NAME));
           console.log('Retrieved posts from cache, will filter locally');
           isOfflineMode = true;
         } else {
-          // Re-throw if it's not a connectivity issue
           throw innerError;
         }
       }
 
-      // Convert to array of documents with proper normalization
       let posts = querySnapshot.docs.map(doc => {
         try {
           return normalizePost(doc.data(), doc.id);
         } catch (error) {
           console.error(`Error normalizing post ${doc.id}:`, error);
-          // Check if this is a connectivity-related error
           const isConnectivityError = error instanceof Error &&
             (error.message?.includes('offline') ||
               error.message?.includes('network') ||
@@ -288,10 +269,8 @@ class PostsService {
             console.warn(`Post ${doc.id} normalization failed due to connectivity issues. Using fallback data.`);
           }
 
-          // Get as much safe data as possible from the document
           const data = doc.data() || {};
 
-          // Return a minimal valid post object with safer property access
           return {
             id: doc.id,
             title: data.title || 'Untitled (Offline Mode)',
@@ -310,17 +289,15 @@ class PostsService {
             tags: Array.isArray(data.tags) ? data.tags : [],
             createdAt: Timestamp.now(),
             updatedAt: Timestamp.now(),
-            _isOfflineData: true // Flag to indicate this was generated during offline mode
+            _isOfflineData: true
           };
         }
       });
 
-      // In offline mode, we need to filter for published posts manually
       if (isOfflineMode) {
         posts = posts.filter(post => post.published === true);
       }
 
-      // Filter by category if specified
       if (categoryId) {
         posts = posts.filter(post => {
           const category = post.category;
@@ -340,7 +317,6 @@ class PostsService {
         });
       }
 
-      // Apply limit if specified
       if (limitCount && limitCount > 0) {
         posts = posts.slice(0, limitCount);
       }
@@ -354,16 +330,24 @@ class PostsService {
 
   async getAllNews(): Promise<Post[]> {
     try {
-      const postsRef = collection(db, COLLECTION_NAME);
-      const q = query(
-        postsRef,
-        where('category.id', '==', 'news'),
-        where('published', '==', true),
-        orderBy('createdAt', 'desc')
-      );
+      // Use optimizedQuery to fetch published posts sorted by creation date
+      const publishedPosts: DocumentData[] = await optimizedQuery(COLLECTION_NAME, {
+        published: true,
+        sortBy: 'createdAt',
+        sortDirection: 'desc'
+      });
 
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => normalizePost(doc.data(), doc.id));
+      // Filter in memory for the 'news' category
+      const newsPosts = publishedPosts.filter((post: DocumentData) => { // Add type annotation
+        const category = post.category;
+        if (!category) return false;
+        const categoryId = typeof category === 'string' ? category : category.id;
+        return categoryId?.toLowerCase() === 'news';
+      });
+
+      // Normalize the results
+      return newsPosts.map((postData: DocumentData) => normalizePost(postData, postData.id)); // Add type annotation
+
     } catch (error) {
       console.error('Error getting news:', error);
       return [];
@@ -394,133 +378,150 @@ class PostsService {
     }
   }
 
-  async updatePost(id: string, post: Partial<Post>): Promise<boolean | { success: boolean, pending?: boolean, offline?: boolean, error?: string }> {
+  async updatePost(
+    currentUser: User | null,
+    id: string,
+    postUpdateData: Partial<Post>
+  ): Promise<{ success: boolean; pending?: boolean; offline?: boolean; error?: string }> {
+    // ... (currentUser check) ...
+    if (!currentUser) {
+      return { success: false, error: 'Authentication required' };
+    }
+
     try {
+      // ... (get postDoc and originalPostData) ...
       const postRef = doc(db, COLLECTION_NAME, id);
       const postDoc = await getDoc(postRef);
-      const postData = postDoc.data();
+      const originalPostData = postDoc.data();
 
-      // Check if post exists
-      if (!postDoc.exists() || !postData) {
-        throw new Error('Post not found');
+      if (!postDoc.exists() || !originalPostData) {
+        return { success: false, error: 'Post not found' };
       }
 
-      // Check authorization - this was missing and causing the issue
-      // Allow editing if:
-      // 1. The current user is the post author
-      // 2. Post has no authorId (system-created)
-      // 3. Post's authorId is 'system'
-      const currentUserId = post.authorId;
-      const postAuthorId = postData.authorId;
-      const isSystemPost = !postAuthorId || postAuthorId === 'system';
+      const normalizedOriginalPost = normalizePost(originalPostData, id);
 
-      // If it's not a system post and the current user is not the author, deny access
-      if (!isSystemPost && postAuthorId && currentUserId && postAuthorId !== currentUserId) {
-        console.error('Unauthorized edit attempt: current user', currentUserId, 'trying to edit post by', postAuthorId);
-        throw new Error('You do not have permission to edit this post');
+      // Add await to the authorization check
+      if (!(await authorization.canEditPost(currentUser, normalizedOriginalPost.authorId))) {
+        console.error(
+          `Unauthorized edit attempt: User ${currentUser.uid} (${currentUser.email}) tried to edit post ${id} by author ${normalizedOriginalPost.authorId}`
+        );
+        return { success: false, error: 'You do not have permission to edit this post' };
       }
+
+      // ... (prepare updatePayload) ...
+      const updatePayload: Partial<Omit<Post, 'createdAt' | 'updatedAt'>> & { updatedAt: FieldValue } = {
+        ...postUpdateData,
+        category: postUpdateData.category ? ensureCategory(postUpdateData.category) : undefined,
+        updatedAt: serverTimestamp()
+      };
+
+      // ... (delete fields) ...
+      delete updatePayload.id;
+      delete updatePayload.authorId; // Prevent changing author via update
 
       try {
-        await updateDoc(postRef, {
-          ...post,
-          updatedAt: serverTimestamp()
-        });
-        return true;
+        // ... (updateDoc call) ...
+        await updateDoc(postRef, updatePayload as any);
+        return { success: true };
       } catch (updateError: any) {
-        // Check if this is a connectivity/offline issue
+        // ... (offline handling for update) ...
         if (updateError.code === 'unavailable' ||
           updateError.message?.includes('network') ||
           updateError.message?.includes('offline')) {
           console.warn('Firebase is offline while trying to update post. Changes will be applied when connectivity is restored.');
-
-          // Firebase will automatically retry the operation when back online due to persistence
-          // Return true with a special flag to indicate pending updates
           return { success: true, pending: true, offline: true };
         }
-
-        // Re-throw for other errors
         throw updateError;
       }
     } catch (error: any) {
+      // ... (general error handling for updatePost) ...
       const isOfflineError = error.code === 'unavailable' ||
         error.message?.includes('offline') ||
         error.message?.includes('network');
 
       if (isOfflineError) {
-        console.warn('Update operation will be retried when connection is restored:', error);
-        return { success: false, offline: true, error: error.message };
+        console.warn('Update operation failed due to offline status:', error);
+        return { success: false, offline: true, error: 'Operation failed while offline. It might be retried automatically.' };
       }
 
       console.error('Error updating post:', error);
-      return false;
+      return { success: false, error: error.message || 'Failed to update post' };
     }
   }
 
-  async deletePost(userId: string, id: string): Promise<boolean | { success: boolean, offline?: boolean, error?: string }> {
-    try {
-      const postRef = doc(db, COLLECTION_NAME, id);
+  async deletePost(
+    currentUser: User | null,
+    id: string
+  ): Promise<{ success: boolean; offline?: boolean; error?: string }> {
+    // ... (currentUser check) ...
+    if (!currentUser) {
+      return { success: false, error: 'Authentication required' };
+    }
 
+    try {
+      // ... (get postDoc, handle offline fetch error) ...
+      const postRef = doc(db, COLLECTION_NAME, id);
       let postDoc;
+
       try {
         postDoc = await getDoc(postRef);
       } catch (getError: any) {
-        // Handle offline fetch during delete
         if (getError.code === 'unavailable' ||
           getError.message?.includes('offline') ||
           getError.message?.includes('network')) {
-          console.warn('Firebase is offline while trying to delete post. Cannot verify permissions offline.');
+          console.warn('Firebase is offline while trying to fetch post for deletion. Cannot verify permissions offline.');
           return {
             success: false,
             offline: true,
-            error: 'Cannot delete post while offline. Please try again when your connection is restored.'
+            error: 'Cannot delete post while offline. Please try again when connection is restored.'
           };
         }
-        throw getError;
+        throw getError; // Re-throw other fetch errors
       }
 
       const postData = postDoc.data();
 
-      // Check if post exists
       if (!postDoc.exists() || !postData) {
-        throw new Error('Post not found');
+        return { success: false, error: 'Post not found' };
       }
 
-      // Allow deletion if:
-      // 1. User is the author of the post
-      // 2. Post has no authorId (system-created)
-      // 3. Post's authorId is 'system'
-      const postAuthorId = postData.authorId;
-      const isSystemPost = !postAuthorId || postAuthorId === 'system';
+      const normalizedPost = normalizePost(postData, id);
 
-      if (!isSystemPost && postAuthorId !== userId) {
-        throw new Error('Unauthorized deletion attempt');
+      // Add await to the authorization check
+      if (!(await authorization.canDeletePost(currentUser, normalizedPost.authorId))) {
+        console.error(
+          `Unauthorized delete attempt: User ${currentUser.uid} (${currentUser.email}) tried to delete post ${id} by author ${normalizedPost.authorId}`
+        );
+        return { success: false, error: 'You do not have permission to delete this post' };
       }
 
       try {
+        // ... (deleteDoc call) ...
         await deleteDoc(postRef);
-        return true;
+        return { success: true };
       } catch (deleteError: any) {
-        // Handle offline mode during delete
+        // ... (offline handling for delete) ...
         if (deleteError.code === 'unavailable' ||
           deleteError.message?.includes('offline') ||
           deleteError.message?.includes('network')) {
           console.warn('Firebase is offline while trying to delete post. Operation will be retried when connection is restored.');
-          return { success: true, offline: true };
+          return { success: true, offline: true }; // Indicate success because Firestore handles offline persistence
         }
         throw deleteError;
       }
     } catch (error: any) {
+      // ... (general error handling for deletePost) ...
       const isOfflineError = error.code === 'unavailable' ||
         error.message?.includes('offline') ||
         error.message?.includes('network');
 
       if (isOfflineError) {
-        console.warn('Delete operation will be retried when connection is restored:', error);
-        return { success: false, offline: true, error: error.message };
+        console.warn('Delete operation failed due to offline status:', error);
+        return { success: false, offline: true, error: 'Operation failed while offline. It might be retried automatically.' };
       }
 
       console.error('Error deleting post:', error);
-      return false;
+      return { success: false, error: error.message || 'Failed to delete post' };
     }
   }
 }

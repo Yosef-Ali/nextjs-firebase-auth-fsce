@@ -102,95 +102,90 @@ export function PostForm({ post, initialData, categories, onSuccess }: PostFormP
     const onSubmit = async (data: PostFormData) => {
         if (!user) {
             toast({
-                id: 'validation-error',
-                title: "Validation Error",
-                description: "Please fill in all required fields",
+                id: 'auth-required-error', // Unique ID
+                title: "Authentication Required",
+                description: "You must be logged in to save a post.",
                 variant: "destructive",
             });
             return;
         }
 
+        setIsSaving(true);
+
         try {
-            setIsSaving(true);
             const selectedCategory = categories.find(cat => cat.id === data.categoryId);
 
             if (!selectedCategory) {
                 toast({
-                    id: 'invalid-category',
-                    title: "Error",
-                    description: "Please select a valid category",
+                    id: 'invalid-category-error', // Unique ID
+                    title: "Invalid Category",
+                    description: "Please select a valid category.",
                     variant: "destructive",
                 });
+                setIsSaving(false);
                 return;
             }
 
-            const postData = {
+            // Payload for both create and update (fields managed by the form)
+            const formPayload: Partial<Post> = {
                 title: data.title,
                 content: data.content,
                 excerpt: data.excerpt,
-                category: selectedCategory,
-                coverImage: data.coverImage || '',
+                category: selectedCategory, // Use the full category object found
+                coverImage: data.coverImage,
                 published: data.published,
                 sticky: data.sticky,
                 section: data.section,
-                images: data.images || [],
-                authorId: user.uid,
-                authorEmail: user.email || '',
+                images: data.images,
                 slug: data.slug,
-                date: Timestamp.now(),
-                tags: [],
-                featured: false,
+                // Fields like authorId, authorEmail, date, tags, featured are handled below
             };
 
             if (post?.id) {
-                // Check if current user is the author or admin
-                if (post.authorId && post.authorId !== user.uid && user.role?.toLowerCase() !== 'admin') {
-                    toast({
-                        id: 'unauthorized-edit',
-                        title: "Unauthorized",
-                        description: "You don't have permission to edit this post. Only the author or an admin can edit it.",
-                        variant: "destructive",
-                    });
-                    return;
-                }
+                // --- UPDATE ---
+                // Call updatePost with the current user, post ID, and the form payload
+                const result = await postsService.updatePost(user, post.id, formPayload);
 
-                try {
-                    const result = await postsService.updatePost(post.id, postData);
+                if (result.success) {
                     toast({
                         id: 'post-update-success',
                         title: "Success",
-                        description: "Post updated successfully",
+                        description: result.pending ? "Post update queued (offline)" : "Post updated successfully",
                     });
                     onSuccess?.();
                     router.push('/dashboard/posts');
-                } catch (updateError: any) {
-                    // Check if it's an authorization error
-                    if (updateError.message?.includes('Unauthorized') ||
-                        updateError.message?.includes('permission') ||
-                        updateError.message?.includes('trying to edit post by')) {
-
-                        // Extract specific information from the error for a more detailed message
-                        const errorMsg = updateError.message || '';
-                        let description = "You don't have permission to edit this post. Only the author or an admin can edit it.";
-
-                        // Check if the error contains specific user IDs
-                        if (errorMsg.includes('trying to edit post by')) {
-                            const ownerType = errorMsg.includes('admin') ? 'an admin' : 'another user';
-                            description = `Unauthorized edit attempt: You cannot edit content created by ${ownerType}. Please contact an administrator if you need changes to this post.`;
-                        }
-
-                        toast({
-                            id: 'unauthorized-edit',
-                            title: "Access Denied",
-                            description: description,
-                            variant: "destructive",
-                        });
-                    } else {
-                        throw updateError; // Re-throw to be caught by the outer catch
-                    }
+                } else {
+                    // Handle failure based on the error message from the service
+                    toast({
+                        id: 'post-update-failed',
+                        title: "Update Failed",
+                        description: result.error || "Could not update the post. Check permissions or try again.",
+                        variant: "destructive",
+                    });
                 }
             } else {
-                await postsService.createPost(postData);
+                // --- CREATE ---
+                // Construct the full data needed for creating a new post
+                const newPostData: Omit<Post, 'id' | 'createdAt' | 'updatedAt'> = {
+                    // Start with form data, providing defaults for required fields if not in formPayload
+                    title: formPayload.title ?? 'Untitled',
+                    content: formPayload.content ?? '',
+                    excerpt: formPayload.excerpt ?? '',
+                    category: formPayload.category!, // Already validated
+                    slug: formPayload.slug ?? postsService.createSlug(formPayload.title ?? 'untitled'),
+                    published: formPayload.published ?? false,
+                    sticky: formPayload.sticky ?? false,
+                    coverImage: formPayload.coverImage ?? '',
+                    images: formPayload.images ?? [],
+                    section: formPayload.section ?? '',
+                    // Add required fields not from the form
+                    authorId: user.uid,
+                    authorEmail: user.email || '',
+                    date: Timestamp.now(), // Use current time for creation
+                    tags: [], // Default empty tags
+                    featured: false, // Default not featured
+                };
+                await postsService.createPost(newPostData);
                 toast({
                     id: 'post-create-success',
                     title: "Success",
@@ -200,11 +195,12 @@ export function PostForm({ post, initialData, categories, onSuccess }: PostFormP
                 router.push('/dashboard/posts');
             }
         } catch (error) {
-            console.error('Error saving post:', error);
+            // Catch unexpected errors (e.g., during createPost, network issues not handled by updatePost)
+            console.error('Error saving post in PostForm component:', error);
             toast({
-                id: 'save-post-error',
-                title: "Error",
-                description: error instanceof Error ? error.message : "An error occurred while saving the post",
+                id: 'save-post-component-error', // Unique ID
+                title: "Save Error",
+                description: error instanceof Error ? error.message : "An unexpected error occurred.",
                 variant: "destructive",
             });
         } finally {

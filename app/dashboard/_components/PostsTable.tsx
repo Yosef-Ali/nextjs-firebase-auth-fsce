@@ -58,30 +58,36 @@ function PostsTable({ initialPosts }: PostsTableProps) {
   }, [initialPosts]);
 
   const handleDelete = async (postId: string) => {
+    // Pass the full user object to the service method
     if (!user || isDeleting) return;
 
+    setIsDeleting(true);
     try {
-      setIsDeleting(true);
-      const deleteResult = await postsService.deletePost(user.uid, postId);
+      // Pass the full user object, not just user.uid
+      const deleteResult = await postsService.deletePost(user, postId);
 
-      if (deleteResult) {
+      // Handle the potentially more complex return object
+      if (deleteResult.success) {
         setPosts(posts.filter(post => post.id !== postId));
         toast({
           title: 'Success',
-          description: 'Post deleted successfully',
+          description: deleteResult.offline
+            ? 'Post deletion queued (offline)'
+            : 'Post deleted successfully',
         });
       } else {
         toast({
           title: 'Error',
-          description: 'You are not authorized to delete this post',
+          description: deleteResult.error || 'Failed to delete post',
           variant: 'destructive',
         });
       }
-    } catch (error) {
-      console.error('Error deleting post:', error);
+    } catch (error: any) {
+      // Catch any unexpected errors from the service call itself
+      console.error('Error calling deletePost service:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete post',
+        description: error.message || 'An unexpected error occurred during deletion',
         variant: 'destructive',
       });
     } finally {
@@ -139,11 +145,14 @@ function PostsTable({ initialPosts }: PostsTableProps) {
     return postsToSort;
   }, [filteredPosts, sortConfig]);
 
-  // Calculate stats
+  // Calculate stats based on the *filtered* posts
   const stats = useMemo(() => {
-    const totalPosts = posts.length;
-    const publishedPosts = posts.filter(post => post.status === 'published').length;
-    const draftPosts = totalPosts - publishedPosts;
+    const totalPosts = filteredPosts.length; // Use filteredPosts
+    // Correctly filter based on the 'published' boolean field
+    const publishedPosts = filteredPosts.filter(post => post.published === true).length;
+    // Correctly filter based on the 'published' boolean field
+    const draftPosts = filteredPosts.filter(post => post.published === false).length;
+    // Categories count based on the original 'posts' state
     const uniqueCategories = Array.from(new Set(posts.map(post => getCategoryName(post.category))));
 
     return {
@@ -152,7 +161,7 @@ function PostsTable({ initialPosts }: PostsTableProps) {
       draftPosts,
       categoriesCount: uniqueCategories.length
     };
-  }, [posts]);
+  }, [filteredPosts, posts]); // Update dependency array
 
   const handleSort = (key: 'category' | 'updatedAt' | 'title') => {
     setSortConfig(current => ({
