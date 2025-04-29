@@ -51,7 +51,7 @@ const ContactPage = () => {
         from_email: formData.email,
         subject: formData.subject,
         message: formData.message,
-        to_email: "meaza@fsc-e.org", // Admin email
+        to_email: "contact@fsc-e.org", // Admin email
       };
 
       // Send email using EmailJS with environment variables
@@ -111,7 +111,7 @@ const ContactPage = () => {
     {
       title: "Email",
       icon: <Mail className="w-6 h-6 text-muted-foreground" />,
-      content: "meaza@fsc-e.org",
+      content: "contact@fsc-e.org",
     },
     {
       title: "Phone",
