@@ -211,6 +211,31 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     return null;
   }
 
+  const [urlInput, setUrlInput] = useState("");
+  const [showUrlInput, setShowUrlInput] = useState(false);
+
+  const handleUrlSubmit = () => {
+    if (urlInput && urlInput.trim()) {
+      const trimmedUrl = urlInput.trim();
+      // Basic URL validation
+      if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+        onChange(trimmedUrl);
+        setUrlInput("");
+        setShowUrlInput(false);
+        toast({
+          title: "Success",
+          description: "Image URL added successfully"
+        });
+      } else {
+        toast({
+          title: "Invalid URL",
+          description: "Please enter a valid URL starting with http:// or https://",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
@@ -239,6 +264,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           </div>
         ))}
       </div>
+      
+      {/* File Upload Option */}
       <div className="flex items-center gap-4">
         <Input
           type="file"
@@ -248,6 +275,29 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           className="cursor-pointer"
         />
         {uploading && <p className="text-sm text-gray-500">Uploading...</p>}
+      </div>
+
+      {/* URL Input Option */}
+      <div className="border-t pt-4 mt-4">
+        <p className="text-sm text-muted-foreground mb-2">Or paste image URL from media gallery:</p>
+        <div className="flex items-center gap-2">
+          <Input
+            type="url"
+            placeholder="https://..."
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            disabled={disabled}
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            onClick={handleUrlSubmit}
+            disabled={disabled || !urlInput.trim()}
+            variant="outline"
+          >
+            Add URL
+          </Button>
+        </div>
       </div>
     </div>
   );
