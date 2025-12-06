@@ -31,6 +31,7 @@ import {
 
 const formSchema = z.object({
   name: z.string().min(1),
+  position: z.string().optional(),
   email: z.string().email(),
   phone: z.string().min(1),
   website: z.string().optional(),
@@ -60,6 +61,7 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
       name: "",
+      position: "",
       email: "",
       phone: "",
       website: "",
@@ -155,6 +157,22 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
 
             <FormField
               control={form.control}
+              name="position"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Position</FormLabel>
+                  <FormControl>
+                    <Input disabled={isLoading} placeholder="Position or role" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
@@ -166,9 +184,7 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
                 </FormItem>
               )}
             />
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="phone"
@@ -182,21 +198,21 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
                 </FormItem>
               )}
             />
-
-            <FormField
-              control={form.control}
-              name="website"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Website</FormLabel>
-                  <FormControl>
-                    <Input disabled={isLoading} placeholder="Website URL" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
+
+          <FormField
+            control={form.control}
+            name="website"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Website</FormLabel>
+                <FormControl>
+                  <Input disabled={isLoading} placeholder="Website URL" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField

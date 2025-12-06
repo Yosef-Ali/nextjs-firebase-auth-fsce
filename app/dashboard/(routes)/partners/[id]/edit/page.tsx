@@ -91,6 +91,7 @@ export default function EditPartnerPage() {
             initialData={{
               id: partner.id,
               name: partner.name,
+              position: partner.position,
               email: partner.email,
               phone: partner.phone,
               website: partner.website,

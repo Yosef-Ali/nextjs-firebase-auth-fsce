@@ -1,6 +1,6 @@
 import { Timestamp, WithTimestamps } from './index';
 
-export type PartnerType = 'membership' | 'strategic';
+export type PartnerType = 'membership' | 'strategic' | 'partner';
 
 export interface Partner extends WithTimestamps {
   id: string;
@@ -10,7 +10,7 @@ export interface Partner extends WithTimestamps {
   website?: string;
   description?: string;
   logo?: string;
-  position: string;
+  position?: string;
   partnerType: PartnerType;
   order: number;
 }
