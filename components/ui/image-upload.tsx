@@ -92,6 +92,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         fileType: file.type,
         fileSize: file.size,
         userAuth: !!user,
+        userId: user?.uid || 'NO_USER_ID',
         storageInitialized: !!storage
       });
 
