@@ -308,7 +308,8 @@ export default function PostEditor({ post, initialData, onSuccess }: PostEditorP
       } satisfies Omit<Post, 'id' | 'createdAt' | 'updatedAt'>;
 
       if (post?.id) {
-        const success = await postsService.updatePost(post.id, postData);
+        const result = await postsService.updatePost(user, post.id, postData);
+        const success = result.success;
         if (success) {
           toast({
             title: "Success",
