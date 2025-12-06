@@ -1,4 +1,4 @@
-import { Timestamp, collection, getDocs, DocumentData, query } from 'firebase/firestore';
+import { Timestamp, collection, getDocs, DocumentData, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 /**
