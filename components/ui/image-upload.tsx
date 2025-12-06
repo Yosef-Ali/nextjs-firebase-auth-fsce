@@ -106,6 +106,12 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       }
 
       if (!user?.uid) {
+        console.error('No authenticated user for upload');
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to upload images",
+          variant: "destructive"
+        });
         throw new Error('Authentication required for upload');
       }
 
