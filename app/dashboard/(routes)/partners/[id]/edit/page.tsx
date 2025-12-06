@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, getDocFromServer } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Partner, PartnerType } from "@/app/types/partner";
 import { PartnerForm } from "../../_components/partner-form";
@@ -18,34 +18,64 @@ export default function EditPartnerPage() {
   const router = useRouter();
   const [partner, setPartner] = useState<Partner | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadPartner = async () => {
       try {
-        // Fix: Changed from params.Id to params.id to match URL parameter
-        if (!params?.id) return;
+        setLoading(true);
+        setError(null);
+        
+        // Safe access to params
+        let id = params?.id;
+        
+        // Handle array case
+        if (Array.isArray(id)) {
+            id = id[0];
+        }
 
-        const docRef = doc(db, "partners", params.id as string);
-        const docSnap = await getDoc(docRef);
+        if (!id || typeof id !== 'string') {
+          console.warn("Invalid partner ID:", id);
+          setError("Invalid partner ID provided via URL.");
+          return;
+        }
+
+        console.log("Loading partner with ID:", id);
+        const docRef = doc(db, "partners", id);
+        
+        let docSnap;
+        try {
+          // Try to get fresh data from server first
+          docSnap = await getDocFromServer(docRef);
+        } catch (serverError: any) {
+          // If server fetch fails (offline), try cached data
+          console.warn("Server fetch failed, trying cache:", serverError?.message);
+          docSnap = await getDoc(docRef);
+        }
 
         if (docSnap.exists()) {
+          console.log("Partner loaded:", docSnap.data());
           setPartner({
             id: docSnap.id,
             ...docSnap.data(),
           } as Partner);
         } else {
+          console.warn("Partner document not found for ID:", id);
+          setError(`Partner not found with ID: ${id}`);
           toast({
             title: "Error",
             description: "Partner not found",
             variant: "destructive",
           });
-          router.push("/dashboard/partners");
         }
-      } catch (error) {
-        console.error("Error loading partner:", error);
+      } catch (err: any) {
+        console.warn("Error loading partner:", err);
+        const errorMessage = err?.message || "Unknown error occurred";
+        setError(`Failed to load partner: ${errorMessage}`);
+        
         toast({
           title: "Error",
-          description: "Failed to load partner",
+          description: "Failed to load partner. Check console for details.",
           variant: "destructive",
         });
       } finally {
@@ -64,6 +94,29 @@ export default function EditPartnerPage() {
           <Skeleton className="h-[500px] w-full" />
         </div>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+        <div className="flex-col">
+          <div className="flex-1 p-8 pt-6 space-y-4">
+            <div className="flex items-center gap-x-4">
+                <Button
+                onClick={() => router.push("/dashboard/partners")}
+                variant="ghost"
+                size="sm"
+                >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Partners
+                </Button>
+            </div>
+            <div className="p-4 bg-destructive/10 text-destructive rounded-md">
+                <h3 className="font-semibold">Error Loading Partner</h3>
+                <p>{error}</p>
+            </div>
+          </div>
+        </div>
     );
   }
 

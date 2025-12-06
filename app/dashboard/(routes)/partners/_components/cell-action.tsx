@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Copy, Edit, MoreHorizontal, Trash } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -73,8 +74,10 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
           <DropdownMenuItem onClick={() => onCopy(data.id)}>
             <Copy className="mr-2 h-4 w-4" /> Copy Id
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push(`/dashboard/partners/${data.id}/edit`)}>
-            <Edit className="mr-2 h-4 w-4" /> Update
+          <DropdownMenuItem asChild>
+            <Link href={`/dashboard/partners/${data.id}/edit`} className="w-full cursor-pointer">
+              <Edit className="mr-2 h-4 w-4" /> Update
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setOpen(true)}>
             <Trash className="mr-2 h-4 w-4" /> Delete

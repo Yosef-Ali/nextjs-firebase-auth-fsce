@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -12,6 +13,7 @@ import { Partner } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function PartnersPage() {
+  const router = useRouter();
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -55,7 +57,7 @@ export default function PartnersPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Partners</h1>
-          <Button onClick={() => window.location.href = '/dashboard/partners/new'}>
+          <Button onClick={() => router.push('/dashboard/partners/new')}>
             <Plus className="mr-2 h-4 w-4" />
             Add Partner
           </Button>
