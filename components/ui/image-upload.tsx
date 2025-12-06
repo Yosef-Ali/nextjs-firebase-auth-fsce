@@ -25,6 +25,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 }) => {
   const [isMounted, setIsMounted] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [urlInput, setUrlInput] = useState("");
   const { user } = useAuth();
 
   useEffect(() => {
@@ -211,9 +212,6 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     return null;
   }
 
-  const [urlInput, setUrlInput] = useState("");
-  const [showUrlInput, setShowUrlInput] = useState(false);
-
   const handleUrlSubmit = () => {
     if (urlInput && urlInput.trim()) {
       const trimmedUrl = urlInput.trim();
@@ -221,7 +219,6 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
         onChange(trimmedUrl);
         setUrlInput("");
-        setShowUrlInput(false);
         toast({
           title: "Success",
           description: "Image URL added successfully"
