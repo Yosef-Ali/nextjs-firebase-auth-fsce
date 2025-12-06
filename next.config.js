@@ -4,9 +4,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   images: {
     remotePatterns: [
       {
@@ -26,6 +23,8 @@ const nextConfig = {
       },
     ],
   },
+  // Next.js 16+ Turbopack config
+  turbopack: {},
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
@@ -41,4 +40,3 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
-
