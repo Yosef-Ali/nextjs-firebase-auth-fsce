@@ -8,36 +8,26 @@ import { getStorage } from 'firebase-admin/storage';
 import 'server-only';
 
 function formatPrivateKey(key: string | undefined): string {
-  console.log('Original private key:', key);
   if (!key) return '';
 
   // If the key already has the correct format with newlines, return it
   if (key.includes('-----BEGIN PRIVATE KEY-----') && key.includes('\n')) {
-    console.log('Key already has correct format');
     return key;
   }
 
   // If the key has the BEGIN/END markers but no proper newlines
   if (key.includes('-----BEGIN PRIVATE KEY-----') && !key.includes('\n')) {
-    console.log('Key has BEGIN/END markers but no newlines');
-    const formattedKey = key.replace('-----BEGIN PRIVATE KEY-----', '-----BEGIN PRIVATE KEY-----\n')
+    return key.replace('-----BEGIN PRIVATE KEY-----', '-----BEGIN PRIVATE KEY-----\n')
       .replace('-----END PRIVATE KEY-----', '\n-----END PRIVATE KEY-----\n');
-    console.log('Formatted key:', formattedKey);
-    return formattedKey;
   }
 
   // If the key is a raw base64 string (no BEGIN/END markers)
   if (!key.includes('-----BEGIN')) {
-    console.log('Key is a raw base64 string');
-    const formattedKey = `-----BEGIN PRIVATE KEY-----\n${key.replace(/\\n/g, '\n')}\n-----END PRIVATE KEY-----\n`;
-    console.log('Formatted key:', formattedKey);
-    return formattedKey;
+    return `-----BEGIN PRIVATE KEY-----\n${key.replace(/\\n/g, '\n')}\n-----END PRIVATE KEY-----\n`;
   }
 
   // Handle escaped newlines in the private key
-  const formattedKey = key.replace(/\\n/g, '\n');
-  console.log('Key has escaped newlines, formatted key:', formattedKey);
-  return formattedKey;
+  return key.replace(/\\n/g, '\n');
 }
 
 // Function to initialize Firebase Admin
