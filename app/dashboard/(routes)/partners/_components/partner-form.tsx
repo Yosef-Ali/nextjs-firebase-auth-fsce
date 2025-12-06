@@ -73,24 +73,37 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
   });
 
   const onSubmit = async (data: PartnerFormValues) => {
+    console.log("Form submitted with data:", data);
+    console.log("Partner ID:", partnerId);
+    
     try {
       setIsLoading(true);
+      
+      // Remove id from submission data if present
+      const { id, ...dataWithoutId } = data;
+      
       const submissionData = {
-        ...data,
-        updatedAt: new Date(),
+        ...dataWithoutId,
+        updatedAt: new Date().toISOString(),
       };
 
+      console.log("Submission data:", submissionData);
+
       if (partnerId) {
+        console.log("Updating partner:", partnerId);
         await updateDocument("partners", partnerId, submissionData);
+        console.log("Update successful");
         toast({
           title: "Success",
           description: "Partner updated successfully",
         });
       } else {
+        console.log("Creating new partner");
         await addDocument("partners", {
           ...submissionData,
-          createdAt: new Date(),
+          createdAt: new Date().toISOString(),
         });
+        console.log("Create successful");
         toast({
           title: "Success",
           description: "Partner created successfully",
@@ -107,6 +120,7 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
         router.push("/dashboard/partners");
       }
     } catch (error) {
+      console.error("Error updating partner:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Something went wrong",
