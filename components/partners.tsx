@@ -84,8 +84,7 @@ export default function Partners() {
                     { src: "/images/Logo-of-Ethiopian-Ministry-of-Labor-and-Social-Affairs.jpg", alt: "Ministry of Labor and Social Affairs logo" },
                     { src: "/images/stop-child-explo.webp", alt: "Stop Child Exploitation logo" },
                     { src: "/images/oak_correct.png", alt: "Oak Foundation logo" },
-                    { src: "/images/Logo-Kindernothilfe.svg.png", alt: "Kindernothilfe logo" },
-                    { src: "https://firebasestorage.googleapis.com/v0/b/fsce-2024.appspot.com/o/partners%2F1739449620952-Logo-Kindernothilfe.svg.png?alt=media&token=4f969dbc-1af4-4f78-9b12-713cedc45ae5", alt: "SOS Children's Villages logo" }
+                    { src: "https://firebasestorage.googleapis.com/v0/b/fsce-2024.appspot.com/o/partners%2F1739449620952-Logo-Kindernothilfe.svg.png?alt=media&token=4f969dbc-1af4-4f78-9b12-713cedc45ae5", alt: "SOS Children Village Ethiopia" }
                   ].map((img) => (
                     <div key={img.src} className="relative w-[140px] h-[70px]">
                       <Image
