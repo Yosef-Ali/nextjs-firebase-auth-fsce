@@ -160,7 +160,7 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>Name <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input disabled={isLoading} placeholder="Partner name" {...field} />
                   </FormControl>
@@ -190,7 +190,7 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input disabled={isLoading} placeholder="Email address" {...field} />
                   </FormControl>
@@ -204,7 +204,7 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone</FormLabel>
+                  <FormLabel>Phone <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input disabled={isLoading} placeholder="Phone number" {...field} />
                   </FormControl>
@@ -234,7 +234,7 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
               name="order"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Display Order</FormLabel>
+                  <FormLabel>Display Order <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input
                       disabled={isLoading}
@@ -253,7 +253,7 @@ export const PartnerForm: React.FC<PartnerFormProps> = ({ initialData, partnerId
               name="partnerType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Partner Type</FormLabel>
+                  <FormLabel>Partner Type <span className="text-red-500">*</span></FormLabel>
                   <Select
                     disabled={isLoading}
                     onValueChange={field.onChange}

@@ -216,21 +216,35 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   const handleUrlSubmit = () => {
     if (urlInput && urlInput.trim()) {
       const trimmedUrl = urlInput.trim();
+      
       // Basic URL validation
-      if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+      if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
+        toast({
+          title: "Invalid URL",
+          description: "Please enter a valid URL starting with http:// or https://",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Validate image by attempting to load it
+      const img = new window.Image();
+      img.onload = () => {
         onChange(trimmedUrl);
         setUrlInput("");
         toast({
           title: "Success",
           description: "Image URL added successfully"
         });
-      } else {
+      };
+      img.onerror = () => {
         toast({
-          title: "Invalid URL",
-          description: "Please enter a valid URL starting with http:// or https://",
+          title: "Invalid Image",
+          description: "The provided URL does not point to a valid or accessible image.",
           variant: "destructive"
         });
-      }
+      };
+      img.src = trimmedUrl;
     }
   };
 
